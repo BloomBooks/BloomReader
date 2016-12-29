@@ -1,10 +1,10 @@
 # Bloom Reader
 [Bloom](http://bloomlibrary.org) is [award-winning](http://allchildrenreading.org/sil-international-wins-enabling-writers-prize-for-software-solution-to-childrens-book-shortage/) open source desktop software for Windows and Linux that communities, NGOs, and Education ministries around the world are using to create books in the worlds thousands of minority languages. These books are mostly distributed via paper, though some people are making epubs. We can now also use SIL's Reading Application Builder to package books as Android apps that can be downloaded from the Play Store.
 
-So what's this "Bloom Reader" about? Bloom users tell us that it's difficult to find epub readers that are simple 
-to use and that can reliably display Bloom books and play audio from Bloom Talking books. 
-They want the simplicity of apps. But they don't want to have to create apps or have people download 
-apps for each book that gets published. Instead, they want an app, kind of like a Kindle app, which 
+So what's this "Bloom Reader" about? Bloom users tell us that it's difficult to find epub readers that are simple
+to use and that can reliably display Bloom books and play audio from Bloom Talking books.
+They want the simplicity of apps. But they don't want to have to create apps or have people download
+apps for each book that gets published. Instead, they want an app, kind of like a Kindle app, which
 people can use to read and share Bloom books.
 
 Bloom Reader is a native java app with a WebView for displaying Bloom books (which are HTML). We want to support the older Android versions and devices that are common in the developing world.
@@ -36,6 +36,12 @@ At this point, literacy projects could seed books into the community and let the
 
 At this point, anyone could publish a book using the existing Bloom mechanism, and have it immediately downloadable by anyone with Bloom Reader. Books would still spread mostly from person to person in expensive internet areas.
 
+# Building
+
+    git clone https://github.com/BloomBooks/BloomReader
+    cd BloomReader
+    gradlew (or, more likely open project in Android Studio)
+
 # Contributions
-We welcome contributions, particularly if we pre-agree on the UX/UI.
+We welcome contributions, particularly if we pre-agree on UX.
 

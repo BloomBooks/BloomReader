@@ -106,10 +106,11 @@ textarea,
   line-height: 1.5em;
   min-height: 1.8em;
   width: 100%;
+  height: 100%;
 }
 /* The following has been split out from the above rule because it should probably be removed,
-	but at this point we are about to go release candidate with 3.1 so it will have to wait.
-	When we do remove it, the main things it could effect are the Story Primer template and the dozen or so SIL LEAD Uganda SHRP templates.
+    but at this point we are about to go release candidate with 3.1 so it will have to wait.
+    When we do remove it, the main things it could effect are the Story Primer template and the dozen or so SIL LEAD Uganda SHRP templates.
 */
 TD {
   resize: none;
@@ -150,17 +151,6 @@ div#bloomDataDiv {
 .centerJustify {
   text-align: center;
 }
-/*Unless otherwise positioned and made visible, hide all the language elements in there*/
-.bloom-editable {
-  display: none;
-  height: 100%;
-}
-/*Outside of xmatter, we assume that if bloom gives it a content tag, then it should be visible*/
-.bloom-page:not(.bloom-frontMatter):not(.bloom-backMatter) .bloom-content1,
-.bloom-page:not(.bloom-frontMatter):not(.bloom-backMatter) .bloom-content2,
-.bloom-page:not(.bloom-frontMatter):not(.bloom-backMatter) .bloom-content3 {
-  display: block;
-}
 /*Notes on wkhtmltopdf and page sizes: Set the border color of Div.Page in preview.css so you can see what the pdf is doing
 these should be 14.8, but wkhtmltopdf shinks it
 The folowing are the values which work with a 1px border.  With 0px border, I could not get the pages to come out
@@ -172,6 +162,18 @@ preview.css.
 
 Changes here generally require similar changes in EpubMaker.FixPictureSizes().
 */
+.bloom-page.Device16x9Portrait {
+  min-width: 100mm;
+  max-width: 100mm;
+  min-height: 177.77777778mm;
+  max-height: 177.77777778mm;
+}
+.bloom-page.Device16x9Landscape {
+  min-width: 177.77777778mm;
+  max-width: 177.77777778mm;
+  min-height: 100mm;
+  max-height: 100mm;
+}
 .bloom-page.A5Portrait {
   min-width: 148mm;
   max-width: 148mm;
@@ -202,6 +204,18 @@ Changes here generally require similar changes in EpubMaker.FixPictureSizes().
   max-width: 210mm;
   min-height: 297mm;
   max-height: 297mm;
+}
+.bloom-page.A3Landscape {
+  min-width: 420mm;
+  max-width: 420mm;
+  min-height: 297mm;
+  max-height: 297mm;
+}
+.bloom-page.A3Portrait {
+  min-width: 297mm;
+  max-width: 297mm;
+  min-height: 420mm;
+  max-height: 420mm;
 }
 .bloom-page.A6Portrait {
   min-width: 105mm;
@@ -283,6 +297,64 @@ Changes here generally require similar changes in EpubMaker.FixPictureSizes().
 .marginBox {
   position: absolute;
   top: 15mm;
+}
+.Device16x9Landscape {
+  background-color: black;
+}
+.Device16x9Landscape img {
+  background-color: white;
+}
+.Device16x9Landscape .origami-toggle,
+.Device16x9Portrait .origami-toggle {
+  display: none;
+}
+.Device16x9Landscape .pageLabel,
+.Device16x9Portrait .pageLabel {
+  display: none;
+}
+.Device16x9Landscape .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top,
+.Device16x9Portrait .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top {
+  margin-bottom: 0;
+}
+.Device16x9Landscape .marginBox .bloom-imageContainer,
+.Device16x9Portrait .marginBox .bloom-imageContainer {
+  height: calc(100%) !important;
+}
+.Device16x9Portrait .marginBox {
+  height: 177.77777778mm;
+  width: 100mm;
+  top: 0;
+  left: 0 !important;
+}
+.Device16x9Portrait .marginBox IMG {
+  max-width: 100mm;
+}
+.Device16x9Portrait .marginBox .bloom-editable {
+  margin-left: 10px;
+  width: calc(100% - 20px);
+}
+.Device16x9Landscape .marginBox {
+  height: 100mm;
+  width: 177.77777778mm;
+  top: 0;
+  left: 0 !important;
+}
+.Device16x9Landscape .marginBox IMG {
+  max-width: 177.77777778mm;
+}
+.Device16x9Landscape .marginBox .position-top {
+  bottom: 0 !important;
+}
+.Device16x9Landscape .marginBox .position-bottom {
+  display: none;
+}
+.A3Landscape .marginBox {
+  height: 267mm;
+  width: 380mm;
+}
+.A3Landscape .marginBox IMG {
+  /* BL-1022, BL-2353 Keeps regular thumb images from going too wide */
+  max-width: 380mm;
 }
 .A4Portrait .marginBox {
   height: 267mm;
@@ -439,6 +511,10 @@ label.placeholder {
   vertical-align: super;
   font-size: 80%;
 }
+/* This is the html default, but our Browser.reset.* unfortunately overrides it. */
+sup {
+  font-size: smaller;
+}
 h1 {
   font-size: 1.5em;
 }
@@ -456,7 +532,7 @@ h2 {
 }
 .customPage {
   /* This is in order to divide up the whole section in equal parts.
-		I'm not sure, though...it looks better when you first make the page. But it actually reduces the flexibility for the user a bit. Hmmm*/
+        I'm not sure, though...it looks better when you first make the page. But it actually reduces the flexibility for the user a bit. Hmmm*/
 }
 .customPage .bloom-imageContainer {
   width: calc(100% - 1px);
@@ -479,6 +555,26 @@ h2 {
 }
 .customPage .split-pane-component {
   min-height: 1.5em;
+}
+/* ------------------------------------------------------
+/*		Visibility System
+/*		https://goo.gl/EgnSJo
+/* ------------------------------------------------------*/
+.bloom-editable {
+  display: none;
+}
+.bloom-translationGroup {
+  display: flex;
+  flex-direction: column;
+}
+.bloom-content1 {
+  order: 1;
+}
+.bloom-content2 {
+  order: 2;
+}
+.bloom-content3 {
+  order: 3;
 }
 
 /*# sourceMappingURL=../../../output/browser/bookLayout/basePage.css.map */

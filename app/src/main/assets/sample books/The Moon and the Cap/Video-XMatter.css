@@ -415,5 +415,94 @@ BODY[bookcreationtype="translation"] .titlePage #funding .bloom-editable {
 .ISBNContainer .ISBNContainer SPAN {
   vertical-align: top;
 }
+div.bloom-page.coverColor,
+.bloom-backMatter {
+  background-color: black !important;
+  color: #9E9E9E;
+}
+div.bloom-page.coverColor .bloom-editable[contentEditable="true"][data-languageTipContent]:after,
+.bloom-backMatter .bloom-editable[contentEditable="true"][data-languageTipContent]:after {
+  color: dimgrey !important;
+}
+.frontCover .marginBox {
+  padding: 20px;
+  padding-top: 100px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.frontCover .marginBox .bookTitle .bloom-content1 {
+  color: #8BC34A;
+}
+.frontCover .marginBox .bottomBlock {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  position: absolute;
+  bottom: 10px;
+  width: 93%;
+}
+.frontCover .marginBox .bottomBlock .coverBottomLangName {
+  position: initial;
+  align-self: center;
+}
+.credits1 img {
+  background-color: white;
+}
+body:not(.publishMode) .bloom-editable {
+  border-color: dimgray;
+}
+.credits2 .bloom-translationGroup {
+  min-height: 3em;
+  width: 100%;
+  margin-bottom: 2em;
+}
+.credits2 .bloom-translationGroup p {
+  min-width: 15em;
+  text-align: center;
+}
+.theEndPage .marginBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.theEnd {
+  height: initial;
+  text-align: center;
+  width: 100%;
+  font-size: 3em;
+}
+.theEnd p {
+  width: inherit;
+}
+.bloom-backMatter .marginBox {
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+.bloom-backMatter .marginBox .licenseAndCopyrightBlock .copyright {
+  text-align: center;
+  font-size: 1.5em;
+}
+.bloom-backMatter .marginBox .licenseAndCopyrightBlock .licenseBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.bloom-backMatter .marginBox .licenseAndCopyrightBlock .licenseBlock img {
+  width: 150px;
+  margin: 20px;
+}
+.bloom-backMatter .marginBox .originalAcknowledgments,
+.bloom-backMatter .marginBox .versionAcknowledgments {
+  margin-top: 20px;
+  width: 100%;
+  text-align: center;
+}
 
-/*# sourceMappingURL=../../../../../output/browser/templates/xMatter/Traditional-XMatter/Traditional-XMatter.css.map */
+/*# sourceMappingURL=../../../../../output/browser/templates/xMatter/Video-XMatter/Video-XMatter.css.map */

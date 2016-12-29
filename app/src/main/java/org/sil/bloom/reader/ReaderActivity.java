@@ -4,9 +4,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.webkit.MimeTypeMap;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringBufferInputStream;
 
 
 public class ReaderActivity extends AppCompatActivity {
@@ -17,18 +23,21 @@ public class ReaderActivity extends AppCompatActivity {
         setContentView(R.layout.activity_reader);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         Intent intent = getIntent();
         loadBook(intent.getStringExtra("PATH"));
     }
 
     private void loadBook(String path) {
-        File file = new File(path);
         WebView browser = (WebView) findViewById(R.id.browser);
         browser.getSettings().setJavaScriptEnabled(true);
-        if (file.isDirectory()) {
-            browser.loadUrl("file:///" + file.getAbsolutePath() + "/" + file.getName() + ".htm");
-        } else { // just a dummy file thing
-            browser.loadUrl("file:///" + file.getAbsolutePath());
-        }
+        File target = new File(path);
+        updateSupportFiles(path);
+        browser.loadUrl("file:///" + target.getAbsolutePath() + "/" + target.getName() + ".htm");
+    }
+
+    // Copy in files like bloomPlayer.js
+    private void updateSupportFiles(String bookFolderPath) {
+        AssetCopier.copyAssetFolder(this.getApplicationContext().getAssets(), "book support files", bookFolderPath);
     }
 }

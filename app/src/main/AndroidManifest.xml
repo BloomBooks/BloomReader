@@ -24,5 +24,6 @@
             android:label="@string/title_activity_reader"
             android:theme="@style/AppTheme.NoActionBar" />
     </application>
-
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+                     android:maxSdkVersion="18" />
 </manifest>

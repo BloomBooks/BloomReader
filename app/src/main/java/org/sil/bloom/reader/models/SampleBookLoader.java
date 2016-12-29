@@ -10,7 +10,7 @@ class SampleBookLoader {
 
     public static void CopySampleBooksFromAssetsIntoBooksFolder(Context context) {
         ContextWrapper cw = new ContextWrapper(context);
-        File directory = cw.getDir("bloomreader", Context.MODE_PRIVATE);
+        File directory = cw.getExternalFilesDir("books");
 
         //enhance: remove existing sample files
 

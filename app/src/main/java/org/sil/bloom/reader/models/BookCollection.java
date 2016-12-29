@@ -32,7 +32,6 @@ public class BookCollection {
 
 
     public void init(Context context) {
-
         SampleBookLoader.CopySampleBooksFromAssetsIntoBooksFolder(context);
 
         for (int i = 2; i <= 4; i++) {
@@ -40,7 +39,7 @@ public class BookCollection {
         }
 
         ContextWrapper cw = new ContextWrapper(context);
-        File directory = cw.getDir("bloomreader", Context.MODE_PRIVATE);
+        File directory = cw.getExternalFilesDir("books");
         File[] files = directory.listFiles();
         for (int i = 0; i < files.length; i++) {
             String path = files[i].getAbsolutePath();
@@ -51,7 +50,7 @@ public class BookCollection {
 
     private void createFilesForDummyBook(Context context, int position) {
         ContextWrapper cw = new ContextWrapper(context);
-        File directory = cw.getDir("bloomreader", Context.MODE_PRIVATE);
+        File directory = cw.getExternalFilesDir("books");
 
         File bookDir = new File(directory, "The " + position + " dwarves");
         bookDir.mkdir();

@@ -45,7 +45,7 @@ public class ReaderActivity extends AppCompatActivity {
         mBrowsers = new ArrayList<View>();
 
         File bookFolder = new File(path);
-        File bookHtml = new File(path + "/" + bookFolder.getName() + ".htm");
+        File bookHtml = new File(path + File.separator + bookFolder.getName() + ".htm");
         try {
             Document doc = Jsoup.parse(bookHtml, "UTF-8", "");
             Element datadiv = doc.select("div#bloomDataDiv").first();

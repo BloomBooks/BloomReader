@@ -1,5 +1,6 @@
 package org.sil.bloom.reader;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
@@ -9,11 +10,19 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.Toast;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -37,9 +46,40 @@ public class ReaderActivity extends AppCompatActivity {
 //        setSupportActionBar(toolbar);
 
         Intent intent = getIntent();
-        loadBook(intent.getStringExtra("PATH"));
+        try {
+            String zipPath = intent.getStringExtra("PATH");
+            String bookStagingPath = unzipBook(zipPath);
+            File bookFolder = new File(bookStagingPath).listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File file) {
+                    return file.isDirectory();
+                }
+            })[0]; // TODO check assumption that there is exactly one folder
+            loadBook(bookFolder.getAbsolutePath());
+        }
+        catch(IOException err){
+
+            Toast.makeText(this.getApplicationContext(), "There was an error showing that book: " + err, Toast.LENGTH_LONG);
+        }
     }
 
+    private String unzipBook(String zipPath) throws IOException {
+        File bookStagingDir = this.getApplicationContext().getDir("currentbook", Context.MODE_PRIVATE);
+        emptyDirectory(bookStagingDir);
+        unzip(new File(zipPath), bookStagingDir);
+        return bookStagingDir.getAbsolutePath();
+    }
+
+    void emptyDirectory(File dir) {
+            for (File child : dir.listFiles())
+                deleteFileOrDirectory(child);
+    }
+    void deleteFileOrDirectory(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory())
+            for (File child : fileOrDirectory.listFiles())
+                deleteFileOrDirectory(child);
+        fileOrDirectory.delete();
+    }
 
     private void loadBook(String path) {
         mBrowsers = new ArrayList<View>();
@@ -74,7 +114,39 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
 
-
+    //from http://stackoverflow.com/a/27050680
+    public static void unzip(File zipFile, File targetDirectory) throws IOException {
+        ZipInputStream zis = new ZipInputStream(
+                new BufferedInputStream(new FileInputStream(zipFile)));
+        try {
+            ZipEntry ze;
+            int count;
+            byte[] buffer = new byte[8192];
+            while ((ze = zis.getNextEntry()) != null) {
+                File file = new File(targetDirectory, ze.getName());
+                File dir = ze.isDirectory() ? file : file.getParentFile();
+                if (!dir.isDirectory() && !dir.mkdirs())
+                    throw new FileNotFoundException("Failed to ensure directory: " +
+                            dir.getAbsolutePath());
+                if (ze.isDirectory())
+                    continue;
+                FileOutputStream fout = new FileOutputStream(file);
+                try {
+                    while ((count = zis.read(buffer)) != -1)
+                        fout.write(buffer, 0, count);
+                } finally {
+                    fout.close();
+                }
+            /* if time should be restored as well
+            long time = ze.getTime();
+            if (time > 0)
+                file.setLastModified(time);
+            */
+            }
+        } finally {
+            zis.close();
+        }
+    }
     // Copy in files like bloomPlayer.js
     private void updateSupportFiles(String bookFolderPath) {
         AssetCopier.copyAssetFolder(this.getApplicationContext().getAssets(), "book support files", bookFolderPath);

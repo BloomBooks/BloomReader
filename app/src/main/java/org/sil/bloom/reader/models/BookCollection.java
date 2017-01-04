@@ -79,4 +79,7 @@ public class BookCollection {
         }
     }
 
+    public  List<Book> getBooks() {
+        return _books;
+    }
 }

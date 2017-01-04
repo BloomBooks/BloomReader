@@ -20,11 +20,20 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -62,12 +71,34 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        SetupCollectionListView();
+    }
 
-        // TODO: we don't need a recycler for the collection of books on this device, since the
-        // number of items will never be huge. This could just be a list.
-        View recyclerView = findViewById(R.id.book_list);
-        assert recyclerView != null;
-        setupRecyclerView((RecyclerView) recyclerView);
+    private void SetupCollectionListView() {
+        ArrayAdapter adapter = new ArrayAdapter(this, R.layout.book_list_content, R.id.title, _bookCollection.getBooks());
+        ListView listView = (ListView) findViewById(R.id.book_list2);
+        listView.setAdapter(adapter);
+        //listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+                public void onItemClick(AdapterView<?> adapter, View v, int position, long arg3) {
+                    Context context = v.getContext();
+                    Intent intent = new Intent(context, ReaderActivity.class);
+                    intent.putExtra("PATH", _bookCollection.get(position).path);
+                    context.startActivity(intent);
+                }
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
+        {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long arg3)
+            {
+                Toast.makeText(view.getContext(), "long click", Toast.LENGTH_SHORT).show();
+                return true; //handled it
+            }
+        });
     }
 
 
@@ -118,72 +149,5 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        recyclerView.setAdapter(new BookItemRecyclerViewAdapter(_bookCollection));
-    }
-
-    public class BookItemRecyclerViewAdapter
-            extends RecyclerView.Adapter<BookItemRecyclerViewAdapter.ViewHolder> {
-
-        public BookItemRecyclerViewAdapter(BookCollection collection) {
-            _bookCollection = collection;
-        }
-
-        @Override
-        public BookItemRecyclerViewAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.book_list_content, parent, false);
-            return new BookItemRecyclerViewAdapter.ViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(final BookItemRecyclerViewAdapter.ViewHolder holder, int position) {
-            holder.book = _bookCollection.get(position);
-            holder.mTitleView.setText(_bookCollection.get(position).name);
-
-            holder.mView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Context context = v.getContext();
-                    Intent intent = new Intent(context, ReaderActivity.class);
-                    intent.putExtra("PATH", holder.book.path);
-                    context.startActivity(intent);
-                }
-            });
-            holder.mView.setOnLongClickListener(new View.OnLongClickListener()
-            {
-                @Override
-                public boolean onLongClick(View v)
-                {
-                    Toast.makeText(v.getContext(), holder.book.path, Toast.LENGTH_SHORT).show();
-                    return true; //handled it
-                }
-            });
-
-        }
-
-        @Override
-        public int getItemCount() {
-            return _bookCollection.size();
-        }
-
-        public class ViewHolder extends RecyclerView.ViewHolder {
-            public final View mView;
-            public final TextView mTitleView;
-            public Book book;
-
-            public ViewHolder(View view) {
-                super(view);
-                mView = view;
-                mTitleView = (TextView) view.findViewById(R.id.title);
-            }
-
-            @Override
-            public String toString() {
-                return super.toString() + " '" + mTitleView.getText() + "'";
-            }
-        }
     }
 }

@@ -5,11 +5,11 @@
         <item
             android:id="@+id/nav_catalog"
             android:icon="@drawable/ic_menu_get_books"
-            android:title="Get Books from Internet" />
+            android:title="Get Books from Internet (not yet)" />
         <item
             android:id="@+id/nav_share"
             android:icon="@drawable/ic_menu_share"
-            android:title="Share Books with Bluetooth" />
+            android:title="Share Books with Bluetooth (not yet)" />
     </group>
 
 

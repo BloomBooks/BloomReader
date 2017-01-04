@@ -62,6 +62,9 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+
+        // TODO: we don't need a recycler for the collection of books on this device, since the
+        // number of items will never be huge. This could just be a list.
         View recyclerView = findViewById(R.id.book_list);
         assert recyclerView != null;
         setupRecyclerView((RecyclerView) recyclerView);
@@ -149,6 +152,16 @@ public class MainActivity extends AppCompatActivity
                     context.startActivity(intent);
                 }
             });
+            holder.mView.setOnLongClickListener(new View.OnLongClickListener()
+            {
+                @Override
+                public boolean onLongClick(View v)
+                {
+                    Toast.makeText(v.getContext(), holder.book.path, Toast.LENGTH_SHORT).show();
+                    return true; //handled it
+                }
+            });
+
         }
 
         @Override

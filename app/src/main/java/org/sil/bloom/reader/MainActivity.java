@@ -2,43 +2,38 @@ package org.sil.bloom.reader;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.graphics.drawable.VectorDrawableCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.support.design.widget.NavigationView;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
+import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private BookCollection _bookCollection = new BookCollection();
+    private ListView mListView;
+    public android.view.ActionMode contextualActionBarMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +48,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         _bookCollection.init(this.getApplicationContext());
+
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -69,14 +65,47 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        SetupCollectionListView();
+        mListView = (ListView) findViewById(R.id.book_list2);
+        SetupCollectionListView(mListView);
     }
 
-    private void SetupCollectionListView() {
+    private void closeContextualActionBar() {
+        contextualActionBarMode.finish();
+    }
+    public void DeleteBook() {
+        int position = mListView.getCheckedItemPosition();
+        final Book book = _bookCollection.get(position);
+
+        AlertDialog x = new AlertDialog.Builder(this).setMessage(getString(R.string.deleteExplanation))
+                .setTitle(getString(R.string.deleteConfirmation))
+                .setPositiveButton(getString(R.string.deleteConfirmButton), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Log.i("BloomReader", "DeleteBook "+ book.name);
+                        _bookCollection.deleteFromDevice(book);
+                        closeContextualActionBar();
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .show();
+    }
+
+
+    private void SetupCollectionListView(final ListView listView) {
+        final AppCompatActivity activity = this;
+
         ArrayAdapter adapter = new ArrayAdapter(this, R.layout.book_list_content, R.id.title, _bookCollection.getBooks());
-        ListView listView = (ListView) findViewById(R.id.book_list2);
+        adapter.setNotifyOnChange(true);
         listView.setAdapter(adapter);
-        //listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
+
+        listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
+
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
@@ -88,17 +117,55 @@ public class MainActivity extends AppCompatActivity
                 }
         });
 
-        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener()
-        {
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
+            private android.view.ActionMode.Callback mActionModeCallback = new android.view.ActionMode.Callback() {
+                @Override
+                public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
+                    mode.getMenuInflater().inflate(R.menu.book_item_menu, menu);
+                    return true;
+                }
+
+                @Override
+                public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
+                    return false;
+                }
+
+                @Override
+                public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
+                    switch(item.getItemId()) {
+                        case R.id.delete:
+                            DeleteBook();
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+
+                @Override
+                public void onDestroyActionMode(android.view.ActionMode mode) {
+                    contextualActionBarMode = null;
+                    mListView.setItemChecked(mListView.getCheckedItemPosition(), false);
+                    //mListView.setSelection(-1);
+                }
+            };
+
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long arg3)
-            {
-                Toast.makeText(view.getContext(), "long click", Toast.LENGTH_SHORT).show();
-                return true; //handled it
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if(contextualActionBarMode != null)
+                    return false;
+                mListView.setSelected(true);
+                mListView.setSelection(position);
+                mListView.setItemChecked(position, true);
+
+                mListView.setOnItemClickListener(null);
+                contextualActionBarMode= activity.startActionMode(mActionModeCallback);
+
+                return true;
             }
         });
-    }
 
+    }
 
     @Override
     public void onBackPressed() {
@@ -110,12 +177,15 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
+ //maybe someday. This is the 3-vertical dot menu
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        //getMenuInflater().inflate(R.menu.main, menu);
+//        getMenuInflater().inflate(R.menu.main, menu);
+//        return true;
+//    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -125,10 +195,13 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch(id) {
+            case R.id.action_settings:
+                return true;
+            case R.id.delete:
+                Toast.makeText(this.getApplicationContext(), "Would delete", Toast.LENGTH_LONG);
+                return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 

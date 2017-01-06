@@ -56,7 +56,7 @@ public class BookCollection {
         if(files != null) {
             for (int i = 0; i < files.length; i++) {
                 String path = files[i].getAbsolutePath();
-                String name = files[i].getName();
+                String name = files[i].getName().replace(".bloom","");
                 addBook(new Book(String.valueOf(i), name, path));
             }
         }
@@ -81,5 +81,13 @@ public class BookCollection {
 
     public  List<Book> getBooks() {
         return _books;
+    }
+
+    public void deleteFromDevice(Book book) {
+        File file = new File(book.path);
+        if(file.exists()){
+            file.delete();
+        }
+        _books.remove(book);
     }
 }

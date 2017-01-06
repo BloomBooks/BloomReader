@@ -1,6 +1,10 @@
 <resources>
     <string name="app_name">Bloom Reader</string>
     <string name="delete">Delete</string>
+    <string name="deleteConfirmation">Delete from device?</string>
+    <string name="deleteExplanation">This book will disappear from your device.</string>
+    <string name="deleteConfirmButton">Delete now</string>
+    <string name="cancel">Cancel</string>
     <string name="title_activity_book_reader">BookReader</string>
 
     <string name="action_settings">Settings</string>

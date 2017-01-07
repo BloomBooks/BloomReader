@@ -3,7 +3,7 @@ package org.sil.bloom.reader.models;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.os.Environment;
-import android.widget.Toast;
+import android.util.Log;
 
 import org.sil.bloom.reader.IOUtilities;
 
@@ -11,14 +11,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class BookCollection {
 
     private List<Book> _books = new ArrayList<Book>();
-    private final Map<String, Book> ID_TO_BOOK_MAP = new HashMap<String, Book>();
+    private File mLocalBooksDirectory;
 
     public Book get(int i) {
         return _books.get(i);
@@ -28,36 +26,35 @@ public class BookCollection {
         return _books.size();
     }
 
-    private void addBook(Book item) {
-        _books.add(item);
-        ID_TO_BOOK_MAP.put(item.id, item);
+    private void addBook(String path) {
+        Book book = new Book(path);
+        _books.add(book);
     }
 
     public void init(Context context) {
         ContextWrapper cw = new ContextWrapper(context);
-        File directory = cw.getExternalFilesDir("books");
-        IOUtilities.deleteFileOrDirectory(directory);
+        //File directory = cw.getExternalFilesDir("books");
+        //IOUtilities.deleteFileOrDirectory(directory);
 
-        SampleBookLoader.CopySampleBooksFromAssetsIntoBooksFolder(context, directory);
+        SampleBookLoader.CopySampleBooksFromAssetsIntoBooksFolder(context, mLocalBooksDirectory);
 
 //        for (int i = 2; i <= 4; i++) {
 //            createFilesForDummyBook(context, directory, i);
 //        }
 
         // load from our private directory. We may get rid of this entirely
-        LoadFromDirectory(directory);
+        //LoadFromDirectory(directory);
 
         // load from the directory the user can see
-        LoadFromDirectory(Environment.getExternalStoragePublicDirectory("Bloom"));
+        mLocalBooksDirectory = Environment.getExternalStoragePublicDirectory("Bloom");
+        LoadFromDirectory(mLocalBooksDirectory);
     }
 
     private void LoadFromDirectory(File directory) {
         File[] files = directory.listFiles();
         if(files != null) {
             for (int i = 0; i < files.length; i++) {
-                String path = files[i].getAbsolutePath();
-                String name = files[i].getName().replace(".bloom","");
-                addBook(new Book(String.valueOf(i), name, path));
+                addBook(files[i].getAbsolutePath());
             }
         }
     }
@@ -89,5 +86,27 @@ public class BookCollection {
             file.delete();
         }
         _books.remove(book);
+    }
+
+    // is this coming from somewhere other than where we store books?
+    // then move or copy it in
+    public String ensureBookIsInCollection(String path) {
+        if (path.indexOf(mLocalBooksDirectory.getAbsolutePath()) < 0) {
+            Log.d("BloomReader", "Moving book into Bloom directory");
+            File source = new File(path);
+            String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + source.getName();
+            IOUtilities.copyFile(path, destination);
+            // We assume that they will be happy with us removing from where ever the file was,
+            // so long as it is on the same device (e.g. not coming from an sd card they plan to pass
+            // around the room).
+            if(!IOUtilities.seemToBeDifferentVolumes(path,destination)) {
+                source.delete();
+            }
+            // we wouldn't have it in our list that we display yet, so make an entry there
+            addBook(destination);
+            return destination;
+        } else {
+            return path;
+        }
     }
 }

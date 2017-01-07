@@ -1,18 +1,20 @@
 package org.sil.bloom.reader.models;
 
+import java.io.File;
+
 public class Book {
     public final String path;
     public final String name;
-    public final String id;
 
-    public Book(String id, String name, String path) {
-        this.id = id;
+    public Book(String path) {
+        //this.id = id;
         this.path = path;
-        this.name = name;
+        File f = new File(path);
+        this.name = f.getName().replace(".bloom","");
     }
 
     @Override
     public String toString() {
-        return name;
+        return this.name;
     }
 }

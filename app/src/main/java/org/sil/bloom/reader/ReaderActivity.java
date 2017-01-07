@@ -40,7 +40,7 @@ public class ReaderActivity extends AppCompatActivity {
 //        setSupportActionBar(toolbar);
 
         Intent intent = getIntent();
-        String path = intent.getStringExtra("PATH");
+        String path = intent.getData().getPath();
         if (path.toLowerCase().endsWith(".bloom")) { //.bloom files are zip files
             try {
 

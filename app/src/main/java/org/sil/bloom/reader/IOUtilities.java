@@ -132,4 +132,17 @@ public class IOUtilities {
                 return false;
             }
     }
+
+    // "Seem" because this doesn't actually have a way of knowing the physical location of things.
+    // The modest goal here is to handle the common case that I'm aware of:
+    // to differentiate between /storage/emulated/0 (internal) and /storage/53D-DS32 (external SD card).
+    public static boolean seemToBeDifferentVolumes(String one, String two) {
+        String[] oneParts = one.split("\\"+File.separator);
+        String[] twoParts = two.split("\\"+File.separator);
+        // for info on paths, https://www.reddit.com/r/Android/comments/496sn3/lets_clear_up_the_confusion_regarding_storage_in/?ref=share&ref_source=link
+        // To would could perhaps only test the third part [2], for "emulated" vs. "53D-DS32". But testing all three doesn't hurt:
+        if (oneParts.length < 3 || twoParts.length < 4) 
+            return false; // this is a surprising situation, play it safe
+        return !oneParts[0].equals(twoParts[0]) || !oneParts[1].equals(twoParts[1]) || !oneParts[2].equals(twoParts[2]);
+    }
 }

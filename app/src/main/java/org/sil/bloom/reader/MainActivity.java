@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
@@ -67,6 +68,16 @@ public class MainActivity extends AppCompatActivity
 
         mListView = (ListView) findViewById(R.id.book_list2);
         SetupCollectionListView(mListView);
+
+        // If we were started by some external process and given a path to a book file,
+        // we want copy it to where Bloom books live if it isn't already there,
+        // make sure it is in our collection,
+        // and then open the reader to view it.
+        Uri data = getIntent().getData();
+        if(data != null && data.getPath().toLowerCase().endsWith(".bloom")) {
+            String newpath = _bookCollection.ensureBookIsInCollection(data.getPath());
+            openBook(this, newpath);
+        }
     }
 
     private void closeContextualActionBar() {
@@ -81,7 +92,7 @@ public class MainActivity extends AppCompatActivity
                 .setPositiveButton(getString(R.string.deleteConfirmButton), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Log.i("BloomReader", "DeleteBook "+ book.name);
+                        Log.i("BloomReader", "DeleteBook "+ book.toString());
                         _bookCollection.deleteFromDevice(book);
                         closeContextualActionBar();
                         dialog.dismiss();
@@ -111,9 +122,7 @@ public class MainActivity extends AppCompatActivity
         {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long arg3) {
                     Context context = v.getContext();
-                    Intent intent = new Intent(context, ReaderActivity.class);
-                    intent.putExtra("PATH", _bookCollection.get(position).path);
-                    context.startActivity(intent);
+                    openBook(context, _bookCollection.get(position).path);
                 }
         });
 
@@ -165,6 +174,12 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+    }
+
+    private void openBook(Context context, String path) {
+        Intent intent = new Intent(context, ReaderActivity.class);
+        intent.setData(Uri.parse(path));
+        context.startActivity(intent);
     }
 
     @Override

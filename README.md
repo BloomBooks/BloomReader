@@ -14,27 +14,37 @@ This is currently an unofficial side project.
 
 # Road map
 ## Prototype
-* Shows a list of books on the device's storage
-* User can select a book and page through using the buttons supplied by [BloomPlayer.js](https://github.com/BloomBooks/BloomPlayer)
+* [x] Shows a list of books on the device's storage
+* [x] user can swipe through pages to read the book
 
 Books would get onto the device by plugging into a computer and transferring files over to some known location.
 
 ## MVP
-* User can share books over Bluetooth
-* Bloom desktop Publish tab offers a "Publish to Bloom Reader" option.
-* Use [Crosswalk](https://crosswalk-project.org/) to get an up-to-date browser that can handle Bloom's Talking Books.
+* [x] Works well with 3rd part file sharing apps.
+* [x] Works with Android 4.4 (KitKat) and up
+* [ ] Book scales to fit device screen
+* [ ] Comes with SIL's Andika literacy font
+* [ ] Bloom desktop Publish tab offers a "Publish to Bloom Reader" option. That may have to reduce image resolution.
 At this point, literacy projects could seed books into the community and let the community distribute them virally.
 
-## Goal
-* Swipe to change pages, with page-sliding animation.
+## Needed for SIL PNG literacy research project
+* Plays talking books
+* Book thumbnails
+
+## Tie into BloomLibrary.org
 * BloomLibrary.org publishes an [OPDS](http://opds-spec.org/specs/opds-catalog-1-1-20110627/) catalog of all its books.
 * User can see a list of all the books in her language that are on [BloomLibrary.org](http://bloomlibrary.org).
 * User can preview books, perhaps in a very low-bandwidth form.
 * User can choose to download books to her device.
 * User gets notifications when new or updated books are available.
-* Use Graphite-enabled Crosswalk to support languages with the most complex scripts.
 
 At this point, anyone could publish a book using the existing Bloom mechanism, and have it immediately downloadable by anyone with Bloom Reader. Books would still spread mostly from person to person in expensive internet areas.
+
+## Other things on the radar
+* Use [Crosswalk](https://crosswalk-project.org/) to get an up-to-date browser that can handle Bloom's Talking Books.
+* Use Graphite-enabled Crosswalk to support languages with the most complex scripts.
+* Support Ken Burns animation as we do in [BloomPlayer.js](https://github.com/BloomBooks/BloomPlayer)
+* Support background music that works across pages, as we do in BloomPlayer.js.
 
 # Building
 

@@ -24,7 +24,7 @@ Books would get onto the device by plugging into a computer and transferring fil
 * [x] Works with Android 4.4 (KitKat) and up
 * [ ] Book scales to fit device screen
 * [ ] Comes with SIL's Andika literacy font
-* [ ] Bloom desktop Publish tab offers a "Publish to Bloom Reader" option. That may have to reduce image resolution.
+* [ ] Bloom desktop Publish tab offers a "Publish to Android Phone" option. That may have to reduce image resolution.
 At this point, literacy projects could seed books into the community and let the community distribute them virally.
 
 ## Needed for SIL PNG literacy research project
@@ -45,6 +45,7 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
 * Use Graphite-enabled Crosswalk to support languages with the most complex scripts.
 * Support Ken Burns animation as we do in [BloomPlayer.js](https://github.com/BloomBooks/BloomPlayer)
 * Support background music that works across pages, as we do in BloomPlayer.js.
+* In-app sharing/synchronization via bluetooth and wifi-direct.
 
 # Building
 

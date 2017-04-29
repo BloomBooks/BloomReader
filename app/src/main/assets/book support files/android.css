@@ -1,0 +1,16 @@
+/* this should be included by books, to link up any fonts and other assets that are built
+    into BloomReader */
+@font-face {
+ font-family: 'Andika New Basic';
+ src: url('file:///android_asset/fonts/Andika New Basic/AndikaNewBasic-I.ttf')
+ font-style: italic;
+}
+@font-face {
+ font-family: 'Andika New Basic';
+ src: url('file:///android_asset/fonts/Andika New Basic/AndikaNewBasic-B.ttf')
+ font-style: bold;
+}
+@font-face {
+ font-family: 'Andika New Basic';
+ src: url('file:///android_asset/fonts/Andika New Basic/AndikaNewBasic-R.ttf')
+}

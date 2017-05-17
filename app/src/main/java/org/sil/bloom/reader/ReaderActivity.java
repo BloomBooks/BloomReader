@@ -22,7 +22,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
+import org.sil.bloom.reader.models.Book;
 
 
 public class ReaderActivity extends AppCompatActivity {
@@ -46,7 +46,7 @@ public class ReaderActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String path = intent.getData().getPath();
-        if (path.toLowerCase().endsWith(".bloom")) { //.bloom files are zip files
+        if (path.toLowerCase().endsWith(Book.BOOK_FILE_EXTENSION)) { //.bloomd files are zip files
             try {
 
                 String bookStagingPath = unzipBook(path);

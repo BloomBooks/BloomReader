@@ -19,7 +19,7 @@
             </intent-filter>
 
             <!-- See http://stackoverflow.com/questions/1733195/android-intent-filter-for-a-particular-file-extension/2062112#2062112 -->
-            
+
             <!--
                  Capture content by MIME type, which is how Gmail broadcasts
                  attachment open requests.  pathPattern and file extensions
@@ -74,13 +74,13 @@
                      implementation that can't cope with finding a . early in
                      the path unless it's explicitly matched.
                 -->
-                <data android:pathPattern=".*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\..*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloom" />
+                <data android:pathPattern=".*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
             </intent-filter>
 
             <!--
@@ -110,13 +110,13 @@
                      implementation that can't cope with finding a . early in
                      the path unless it's explicitly matched.
                 -->
-                <data android:pathPattern=".*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\..*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloom" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloom" />
+                <data android:pathPattern=".*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
             </intent-filter>
 
         </activity>

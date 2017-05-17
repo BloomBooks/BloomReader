@@ -3,6 +3,8 @@ package org.sil.bloom.reader.models;
 import java.io.File;
 
 public class Book {
+    public static final String BOOK_FILE_EXTENSION = ".bloomd";
+
     public final String path;
     public final String name;
 
@@ -10,7 +12,7 @@ public class Book {
         //this.id = id;
         this.path = path;
         File f = new File(path);
-        this.name = f.getName().replace(".bloom","");
+        this.name = f.getName().replace(BOOK_FILE_EXTENSION,"");
     }
 
     @Override

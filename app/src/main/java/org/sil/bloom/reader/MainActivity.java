@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity
         // make sure it is in our collection,
         // and then open the reader to view it.
         Uri data = getIntent().getData();
-        if(data != null && data.getPath().toLowerCase().endsWith(".bloom")) {
+        if(data != null && data.getPath().toLowerCase().endsWith(Book.BOOK_FILE_EXTENSION)) {
             String newpath = _bookCollection.ensureBookIsInCollection(data.getPath());
             openBook(this, newpath);
         }

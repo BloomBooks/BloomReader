@@ -20,10 +20,10 @@ This is currently an unofficial side project.
 Books would get onto the device by plugging into a computer and transferring files over to some known location.
 
 ## MVP
-* [x] Works well with 3rd part file sharing apps.
+* [x] Works well with 3rd party file sharing apps.
 * [x] Works with Android 4.4 (KitKat) and up
+* [x] Comes with SIL's Andika literacy font
 * [ ] Book scales to fit device screen
-* [ ] Comes with SIL's Andika literacy font
 * [ ] Bloom desktop Publish tab offers a "Publish to Android Phone" option. That may have to reduce image resolution.
 At this point, literacy projects could seed books into the community and let the community distribute them virally.
 

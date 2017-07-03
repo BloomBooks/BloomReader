@@ -94,8 +94,10 @@ public class ReaderActivity extends AppCompatActivity {
             //make a browser for each remaining page. Enhance: that's probably not the
             //best way to go about this...
             for (Element page : pages) {
-                WebView browser = new WebView(this);
-                page.attr("style", "");
+                WebView browser = new ScaledWebView(this);
+
+                //makes it visible (removes display:none) and gets rid of the border
+                page.attr("style", "border:0 !important");
                 browser.loadDataWithBaseURL("file:///"+bookHtmlPath.getAbsolutePath(), doc.outerHtml(), "text/html", "utf-8", null);
                 mBrowsers.add(browser);
                 page.attr("style", "display:none"); // return to default hidden
@@ -114,6 +116,18 @@ public class ReaderActivity extends AppCompatActivity {
         mPager.setAdapter(mAdapter);
     }
 
+    private int getPageScale(int viewWidth, int viewHeight){
+        //we'll probably want to read or calculate these at some point...
+        //but for now, they are the width and height of the Device16x9Portrait layout
+        int bookPageWidth = 378;
+        int bookPageHeight = 674;
+
+        Double widthScale = new Double(viewWidth)/new Double(bookPageWidth);
+        Double heightScale = new Double(viewHeight)/new Double(bookPageHeight);
+        Double scale = Math.min(widthScale, heightScale);
+        scale = scale * 100d;
+        return scale.intValue();
+    }
 
     // Copy in files like bloomPlayer.js
     private void updateSupportFiles(String bookFolderPath) {
@@ -144,14 +158,33 @@ public class ReaderActivity extends AppCompatActivity {
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
             Log.d("Reader", "instantiateItem");
-            container.addView(mBrowsers.get(position));
-            return mBrowsers.get(position);
+            View browser = mBrowsers.get(position);
+            container.addView(browser);
+            return browser;
         }
 
         @Override
         public boolean isViewFromObject(View view, Object object) {
             Log.d("Reader", "isViewFromObject = " + (view == object));
             return view == object;
+        }
+    }
+
+    private class ScaledWebView extends WebView {
+
+        public ScaledWebView(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onSizeChanged(int w, int h, int ow, int oh) {
+
+            // if width is zero, this method will be called again
+            if (w != 0) {
+                setInitialScale(getPageScale(w, h));
+            }
+
+            super.onSizeChanged(w, h, ow, oh);
         }
     }
 }

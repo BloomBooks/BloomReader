@@ -125,6 +125,15 @@
             android:name=".ReaderActivity"
             android:label="@string/title_activity_reader"
             android:theme="@style/AppTheme.NoActionBar" />
+        <service
+            android:name=".WiFi.NewBookListenerService"
+            android:enabled="true"
+            android:exported="true"></service>
+        <service
+            android:name=".WiFi.SyncService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>

@@ -25,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.sil.bloom.reader.WiFi.NewBookListenerService;
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
 
@@ -78,6 +79,12 @@ public class MainActivity extends AppCompatActivity
             String newpath = _bookCollection.ensureBookIsInCollection(data.getPath());
             openBook(this, newpath);
         }
+        startBookListener();
+    }
+
+    private void startBookListener() {
+        Intent serviceIntent = new Intent(this, NewBookListenerService.class);
+        startService(serviceIntent);
     }
 
     private void closeContextualActionBar() {

@@ -6,6 +6,7 @@ import android.os.Environment;
 import android.util.Log;
 
 import org.sil.bloom.reader.IOUtilities;
+import org.sil.bloom.reader.WiFi.NewBookListenerService;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -46,14 +47,20 @@ public class BookCollection {
         //LoadFromDirectory(directory);
 
         // load from the directory the user can see
-        mLocalBooksDirectory = Environment.getExternalStoragePublicDirectory("Bloom");
+        mLocalBooksDirectory = getLocalBooksDirectory();
         LoadFromDirectory(mLocalBooksDirectory);
+    }
+
+    public static File getLocalBooksDirectory() {
+        return Environment.getExternalStoragePublicDirectory("Bloom");
     }
 
     private void LoadFromDirectory(File directory) {
         File[] files = directory.listFiles();
         if(files != null) {
             for (int i = 0; i < files.length; i++) {
+                if (!files[i].getName().endsWith(Book.BOOK_FILE_EXTENSION))
+                    continue; // not a book!
                 addBook(files[i].getAbsolutePath());
             }
         }

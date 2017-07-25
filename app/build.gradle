@@ -35,6 +35,8 @@ dependencies {
     compile 'com.android.support:support-v4:23.4.0'
     compile 'com.android.support:recyclerview-v7:23.4.0'
     compile 'com.android.support:design:23.4.0'
+    // Supports the WiFi module's 'server' used to receive books from Bloom desktop
+    compile "cz.msebera.android:httpclient:4.4.1.2"
     compile 'org.jsoup:jsoup:1.10.1'
     testCompile 'junit:junit:4.12'
 }

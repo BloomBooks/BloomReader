@@ -17,6 +17,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -26,6 +27,8 @@ import org.sil.bloom.reader.models.Book;
 
 
 public class ReaderActivity extends AppCompatActivity {
+
+    private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)$");
 
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
@@ -96,6 +99,8 @@ public class ReaderActivity extends AppCompatActivity {
             for (Element page : pages) {
                 WebView browser = new ScaledWebView(this);
 
+                modifyLayout(page, "Device16x9Portrait");
+
                 //makes it visible (removes display:none) and gets rid of the border
                 page.attr("style", "border:0 !important");
                 browser.loadDataWithBaseURL("file:///"+bookHtmlPath.getAbsolutePath(), doc.outerHtml(), "text/html", "utf-8", null);
@@ -114,6 +119,15 @@ public class ReaderActivity extends AppCompatActivity {
         mAdapter = new BookPagerAdapter(mBrowsers);
         mPager = (ViewPager) findViewById(R.id.book_pager);
         mPager.setAdapter(mAdapter);
+    }
+
+    private void modifyLayout(Element page, String newLayout) {
+        for (String className : page.classNames()) {
+            if (sLayoutPattern.matcher(className).matches()) {
+                page.removeClass(className);
+                page.addClass(newLayout);
+            }
+        }
     }
 
     private int getPageScale(int viewWidth, int viewHeight){

@@ -27,9 +27,25 @@ public class BookCollection {
         return _books.size();
     }
 
-    private void addBook(String path) {
+    public Book addBookIfNeeded(String path) {
+        Book existingBook = getBookByPath(path);
+        if (existingBook != null)
+            return existingBook;
+        return addBook(path);
+    }
+
+    private Book addBook(String path) {
         Book book = new Book(path);
         _books.add(book);
+        return book;
+    }
+
+    private Book getBookByPath(String path) {
+        for (Book book:_books) {
+            if (book.path.equals(path))
+                return book;
+        }
+        return null;
     }
 
     public void init(Context context) {

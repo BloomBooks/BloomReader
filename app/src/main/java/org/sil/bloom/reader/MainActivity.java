@@ -1,14 +1,17 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -35,12 +38,25 @@ public class MainActivity extends AppCompatActivity
 
     private BookCollection _bookCollection = new BookCollection();
     private ListView mListView;
+    private BroadcastReceiver receiver;
     public android.view.ActionMode contextualActionBarMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String filePath = intent.getStringExtra(DirectoryChangeListenerService.DCLS_FILE_NAME_MESSAGE);
+                Book book = _bookCollection.addBookIfNeeded(filePath);
+                if (book != null) {
+                    refreshList();
+                }
+                Toast.makeText(MainActivity.this, book.name + " added or updated", Toast.LENGTH_SHORT).show();
+            }
+        };
 
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             //NB: if the build.gradle targetSdkVersion goes above 22, then the permission system changes and
@@ -80,11 +96,35 @@ public class MainActivity extends AppCompatActivity
             openBook(this, newpath);
         }
         startBookListener();
+        startDirectoryChangeListener();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        LocalBroadcastManager.getInstance(this).registerReceiver((receiver),
+                new IntentFilter(DirectoryChangeListenerService.DCLS_RESULT)
+        );
+    }
+
+    @Override
+    protected void onStop() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver);
+        super.onStop();
     }
 
     private void startBookListener() {
         Intent serviceIntent = new Intent(this, NewBookListenerService.class);
         startService(serviceIntent);
+    }
+
+    private void startDirectoryChangeListener() {
+        Intent serviceIntent = new Intent(this, DirectoryChangeListenerService.class);
+        startService(serviceIntent);
+    }
+
+    private void refreshList() {
+        mListView.invalidateViews();
     }
 
     private void closeContextualActionBar() {

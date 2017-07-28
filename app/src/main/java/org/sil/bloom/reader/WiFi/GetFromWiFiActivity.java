@@ -1,6 +1,5 @@
 package org.sil.bloom.reader.WiFi;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,23 +8,19 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.sil.bloom.reader.BaseActivity;
 import org.sil.bloom.reader.R;
 
 // An activity that is made to look like a dialog (see the theme associated with it in
 // the main manifest and defined in styles.xml) and which implements the command to receive
 // Bloom books from Wifi (i.e., from a desktop running Bloom...eventually possibly from
 // another copy of BloomReader). This is launched from a menu option in the main activity.
-public class GetFromWiFiActivity extends AppCompatActivity {
+public class GetFromWiFiActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +81,12 @@ public class GetFromWiFiActivity extends AppCompatActivity {
         super.onPause();
         // Enhance: do we want to do something to allow an in-progress transfer to complete?
         stopBookListener();
+    }
+
+    @Override
+    protected void onNewOrUpdatedBook(String fullPath) {
+        // Don't do anything.
+        // TODO: We'll want to update the main activity upon exit.
     }
 
     // Get the human-readable name of the WiFi network that the Android is connected to

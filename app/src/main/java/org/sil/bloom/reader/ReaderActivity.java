@@ -26,7 +26,7 @@ import org.jsoup.select.Elements;
 import org.sil.bloom.reader.models.Book;
 
 
-public class ReaderActivity extends AppCompatActivity {
+public class ReaderActivity extends BaseActivity {
 
     private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)$");
 
@@ -67,6 +67,16 @@ public class ReaderActivity extends AppCompatActivity {
         } else {
             loadBook(path); // during stylesheet development, it's nice to be able to work with a folder rather than a zip
         }
+    }
+
+    @Override
+    protected void onNewOrUpdatedBook(String fullPath) {
+        ((BloomReaderApplication)this.getApplication()).setBookToHighlight(fullPath);
+        Intent intent = new Intent(this, MainActivity.class);
+        // Clears the history so now the back button doesn't take from the main activity back to here.
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private String unzipBook(String zipPath) throws IOException {

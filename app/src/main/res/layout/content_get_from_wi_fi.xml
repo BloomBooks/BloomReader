@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.widget.LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="top"
+    tools:context="org.sil.bloom.reader.WiFi.GetFromWiFiActivity"
+    tools:showIn="@layout/activity_get_from_wi_fi">
+
+    <TextView android:id="@+id/text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/get_books_local_wifi"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:textColor="#000"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="80dp"
+        tools:layout_editor_absoluteY="0dp"
+        tools:layout_editor_absoluteX="8dp" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_marginLeft="60dp"
+        android:layout_marginRight="60dp"
+        android:layout_height="80dp"
+        app:srcCompat="@drawable/get_book_from_wifi"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:scrollbars="vertical"
+        android:layout_weight="1.0">
+
+        <TextView
+            android:id="@+id/wifi_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp" />
+
+    </ScrollView>
+
+
+</android.widget.LinearLayout>

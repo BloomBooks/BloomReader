@@ -1,5 +1,7 @@
 package org.sil.bloom.reader.WiFi;
 
+import android.content.Context;
+
 import cz.msebera.android.httpclient.HttpException;
 import cz.msebera.android.httpclient.HttpRequest;
 import cz.msebera.android.httpclient.impl.DefaultBHttpServerConnection;
@@ -40,11 +42,12 @@ public class SyncServer extends Thread {
     private BasicHttpContext httpContext = null;
     private HttpService httpService = null;
     boolean _running;
+    Context _parent;
 
-    public SyncServer()
+    public SyncServer(Context parent)
     {
         super("BloomReaderAndroidServer");
-
+        _parent = parent;
         httpproc = new ImmutableHttpProcessor(new ResponseDate(), new ResponseServer(), new ResponseContent(), new ResponseConnControl());
         httpContext = new BasicHttpContext();
 
@@ -53,7 +56,7 @@ public class SyncServer extends Thread {
             public HttpRequestHandler lookup(HttpRequest request) {
                 String uri = request.getRequestLine().getUri();
                 if (uri.contains("/putfile"))
-                    return new AcceptFileHandler();
+                    return new AcceptFileHandler(_parent);
                 else if (uri.contains("/notify"))
                     return new AcceptNotificationHandler();
                 return null;

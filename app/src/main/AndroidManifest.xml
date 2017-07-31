@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.sil.bloom.reader">
 
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -20,6 +24,7 @@
 
             <!-- See http://stackoverflow.com/questions/1733195/android-intent-filter-for-a-particular-file-extension/2062112#2062112 -->
 
+
             <!--
                  Capture content by MIME type, which is how Gmail broadcasts
                  attachment open requests.  pathPattern and file extensions
@@ -29,7 +34,7 @@
             <intent-filter
                 android:icon="@drawable/book"
                 android:label="@string/app_name"
-                android:priority="50" >
+                android:priority="50">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -37,16 +42,16 @@
 
                 <!-- needed for properly formatted email messages -->
                 <data
-                    android:scheme="content"
-                    android:mimeType="application/vnd.bloom" />
+                    android:mimeType="application/vnd.bloom"
+                    android:scheme="content" />
                 <!-- needed for mangled email messages -->
                 <data
-                    android:scheme="content"
-                    android:mimeType="application/bloom" />
+                    android:mimeType="application/bloom"
+                    android:scheme="content" />
                 <!-- needed for mangled email messages -->
                 <data
-                    android:scheme="content"
-                    android:mimeType="application/octet-stream" />
+                    android:mimeType="application/octet-stream"
+                    android:scheme="content" />
             </intent-filter>
 
             <!--
@@ -60,7 +65,7 @@
             <intent-filter
                 android:icon="@drawable/book"
                 android:label="@string/app_name"
-                android:priority="50" >
+                android:priority="50">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -95,7 +100,7 @@
             <intent-filter
                 android:icon="@drawable/book"
                 android:label="@string/app_name"
-                android:priority="50" >
+                android:priority="50">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -118,22 +123,25 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
             </intent-filter>
-
         </activity>
-
         <activity
             android:name=".ReaderActivity"
             android:label="@string/title_activity_reader"
             android:theme="@style/AppTheme.NoActionBar" />
+
         <service
             android:name=".WiFi.NewBookListenerService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
         <service
             android:name=".WiFi.SyncService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
+
+        <activity
+            android:name=".WiFi.GetFromWiFiActivity"
+            android:label="@string/title_activity_get_from_wi_fi"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.INTERNET"/>
+
 </manifest>

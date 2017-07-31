@@ -15,4 +15,14 @@
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="title_activity_get_from_wi_fi">GetFromWiFiActivity</string>
+    <string name="get_books_local_wifi">Get Books From Local Wifi Network</string>
+    <string name="already_have_version">Found \"%1$s\", already have this version.</string>
+    <string name="found_new_version">Found new version of \"%1$s\", requesting...</string>
+    <string name="found_file">Found \"%1$s\", requesting...</string>
+    <!-- As in, Done receiving a file-->
+    <string name="done">Done.</string>
+    <string name="downloading">Downloading...</string>
+    <string name="looking_for_adds">Looking for book advertisements on wifi network %1s...</string>
+    <string name="no_wifi_connected">The phone does not appear to be connected to a wifi network.</string>
 </resources>

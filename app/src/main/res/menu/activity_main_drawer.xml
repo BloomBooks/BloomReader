@@ -3,6 +3,10 @@
 
     <group android:checkableBehavior="single">
         <item
+            android:id="@+id/nav_get_wifi"
+            android:icon="@drawable/ic_wifi_black_24dp"
+            android:title="Get Books from Desktop" />
+        <item
             android:id="@+id/nav_catalog"
             android:icon="@drawable/ic_menu_get_books"
             android:title="Get Books from Internet (not yet)" />

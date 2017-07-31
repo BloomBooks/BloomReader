@@ -1,14 +1,21 @@
 package org.sil.bloom.reader.WiFi;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.sil.bloom.reader.R;
+import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.io.File;
@@ -24,6 +31,8 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Thomson on 7/22/2017.
@@ -50,6 +59,7 @@ public class NewBookListenerService extends Service {
     String newBookVersion;
     File versionFile;
     boolean gettingBook = false;
+    private Set<String> _announcedBooks = new HashSet<String>();
 
     @Nullable
     @Override
@@ -76,9 +86,41 @@ public class NewBookListenerService extends Service {
             JSONObject data = new JSONObject(message);
             String title = data.getString("Title");
             newBookVersion = data.getString("Version");
-            if (!IsUpToDate(title)) {
+            File localBookDirectory = BookCollection.getLocalBooksDirectory();
+            File bookFile = new File(localBookDirectory, title + Book.BOOK_FILE_EXTENSION);
+            boolean bookExists = bookFile.exists();
+            // It is pathological that the book doesn't exist but the version file is up to date.
+            // But it easily happens with manual testers wanting to redo transmission.
+            // It could possibly happen with end users messing with their file system.
+            // So we don't actually have the book we will re-request it.
+            if (bookExists && IsUpToDate(title)) {
+                // Enhance: possibly we might want to announce this again if the book has been off the air
+                // for a while? So a user doesn't see "nothing happening" if he thinks he just started
+                // publishing it, but somehow BR has seen it recently? Thought about just keeping
+                // the most recent name, so we'd report a different one even if it had been advertised
+                // recently. But there could be two advertisers on the network, which could lead to
+                // alternating advertisements. Another idea: find a way to only keep track of, say,
+                // books advertised in the last few seconds. Since books are normally advertised
+                // every second, a book we haven't seen for even 5 seconds is probably interesting
+                // enough to announce again. One way would be, every 5 seconds we copy the current
+                // set to an 'old' set and clear current. Then when we see a book, we skip announcing if it is in
+                // either set. But only add it to the new one. Then, after 5-10 seconds of not seeing
+                // an add, a book would drop out of both. Another approach would be a dictionary
+                // mapping title to last-add-time, and if > 5s announce again.
+                if (!_announcedBooks.contains(title)) {
+                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.already_have_version), title) + "\n\n");
+                }
+            }
+            else {
+                if (bookExists)
+                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_new_version), title) + "\n");
+                else
+                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_file), title) + "\n");
                 getBook(senderIP, title);
             }
+            // Whether we just got it or just said we already have it, we don't need to keep announcing
+            // that we have it.
+            _announcedBooks.add(title);
 
         } catch (JSONException e) {
             // This can stay in production. Just ignore any broadcast packet that doesn't have
@@ -146,6 +188,7 @@ public class NewBookListenerService extends Service {
             e.printStackTrace();
         }
         gettingBook = false;
+        GetFromWiFiActivity.sendProgressMessage(this, getString(R.string.done) + "\n\n");
     }
 
     // Get the IP address of this device (on the WiFi network) to transmit to the desktop.
@@ -198,6 +241,9 @@ public class NewBookListenerService extends Service {
             return false;
         }
     }
+
+    public static final String BROADCAST_BOOK_LISTENER_PROGRESS = "org.sil.bloomreader.booklistener.progress";
+    public static final String BROADCAST_BOOK_LISTENER_PROGRESS_CONTENT = "org.sil.bloomreader.booklistener.progress.content";
 
     void startListenForUDPBroadcast() {
         UDPBroadcastThread = new Thread(new Runnable() {

@@ -25,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.sil.bloom.reader.WiFi.GetFromWiFiActivity;
 import org.sil.bloom.reader.WiFi.NewBookListenerService;
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
@@ -79,12 +80,6 @@ public class MainActivity extends AppCompatActivity
             String newpath = _bookCollection.ensureBookIsInCollection(data.getPath());
             openBook(this, newpath);
         }
-        startBookListener();
-    }
-
-    private void startBookListener() {
-        Intent serviceIntent = new Intent(this, NewBookListenerService.class);
-        startService(serviceIntent);
     }
 
     private void closeContextualActionBar() {
@@ -237,6 +232,10 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_share) {
 
+        }
+        else if (id == R.id.nav_get_wifi) {
+            Intent intent = new Intent(this, GetFromWiFiActivity.class);
+            this.startActivity(intent);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

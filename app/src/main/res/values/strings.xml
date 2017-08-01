@@ -5,6 +5,7 @@
     <string name="deleteExplanation">This book will disappear from your device.</string>
     <string name="deleteConfirmButton">Delete now</string>
     <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
     <string name="title_activity_book_reader">BookReader</string>
 
     <string name="action_settings">Settings</string>
@@ -23,6 +24,6 @@
     <!-- As in, Done receiving a file-->
     <string name="done">Done.</string>
     <string name="downloading">Downloading...</string>
-    <string name="looking_for_adds">Looking for book advertisements on wifi network %1s...</string>
-    <string name="no_wifi_connected">The phone does not appear to be connected to a wifi network.</string>
+    <string name="looking_for_adds">Looking for book advertisements on WiFi network %1s...</string>
+    <string name="no_wifi_connected">The device does not appear to be connected to a WiFi network.</string>
 </resources>

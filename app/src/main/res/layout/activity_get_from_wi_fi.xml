@@ -1,35 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.widget.LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/wifiDialog"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="org.sil.bloom.reader.WiFi.GetFromWiFiActivity">
+    android:orientation="vertical"
+    android:background="#fff"
+    android:gravity="top" >
 
-    <android.support.design.widget.AppBarLayout
+    <TextView android:id="@+id/text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
+        android:text="@string/get_books_local_wifi"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:textColor="#000"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="20dp"
+        tools:layout_editor_absoluteY="0dp"
+        tools:layout_editor_absoluteX="8dp" />
 
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:layout_height="80dp"
+        app:srcCompat="@drawable/get_book_from_wifi"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:scrollbars="vertical"
+        android:layout_weight="1.0">
+
+        <TextView
+            android:id="@+id/wifi_progress"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            android:elevation="4dp"
-            app:popupTheme="@style/AppTheme.PopupOverlay" >
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:textColor="#000"/>
 
-            <ImageView
-                android:id="@+id/imageView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="2dp"
-                app:srcCompat="@drawable/bloom_against_dark" />
+    </ScrollView>
+    <Button
+        android:id="@+id/wifiOk"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:background="#fff"
+        android:textColor="#000"
+        android:text="@string/ok"/>
 
-        </android.support.v7.widget.Toolbar>
 
-    </android.support.design.widget.AppBarLayout>
-
-    <include layout="@layout/content_get_from_wi_fi" />
-
-</android.support.design.widget.CoordinatorLayout>
+</android.widget.LinearLayout>

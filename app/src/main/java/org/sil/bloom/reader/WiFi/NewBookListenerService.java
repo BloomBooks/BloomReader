@@ -92,7 +92,7 @@ public class NewBookListenerService extends Service {
             // It is pathological that the book doesn't exist but the version file is up to date.
             // But it easily happens with manual testers wanting to redo transmission.
             // It could possibly happen with end users messing with their file system.
-            // So we don't actually have the book we will re-request it.
+            // So if we don't actually have the book we will re-request it.
             if (bookExists && IsUpToDate(title)) {
                 // Enhance: possibly we might want to announce this again if the book has been off the air
                 // for a while? So a user doesn't see "nothing happening" if he thinks he just started
@@ -106,7 +106,7 @@ public class NewBookListenerService extends Service {
                 // set to an 'old' set and clear current. Then when we see a book, we skip announcing if it is in
                 // either set. But only add it to the new one. Then, after 5-10 seconds of not seeing
                 // an add, a book would drop out of both. Another approach would be a dictionary
-                // mapping title to last-add-time, and if > 5s announce again.
+                // mapping title to last-advertised-time, and if > 5s ago announce again.
                 if (!_announcedBooks.contains(title)) {
                     GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.already_have_version), title) + "\n\n");
                 }

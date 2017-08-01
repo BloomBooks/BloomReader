@@ -141,7 +141,8 @@
         <activity
             android:name=".WiFi.GetFromWiFiActivity"
             android:label="@string/title_activity_get_from_wi_fi"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:excludeFromRecents="true"
+            android:theme="@style/WiFiDialogTheme"></activity>
     </application>
 
 </manifest>

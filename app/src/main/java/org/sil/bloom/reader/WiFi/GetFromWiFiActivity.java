@@ -1,5 +1,6 @@
 package org.sil.bloom.reader.WiFi;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -13,7 +14,9 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import org.sil.bloom.reader.R;
@@ -24,13 +27,16 @@ public class GetFromWiFiActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_from_wi_fi);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        getSupportActionBar().setTitle(""); // remove default activity name, we have bloom image
 
         LocalBroadcastManager.getInstance(this).registerReceiver(new ProgressReceiver(),
                 new IntentFilter(NewBookListenerService.BROADCAST_BOOK_LISTENER_PROGRESS));
+
+        final Button okButton = (Button)findViewById(R.id.wifiOk);
+        okButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                finish();
+            }
+        });
     }
 
     public static void sendProgressMessage(Context context, String message) {

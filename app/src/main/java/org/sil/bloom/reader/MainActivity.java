@@ -112,6 +112,7 @@ public class MainActivity extends BaseActivity
     private void updateForNewBook(String filePath) {
         Book book = _bookCollection.addBookIfNeeded(filePath);
         refreshList(book);
+        playSoundFile(R.raw.bell);
         Toast.makeText(MainActivity.this, book.name + " added or updated", Toast.LENGTH_SHORT).show();
     }
 
@@ -124,6 +125,7 @@ public class MainActivity extends BaseActivity
         if (book != null) {
             int bookIndex = _bookCollection.indexOf(book);
             mListView.smoothScrollToPosition(bookIndex);
+            mListView.setItemChecked(bookIndex, true);
         }
     }
 
@@ -162,8 +164,7 @@ public class MainActivity extends BaseActivity
         adapter.setNotifyOnChange(true);
         listView.setAdapter(adapter);
 
-        listView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
-
+        listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {

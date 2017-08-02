@@ -1,5 +1,6 @@
 package org.sil.bloom.reader;
 
+import android.media.MediaPlayer;
 import android.os.FileObserver;
 import android.support.v7.app.AppCompatActivity;
 
@@ -55,5 +56,10 @@ public abstract class BaseActivity extends AppCompatActivity {
                 }
             }
         };
+    }
+
+    protected void playSoundFile(int id) {
+        MediaPlayer mp = MediaPlayer.create(getApplicationContext(), id);
+        mp.start();
     }
 }

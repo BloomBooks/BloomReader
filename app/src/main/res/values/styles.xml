@@ -30,4 +30,13 @@
         <item name="android:background">@color/black_overlay</item>
     </style>
 
+    <style name="WiFiDialogTheme" parent="Base.Theme.AppCompat.Dialog">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowFixedHeightMajor">90%</item>
+        <item name="windowFixedHeightMinor">95%</item>
+        <item name="windowFixedWidthMajor">80%</item>
+        <item name="windowFixedWidthMinor">95%</item>
+    </style>
+
 </resources>

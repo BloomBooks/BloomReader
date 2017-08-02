@@ -3,6 +3,7 @@ package org.sil.bloom.reader.WiFi;
 import android.content.Context;
 import android.net.Uri;
 
+import org.sil.bloom.reader.R;
 import org.sil.bloom.reader.models.BookCollection;
 
 import cz.msebera.android.httpclient.HttpEntity;
@@ -27,10 +28,14 @@ import java.io.IOException;
  * Slightly adapted from a similar file in HearThis Android
  */
 public class AcceptFileHandler implements HttpRequestHandler {
-    public AcceptFileHandler()
-    {}
+    Context _parent;
+    public AcceptFileHandler(Context parent)
+    {
+        _parent = parent;
+    }
     @Override
     public void handle(HttpRequest request, HttpResponse response, HttpContext httpContext) throws HttpException, IOException {
+        GetFromWiFiActivity.sendProgressMessage(_parent, _parent.getString(R.string.downloading) + "\n");
         File baseDir = BookCollection.getLocalBooksDirectory();
         Uri uri = Uri.parse(request.getRequestLine().getUri());
         String filePath = uri.getQueryParameter("path");

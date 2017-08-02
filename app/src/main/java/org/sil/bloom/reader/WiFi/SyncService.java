@@ -23,7 +23,7 @@ public class SyncService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        _server = new SyncServer();
+        _server = new SyncServer(this);
     }
 
     @Override

@@ -89,11 +89,12 @@ public class NewBookListenerService extends Service {
             File localBookDirectory = BookCollection.getLocalBooksDirectory();
             File bookFile = new File(localBookDirectory, title + Book.BOOK_FILE_EXTENSION);
             boolean bookExists = bookFile.exists();
+            versionFile = new File(localBookDirectory, title + VERSION_EXTENSION);
             // It is pathological that the book doesn't exist but the version file is up to date.
             // But it easily happens with manual testers wanting to redo transmission.
             // It could possibly happen with end users messing with their file system.
             // So if we don't actually have the book we will re-request it.
-            if (bookExists && IsUpToDate(title)) {
+            if (bookExists && IsCurrentBookUpToDate()) {
                 // Enhance: possibly we might want to announce this again if the book has been off the air
                 // for a while? So a user doesn't see "nothing happening" if he thinks he just started
                 // publishing it, but somehow BR has seen it recently? Thought about just keeping
@@ -219,11 +220,9 @@ public class NewBookListenerService extends Service {
         return ip;
     }
 
-    // Determine whether the book is up to date, based on the newBookVersion information
+    // Determine whether the book is up to date, based on the versionFile information
     // saved in a member variable when we got the advertisement.
-    boolean IsUpToDate(String title) {
-        File localBookDirectory = BookCollection.getLocalBooksDirectory();
-        versionFile = new File(localBookDirectory, title + VERSION_EXTENSION);
+    boolean IsCurrentBookUpToDate() {
         if (!versionFile.isFile())
             return false;
         try {

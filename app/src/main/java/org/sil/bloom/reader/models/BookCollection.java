@@ -34,13 +34,14 @@ public class BookCollection {
         Book existingBook = getBookByPath(path);
         if (existingBook != null)
             return existingBook;
-        return addBook(path);
+        return addBook(path, true);
     }
 
-    private Book addBook(String path) {
+    private Book addBook(String path, boolean sortList) {
         Book book = new Book(path);
         _books.add(book);
-        Collections.sort(_books, Book.AlphabeticalComparator);
+        if (sortList)
+            Collections.sort(_books, Book.AlphabeticalComparator);
         return book;
     }
 
@@ -81,8 +82,9 @@ public class BookCollection {
             for (int i = 0; i < files.length; i++) {
                 if (!files[i].getName().endsWith(Book.BOOK_FILE_EXTENSION))
                     continue; // not a book!
-                addBook(files[i].getAbsolutePath());
+                addBook(files[i].getAbsolutePath(), false);
             }
+            Collections.sort(_books, Book.AlphabeticalComparator);
         }
     }
 
@@ -130,7 +132,7 @@ public class BookCollection {
                 source.delete();
             }
             // we wouldn't have it in our list that we display yet, so make an entry there
-            addBook(destination);
+            addBook(destination, true);
             return destination;
         } else {
             return path;

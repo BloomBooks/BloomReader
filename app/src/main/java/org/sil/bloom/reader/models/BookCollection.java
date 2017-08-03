@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class BookCollection {
@@ -39,6 +40,7 @@ public class BookCollection {
     private Book addBook(String path) {
         Book book = new Book(path);
         _books.add(book);
+        Collections.sort(_books, Book.AlphabeticalComparator);
         return book;
     }
 

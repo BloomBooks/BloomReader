@@ -57,6 +57,121 @@ body {
 .bloom-background-gray {
   background-color: #dbdbdb;
 }
+.bloom-page.Device16x9Portrait {
+  min-width: 100mm;
+  max-width: 100mm;
+  min-height: 177.77777778mm;
+  max-height: 177.77777778mm;
+}
+.bloom-page.Device16x9Landscape {
+  min-width: 177.77777778mm;
+  max-width: 177.77777778mm;
+  min-height: 100mm;
+  max-height: 100mm;
+}
+.bloom-page.PictureStoryLandscape {
+  min-width: 177.77777778mm;
+  max-width: 177.77777778mm;
+  min-height: 100mm;
+  max-height: 100mm;
+}
+.Device16x9Landscape,
+.PictureStoryLandscape {
+  background-color: black;
+}
+.Device16x9Landscape img,
+.PictureStoryLandscape img {
+  background-color: white;
+}
+.Device16x9Landscape .origami-toggle,
+.Device16x9Portrait .origami-toggle,
+.PictureStoryLandscape .origami-toggle {
+  display: none;
+}
+.Device16x9Landscape .pageLabel,
+.Device16x9Portrait .pageLabel,
+.PictureStoryLandscape .pageLabel {
+  display: none;
+}
+.Device16x9Landscape .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top,
+.Device16x9Portrait .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top,
+.PictureStoryLandscape .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top {
+  margin-bottom: 0;
+}
+.Device16x9Landscape .marginBox .bloom-imageContainer,
+.Device16x9Portrait .marginBox .bloom-imageContainer,
+.PictureStoryLandscape .marginBox .bloom-imageContainer {
+  height: calc(100%) !important;
+}
+.Device16x9Landscape.numberedPage::after,
+.Device16x9Portrait.numberedPage::after,
+.PictureStoryLandscape.numberedPage::after {
+  bottom: 5px;
+}
+.Device16x9Landscape.numberedPage.side-left::after,
+.Device16x9Portrait.numberedPage.side-left::after,
+.PictureStoryLandscape.numberedPage.side-left::after {
+  left: calc(100% / 2 -  10px);
+}
+.Device16x9Landscape.numberedPage.side-right::after,
+.Device16x9Portrait.numberedPage.side-right::after,
+.PictureStoryLandscape.numberedPage.side-right::after {
+  right: calc(100% / 2 -  10px);
+}
+.Device16x9Portrait .marginBox {
+  height: 177.77777778mm;
+  width: 100mm;
+  top: 0;
+  left: 0 !important;
+}
+.Device16x9Portrait .marginBox IMG {
+  max-width: 100mm;
+}
+.Device16x9Portrait .marginBox .bloom-editable {
+  margin-left: 10px;
+  width: calc(100% -  20px);
+}
+.numberedPage.Device16x9Portrait .marginBox {
+  height: 169.84027778mm;
+}
+.Device16x9Landscape .marginBox {
+  height: 100mm;
+  width: 177.77777778mm;
+  top: 0;
+  left: 0 !important;
+}
+.Device16x9Landscape .marginBox IMG {
+  max-width: 177.77777778mm;
+}
+.Device16x9Landscape .marginBox .bloom-editable {
+  margin-left: 10px;
+  width: calc(100% -  20px);
+}
+.numberedPage.Device16x9Landscape .marginBox {
+  height: 92.0625mm;
+}
+.PictureStoryLandscape .marginBox {
+  height: 100mm;
+  width: 177.77777778mm;
+  top: 0;
+  left: 0 !important;
+}
+.PictureStoryLandscape .marginBox IMG {
+  max-width: 177.77777778mm;
+}
+.PictureStoryLandscape .marginBox .bloom-editable {
+  margin-left: 10px;
+  width: calc(100% -  20px);
+}
+.PictureStoryLandscape .marginBox .position-top {
+  bottom: 0 !important;
+}
+.PictureStoryLandscape .marginBox .position-bottom {
+  display: none;
+}
+.numberedPage.PictureStoryLandscape .marginBox {
+  height: 92.0625mm;
+}
 .bloom-imageContainer:not(.hoverUp) .bloom-editable {
   border: none;
   padding-left: 1px;
@@ -267,24 +382,6 @@ preview.css.
 
 Changes here generally require similar changes in EpubMaker.FixPictureSizes() and pageThumbnailList.less.
 */
-.bloom-page.Device16x9Portrait {
-  min-width: 100mm;
-  max-width: 100mm;
-  min-height: 177.77777778mm;
-  max-height: 177.77777778mm;
-}
-.bloom-page.Device16x9Landscape {
-  min-width: 177.77777778mm;
-  max-width: 177.77777778mm;
-  min-height: 100mm;
-  max-height: 100mm;
-}
-.bloom-page.PictureStoryLandscape {
-  min-width: 177.77777778mm;
-  max-width: 177.77777778mm;
-  min-height: 100mm;
-  max-height: 100mm;
-}
 .bloom-page.A5Portrait {
   min-width: 148mm;
   max-width: 148mm;
@@ -408,79 +505,6 @@ Changes here generally require similar changes in EpubMaker.FixPictureSizes() an
 .marginBox {
   position: absolute;
   top: 15mm;
-}
-.Device16x9Landscape,
-.PictureStoryLandscape {
-  background-color: black;
-}
-.Device16x9Landscape img,
-.PictureStoryLandscape img {
-  background-color: white;
-}
-.Device16x9Landscape .origami-toggle,
-.Device16x9Portrait .origami-toggle,
-.PictureStoryLandscape .origami-toggle {
-  display: none;
-}
-.Device16x9Landscape .pageLabel,
-.Device16x9Portrait .pageLabel,
-.PictureStoryLandscape .pageLabel {
-  display: none;
-}
-.Device16x9Landscape .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top,
-.Device16x9Portrait .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top,
-.PictureStoryLandscape .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top {
-  margin-bottom: 0;
-}
-.Device16x9Landscape .marginBox .bloom-imageContainer,
-.Device16x9Portrait .marginBox .bloom-imageContainer,
-.PictureStoryLandscape .marginBox .bloom-imageContainer {
-  height: calc(100%) !important;
-}
-.Device16x9Portrait .marginBox {
-  height: 177.77777778mm;
-  width: 100mm;
-  top: 0;
-  left: 0 !important;
-}
-.Device16x9Portrait .marginBox IMG {
-  max-width: 100mm;
-}
-.Device16x9Portrait .marginBox .bloom-editable {
-  margin-left: 10px;
-  width: calc(100% -  20px);
-}
-.Device16x9Landscape .marginBox {
-  height: 100mm;
-  width: 177.77777778mm;
-  top: 0;
-  left: 0 !important;
-}
-.Device16x9Landscape .marginBox IMG {
-  max-width: 177.77777778mm;
-}
-.Device16x9Landscape .marginBox .bloom-editable {
-  margin-left: 10px;
-  width: calc(100% -  20px);
-}
-.PictureStoryLandscape .marginBox {
-  height: 100mm;
-  width: 177.77777778mm;
-  top: 0;
-  left: 0 !important;
-}
-.PictureStoryLandscape .marginBox IMG {
-  max-width: 177.77777778mm;
-}
-.PictureStoryLandscape .marginBox .bloom-editable {
-  margin-left: 10px;
-  width: calc(100% -  20px);
-}
-.PictureStoryLandscape .marginBox .position-top {
-  bottom: 0 !important;
-}
-.PictureStoryLandscape .marginBox .position-bottom {
-  display: none;
 }
 .A3Landscape .marginBox {
   height: 267mm;

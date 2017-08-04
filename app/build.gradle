@@ -11,7 +11,7 @@ android {
         applicationId "org.sil.bloom.reader"
         minSdkVersion 19
         targetSdkVersion 22
-        versionCode versionMajor * 10000 + versionMinor * 1000 + versionRelease
+        versionCode versionMajor * 10000 + versionMinor * 1000 + versionRelease.toInteger()
         versionName "${versionMajor}.${versionMinor}.${versionRelease}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary true

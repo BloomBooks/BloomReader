@@ -25,7 +25,7 @@
 }
 .bloom-frontMatter .pageLabel:before,
 .bloom-backMatter .pageLabel:before {
-  content: "Traditional";
+  content: "Super Paper Saver";
   display: none;
 }
 .bloom-frontMatter .pageLabel:after,
@@ -224,6 +224,9 @@
   height: auto;
   justify-content: center;
 }
+.frontCover .bloom-translationGroup.bookTitle .bloom-editable.bloom-contentNational1 {
+  order: 1;
+}
 .frontCover .placeholder,
 .frontCover .bloom-imageContainer {
   order: 1;
@@ -290,6 +293,7 @@
 }
 .credits .versionAcknowledgments .bloom-editable {
   height: auto;
+  margin-bottom: 1em;
 }
 .credits .licenseUrl {
   display: none;
@@ -318,13 +322,11 @@
 .credits.QuarterLetterPortrait .originalAcknowledgments .bloom-editable {
   margin-bottom: 0.5em;
 }
-.credits .bottomImageWrapper {
-  width: 100%;
+.credits .branding {
   position: absolute;
   bottom: 0;
-  text-align: center;
-}
-.credits .bottomImageWrapper .branding {
+  left: 0;
+  right: 0;
   height: 1in;
 }
 BODY[bookcreationtype="original"] .titlePage #originalContributions .bloom-editable {
@@ -416,4 +418,4 @@ BODY[bookcreationtype="translation"] .titlePage #funding .bloom-editable {
   vertical-align: top;
 }
 
-/*# sourceMappingURL=../../../../../output/browser/templates/xMatter/Traditional-XMatter/Traditional-XMatter.css.map */
+/*# sourceMappingURL=../../../../../output/browser/templates/xMatter/SuperPaperSaver-XMatter/SuperPaperSaver-XMatter.css.map */

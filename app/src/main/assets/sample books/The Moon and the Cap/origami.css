@@ -173,7 +173,7 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
   color: black;
 }
 .origami-layout-mode .bloom-editable {
-  color: #e6fafa !important;
+  color: #ececec !important;
 }
 .origami-controls {
   position: absolute;
@@ -281,8 +281,8 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
 /*.origami-layout-mode .split-pane-component-inner .bloom-editable.bloom-content1:empty:before,*/
 .origami-layout-mode .split-pane-component-inner .textBox-identifier {
   /*content: "Text Box";*/
-  color: #cccccc;
-  white-space: nowrap;
+  color: #7e7e7e;
+  white-space: normal;
   transition-property: font-size;
   transition-duration: 0.5s;
   text-align: center;
@@ -290,6 +290,11 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
   position: absolute;
   top: 45%;
   z-index: 50000;
+}
+.origami-layout-mode .split-pane-component-inner .textBox-identifier .formatButton {
+  z-index: 60000;
+  padding-left: 10px;
+  display: inline-flex;
 }
 .container-selector-links {
   display: none;

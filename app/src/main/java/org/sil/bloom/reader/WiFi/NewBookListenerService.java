@@ -86,6 +86,12 @@ public class NewBookListenerService extends Service {
             JSONObject data = new JSONObject(message);
             String title = data.getString("Title");
             newBookVersion = data.getString("Version");
+            String sender = "unknown";
+            try {
+                sender = data.getString("Sender");
+            } catch(JSONException e) {
+                e.printStackTrace();
+            }
             File localBookDirectory = BookCollection.getLocalBooksDirectory();
             File bookFile = new File(localBookDirectory, title + Book.BOOK_FILE_EXTENSION);
             boolean bookExists = bookFile.exists();
@@ -114,9 +120,9 @@ public class NewBookListenerService extends Service {
             }
             else {
                 if (bookExists)
-                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_new_version), title) + "\n");
+                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_new_version), title, sender, senderIP) + "\n");
                 else
-                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_file), title) + "\n");
+                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_file), title, sender, senderIP) + "\n");
                 getBook(senderIP, title);
             }
             // Whether we just got it or just said we already have it, we don't need to keep announcing

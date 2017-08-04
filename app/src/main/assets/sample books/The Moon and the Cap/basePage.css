@@ -7,6 +7,101 @@ body {
   background-repeat: no-repeat;
   background-position: center;
 }
+.bloom-borderstyle-black,
+.bloom-borderstyle-black-round,
+.bloom-borderstyle-gray,
+.bloom-borderstyle-gray-round {
+  padding: 1em;
+}
+.bloom-borderstyle-black .bloom-editable,
+.bloom-borderstyle-black-round .bloom-editable,
+.bloom-borderstyle-gray .bloom-editable,
+.bloom-borderstyle-gray-round .bloom-editable {
+  border: none;
+}
+.bloom-borderstyle-black {
+  border: 1px solid black;
+  border-radius: 0px;
+  box-sizing: border-box;
+}
+.bloom-borderstyle-black-round {
+  border: 1px solid black;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+.bloom-borderstyle-gray {
+  border: 1px solid gray;
+  border-radius: 0px;
+  box-sizing: border-box;
+}
+.bloom-borderstyle-gray-round {
+  border: 1px solid gray;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+.bloom-top-border-off {
+  border-top: none;
+}
+.bloom-right-border-off {
+  border-right: none;
+}
+.bloom-bottom-border-off {
+  border-bottom: none;
+}
+.bloom-left-border-off {
+  border-left: none;
+}
+.bloom-background-none {
+  background-color: transparent;
+}
+.bloom-background-gray {
+  background-color: #dbdbdb;
+}
+.bloom-imageContainer:not(.hoverUp) .bloom-editable {
+  border: none;
+  padding-left: 1px;
+  padding-top: 2px;
+}
+.bloom-imageContainer:not(.hoverUp) .bloom-editable:after {
+  content: "" !important;
+}
+.bloom-imageContainer:not(.hoverUp) .ui-resizable-handle {
+  display: none !important;
+}
+.bloom-imageContainer:not(.hoverUp) .bloom-dragHandleTOP {
+  display: none;
+}
+.bloom-imageContainer .bloom-textOverPicture {
+  position: absolute;
+  width: 140px;
+  height: 40px;
+  min-width: 30px;
+  min-height: 40px;
+  border-radius: 3px;
+  border: none !important;
+  z-index: 1001;
+}
+.bloom-imageContainer .bloom-textOverPicture .bloom-dragHandleTOP {
+  position: absolute;
+  background: url('img/dragHandleGrey.svg') no-repeat center;
+  background-size: contain;
+  background-color: transparent;
+  width: 16px;
+  height: 16px;
+  left: -12px;
+  top: -12px;
+  cursor: move;
+  z-index: 1002;
+}
+.bloom-imageContainer .bloom-textOverPicture .bloom-translationGroup {
+  background: transparent;
+  border: none;
+}
+.bloom-imageContainer .bloom-textOverPicture .bloom-translationGroup .bloom-editable {
+  min-width: 27px;
+  min-height: 37px !important;
+  text-align: center;
+}
 /*+init {*/
 * {
   position: relative;
@@ -74,6 +169,15 @@ So if you change this, change it there. Note, this might not be the best long-te
 To handling the mis-match.*/
   font-size: 10pt;
 }
+.bloom-templateThumbnail .numberedPage:after {
+  display: none;
+}
+.bloom-templateThumbnail .bloom-editable {
+  background-image: url('templateThumbnailText.svg');
+  background-repeat: repeat-y;
+  background-size: 100% 3em;
+  color: transparent;
+}
 /* gridItem means this is a page thumbnail */
 .gridItem .pageOverflows {
   background-image: url("/bloom/BloomBrowserUI/images/Attention.svg");
@@ -107,6 +211,7 @@ textarea,
   min-height: 1.8em;
   width: 100%;
   height: 100%;
+  flex-direction: column;
 }
 /* The following has been split out from the above rule because it should probably be removed,
     but at this point we are about to go release candidate with 3.1 so it will have to wait.
@@ -160,7 +265,7 @@ page be the full page, regardless of the contents.
 To compensate, the code asks wkthmlpdf to zoom the page by 9.1%, which an invisble 1px border added by
 preview.css.
 
-Changes here generally require similar changes in EpubMaker.FixPictureSizes().
+Changes here generally require similar changes in EpubMaker.FixPictureSizes() and pageThumbnailList.less.
 */
 .bloom-page.Device16x9Portrait {
   min-width: 100mm;
@@ -169,6 +274,12 @@ Changes here generally require similar changes in EpubMaker.FixPictureSizes().
   max-height: 177.77777778mm;
 }
 .bloom-page.Device16x9Landscape {
+  min-width: 177.77777778mm;
+  max-width: 177.77777778mm;
+  min-height: 100mm;
+  max-height: 100mm;
+}
+.bloom-page.PictureStoryLandscape {
   min-width: 177.77777778mm;
   max-width: 177.77777778mm;
   min-height: 100mm;
@@ -298,26 +409,32 @@ Changes here generally require similar changes in EpubMaker.FixPictureSizes().
   position: absolute;
   top: 15mm;
 }
-.Device16x9Landscape {
+.Device16x9Landscape,
+.PictureStoryLandscape {
   background-color: black;
 }
-.Device16x9Landscape img {
+.Device16x9Landscape img,
+.PictureStoryLandscape img {
   background-color: white;
 }
 .Device16x9Landscape .origami-toggle,
-.Device16x9Portrait .origami-toggle {
+.Device16x9Portrait .origami-toggle,
+.PictureStoryLandscape .origami-toggle {
   display: none;
 }
 .Device16x9Landscape .pageLabel,
-.Device16x9Portrait .pageLabel {
+.Device16x9Portrait .pageLabel,
+.PictureStoryLandscape .pageLabel {
   display: none;
 }
 .Device16x9Landscape .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top,
-.Device16x9Portrait .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top {
+.Device16x9Portrait .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top,
+.PictureStoryLandscape .marginBox .split-pane.horizontal-percent > .split-pane-component.position-top {
   margin-bottom: 0;
 }
 .Device16x9Landscape .marginBox .bloom-imageContainer,
-.Device16x9Portrait .marginBox .bloom-imageContainer {
+.Device16x9Portrait .marginBox .bloom-imageContainer,
+.PictureStoryLandscape .marginBox .bloom-imageContainer {
   height: calc(100%) !important;
 }
 .Device16x9Portrait .marginBox {
@@ -331,7 +448,7 @@ Changes here generally require similar changes in EpubMaker.FixPictureSizes().
 }
 .Device16x9Portrait .marginBox .bloom-editable {
   margin-left: 10px;
-  width: calc(100% - 20px);
+  width: calc(100% -  20px);
 }
 .Device16x9Landscape .marginBox {
   height: 100mm;
@@ -342,10 +459,27 @@ Changes here generally require similar changes in EpubMaker.FixPictureSizes().
 .Device16x9Landscape .marginBox IMG {
   max-width: 177.77777778mm;
 }
-.Device16x9Landscape .marginBox .position-top {
+.Device16x9Landscape .marginBox .bloom-editable {
+  margin-left: 10px;
+  width: calc(100% -  20px);
+}
+.PictureStoryLandscape .marginBox {
+  height: 100mm;
+  width: 177.77777778mm;
+  top: 0;
+  left: 0 !important;
+}
+.PictureStoryLandscape .marginBox IMG {
+  max-width: 177.77777778mm;
+}
+.PictureStoryLandscape .marginBox .bloom-editable {
+  margin-left: 10px;
+  width: calc(100% -  20px);
+}
+.PictureStoryLandscape .marginBox .position-top {
   bottom: 0 !important;
 }
-.Device16x9Landscape .marginBox .position-bottom {
+.PictureStoryLandscape .marginBox .position-bottom {
   display: none;
 }
 .A3Landscape .marginBox {
@@ -476,27 +610,14 @@ Changes here generally require similar changes in EpubMaker.FixPictureSizes().
   /* BL-1022, BL-2353 Keeps regular thumb images from going too wide */
   max-width: 12.42519685in;
 }
-.publishMode:not(.calendarFold) :not(.outsideFrontCover):not(.outsideBackCover).bloom-page:nth-of-type(odd) .marginBox {
-  /* shifted margin */
+:not(.calendarFold) :not(.outsideFrontCover):not(.outsideBackCover).side-left .marginBox {
   left: 15mm;
 }
-.publishMode:not(.calendarFold) :not(.outsideFrontCover):not(.outsideBackCover).bloom-page:nth-of-type(even) .marginBox {
-  /* shifted margin */
+:not(.calendarFold) :not(.outsideFrontCover):not(.outsideBackCover).side-right .marginBox {
   left: 25mm;
 }
 .calendarFold .marginBox {
   /* balanced margin*/
-  left: 20mm;
-}
-.rightToLeft.publishMode:not(.calendarFold) :not(.outsideFrontCover):not(.outsideBackCover).bloom-page:nth-of-type(odd) .marginBox {
-  /* swap margins on right to left */
-  left: 25mm;
-}
-.rightToLeft.publishMode:not(.calendarFold) :not(.outsideFrontCover):not(.outsideBackCover).bloom-page:nth-of-type(even) .marginBox {
-  /* swap margins on right to left */
-  left: 15mm;
-}
-body:not(.publishMode) .marginBox {
   left: 20mm;
 }
 .pageDescription {
@@ -526,8 +647,8 @@ h2 {
 .box-header-off {
   display: none !important;
 }
-.bloom-translationGroup .bloom-editable.bloom-content2,
-.bloom-translationGroup .bloom-editable.bloom-content3 {
+.bloom-editable.bloom-visibility-code-on ~ .bloom-editable,
+.bloom-editable.bloom-visibility-user-on ~ .bloom-editable {
   margin-top: 10px;
 }
 .customPage {
@@ -556,25 +677,51 @@ h2 {
 .customPage .split-pane-component {
   min-height: 1.5em;
 }
+.bloom-vertical-align-center {
+  justify-content: center;
+}
+.bloom-vertical-align-center:not(.bloom-bilingual):not(.bloom-trilingual) .bloom-editable {
+  justify-content: center;
+}
+.bloom-vertical-align-bottom {
+  justify-content: flex-end;
+}
+.bloom-vertical-align-bottom:not(.bloom-bilingual):not(.bloom-trilingual) .bloom-editable {
+  justify-content: flex-end;
+}
 /* ------------------------------------------------------
 /*		Visibility System
 /*		https://goo.gl/EgnSJo
 /* ------------------------------------------------------*/
 .bloom-editable {
   display: none;
+  order: 99;
 }
 .bloom-translationGroup {
   display: flex;
   flex-direction: column;
 }
 .bloom-content1 {
-  order: 1;
+  order: 0;
 }
 .bloom-content2 {
-  order: 2;
+  order: 1;
 }
 .bloom-content3 {
-  order: 3;
+  order: 2;
+}
+.numberedPage:after {
+  content: attr(data-page-number);
+  font-size: 14pt;
+  position: absolute;
+  bottom: 20px;
+}
+.numberedPage.side-left:after {
+  left: 57px;
+}
+.numberedPage.side-right:after {
+  right: 60px;
+  text-align: right;
 }
 
 /*# sourceMappingURL=../../../output/browser/bookLayout/basePage.css.map */

@@ -10,7 +10,7 @@ people can use to read and share Bloom books.
 Bloom Reader is a native java app with a WebView for displaying Bloom books (which are HTML). We want to support the older Android versions and devices that are common in the developing world.
 
 # Status
-This is currently an unofficial side project.
+Bloom Reader is in active development with an official MVP release expected Fall 2017.
 
 # Road map
 ## Prototype
@@ -23,8 +23,9 @@ Books would get onto the device by plugging into a computer and transferring fil
 * [x] Works well with 3rd party file sharing apps.
 * [x] Works with Android 4.4 (KitKat) and up
 * [x] Comes with SIL's Andika literacy font
-* [ ] Book scales to fit device screen
-* [ ] Bloom desktop Publish tab offers a "Publish to Android Phone" option. That may have to reduce image resolution.
+* [x] Book scales to fit device screen
+* [x] Bloom desktop Publish tab offers a "Publish to Android Phone" option (Bloom version 4.0). That may have to reduce image resolution.
+
 At this point, literacy projects could seed books into the community and let the community distribute them virally.
 
 ## Needed for SIL PNG literacy research project

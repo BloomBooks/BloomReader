@@ -33,10 +33,13 @@ import org.sil.bloom.reader.WiFi.NewBookListenerService;
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
 
+import java.util.ArrayList;
+
 
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    public static final String NEW_BOOKS = "newBooks";
     private BookCollection _bookCollection = new BookCollection();
     private ListView mListView;
     public android.view.ActionMode contextualActionBarMode;
@@ -268,6 +271,8 @@ public class MainActivity extends BaseActivity
         return super.onOptionsItemSelected(item);
     }
 
+    static final int DOWNLOAD_BOOKS_REQUEST = 1;
+
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -281,11 +286,25 @@ public class MainActivity extends BaseActivity
         }
         else if (id == R.id.nav_get_wifi) {
             Intent intent = new Intent(this, GetFromWiFiActivity.class);
-            this.startActivity(intent);
+            this.startActivityForResult(intent, DOWNLOAD_BOOKS_REQUEST);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        if (requestCode == DOWNLOAD_BOOKS_REQUEST && resultCode == RESULT_OK) {
+            String[] newBooks = data.getStringArrayExtra(NEW_BOOKS);
+            for (String bookPath : newBooks) {
+                _bookCollection.addBookIfNeeded(bookPath);
+            }
+            if (newBooks.length > 0) {
+                onNewOrUpdatedBook(newBooks[newBooks.length - 1]);
+            }
+        }
     }
 }

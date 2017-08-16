@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.MediaPlayer;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -14,13 +15,18 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import org.sil.bloom.reader.BaseActivity;
+import org.sil.bloom.reader.MainActivity;
 import org.sil.bloom.reader.R;
+
+import java.util.ArrayList;
 
 // An activity that is made to look like a dialog (see the theme associated with it in
 // the main manifest and defined in styles.xml) and which implements the command to receive
 // Bloom books from Wifi (i.e., from a desktop running Bloom...eventually possibly from
 // another copy of BloomReader). This is launched from a menu option in the main activity.
 public class GetFromWiFiActivity extends BaseActivity {
+
+    ArrayList<String> newBookPaths = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,9 +39,18 @@ public class GetFromWiFiActivity extends BaseActivity {
         final Button okButton = (Button)findViewById(R.id.wifiOk);
         okButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                finish();
+                onBackPressed();
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        // inform the main activity of the books we added.
+        Intent result = new Intent();
+        result.putExtra(MainActivity.NEW_BOOKS, newBookPaths.toArray(new String[0]));
+        setResult(RESULT_OK, result);
+        finish();
     }
 
     // This is used by various companion classes that want to display stuff in our progress window.
@@ -85,8 +100,8 @@ public class GetFromWiFiActivity extends BaseActivity {
 
     @Override
     protected void onNewOrUpdatedBook(String fullPath) {
-        // Don't do anything.
-        // TODO: We'll want to update the main activity upon exit.
+        newBookPaths.add(fullPath);
+        playSoundFile(R.raw.bell);
     }
 
     // Get the human-readable name of the WiFi network that the Android is connected to

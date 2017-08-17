@@ -5,15 +5,27 @@
         <item
             android:id="@+id/nav_get_wifi"
             android:icon="@drawable/ic_wifi_black_24dp"
-            android:title="Get Books from Desktop" />
-        <item
+            android:title="Receive Books over WiFi" />
+        <!--item
             android:id="@+id/nav_catalog"
             android:icon="@drawable/ic_menu_get_books"
             android:title="Get Books from Internet (not yet)" />
         <item
             android:id="@+id/nav_share"
             android:icon="@drawable/ic_menu_share"
-            android:title="Share Books with Bluetooth (not yet)" />
+            android:title="Share Books with Bluetooth (not yet)" /-->
+        <item
+            android:id="@+id/nav_release_notes"
+            android:title="Release Notes" />
+        <item
+            android:id="@+id/about_reader"
+            android:title="About Bloom Reader" />
+        <item
+            android:id="@+id/about_bloom"
+            android:title="About Bloom" />
+        <item
+            android:id="@+id/about_sil"
+            android:title="About SIL" />
     </group>
 
 

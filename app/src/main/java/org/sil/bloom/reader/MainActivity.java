@@ -18,6 +18,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +27,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.sil.bloom.reader.WiFi.GetFromWiFiActivity;
@@ -34,6 +36,7 @@ import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 
 public class MainActivity extends BaseActivity
@@ -85,6 +88,21 @@ public class MainActivity extends BaseActivity
         if(data != null && data.getPath().toLowerCase().endsWith(Book.BOOK_FILE_EXTENSION)) {
             String newpath = _bookCollection.ensureBookIsInCollection(data.getPath());
             openBook(this, newpath);
+        }
+
+        // Insert the build version and date into the appropriate control.
+        // We have to find it indirectly through the navView's header or it won't be found
+        // this early in the view construction.
+        NavigationView navView = (NavigationView)findViewById(R.id.nav_view);
+        TextView versionDate = (TextView)navView.getHeaderView(0).findViewById(R.id.versionDate);
+        try {
+            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            Date buildDate = new Date(BuildConfig.TIMESTAMP);
+            DateFormat df = new DateFormat();
+            String date = df.format("dd MMM yyyy", buildDate).toString();
+            versionDate.setText(versionName + ", " + date);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
         }
     }
 
@@ -279,12 +297,13 @@ public class MainActivity extends BaseActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_catalog) {
-
-        } else if (id == R.id.nav_share) {
-
-        }
-        else if (id == R.id.nav_get_wifi) {
+//        if (id == R.id.nav_catalog) {
+//
+//        } else if (id == R.id.nav_share) {
+//
+//        }
+//        else
+        if (id == R.id.nav_get_wifi) {
             Intent intent = new Intent(this, GetFromWiFiActivity.class);
             this.startActivityForResult(intent, DOWNLOAD_BOOKS_REQUEST);
         }
@@ -292,6 +311,16 @@ public class MainActivity extends BaseActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    // invoked by click on bloomUrl textview in nav_header_main because it has onClick property
+    public void bloomUrlClicked(View v) {
+        // for some reason, it doesn't work with just bloomlibrary.org. Seems to thing a URL
+        // must have http://www. Fails to resolve activity.
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.bloomlibrary.org"));
+        if (browserIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(browserIntent);
+        }
     }
 
     @Override

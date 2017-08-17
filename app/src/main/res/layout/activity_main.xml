@@ -13,9 +13,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Not sure how well 350dp will work in general but wrap-content did not.
+    Made everything too narrow so menu items were truncated and header laid
+    out poorly. -->
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
+        android:layout_width="350dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:fitsSystemWindows="true"

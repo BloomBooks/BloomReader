@@ -3,25 +3,18 @@ package org.sil.bloom.reader.WiFi;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.IBinder;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
-import android.support.v4.content.LocalBroadcastManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.sil.bloom.reader.IOUtilities;
 import org.sil.bloom.reader.R;
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
@@ -29,7 +22,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -42,11 +34,6 @@ import java.util.Set;
  */
 
 public class NewBookListenerService extends Service {
-    // Small files with this extension are created to store the file version information
-    // sent with each advertisement. This allows BloomReader to avoid repeatedly downloading
-    // the same version of the same book. BloomReader does not interpret the version information,
-    // just compares what it got originally with the new advertisement.
-    public static final String VERSION_EXTENSION = ".version";
     DatagramSocket socket;
     Thread UDPBroadcastThread;
     private Boolean shouldRestartSocketListen=true;
@@ -56,8 +43,6 @@ public class NewBookListenerService extends Service {
     // Must be different from ports in NewBookListenerService.startListenForUDPBroadcast
     // and SyncServer._serverPort.
     int desktopPort = 5915;
-    String newBookVersion;
-    File versionFile;
     boolean gettingBook = false;
     private Set<String> _announcedBooks = new HashSet<String>();
 
@@ -84,23 +69,22 @@ public class NewBookListenerService extends Service {
 
         try {
             JSONObject data = new JSONObject(message);
-            String title = data.getString("Title");
-            newBookVersion = data.getString("Version");
+            String title = data.getString("title");
+            String newBookVersion = data.getString("version");
             String sender = "unknown";
             try {
-                sender = data.getString("Sender");
+                sender = data.getString("sender");
             } catch(JSONException e) {
                 e.printStackTrace();
             }
             File localBookDirectory = BookCollection.getLocalBooksDirectory();
             File bookFile = new File(localBookDirectory, title + Book.BOOK_FILE_EXTENSION);
             boolean bookExists = bookFile.exists();
-            versionFile = new File(localBookDirectory, title + VERSION_EXTENSION);
             // It is pathological that the book doesn't exist but the version file is up to date.
             // But it easily happens with manual testers wanting to redo transmission.
             // It could possibly happen with end users messing with their file system.
             // So if we don't actually have the book we will re-request it.
-            if (bookExists && IsCurrentBookUpToDate()) {
+            if (bookExists && IsBookUpToDate(bookFile, title, newBookVersion)) {
                 // Enhance: possibly we might want to announce this again if the book has been off the air
                 // for a while? So a user doesn't see "nothing happening" if he thinks he just started
                 // publishing it, but somehow BR has seen it recently? Thought about just keeping
@@ -188,22 +172,6 @@ public class NewBookListenerService extends Service {
         // We can stop listening for file transfers and notifications from the desktop.
         Intent serviceIntent = new Intent(this, SyncService.class);
         stopService(serviceIntent);
-
-        byte[] versionInfo=new byte[0];
-        try {
-            versionInfo = newBookVersion.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace(); // not going to happen but Java demands we catch it.
-        }
-        try {
-            FileOutputStream fos = new FileOutputStream(versionFile);
-            fos.write(versionInfo);
-            fos.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         gettingBook = false;
         GetFromWiFiActivity.sendProgressMessage(this, getString(R.string.done) + "\n\n");
     }
@@ -236,25 +204,25 @@ public class NewBookListenerService extends Service {
         return ip;
     }
 
-    // Determine whether the book is up to date, based on the versionFile information
-    // saved in a member variable when we got the advertisement.
-    boolean IsCurrentBookUpToDate() {
-        if (!versionFile.isFile())
+    // Determine whether the book is up to date, based on comparing the version file embedded in it
+    // with the one we got from the advertisement.
+    // A small file called version.txt is embedded in each .bloomd file to store the file version information
+    // sent with each advertisement. This allows BloomReader to avoid repeatedly downloading
+    // the same version of the same book. BloomReader does not interpret the version information,
+    // just compares what is in the  version.txt in the .bloomd file it has (if any) with what it
+    // got in the new advertisement.
+    boolean IsBookUpToDate(File bookFile, String title, String newBookVersion) {
+        // "version.txt" must match the name given in Bloom Desktop BookCompressor.CompressDirectory()
+        byte[] oldShaBytes = IOUtilities.ExtractZipEntry(bookFile, "version.txt");
+        if (oldShaBytes == null)
             return false;
+        String oldSha = "";
         try {
-            FileInputStream fis = new FileInputStream(versionFile);
-            byte[] data = new byte[(int)versionFile.length()];
-            fis.read(data);
-            fis.close();
-            String oldSha = new String(data, "UTF-8");
-            return oldSha.equals(newBookVersion); // not ==, they are different objects.
-        } catch (FileNotFoundException e) {
+            oldSha = new String(oldShaBytes, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-            return false;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
         }
+        return oldSha.equals(newBookVersion); // not ==, they are different objects.
     }
 
     public static final String BROADCAST_BOOK_LISTENER_PROGRESS = "org.sil.bloomreader.booklistener.progress";

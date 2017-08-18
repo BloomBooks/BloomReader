@@ -15,7 +15,7 @@ android {
         versionName "${versionMajor}.${versionMinor}.${versionRelease}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary true
-
+        buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
     }
     buildTypes {
         release {

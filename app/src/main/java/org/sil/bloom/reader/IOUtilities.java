@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 
@@ -69,6 +70,24 @@ public class IOUtilities {
             }
         } finally {
             zis.close();
+        }
+    }
+
+    public static byte[] ExtractZipEntry(File input, String entryName) {
+        try {
+            ZipFile zip = new ZipFile(input);
+            ZipEntry entry = zip.getEntry(entryName);
+            if (entry == null) {
+                return null;
+            }
+            InputStream stream = zip.getInputStream(entry);
+            byte[] buffer = new byte[(int)entry.getSize()];
+            stream.read(buffer);
+            zip.close();
+            return buffer;
+        } catch (IOException e)
+        {
+            return null;
         }
     }
 

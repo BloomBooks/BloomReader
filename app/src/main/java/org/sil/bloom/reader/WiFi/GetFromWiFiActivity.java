@@ -107,7 +107,7 @@ public class GetFromWiFiActivity extends BaseActivity {
     // Get the human-readable name of the WiFi network that the Android is connected to
     // (or null if not connected over WiFi).
     public String getWifiName(Context context) {
-        WifiManager manager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiManager manager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (manager.isWifiEnabled()) {
             WifiInfo wifiInfo = manager.getConnectionInfo();
             if (wifiInfo != null) {

@@ -1,7 +1,7 @@
 package org.sil.bloom.reader.WiFi;
 
 import android.app.Service;
-import android.content.Context;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
@@ -120,9 +120,9 @@ public class NewBookListenerService extends Service {
             }
             else {
                 if (bookExists)
-                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_new_version), title, sender, senderIP) + "\n");
+                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_new_version), title, sender) + "\n");
                 else
-                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_file), title, sender, senderIP) + "\n");
+                    GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_file), title, sender) + "\n");
                 getBook(senderIP, title);
             }
             // Whether we just got it or just said we already have it, we don't need to keep announcing
@@ -165,7 +165,17 @@ public class NewBookListenerService extends Service {
         SendMessage sendMessageTask = new SendMessage();
         sendMessageTask.desktopIpAddress = sourceIP;
         sendMessageTask.ourIpAddress = getOurIpAddress();
+        sendMessageTask.ourDeviceName = getOurDeviceName();
         sendMessageTask.execute();
+    }
+
+    // It's slightly odd to use the Bluetooth name for a WiFi function, but it's the only
+    // generally-available user-configurable device name we can find. (Some devices...e.g.,
+    // my Note 4...have a setting for a more general device name, but others (e.g., Nexus)
+    // do not.)
+    private String getOurDeviceName() {
+        BluetoothAdapter myDevice = BluetoothAdapter.getDefaultAdapter();
+        return myDevice.getName();
     }
 
     private void startSyncServer() {
@@ -291,12 +301,23 @@ public class NewBookListenerService extends Service {
 
         public String ourIpAddress;
         public String desktopIpAddress;
+        public String ourDeviceName;
         @Override
         protected Void doInBackground(Void... params) {
             try {
                 InetAddress receiverAddress = InetAddress.getByName(desktopIpAddress);
                 DatagramSocket socket = new DatagramSocket();
-                byte[] buffer = ourIpAddress.getBytes("UTF-8");
+                JSONObject data = new JSONObject();
+                try {
+                    // names used here must match those in Bloom WiFiAdvertiser.Start(),
+                    // in the event handler for _wifiListener.NewMessageReceived.
+                    data.put("deviceAddress", ourIpAddress);
+                    data.put("deviceName", ourDeviceName);
+                } catch (JSONException e) {
+                    // How could these fail?? But compiler demands we catch this.
+                    e.printStackTrace();
+                }
+                byte[] buffer = data.toString().getBytes("UTF-8");
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, desktopPort);
                 socket.send(packet);
             } catch (IOException e) {

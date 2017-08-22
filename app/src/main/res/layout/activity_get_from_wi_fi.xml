@@ -29,6 +29,7 @@
         app:srcCompat="@drawable/get_book_from_wifi"/>
 
     <ScrollView
+        android:id="@+id/wifi_progress_scroller"
         android:layout_width="match_parent"
         android:layout_height="30dp"
         android:scrollbars="vertical"

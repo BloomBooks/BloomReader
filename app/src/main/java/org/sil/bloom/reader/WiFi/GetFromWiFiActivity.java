@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.sil.bloom.reader.BaseActivity;
@@ -67,6 +68,13 @@ public class GetFromWiFiActivity extends BaseActivity {
         public void onReceive(Context context, Intent intent) {
             TextView progressView = (TextView) findViewById(R.id.wifi_progress);
             progressView.append(intent.getStringExtra(NewBookListenerService.BROADCAST_BOOK_LISTENER_PROGRESS_CONTENT));
+            // Scroll to the bottom so the new message is visible
+            // see https://stackoverflow.com/questions/3506696/auto-scrolling-textview-in-android-to-bring-text-into-view
+            // Hints there suggest we might not need a scroll view wrapped around our text view...we can make the
+            // text view itself scrollable. That might be more efficient for a long report.
+            // This is good enough for now.
+            ScrollView progressScroller = (ScrollView) findViewById(R.id.wifi_progress_scroller);
+            progressScroller.fullScroll(View.FOCUS_DOWN);
         }
     }
 

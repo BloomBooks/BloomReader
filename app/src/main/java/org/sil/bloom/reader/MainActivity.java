@@ -133,7 +133,7 @@ public class MainActivity extends BaseActivity
     private void updateForNewBook(String filePath) {
         Book book = _bookCollection.addBookIfNeeded(filePath);
         refreshList(book);
-        playSoundFile(R.raw.bell);
+        playSoundFile(R.raw.bookarrival);
         Toast.makeText(MainActivity.this, book.name + " added or updated", Toast.LENGTH_SHORT).show();
     }
 

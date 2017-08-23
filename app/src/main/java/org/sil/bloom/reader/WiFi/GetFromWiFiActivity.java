@@ -109,7 +109,7 @@ public class GetFromWiFiActivity extends BaseActivity {
     @Override
     protected void onNewOrUpdatedBook(String fullPath) {
         newBookPaths.add(fullPath);
-        playSoundFile(R.raw.bell);
+        playSoundFile(R.raw.bookarrival);
     }
 
     // Get the human-readable name of the WiFi network that the Android is connected to

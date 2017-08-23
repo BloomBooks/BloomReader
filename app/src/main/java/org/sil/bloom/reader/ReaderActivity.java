@@ -53,19 +53,16 @@ public class ReaderActivity extends BaseActivity {
             try {
 
                 String bookStagingPath = unzipBook(path);
-                File bookFolder = new File(bookStagingPath).listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(File file) {
-                        return file.isDirectory();
-                    }
-                })[0]; // TODO check assumption that there is exactly one folder
-                loadBook(bookFolder.getAbsolutePath());
+                String filenameWithExtension = new File(path).getName();
+                // strip off the extension (which we already know exactly)
+                String bookName = filenameWithExtension.substring(0, filenameWithExtension.length() - Book.BOOK_FILE_EXTENSION.length());
+                loadBook(bookStagingPath, bookName);
             } catch (IOException err) {
 
                 Toast.makeText(this.getApplicationContext(), "There was an error showing that book: " + err, Toast.LENGTH_LONG);
             }
         } else {
-            loadBook(path); // during stylesheet development, it's nice to be able to work with a folder rather than a zip
+            loadBook(path, new File(path).getName()); // during stylesheet development, it's nice to be able to work with a folder rather than a zip
         }
     }
 
@@ -87,11 +84,11 @@ public class ReaderActivity extends BaseActivity {
     }
 
 
-    private void loadBook(String path) {
+    private void loadBook(String path, String bookName) {
         mBrowsers = new ArrayList<View>();
 
         File bookFolder = new File(path);
-        File bookHtmlPath = new File(path + File.separator + bookFolder.getName() + ".htm");
+        File bookHtmlPath = new File(path + File.separator + bookName + ".htm");
         try {
             //review: so we need an overload of Jsoup.parse() that throws parse errors?
             Document doc = Jsoup.parse(bookHtmlPath, "UTF-8", "");

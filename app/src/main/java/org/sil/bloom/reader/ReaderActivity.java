@@ -38,6 +38,8 @@ public class ReaderActivity extends BaseActivity {
     // it's good enough.)
     private static final Pattern sPagePattern = Pattern.compile("<div\\s+[^>]*class\\s*=\\s*['\"][^'\"]*bloom-page");
 
+    private static final Pattern sClassAttrPattern = Pattern.compile("class\\s*=\\s*(['\"])(.*?)\\1");
+
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
 
@@ -177,15 +179,21 @@ public class ReaderActivity extends BaseActivity {
     // Forces the layout we want into the class, and inserts the specified style.
     // assumes some layout is already present in classes attribute, and no style already exists.
     private String modifyPage(String page, String newLayout, String style) {
-        // For efficiency we assume a simple class attribute delimited with double quote.
-        // If this is in doubt we will need to either improve Bloom to enforce it
-        // or make this code smarter. But I think it's how Tidy formats things.
-        String classMarker = "class=\"";
-        int start = page.indexOf(classMarker) + classMarker.length();
-        int end = page.indexOf('"', start);
-        String classNames = page.substring(start, end);
+        // Get the content of the class attribute and its position
+        Matcher matcher = sClassAttrPattern.matcher(page);
+        if (!matcher.find())
+            return page; // don't think this can happen, we create pages by finding class attr.
+        int start = matcher.start(2);
+        int end = matcher.end(2);
+        String classNames = matcher.group(2);
         String newClassNames = sLayoutPattern.matcher(classNames).replaceFirst(newLayout);
-        return page.substring(0,start) + newClassNames + "\" style=\"" + style + page.substring(end, page.length());
+        return page.substring(0,start) // everything up to the opening quote in class="
+                + newClassNames
+                + matcher.group(1) // proper matching closing quote ends class attr
+                + " style="
+                + matcher.group(1) // we need to use the same quote for style...
+                + style
+                + page.substring(end, page.length()); // because this includes the original closing quote from class attr
     }
 
     private int getPageScale(int viewWidth, int viewHeight){
@@ -206,6 +214,44 @@ public class ReaderActivity extends BaseActivity {
         IOUtilities.copyAssetFolder(this.getApplicationContext().getAssets(), "book support files", bookFolderPath);
     }
 
+    // Wraps access to what would otherwise be two variables of BookPagerAdapter and ensures
+    // all access to them is synchronized. This is necessary because we access them both in the
+    // UI thread and in a background thread used to create the next page view while
+    // displaying the current one.
+    private class NextPageWrapper
+    {
+        WebView mNextPageContentControl;
+        int mNextPageIndex = -1; // flag value indicating we don't have a next page.
+
+        // IF the known next page is the one wanted, return it. Otherwise null.
+        WebView getBrowserIfForPage(int position) {
+            synchronized (this) {
+                if (position == mNextPageIndex) {
+                    return mNextPageContentControl;
+                }
+            }
+            return null;
+        }
+
+        void setNextPage(WebView nextPageControl, int nextPageIndex) {
+            synchronized (this) {
+                if (mNextPageIndex == nextPageIndex)
+                    return; // already have page for this index, no need to replace it.
+                mNextPageContentControl = nextPageControl;
+                mNextPageIndex = nextPageIndex;
+            }
+        }
+
+        // It's reasonable to get this without synchronization as long as there's no
+        // independent access to the page control that assumes another thread hasn't changed
+        // it meanwhile. For example, to decide whether to kick off creation of a next page control.
+        // Please do NOT add a similar method that gives unsynchronized access to the control,
+        // it's asking for trouble to access that without synchronizing access to the page index.
+        int getNextPageIndex() {
+            return mNextPageIndex;
+        }
+    }
+
     // Class that provides individual page views as needed.
     // possible enhancement: can we reuse the same browser, just change which page is visible?
     private class BookPagerAdapter extends PagerAdapter {
@@ -221,8 +267,7 @@ public class ReaderActivity extends BaseActivity {
         ReaderActivity mParent;
         File mBookHtmlPath;
         String mFolderPath;
-        WebView mNextPageContentControl;
-        int mNextPageIndex;
+        NextPageWrapper mNextPageWrapper = new NextPageWrapper();
         WebView mLastPageContentControl;
         int mLastPageIndex;
         int mThisPageIndex;
@@ -236,7 +281,6 @@ public class ReaderActivity extends BaseActivity {
             mHtmlAfterLastPageDiv = htmlAfterLastPageDiv;
             mFolderPath = folderPath;
             mLastPageIndex = -1;
-            mNextPageIndex = -1;
             mThisPageIndex = -1;
         }
 
@@ -257,12 +301,7 @@ public class ReaderActivity extends BaseActivity {
         public Object instantiateItem(ViewGroup container, int position) {
             Log.d("Reader", "instantiateItem");
 
-            WebView browser = null;
-            synchronized (this) { // lock all access to these two variables.
-                if (position == mNextPageIndex) {
-                    browser = mNextPageContentControl;
-                }
-            }
+            WebView browser = mNextPageWrapper.getBrowserIfForPage(position); // leaves null if not already created
             if (browser == null && position == mLastPageIndex) {
                 browser = mLastPageContentControl;
             } else if (position == mThisPageIndex) {
@@ -275,23 +314,16 @@ public class ReaderActivity extends BaseActivity {
                 mLastPageIndex = mThisPageIndex;
                 mLastPageContentControl = mThisPageContentControl;
             } else {
-                synchronized (this) {
-                    // We just went back a page. Keep the current page as 'next'.
-                    if (mThisPageIndex == position + 1) {
-                        mNextPageIndex = mThisPageIndex;
-                        mNextPageContentControl = mThisPageContentControl;
-                    }
+                // We just went back a page. Keep the current page as 'next'.
+                if (mThisPageIndex == position + 1) {
+                    mNextPageWrapper.setNextPage(mThisPageContentControl, mThisPageIndex);
                 }
             }
             mThisPageContentControl = browser;
             mThisPageIndex = position;
 
             // If relevant start a process to get the next page the user is likely to want.
-            boolean needToGetNextPage = false;
-            synchronized (this) {
-                needToGetNextPage = mNextPageIndex != position + 1 && position < mHtmlPageDivs.size() - 1;
-            }
-            if (needToGetNextPage) {
+            if ( mNextPageWrapper.getNextPageIndex() != position + 1 && position < mHtmlPageDivs.size() - 1) {
                 new PageMaker().execute(position + 1);
             }
 
@@ -314,12 +346,7 @@ public class ReaderActivity extends BaseActivity {
                     @Override
                     public void run() {
                         WebView browser =  MakeBrowserForPage(position);
-                        synchronized (BookPagerAdapter.this) {
-                            if (mNextPageIndex != position) {
-                                mNextPageIndex = position;
-                                mNextPageContentControl = browser;
-                            }
-                        }
+                        BookPagerAdapter.this.mNextPageWrapper.setNextPage(browser, position);
                     }
                 });
                 return 0L;

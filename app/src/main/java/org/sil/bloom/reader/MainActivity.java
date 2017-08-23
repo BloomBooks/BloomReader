@@ -236,7 +236,6 @@ public class MainActivity extends BaseActivity
                 mListView.setSelection(position);
                 mListView.setItemChecked(position, true);
 
-                mListView.setOnItemClickListener(null);
                 contextualActionBarMode= activity.startActionMode(mActionModeCallback);
 
                 return true;

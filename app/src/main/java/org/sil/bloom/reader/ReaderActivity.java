@@ -62,19 +62,17 @@ public class ReaderActivity extends BaseActivity {
             try {
 
                 String bookStagingPath = unzipBook(path);
-                File bookFolder = new File(bookStagingPath).listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(File file) {
-                        return file.isDirectory();
-                    }
-                })[0]; // TODO check assumption that there is exactly one folder
-                new Loader().execute(bookFolder.getAbsolutePath());
+                String filenameWithExtension = new File(path).getName();
+                // strip off the extension (which we already know exactly)
+                String bookName = filenameWithExtension.substring(0, filenameWithExtension.length() - Book.BOOK_FILE_EXTENSION.length());
+
+                new Loader().execute(bookStagingPath, bookName);
             } catch (IOException err) {
 
                 Toast.makeText(this.getApplicationContext(), "There was an error showing that book: " + err, Toast.LENGTH_LONG);
             }
         } else {
-            new Loader().execute(path); // during stylesheet development, it's nice to be able to work with a folder rather than a zip
+            new Loader().execute(path, new File(path).getName()); // during stylesheet development, it's nice to be able to work with a folder rather than a zip
         }
     }
 
@@ -82,8 +80,8 @@ public class ReaderActivity extends BaseActivity {
     private class Loader extends AsyncTask<String, Integer, Long> {
 
         @Override
-        protected Long doInBackground(String... paths) {
-            loadBook(paths[0]);
+        protected Long doInBackground(String... args) {
+            loadBook(args[0], args[1]);
             return 0L;
         }
     }
@@ -106,10 +104,10 @@ public class ReaderActivity extends BaseActivity {
     }
 
 
-    private void loadBook(String path) {
+    private void loadBook(String path, String bookName) {
 
         File bookFolder = new File(path);
-        File bookHtmlPath = new File(path + File.separator + bookFolder.getName() + ".htm");
+        File bookHtmlPath = new File(path + File.separator + bookName + ".htm");
         try {
             long start = System.currentTimeMillis();
             BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(bookHtmlPath),"UTF-8"));

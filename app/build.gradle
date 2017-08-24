@@ -17,10 +17,16 @@ android {
         vectorDrawables.useSupportLibrary true
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
     }
+
+    signingConfigs {
+        release
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }
@@ -43,3 +49,8 @@ dependencies {
     compile 'org.jsoup:jsoup:1.10.1'
     testCompile 'junit:junit:4.12'
 }
+
+android.signingConfigs.release.storeFile = file("$System.env.BLOOM_READER_STORE_FILE")
+android.signingConfigs.release.storePassword = "$System.env.BLOOM_READER_STORE_PASSWORD"
+android.signingConfigs.release.keyAlias = "$System.env.BLOOM_READER_KEY_ALIAS"
+android.signingConfigs.release.keyPassword = "$System.env.BLOOM_READER_KEY_PASSWORD"

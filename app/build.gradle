@@ -4,6 +4,11 @@ def versionMajor = 1
 def versionMinor = 0
 def versionRelease = project.ext.properties['build.number'] ?: 800 // default for non-tc
 
+// Load our credentials
+def keystorePropertiesFile = rootProject.file("${System.properties['user.home']}${File.separator}keystore${File.separator}keystore_bloom_reader.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 android {
     compileSdkVersion 23
     buildToolsVersion "25.0.0"
@@ -17,10 +22,21 @@ android {
         vectorDrawables.useSupportLibrary true
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
     }
+
+    signingConfigs {
+        release {
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }

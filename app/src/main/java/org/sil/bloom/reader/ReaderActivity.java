@@ -28,7 +28,7 @@ import org.sil.bloom.reader.models.Book;
 
 public class ReaderActivity extends BaseActivity {
 
-    private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)$");
+    private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)\\b");
     // Matches a div with class bloom-page, that is, the start of the main content of one page.
     // (We're looking for the start of a div tag, then before finding the end wedge, we find
     // class<maybe space>=<maybe space><some sort of quote> and then bloom-page before we find

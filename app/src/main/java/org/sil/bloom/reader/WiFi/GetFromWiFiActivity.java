@@ -28,13 +28,15 @@ import java.util.ArrayList;
 public class GetFromWiFiActivity extends BaseActivity {
 
     ArrayList<String> newBookPaths = new ArrayList<String>();
+    ProgressReceiver mProgressReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_get_from_wi_fi);
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(new ProgressReceiver(),
+        mProgressReceiver = new ProgressReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mProgressReceiver,
                 new IntentFilter(NewBookListenerService.BROADCAST_BOOK_LISTENER_PROGRESS));
 
         final Button okButton = (Button)findViewById(R.id.wifiOk);
@@ -43,6 +45,13 @@ public class GetFromWiFiActivity extends BaseActivity {
                 onBackPressed();
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        // Unregister since the activity is about to be closed.
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mProgressReceiver);
+        super.onDestroy();
     }
 
     @Override

@@ -1,17 +1,14 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -23,7 +20,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -31,11 +27,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.sil.bloom.reader.WiFi.GetFromWiFiActivity;
-import org.sil.bloom.reader.WiFi.NewBookListenerService;
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
 
-import java.util.ArrayList;
 import java.util.Date;
 
 
@@ -46,6 +40,7 @@ public class MainActivity extends BaseActivity
     private BookCollection _bookCollection = new BookCollection();
     private ListView mListView;
     public android.view.ActionMode contextualActionBarMode;
+    private static boolean sSkipNextNewFileSound;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +104,12 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
+        // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
+        // book to our directory using MTP.
+        startObserving();
+        // And right now we will trigger the notification if anyone or anything has changed a
+        // book in our folder while we were paused.
+        notifyIfNewFileChanges();
         String bookToHighlight = ((BloomReaderApplication) this.getApplication()).getBookToHighlight();
         if (bookToHighlight != null) {
             updateForNewBook(bookToHighlight);
@@ -117,6 +118,13 @@ public class MainActivity extends BaseActivity
             // We could have gotten a new book while the app was not in the foreground
             updateDisplay();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        stopObserving();
+
+        super.onPause();
     }
 
     @Override
@@ -130,10 +138,19 @@ public class MainActivity extends BaseActivity
         });
     }
 
+    public static void skipNextNewFileSound() {
+        sSkipNextNewFileSound = true;
+    }
+
     private void updateForNewBook(String filePath) {
         Book book = _bookCollection.addBookIfNeeded(filePath);
         refreshList(book);
-        playSoundFile(R.raw.bookarrival);
+        if (sSkipNextNewFileSound) {
+            sSkipNextNewFileSound = false;
+        }
+        else {
+            playSoundFile(R.raw.bookarrival);
+        }
         Toast.makeText(MainActivity.this, book.name + " added or updated", Toast.LENGTH_SHORT).show();
     }
 

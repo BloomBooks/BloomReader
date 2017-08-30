@@ -9,7 +9,9 @@ import android.support.annotation.Nullable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.sil.bloom.reader.BaseActivity;
 import org.sil.bloom.reader.IOUtilities;
+import org.sil.bloom.reader.MainActivity;
 import org.sil.bloom.reader.R;
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
@@ -80,10 +82,7 @@ public class NewBookListenerService extends Service {
             File localBookDirectory = BookCollection.getLocalBooksDirectory();
             File bookFile = new File(localBookDirectory, title + Book.BOOK_FILE_EXTENSION);
             boolean bookExists = bookFile.exists();
-            // It is pathological that the book doesn't exist but the version file is up to date.
-            // But it easily happens with manual testers wanting to redo transmission.
-            // It could possibly happen with end users messing with their file system.
-            // So if we don't actually have the book we will re-request it.
+            // If the book doesn't exist it can't be up to date.
             if (bookExists && IsBookUpToDate(bookFile, title, newBookVersion)) {
                 // Enhance: possibly we might want to announce this again if the book has been off the air
                 // for a while? So a user doesn't see "nothing happening" if he thinks he just started
@@ -174,6 +173,10 @@ public class NewBookListenerService extends Service {
         stopService(serviceIntent);
         gettingBook = false;
         GetFromWiFiActivity.sendProgressMessage(this, getString(R.string.done) + "\n\n");
+        BaseActivity.playSoundFile(R.raw.bookarrival);
+        // We already played a sound for this file, don't need to play another when we resume
+        // the main activity and notice the new file.
+        MainActivity.skipNextNewFileSound();
     }
 
     // Get the IP address of this device (on the WiFi network) to transmit to the desktop.

@@ -28,7 +28,9 @@ import org.sil.bloom.reader.models.Book;
 
 public class ReaderActivity extends BaseActivity {
 
+    private static final String sAssetsStylesheetLink = "<link rel=\"stylesheet\" href=\"file:///android_asset/book support files/assets.css\" type=\"text/css\"></link>";
     private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)\\b");
+    private static final Pattern sHeadElementEndPattern = Pattern.compile("</head");
     // Matches a div with class bloom-page, that is, the start of the main content of one page.
     // (We're looking for the start of a div tag, then before finding the end wedge, we find
     // class<maybe space>=<maybe space><some sort of quote> and then bloom-page before we find
@@ -140,6 +142,7 @@ public class ReaderActivity extends BaseActivity {
             if (matcher.find()) {
                 int firstPageIndex = matcher.start();
                 startFrame = html.substring(0, firstPageIndex);
+                startFrame = addAssetsStylesheetLink(startFrame);
                 int startPage = firstPageIndex;
                 while (matcher.find()) {
                     pages.add(html.substring(startPage, matcher.start()));
@@ -172,6 +175,14 @@ public class ReaderActivity extends BaseActivity {
             }
         });
 
+    }
+
+    private String addAssetsStylesheetLink(String htmlSnippet) {
+        final Matcher matcher = sHeadElementEndPattern.matcher(htmlSnippet);
+        if (matcher.find()) {
+            return htmlSnippet.substring(0, matcher.start()) + sAssetsStylesheetLink + htmlSnippet.substring(matcher.start());
+        }
+        return htmlSnippet;
     }
 
     // Forces the layout we want into the class, and inserts the specified style.

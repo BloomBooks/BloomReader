@@ -15,7 +15,10 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.SpannableString;
 import android.text.format.DateFormat;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -333,14 +336,44 @@ public class MainActivity extends BaseActivity
 //
 //        }
 //        else
-        if (id == R.id.nav_get_wifi) {
-            Intent intent = new Intent(this, GetFromWiFiActivity.class);
-            this.startActivityForResult(intent, DOWNLOAD_BOOKS_REQUEST);
+        switch (id) {
+            case R.id.nav_get_wifi:
+                Intent intent = new Intent(this, GetFromWiFiActivity.class);
+                this.startActivityForResult(intent, DOWNLOAD_BOOKS_REQUEST);
+                break;
+            case R.id.nav_release_notes:
+                DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
+                break;
+            case R.id.about_reader:
+                DisplaySimpleResource(getString(R.string.about_bloom_reader), R.raw.about_reader);
+                break;
+            case R.id.about_bloom:
+                DisplaySimpleResource(getString(R.string.about_bloom), R.raw.about_bloom);
+                break;
+            case R.id.about_sil:
+                DisplaySimpleResource(getString(R.string.about_sil), R.raw.about_sil);
+                break;
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void DisplaySimpleResource(String title, int fileResourceId) {
+        // Linkify the message
+        final SpannableString msg = new SpannableString(IOUtilities.InputStreamToString(getResources().openRawResource(fileResourceId)));
+        Linkify.addLinks(msg, Linkify.ALL);
+
+        final AlertDialog d = new AlertDialog.Builder(this)
+                .setPositiveButton(android.R.string.ok, null)
+                .setTitle(title)
+                .setMessage(msg)
+                .create();
+        d.show();
+
+        // Make the textview clickable. Must be called after show()
+        ((TextView)d.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     // invoked by click on bloomUrl textview in nav_header_main because it has onClick property

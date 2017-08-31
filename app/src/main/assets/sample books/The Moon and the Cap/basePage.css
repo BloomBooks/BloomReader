@@ -119,49 +119,37 @@ body {
   right: calc(100% / 2 -  10px);
 }
 .Device16x9Portrait .marginBox {
-  height: 177.77777778mm;
-  width: 100mm;
-  top: 0;
-  left: 0 !important;
+  height: 172.48611111mm;
+  width: 94.70833333mm;
+  top: 10px;
+  left: 10px !important;
 }
 .Device16x9Portrait .marginBox IMG {
-  max-width: 100mm;
-}
-.Device16x9Portrait .marginBox .bloom-editable {
-  margin-left: 10px;
-  width: calc(100% -  20px);
+  max-width: 94.70833333mm;
 }
 .numberedPage.Device16x9Portrait .marginBox {
-  height: 169.84027778mm;
+  height: 165.87152778mm;
 }
 .Device16x9Landscape .marginBox {
-  height: 100mm;
-  width: 177.77777778mm;
-  top: 0;
-  left: 0 !important;
+  height: 94.70833333mm;
+  width: 172.48611111mm;
+  top: 10px;
+  left: 10px !important;
 }
 .Device16x9Landscape .marginBox IMG {
-  max-width: 177.77777778mm;
-}
-.Device16x9Landscape .marginBox .bloom-editable {
-  margin-left: 10px;
-  width: calc(100% -  20px);
+  max-width: 172.48611111mm;
 }
 .numberedPage.Device16x9Landscape .marginBox {
-  height: 92.0625mm;
+  height: 88.09375mm;
 }
 .PictureStoryLandscape .marginBox {
-  height: 100mm;
-  width: 177.77777778mm;
-  top: 0;
-  left: 0 !important;
+  height: 94.70833333mm;
+  width: 172.48611111mm;
+  top: 10px;
+  left: 10px !important;
 }
 .PictureStoryLandscape .marginBox IMG {
-  max-width: 177.77777778mm;
-}
-.PictureStoryLandscape .marginBox .bloom-editable {
-  margin-left: 10px;
-  width: calc(100% -  20px);
+  max-width: 172.48611111mm;
 }
 .PictureStoryLandscape .marginBox .position-top {
   bottom: 0 !important;
@@ -170,7 +158,7 @@ body {
   display: none;
 }
 .numberedPage.PictureStoryLandscape .marginBox {
-  height: 92.0625mm;
+  height: 88.09375mm;
 }
 .bloom-imageContainer:not(.hoverUp) .bloom-editable {
   border: none;

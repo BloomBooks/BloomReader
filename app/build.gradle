@@ -1,8 +1,9 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.github.triplet.play'
 // This is the master definition of what version of Bloom Reader we are building
 def versionMajor = 1
 def versionMinor = 0
-def versionRelease = project.ext.properties['build.number'] ?: 800 // default for non-tc
+def versionRelease = project.ext.properties['build.number'] ?: 0 // default for non-tc
 
 // Load our credentials
 def fileName = "${System.properties['user.home']}${File.separator}keystore${File.separator}keystore_bloom_reader.properties"
@@ -16,15 +17,25 @@ if (rootProject.file(fileName).exists()) {
 android {
     compileSdkVersion 23
     buildToolsVersion "25.0.0"
+
+    playAccountConfigs {
+        defaultAccountConfig {
+            if (keystoreProperties) {
+                jsonFile = file(keystoreProperties['serviceAccountJsonFile'])
+            }
+        }
+    }
+
     defaultConfig {
         applicationId "org.sil.bloom.reader"
         minSdkVersion 19
         targetSdkVersion 22
-        versionCode versionMajor * 10000 + versionMinor * 1000 + versionRelease.toInteger()
+        versionCode versionMajor * 100000 + versionMinor * 1000 + versionRelease.toInteger()
         versionName "${versionMajor}.${versionMinor}.${versionRelease}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary true
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
+        playAccountConfig = playAccountConfigs.defaultAccountConfig
     }
 
     signingConfigs {
@@ -44,6 +55,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
+    }
+
+    play {
+        track = 'alpha'
+        uploadImages = true
     }
 }
 

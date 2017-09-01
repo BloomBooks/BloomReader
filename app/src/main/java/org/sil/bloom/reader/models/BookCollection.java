@@ -45,7 +45,7 @@ public class BookCollection {
         return book;
     }
 
-    private Book getBookByPath(String path) {
+    public Book getBookByPath(String path) {
         for (Book book:_books) {
             if (book.path.equals(path))
                 return book;

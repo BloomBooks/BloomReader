@@ -30,6 +30,7 @@ import org.sil.bloom.reader.WiFi.GetFromWiFiActivity;
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
 
+import java.io.File;
 import java.util.Date;
 
 
@@ -41,6 +42,7 @@ public class MainActivity extends BaseActivity
     private ListView mListView;
     public android.view.ActionMode contextualActionBarMode;
     private static boolean sSkipNextNewFileSound;
+    ArrayAdapter mListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -198,9 +200,9 @@ public class MainActivity extends BaseActivity
     private void SetupCollectionListView(final ListView listView) {
         final AppCompatActivity activity = this;
 
-        ArrayAdapter adapter = new ArrayAdapter(this, R.layout.book_list_content, R.id.title, _bookCollection.getBooks());
-        adapter.setNotifyOnChange(true);
-        listView.setAdapter(adapter);
+        mListAdapter = new ArrayAdapter(this, R.layout.book_list_content, R.id.title, _bookCollection.getBooks());
+        mListAdapter.setNotifyOnChange(true);
+        listView.setAdapter(mListAdapter);
 
         listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
@@ -262,6 +264,18 @@ public class MainActivity extends BaseActivity
     }
 
     private void openBook(Context context, String path) {
+        if (!new File(path).exists()) {
+            // Deleted (probably by some other process). We consider this a corner case
+            // unworthy of creating message strings that must be localized, so just
+            // clean it up. (Since it already doesn't exist, deleteFromDevice just
+            // removes it from the collection.)
+            _bookCollection.deleteFromDevice(_bookCollection.getBookByPath(path));
+            // JT: without this an exception is thrown saying we should have called it.
+            // I cannot figure out why other things that change the list...especially our own
+            // delete command...do not need this.
+            mListAdapter.notifyDataSetChanged();
+            return;
+        }
         Intent intent = new Intent(context, ReaderActivity.class);
         intent.setData(Uri.parse(path));
         context.startActivity(intent);

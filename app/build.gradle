@@ -55,6 +55,26 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
+        debug {
+            applicationIdSuffix ".debug"
+        }
+    }
+
+    productFlavors {
+        alpha {
+            applicationIdSuffix ".alpha"
+            versionNameSuffix "-alpha"
+            signingConfig signingConfigs.release
+        }
+        beta {
+            applicationIdSuffix ".beta"
+            versionNameSuffix "-beta"
+            signingConfig signingConfigs.release
+        }
+        production {
+            // no id or version name suffix; this is the main product.
+            signingConfig signingConfigs.release
+        }
     }
 
     play {

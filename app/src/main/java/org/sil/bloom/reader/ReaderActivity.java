@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -110,6 +111,22 @@ public class ReaderActivity extends BaseActivity {
         File bookHtmlPath = new File(path + File.separator + bookName + ".htm");
         try {
             long start = System.currentTimeMillis();
+            if (!bookHtmlPath.exists()) {
+                // Maybe the book file was renamed. There should be just one .htm file.
+                File[] paths = bookFolder.listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File file, String name) {
+                        return name.endsWith(".htm");
+                    }
+                });
+                if (paths.length == 1) {
+                    bookHtmlPath = paths[0];
+                }
+                else {
+                    // what on earth do we try now??
+                    return;
+                }
+            }
             BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(bookHtmlPath),"UTF-8"));
             // an infuriatingly inefficient way to read the file into a string.
             StringBuilder sb = new StringBuilder((int)bookHtmlPath.length());

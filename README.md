@@ -54,6 +54,19 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
     cd BloomReader
     gradlew (or, more likely open project in Android Studio)
 
-# Contributions
+# Development
+
+## Sample Book
+
+To update the sample book, *The Moon and the Cap*:
+
+- Open an English collection in the latest version of Bloom. Vernacular and National language should be English. 
+- Set xMatter to Super Paper Saver. 
+- Create a book using the sample shell.
+- Set the layout to Device16x9Portrait (this step is, theoretically, not necessary because Bloom Reader should display the correct layout, anyway, but it is probably a good idea).
+- Publish -> Android -> Save Bloom Reader File
+- Save to {BloomReader}/app/src/main/assets/sample books/The Moon and the Cap.bloomd
+
+## Contributions
 We welcome contributions, particularly if we pre-agree on UX.
 

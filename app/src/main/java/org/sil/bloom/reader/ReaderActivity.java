@@ -110,41 +110,25 @@ public class ReaderActivity extends BaseActivity {
     private void loadBook(String path, String bookName) {
 
         File bookFolder = new File(path);
-        File bookHtmlPath = new File(path + File.separator + bookName + ".htm");
+        File bookHtmlFile = new File(path + File.separator + bookName + ".htm");
+        if (!bookHtmlFile.exists()) {
+            // Maybe the book file was renamed. There should be just one .htm file.
+            File[] paths = bookFolder.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File file, String name) {
+                    return name.endsWith(".htm");
+                }
+            });
+            if (paths.length == 1) {
+                bookHtmlFile = paths[0];
+            }
+            else {
+                // what on earth do we try now??
+                return;
+            }
+        }
         try {
-            long start = System.currentTimeMillis();
-            if (!bookHtmlPath.exists()) {
-                // Maybe the book file was renamed. There should be just one .htm file.
-                File[] paths = bookFolder.listFiles(new FilenameFilter() {
-                    @Override
-                    public boolean accept(File file, String name) {
-                        return name.endsWith(".htm");
-                    }
-                });
-                if (paths.length == 1) {
-                    bookHtmlPath = paths[0];
-                }
-                else {
-                    // what on earth do we try now??
-                    return;
-                }
-            }
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(bookHtmlPath),"UTF-8"));
-            // an infuriatingly inefficient way to read the file into a string.
-            StringBuilder sb = new StringBuilder((int)bookHtmlPath.length());
-            try {
-                String line = reader.readLine();
-                while (line != null) {
-                    sb.append(line);
-                    sb.append("\n");
-                    line = reader.readLine();
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            String html = sb.toString();
-            long endTime = System.currentTimeMillis();
-            long timeToReadFile = endTime - start;
+            String html = IOUtilities.FileToString(bookHtmlFile);
 
             // Break the html into everything before the first page, a sequence of pages,
             // and the bit after the last. Note: assumes there is nothing but the </body> after
@@ -169,14 +153,9 @@ public class ReaderActivity extends BaseActivity {
                 pages.add(html.substring(startPage, endBody));
                 endFrame = html.substring(endBody, html.length());
             }
-            long endTime2 = System.currentTimeMillis();
-            long timeToParse = endTime2 - endTime;
 
-            mAdapter = new BookPagerAdapter(pages, this, bookHtmlPath, startFrame, endFrame, path);
+            mAdapter = new BookPagerAdapter(pages, this, bookHtmlFile, startFrame, endFrame, path);
 
-        } catch (IOException ex) {
-            Log.e("Reader", "IO Error loading " + path + "  " + ex);
-            return;
         } catch (Exception ex) {
             Log.e("Reader", "Error loading " + path + "  " + ex);
             return;

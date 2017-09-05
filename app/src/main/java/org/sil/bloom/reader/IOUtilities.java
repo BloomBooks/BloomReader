@@ -4,14 +4,19 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.widget.Toast;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -167,8 +172,24 @@ public class IOUtilities {
         String[] twoParts = two.split("\\"+File.separator);
         // for info on paths, https://www.reddit.com/r/Android/comments/496sn3/lets_clear_up_the_confusion_regarding_storage_in/?ref=share&ref_source=link
         // To would could perhaps only test the third part [2], for "emulated" vs. "53D-DS32". But testing all three doesn't hurt:
-        if (oneParts.length < 3 || twoParts.length < 4) 
+        if (oneParts.length < 3 || twoParts.length < 4)
             return false; // this is a surprising situation, play it safe
         return !oneParts[0].equals(twoParts[0]) || !oneParts[1].equals(twoParts[1]) || !oneParts[2].equals(twoParts[2]);
+    }
+
+    public static String FileToString(File file) {
+        try {
+            return InputStreamToString(new FileInputStream(file));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String InputStreamToString(InputStream inputStream) {
+        try {
+            return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -16,16 +16,16 @@
             android:title="Share Books with Bluetooth (not yet)" /-->
         <item
             android:id="@+id/nav_release_notes"
-            android:title="Release Notes" />
+            android:title="@string/release_notes" />
         <item
             android:id="@+id/about_reader"
-            android:title="About Bloom Reader" />
+            android:title="@string/about_bloom_reader" />
         <item
             android:id="@+id/about_bloom"
-            android:title="About Bloom" />
+            android:title="@string/about_bloom" />
         <item
             android:id="@+id/about_sil"
-            android:title="About SIL" />
+            android:title="@string/about_sil" />
     </group>
 
 

@@ -1,6 +1,16 @@
 Bloom Reader
 Copyright SIL International 2017
 
-Open Source Credits:
+Support: https://community.software.sil.org/c/bloom
+
+Code:
+https://github.com/BloomBooks/BloomReader
+
+Credits:
 
 Book arrival sound: "You've Been Informed", CC-BY, notificationsounds.com.
+"Moon and The Cap" Copyright Pratham Books, CC-BY.
+
+Apache Commons IO (http://commons.apache.org/io/)
+Licensed under Apache License, Version 2.0 - http://www.apache.org/licenses/LICENSE-2.0
+

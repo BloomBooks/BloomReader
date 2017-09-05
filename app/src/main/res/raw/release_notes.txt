@@ -1,1 +1,7 @@
-(under construction...)
+1.0
+This initial release has only the most basic capabilities. You can use WiFi or USB to publish a book from the Bloom program on a laptop to this app.
+Future releases will include the following:
+* embed fonts in books (currently only supports Andika)
+* share books with other devices
+* play audio books
+* get books from bloomlibrary.org

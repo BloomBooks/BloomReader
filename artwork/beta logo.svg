@@ -17,7 +17,7 @@
    id="svg4669"
    inkscape:version="0.92.1 r15371"
    sodipodi:docname="beta logo.svg"
-   inkscape:export-filename="X:\dev\BloomReader\artwork\alpha logo.png"
+   inkscape:export-filename="X:\dev\BloomReader\app\src\beta\play\en-US\listing\icon\icon.png"
    inkscape:export-xdpi="95.916985"
    inkscape:export-ydpi="95.916985">
   <defs
@@ -47,7 +47,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.53740115"
-     inkscape:cx="-130.88794"
+     inkscape:cx="-409.07864"
      inkscape:cy="130.50262"
      inkscape:document-units="mm"
      inkscape:current-layer="g4593"
@@ -57,9 +57,9 @@
      fit-margin-right="0"
      fit-margin-bottom="0"
      inkscape:pagecheckerboard="false"
-     inkscape:window-width="1822"
-     inkscape:window-height="1177"
-     inkscape:window-x="1912"
+     inkscape:window-width="1920"
+     inkscape:window-height="1147"
+     inkscape:window-x="-8"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
      units="px" />
@@ -71,7 +71,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

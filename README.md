@@ -54,9 +54,39 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
     cd BloomReader
     gradlew (or, more likely open project in Android Studio)
 
+# Signing and Deployment
+
+## Flavors
+
+We build three flavors of the app:
+
+- alpha (`org.sil.bloom.reader.alpha`)
+- beta (`org.sil.bloom.reader.beta`)
+- production (`org.sil.bloom.reader`)
+
+## Debug builds
+
+Each flavor can also build a debug configuration which appends `.debug` to the package name.
+The main reason for this is to prevent debug builds from polluting crash reports. See [https://issuetracker.google.com/issues/64929012](https://issuetracker.google.com/issues/64929012).
+
+## Signing a release build
+
+To sign a release build, you need the following file.
+
+	{UserHome}/keystore/keystore_bloom_reader.properties
+
+The contents of this file are: 
+
+    storeFile=
+    storePassword=
+    keyAlias=
+    keyPassword=
+
+where `storeFile` is an absolute path to `keystore_bloom_reader.keystore`. This file and the other values must be shared with you by a member of the team who has them.
+
 # Development
 
-## Sample Book
+## Sample book
 
 To update the sample book, *The Moon and the Cap*:
 

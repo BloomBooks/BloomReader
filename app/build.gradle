@@ -69,25 +69,28 @@ android {
             applicationIdSuffix ".alpha"
             versionNameSuffix "-alpha"
             signingConfig signingConfigs.release
-            playStoreTrack = "alpha"
         }
         beta {
             applicationIdSuffix ".beta"
             versionNameSuffix "-beta"
             signingConfig signingConfigs.release
-            playStoreTrack = "beta"
         }
         production {
             // no id or version name suffix; this is the main product.
             signingConfig signingConfigs.release
-            playStoreTrack = "beta"
         }
     }
 
     play {
         productFlavors {
-            all {
-                track = playStoreTrack
+            alpha {
+                track = "alpha"
+            }
+            beta {
+                track = "beta"
+            }
+            production {
+                track = "beta"
             }
         }
         uploadImages = true

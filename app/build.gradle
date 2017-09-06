@@ -14,8 +14,6 @@ if (rootProject.file(fileName).exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
-def playStoreTrack
-
 android {
     compileSdkVersion 23
     buildToolsVersion "25.0.0"
@@ -62,6 +60,10 @@ android {
         }
     }
 
+    productFlavors.all {
+        ext.playStoreTrack = ""
+    }
+
     productFlavors {
         alpha {
             applicationIdSuffix ".alpha"
@@ -83,7 +85,11 @@ android {
     }
 
     play {
-        track = playStoreTrack
+        productFlavors {
+            all {
+                track = playStoreTrack
+            }
+        }
         uploadImages = true
     }
 }

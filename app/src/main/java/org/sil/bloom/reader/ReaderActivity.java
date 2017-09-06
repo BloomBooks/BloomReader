@@ -12,6 +12,9 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.Toast;
 
+import com.segment.analytics.Analytics;
+import com.segment.analytics.Properties;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -45,6 +48,7 @@ public class ReaderActivity extends BaseActivity {
 
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
+    private String mBookName;
 
 
     @Override
@@ -67,9 +71,10 @@ public class ReaderActivity extends BaseActivity {
                 String bookStagingPath = unzipBook(path);
                 String filenameWithExtension = new File(path).getName();
                 // strip off the extension (which we already know exactly)
-                String bookName = filenameWithExtension.substring(0, filenameWithExtension.length() - Book.BOOK_FILE_EXTENSION.length());
+                mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - Book.BOOK_FILE_EXTENSION.length());
+                Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Book opened", new Properties().putValue("title", mBookName));
 
-                new Loader().execute(bookStagingPath, bookName);
+                new Loader().execute(bookStagingPath, mBookName);
             } catch (IOException err) {
 
                 Toast.makeText(this.getApplicationContext(), "There was an error showing that book: " + err, Toast.LENGTH_LONG);
@@ -77,6 +82,20 @@ public class ReaderActivity extends BaseActivity {
         } else {
             new Loader().execute(path, new File(path).getName()); // during stylesheet development, it's nice to be able to work with a folder rather than a zip
         }
+    }
+
+    @Override
+    protected void onPause() {
+        if (isFinishing()) {
+            try {
+                // Provides some rough idea about how much was read.
+                Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Book closed",
+                        new Properties().putValue("title", mBookName).putValue("lastPage", mAdapter.mThisPageIndex));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        super.onPause();
     }
 
     // class to run loadBook in the background (so the UI thread is available to animate the progress bar)

@@ -2,6 +2,15 @@ package org.sil.bloom.reader;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.widget.Toast;
+
+import com.segment.analytics.Analytics;
+
+import org.sil.bloom.reader.models.BookCollection;
+
+import java.io.File;
 
 // Our special Application class which allows us to share information easily between activities.
 // Note that anything stored here should not be expected to persist indefinitely.
@@ -15,6 +24,43 @@ public class BloomReaderApplication extends Application {
     public void onCreate() {
         super.onCreate();
         sApplicationContext = getApplicationContext();
+
+        String writeKey = "FSepBapJtfOi3FfhsEWQjc2Dw0O3ixuY"; // Source BloomReaderTest
+        boolean testMode = BuildConfig.DEBUG
+                || BuildConfig.FLAVOR.equals("alpha")
+                // We'd really like to just ignore case, but no easy way to do it.
+                || new File(BookCollection.getLocalBooksDirectory(), "UseTestAnalytics").exists()
+                || new File(BookCollection.getLocalBooksDirectory(), "useTestAnalytics").exists()
+                || new File(BookCollection.getLocalBooksDirectory(), "usetestanalytics").exists();
+        if (testMode) {
+            Toast.makeText(getApplicationContext(), "Using Test Analytics", Toast.LENGTH_SHORT).show();
+        } else {
+            if (BuildConfig.FLAVOR == "production") {
+                writeKey = "EfisyNbRjBYIHyHZ9njJcs5dWF4zabyH"; // Source BloomReader
+            } else {
+                writeKey = "HRltJ1F4vEVgCypIMeRVnjLAMUTAyOAI"; // Source BloomReaderBeta
+            }
+        }
+
+        // Create an analytics client with the given context and Segment write key.
+        Analytics analytics = new Analytics.Builder(sApplicationContext, writeKey)
+                // Tracks Application Opened, Application Installed, Application Updated
+                .trackApplicationLifecycleEvents()
+                // Tracks each screen opened
+                .recordScreenViews()
+                .build();
+
+        try {
+            String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            String[] numbers = version.split("\\.");
+            analytics.getAnalyticsContext().putValue("majorMinor", numbers[0] + "." + numbers[1]);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+
+        // Set the initialized instance as a globally accessible instance.
+        Analytics.setSingletonInstance(analytics);
     }
 
     public void setBookToHighlight(String bookToHighlight) {

@@ -14,7 +14,7 @@ if (rootProject.file(fileName).exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
-def playStoreTrack = "alpha";
+def playStoreTrack
 
 android {
     compileSdkVersion 23
@@ -67,6 +67,7 @@ android {
             applicationIdSuffix ".alpha"
             versionNameSuffix "-alpha"
             signingConfig signingConfigs.release
+            playStoreTrack = "alpha"
         }
         beta {
             applicationIdSuffix ".beta"

@@ -84,6 +84,27 @@ The contents of this file are:
 
 where `storeFile` is an absolute path to `keystore_bloom_reader.keystore`. This file and the other values must be shared with you by a member of the team who has them.
 
+## TeamCity builds (and deploying to the Play Store)
+
+To publish to the Play Store, we use a gradle plugin: `https://github.com/Triple-T/gradle-play-publisher`. To use the plugin, you must add `serviceAccountJsonFile=` to the `.properties` file described above. Set the value as an absolute path to the `Google Play Android Developer-cf6d1afc73be.json` file which you must obtain from a member of the team.
+
+Gradle tasks which can be called with the plugin include:
+
+- publish{Alpha/Beta/Production}Release
+	- pushes both the apk and listing metadata to the Play Store
+- publishApk{Alpha/Beta/Production}Release
+	- pushes only the apk to the Play Store
+- publishListing{Alpha/Beta/Production}Release
+	- pushes only the listing metadata to the Play Store
+
+TeamCity builds are configured to publish the alpha, beta, and production flavors to three respective apps on the Play Store. 
+
+- The alpha build is a continuous publish to the alpha track of the alpha app.
+- The beta build is a manual publish to the beta track of the beta app.
+- The production build is a manual publish to the beta track of the production app.
+
+The `ba-win10-64-s1-601` (in the Keyman pool) is currently the only agent configured with the `.properties` file described above.
+
 # Development
 
 ## Sample book

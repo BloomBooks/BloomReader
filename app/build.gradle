@@ -60,10 +60,6 @@ android {
         }
     }
 
-    productFlavors.all {
-        ext.playStoreTrack = ""
-    }
-
     productFlavors {
         alpha {
             applicationIdSuffix ".alpha"
@@ -82,17 +78,17 @@ android {
     }
 
     play {
-        productFlavors {
-            alpha {
-                track = "alpha"
-            }
-            beta {
-                track = "beta"
-            }
-            production {
-                track = "beta"
-            }
-        }
+        // This is definitely a hack, but I could find no other way to set the track based on what flavor we actually want to publish.
+        // The problem is, if you try to do something like set a variable in the flavor and then set the track here using that variable,
+        // the last time you set track is always the winner. And it always processes every flavor.
+        // There is the potential someone could call with, e.g. publishAlphaRelease and publishBetaRelease, but I think I would
+        // rather have an attempt to push a beta track on the alpha product (which would often fail because of version numbers, anyway)
+        // than to have an attempt to push an alpha track on the beta or production products. Could probably be argued either way, though.
+        if (project.gradle.startParameter.taskNames.any{tn -> tn.contains("ProductionRelease") || tn.contains("BetaRelease")})
+            track = "beta"
+        else
+            track = "alpha"
+
         uploadImages = true
     }
 }

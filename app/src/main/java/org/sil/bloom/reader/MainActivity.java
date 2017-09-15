@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -176,6 +177,20 @@ public class MainActivity extends BaseActivity
         contextualActionBarMode.finish();
     }
 
+    private void shareBook(){
+        int position = mListView.getCheckedItemPosition();
+        Book book = _bookCollection.get(position);
+        File bookFile = new File(book.path);
+        Uri fileUri = FileProvider.getUriForFile(this, "org.sil.bloom.reader.fileprovider", bookFile);
+
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.setDataAndType(fileUri, getContentResolver().getType(fileUri));
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        startActivity(Intent.createChooser(shareIntent, "Share"));
+    }
+
     public void DeleteBook() {
         int position = mListView.getCheckedItemPosition();
         final Book book = _bookCollection.get(position);
@@ -234,6 +249,9 @@ public class MainActivity extends BaseActivity
                 @Override
                 public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
                     switch(item.getItemId()) {
+                        case R.id.share:
+                            shareBook();
+                            return true;
                         case R.id.delete:
                             DeleteBook();
                             return true;
@@ -302,7 +320,6 @@ public class MainActivity extends BaseActivity
 //        getMenuInflater().inflate(R.menu.main, menu);
 //        return true;
 //    }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

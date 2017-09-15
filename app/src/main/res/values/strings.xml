@@ -4,6 +4,7 @@
     <string name="deleteConfirmation">Delete from device?</string>
     <string name="deleteExplanation">This book will disappear from your device.</string>
     <string name="deleteConfirmButton">Delete now</string>
+    <string name="share">Share</string>
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     <string name="title_activity_book_reader">BookReader</string>

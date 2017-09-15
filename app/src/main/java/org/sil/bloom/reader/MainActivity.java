@@ -175,6 +175,7 @@ public class MainActivity extends BaseActivity
     private void closeContextualActionBar() {
         contextualActionBarMode.finish();
     }
+
     public void DeleteBook() {
         int position = mListView.getCheckedItemPosition();
         final Book book = _bookCollection.get(position);
@@ -198,7 +199,6 @@ public class MainActivity extends BaseActivity
                 })
                 .show();
     }
-
 
     private void SetupCollectionListView(final ListView listView) {
         final AppCompatActivity activity = this;

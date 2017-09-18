@@ -28,6 +28,7 @@
     <string name="looking_for_adds">Looking for book advertisements on WiFi network %1s...</string>
     <string name="no_wifi_connected">The device does not appear to be connected to a WiFi network.</string>
     <string name="bloomReaderUrl"><u>bloomlibrary.org</u></string>
+    <string name="failed_book_import">Failed to import book.</string>
 
     <string name="release_notes">Release Notes</string>
     <string name="about_bloom_reader">About Bloom Reader</string>

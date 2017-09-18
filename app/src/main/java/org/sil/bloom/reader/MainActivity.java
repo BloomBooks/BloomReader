@@ -5,9 +5,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Path;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.provider.OpenableColumns;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -86,11 +89,7 @@ public class MainActivity extends BaseActivity
         // we want copy it to where Bloom books live if it isn't already there,
         // make sure it is in our collection,
         // and then open the reader to view it.
-        Uri data = getIntent().getData();
-        if(data != null && data.getPath().toLowerCase().endsWith(Book.BOOK_FILE_EXTENSION)) {
-            String newpath = _bookCollection.ensureBookIsInCollection(data.getPath());
-            openBook(this, newpath);
-        }
+        importBookIfAttached(getIntent());
 
         // Insert the build version and date into the appropriate control.
         // We have to find it indirectly through the navView's header or it won't be found
@@ -105,6 +104,19 @@ public class MainActivity extends BaseActivity
             versionDate.setText(versionName + ", " + date);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void importBookIfAttached(Intent intent){
+        Uri bookUri = getIntent().getData();
+        if(bookUri == null)
+            return;
+        String newpath = _bookCollection.ensureBookIsInCollection(this, bookUri);
+        if(newpath != null) {
+            openBook(this, newpath);
+        } else{
+            Toast failToast = Toast.makeText(this, R.string.failed_book_import, Toast.LENGTH_LONG);
+            failToast.show();
         }
     }
 

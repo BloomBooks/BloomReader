@@ -2,6 +2,7 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.net.Uri;
 import android.widget.Toast;
 
 import org.apache.commons.io.IOUtils;
@@ -9,6 +10,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -154,14 +156,25 @@ public class IOUtilities {
         }
     }
 
-        public static boolean copyFile(String fromPath, String toPath) {
-            try {
-                InputStream in = new FileInputStream(fromPath);
-                return copyFile(in, toPath);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
+    public static boolean copyFile(String fromPath, String toPath) {
+        try {
+            InputStream in = new FileInputStream(fromPath);
+            return copyFile(in, toPath);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean copyFile(Context context, Uri bookUri, String toPath){
+        try {
+            FileDescriptor fd = context.getContentResolver().openFileDescriptor(bookUri, "r").getFileDescriptor();
+            InputStream in = new FileInputStream(fd);
+            return copyFile(in, toPath);
+        } catch (IOException e){
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // "Seem" because this doesn't actually have a way of knowing the physical location of things.

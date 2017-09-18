@@ -2,7 +2,10 @@ package org.sil.bloom.reader.models;
 
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Environment;
+import android.provider.OpenableColumns;
 import android.util.Log;
 
 import org.sil.bloom.reader.IOUtilities;
@@ -119,23 +122,44 @@ public class BookCollection {
 
     // is this coming from somewhere other than where we store books?
     // then move or copy it in
-    public String ensureBookIsInCollection(String path) {
-        if (path.indexOf(mLocalBooksDirectory.getAbsolutePath()) < 0) {
-            Log.d("BloomReader", "Moving book into Bloom directory");
-            File source = new File(path);
-            String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + source.getName();
-            IOUtilities.copyFile(path, destination);
+    public String ensureBookIsInCollection(Context context, Uri bookUri) {
+        if (bookUri.getPath().indexOf(mLocalBooksDirectory.getAbsolutePath()) >= 0)
+            return bookUri.getPath();
+        String name = nameOfBloomFile(context, bookUri);
+        if(!name.endsWith(Book.BOOK_FILE_EXTENSION))
+            return null; //I'm not 100% sure this won't weed out some legit book files
+        Log.d("BloomReader", "Moving book into Bloom directory");
+        //File source = new File(path);
+        String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + name;
+        boolean copied = IOUtilities.copyFile(context, bookUri, destination);
+        if(copied){
             // We assume that they will be happy with us removing from where ever the file was,
             // so long as it is on the same device (e.g. not coming from an sd card they plan to pass
             // around the room).
-            if(!IOUtilities.seemToBeDifferentVolumes(path,destination)) {
-                source.delete();
+            if(!IOUtilities.seemToBeDifferentVolumes(bookUri.getPath(),destination)) {
+                (new File(bookUri.getPath())).delete();
             }
             // we wouldn't have it in our list that we display yet, so make an entry there
             addBook(destination, true);
             return destination;
-        } else {
-            return path;
+        } else{
+            return null;
         }
+    }
+
+    public String nameOfBloomFile(Context context, Uri bookUri){
+        //Three different apps sent me the file three different ways. There may be other ways
+        //we want to handle that I don't know about.
+        Cursor cursor = context.getContentResolver().query(bookUri, null, null, null, null);
+        if(cursor != null) {
+            cursor.moveToFirst();
+            int displayNameColumn = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+            int filenameColumn = cursor.getColumnIndex("filename");
+            if (displayNameColumn >= 0)
+                return cursor.getString(displayNameColumn);
+            if (filenameColumn >= 0)
+                return cursor.getString(filenameColumn);
+        }
+        return new File(bookUri.getPath()).getName();
     }
 }

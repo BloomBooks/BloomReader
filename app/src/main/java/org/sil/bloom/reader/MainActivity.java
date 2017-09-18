@@ -202,7 +202,7 @@ public class MainActivity extends BaseActivity
         shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
         shareIntent.setType("*/*");
 
-        startActivity(Intent.createChooser(shareIntent, "Share"));
+        startActivity(Intent.createChooser(shareIntent, getResources().getString(R.string.share) + " " + book.name));
     }
 
     public void DeleteBook() {

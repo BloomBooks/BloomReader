@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -185,8 +186,9 @@ public class MainActivity extends BaseActivity
 
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.setDataAndType(fileUri, getContentResolver().getType(fileUri));
         shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+        shareIntent.setType("*/*");
 
         startActivity(Intent.createChooser(shareIntent, "Share"));
     }
@@ -251,6 +253,7 @@ public class MainActivity extends BaseActivity
                     switch(item.getItemId()) {
                         case R.id.share:
                             shareBook();
+                            mode.finish();
                             return true;
                         case R.id.delete:
                             DeleteBook();

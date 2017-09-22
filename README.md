@@ -53,6 +53,12 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
     git clone https://github.com/BloomBooks/BloomReader
     cd BloomReader
     gradlew (or, more likely open project in Android Studio)
+	
+	To use the audio player (and eventually pan and zoom) features requires a JavaScript file,
+	app\src\main\assets\book support files\bloomPagePlayer.js, which is one of the outputs of
+	the BloomPlayer project. On TeamCity this should be configured as a dependency.
+	When building locally you will currently need to build BloomPlayer first and copy the file over,
+	or download the asset from TC if you don't need to change anything in it.
 
 # Signing and Deployment
 

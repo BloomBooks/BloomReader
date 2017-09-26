@@ -186,9 +186,13 @@ public class MainActivity extends BaseActivity
         contextualActionBarMode.finish();
     }
 
-    private void shareBook(){
+    private Book selectedBook(){
         int position = mListView.getCheckedItemPosition();
-        Book book = _bookCollection.get(position);
+        return _bookCollection.get(position);
+    }
+
+    private void shareBook(){
+        Book book = selectedBook();
         File bookFile = new File(book.path);
         Uri fileUri = FileProvider.getUriForFile(this, "org.sil.bloom.reader.fileprovider", bookFile);
 
@@ -202,8 +206,7 @@ public class MainActivity extends BaseActivity
     }
 
     public void DeleteBook() {
-        int position = mListView.getCheckedItemPosition();
-        final Book book = _bookCollection.get(position);
+        final Book book = selectedBook();
 
         AlertDialog x = new AlertDialog.Builder(this).setMessage(getString(R.string.deleteExplanation))
                 .setTitle(getString(R.string.deleteConfirmation))

@@ -8,6 +8,7 @@ import android.os.Environment;
 import android.provider.OpenableColumns;
 import android.util.Log;
 
+import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.IOUtilities;
 import org.sil.bloom.reader.WiFi.NewBookListenerService;
 
@@ -125,11 +126,12 @@ public class BookCollection {
     public String ensureBookIsInCollection(Context context, Uri bookUri) {
         if (bookUri.getPath().indexOf(mLocalBooksDirectory.getAbsolutePath()) >= 0)
             return bookUri.getPath();
-        String name = nameOfBloomFile(context, bookUri);
-        if(!name.endsWith(Book.BOOK_FILE_EXTENSION))
-            return null; //I'm not 100% sure this won't weed out some legit book files
+        BloomFileReader fileReader = new BloomFileReader(context, bookUri);
+        String name = fileReader.bookNameIfValid();
+        if(name == null)
+            return null;
+
         Log.d("BloomReader", "Moving book into Bloom directory");
-        //File source = new File(path);
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + name;
         boolean copied = IOUtilities.copyFile(context, bookUri, destination);
         if(copied){
@@ -145,21 +147,5 @@ public class BookCollection {
         } else{
             return null;
         }
-    }
-
-    public String nameOfBloomFile(Context context, Uri bookUri){
-        //Three different apps sent me the file three different ways. There may be other ways
-        //we want to handle that I don't know about.
-        Cursor cursor = context.getContentResolver().query(bookUri, null, null, null, null);
-        if(cursor != null) {
-            cursor.moveToFirst();
-            int displayNameColumn = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-            int filenameColumn = cursor.getColumnIndex("filename");
-            if (displayNameColumn >= 0)
-                return cursor.getString(displayNameColumn);
-            if (filenameColumn >= 0)
-                return cursor.getString(filenameColumn);
-        }
-        return new File(bookUri.getPath()).getName();
     }
 }

@@ -14,6 +14,7 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -47,9 +48,7 @@ public class IOUtilities {
     }
 
     //from http://stackoverflow.com/a/27050680
-    public static void unzip(File zipFile, File targetDirectory) throws IOException {
-        ZipInputStream zis = new ZipInputStream(
-                new BufferedInputStream(new FileInputStream(zipFile)));
+    public static void unzip(ZipInputStream zis, File targetDirectory) throws IOException {
         try {
             ZipEntry ze;
             int count;
@@ -78,6 +77,19 @@ public class IOUtilities {
         } finally {
             zis.close();
         }
+    }
+
+    public static void unzip(File zipFile, File targetDirectory) throws IOException {
+        ZipInputStream zis = new ZipInputStream(
+                new BufferedInputStream(new FileInputStream(zipFile)));
+        unzip(zis, targetDirectory);
+    }
+
+    public static void unzip(Context context, Uri uri, File targetDirectory) throws IOException {
+        FileDescriptor fd = context.getContentResolver().openFileDescriptor(uri, "r").getFileDescriptor();
+        ZipInputStream zis = new ZipInputStream(
+                new BufferedInputStream(new FileInputStream(fd)));
+        unzip(zis, targetDirectory);
     }
 
     public static byte[] ExtractZipEntry(File input, String entryName) {
@@ -204,5 +216,18 @@ public class IOUtilities {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static File findFirstWithExtension(File directory, final String extension){
+        File[] paths = directory.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File file, String name) {
+                return name.endsWith(extension);
+            }
+        });
+
+        if (paths.length >= 1)
+            return paths[0];
+        return null;
     }
 }

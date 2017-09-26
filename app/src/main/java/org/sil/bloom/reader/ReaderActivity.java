@@ -7,20 +7,23 @@ import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
+import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,6 +33,7 @@ import org.sil.bloom.reader.models.Book;
 public class ReaderActivity extends BaseActivity {
 
     private static final String sAssetsStylesheetLink = "<link rel=\"stylesheet\" href=\"file:///android_asset/book support files/assets.css\" type=\"text/css\"></link>";
+    private static final String sAssetsBloomPlayerScript = "<script type=\"text/javascript\" src=\"file:///android_asset/book support files/bloomPagePlayer.js\"></script>";
     private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)\\b");
     private static final Pattern sHeadElementEndPattern = Pattern.compile("</head");
     // Matches a div with class bloom-page, that is, the start of the main content of one page.
@@ -45,7 +49,14 @@ public class ReaderActivity extends BaseActivity {
 
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
-
+    // Keeps track of whether we switched pages while audio paused. If so, we don't resume
+    // the audio of the previously visible page, but start this page from the beginning.
+    boolean mSwitchedPagesWhilePaused = false;
+    // These variables support a minimum time on each page before we automatically switch to
+    // the next (if the audio on this page is short or non-existent).
+    private long mTimeLastPageSwitch;
+    private Timer mNextPageTimer;
+    private boolean mIsMultiMediaBook;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +90,12 @@ public class ReaderActivity extends BaseActivity {
         }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        WebAppInterface.stopPlaying();
+    }
+
     // class to run loadBook in the background (so the UI thread is available to animate the progress bar)
     private class Loader extends AsyncTask<String, Integer, Long> {
 
@@ -87,6 +104,109 @@ public class ReaderActivity extends BaseActivity {
             loadBook(args[0], args[1]);
             return 0L;
         }
+    }
+
+    // Minimum time a page must be visible before we automatically switch to the next
+    // (if playing audio...usually this only affects pages with no audio)
+    final int MIN_PAGE_SWITCH_MILLIS = 3000;
+
+    // This is the routine that is invoked as a result of a call-back from javascript indicating
+    // that the current page is complete (which in turn typically follows a notifcation from
+    // Java that a sound finished playing...but it is the JS that knows it is the last audio
+    // on the page). Basically it is responsible for flipping to the next page (see goToNextPageNow).
+    // But, we get the notification instantly if there is NO audio on the page.
+    // So we do complicated things with a timer to make sure we don't flip the page too soon...
+    // the minimum delay is specified in MIN_PAGE_SWITCH_MILLIS.
+    public void pageAudioCompleted() {
+        clearNextPageTimer();
+        long millisSinceLastSwitch = System.currentTimeMillis() - mTimeLastPageSwitch;
+        if (millisSinceLastSwitch >= MIN_PAGE_SWITCH_MILLIS) {
+            goToNextPageNow();
+            return;
+        }
+        // If nothing else happens, we will go to next page when the minimum time has elapsed.
+        // Unfortunately, the only way to stop scheduled events in a Java timer is to destroy it.
+        // So that's what clearNextPageTimer() does (e.g., if the user manually changes pages).
+        // Consequently, we have to make a new one each time.
+        synchronized (this) {
+            mNextPageTimer = new Timer();
+            mNextPageTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    goToNextPageNow();
+                }
+            }, MIN_PAGE_SWITCH_MILLIS - millisSinceLastSwitch);
+        }
+    }
+
+    void clearNextPageTimer() {
+        synchronized (this) {
+            if (mNextPageTimer == null)
+                return;
+            mNextPageTimer.cancel();
+            mNextPageTimer = null;
+        }
+    }
+
+    private void goToNextPageNow() {
+        if (!mIsMultiMediaBook)
+            return;
+        clearNextPageTimer();
+        runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                  // In case some race condition has this getting called while we are paused,
+                  // don't let it happen.
+                  if (WebAppInterface.isNarrationPaused()) {
+                      return;
+                  }
+                  int current = mPager.getCurrentItem();
+                  if (current < mAdapter.getCount() - 1) {
+                      mPager.setCurrentItem(current + 1);
+                  }
+              }
+          }
+        );
+    }
+
+    public int indexOfCurrentPage() {
+        return mPager.getCurrentItem();
+    }
+
+    public void narrationPausedChanged() {
+        if (!mIsMultiMediaBook)
+            return; // no media visual effects.
+        final ImageView view = (ImageView)findViewById(R.id.playPause);
+        if (WebAppInterface.isNarrationPaused()) {
+            clearNextPageTimer(); // any pending automatic page flip should be prevented.
+            view.setImageResource(R.drawable.pause_on_circle); // black circle around android.R.drawable.ic_media_pause);
+        } else {
+            view.setImageResource(R.drawable.play_on_circle);
+            if(mSwitchedPagesWhilePaused) {
+                mAdapter.startNarrationForPage(mPager.getCurrentItem());
+            }
+        }
+        mSwitchedPagesWhilePaused = false;
+        final Animation anim = AnimationUtils.loadAnimation(this, R.anim.grow_and_fade);
+        // Make the view hidden when the animation finishes. Otherwise it returns to full visibility.
+        anim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                // required method for abstract class
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                view.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+                // required method for abstract class
+            }
+        });
+        view.setVisibility(View.VISIBLE);
+        view.startAnimation(anim);
     }
 
     @Override
@@ -129,7 +249,11 @@ public class ReaderActivity extends BaseActivity {
         }
         try {
             String html = IOUtilities.FileToString(bookHtmlFile);
-
+            // Enhance: eventually also look for images with animation data.
+            // This is a fairly crude search, we really want the doc to have spans with class
+            // audio-sentence; but I think it's a sufficiently unlikely string to find elsewhere
+            // that this is good enough.
+            mIsMultiMediaBook = html.indexOf("audio-sentence") >= 0;
             // Break the html into everything before the first page, a sequence of pages,
             // and the bit after the last. Note: assumes there is nothing but the </body> after
             // the last page, that is, that pages are the direct children of <body> and
@@ -151,7 +275,9 @@ public class ReaderActivity extends BaseActivity {
                 }
                 int endBody = html.indexOf("</body>", startPage);
                 pages.add(html.substring(startPage, endBody));
-                endFrame = html.substring(endBody, html.length());
+                // We can leave out the bloom player JS altogether if not needed.
+                endFrame = (mIsMultiMediaBook ? sAssetsBloomPlayerScript : "")
+                        + html.substring(endBody, html.length());
             }
 
             mAdapter = new BookPagerAdapter(pages, this, bookHtmlFile, startFrame, endFrame, path);
@@ -166,11 +292,41 @@ public class ReaderActivity extends BaseActivity {
             public void run() {
                 mPager = (ViewPager) findViewById(R.id.book_pager);
                 mPager.setAdapter(mAdapter);
+                final ViewPager.SimpleOnPageChangeListener listener = new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        super.onPageSelected(position);
+                        clearNextPageTimer(); // in case user manually moved to a new page while waiting
+                        mTimeLastPageSwitch = System.currentTimeMillis();
+                        mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
+                        WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
+                        if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
+                            mAdapter.startNarrationForPage(position);
+                        }
+                    }
+                };
+                mPager.addOnPageChangeListener(listener);
                 // Now we're ready to display the book, so hide the 'progress bar' (spinning circle)
                 findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+
+                // A design flaw in the ViewPager is that its onPageSelected method does not
+                // get called for the page that is initially displayed. But we want to do all the
+                // same things to the first page as the others. So we will call it
+                // manually. Using post delays this until everything is initialized and the view
+                // starts to process events. I'm not entirely sure why this should be done;
+                // I copied this from something on StackOverflow. Probably it means that the
+                // first-page call happens in a more similar situation to the change-page calls.
+                // It might work to just call it immediately.
+                mPager.post(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        listener.onPageSelected(mPager.getCurrentItem());
+                    }
+                });
             }
         });
-
     }
 
     private String addAssetsStylesheetLink(String htmlSnippet) {
@@ -219,44 +375,6 @@ public class ReaderActivity extends BaseActivity {
         IOUtilities.copyAssetFolder(this.getApplicationContext().getAssets(), "book support files", bookFolderPath);
     }
 
-    // Wraps access to what would otherwise be two variables of BookPagerAdapter and ensures
-    // all access to them is synchronized. This is necessary because we access them both in the
-    // UI thread and in a background thread used to create the next page view while
-    // displaying the current one.
-    private class NextPageWrapper
-    {
-        WebView mNextPageContentControl;
-        int mNextPageIndex = -1; // flag value indicating we don't have a next page.
-
-        // IF the known next page is the one wanted, return it. Otherwise null.
-        WebView getBrowserIfForPage(int position) {
-            synchronized (this) {
-                if (position == mNextPageIndex) {
-                    return mNextPageContentControl;
-                }
-            }
-            return null;
-        }
-
-        void setNextPage(WebView nextPageControl, int nextPageIndex) {
-            synchronized (this) {
-                if (mNextPageIndex == nextPageIndex)
-                    return; // already have page for this index, no need to replace it.
-                mNextPageContentControl = nextPageControl;
-                mNextPageIndex = nextPageIndex;
-            }
-        }
-
-        // It's reasonable to get this without synchronization as long as there's no
-        // independent access to the page control that assumes another thread hasn't changed
-        // it meanwhile. For example, to decide whether to kick off creation of a next page control.
-        // Please do NOT add a similar method that gives unsynchronized access to the control,
-        // it's asking for trouble to access that without synchronizing access to the page index.
-        int getNextPageIndex() {
-            return mNextPageIndex;
-        }
-    }
-
     // Class that provides individual page views as needed.
     // possible enhancement: can we reuse the same browser, just change which page is visible?
     private class BookPagerAdapter extends PagerAdapter {
@@ -272,11 +390,14 @@ public class ReaderActivity extends BaseActivity {
         ReaderActivity mParent;
         File mBookHtmlPath;
         String mFolderPath;
-        NextPageWrapper mNextPageWrapper = new NextPageWrapper();
-        WebView mLastPageContentControl;
         int mLastPageIndex;
         int mThisPageIndex;
-        WebView mThisPageContentControl;
+        // This map allows us to convert from the page index we get from the ViewPager to
+        // the actual child WebView on that page. There ought to be a way to get the actual
+        // current child control from the ViewPager, but I haven't found it yet.
+        // Note that it only tracks WebViews for items that have been instantiated and not
+        // yet destroyed; this is important to allow others to be garbage-collected.
+        private HashMap<Integer, ScaledWebView> mActiveViews = new HashMap<Integer, ScaledWebView>();
 
         BookPagerAdapter(List<String> htmlPageDivs, ReaderActivity parent, File bookHtmlPath, String htmlBeforeFirstPageDiv, String htmlAfterLastPageDiv, String folderPath) {
             mHtmlPageDivs = htmlPageDivs;
@@ -291,8 +412,9 @@ public class ReaderActivity extends BaseActivity {
 
         @Override
         public void destroyItem(ViewGroup collection, int position, Object view) {
-            Log.d("Reader", "destroyItem");
+            Log.d("Reader", "destroyItem " + position);
             collection.removeView((View) view);
+            mActiveViews.remove(position);
         }
 
 
@@ -304,71 +426,49 @@ public class ReaderActivity extends BaseActivity {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            Log.d("Reader", "instantiateItem");
+            Log.d("Reader", "instantiateItem " + position);
 
-            WebView browser = mNextPageWrapper.getBrowserIfForPage(position); // leaves null if not already created
-            if (browser == null && position == mLastPageIndex) {
-                browser = mLastPageContentControl;
-            } else if (position == mThisPageIndex) {
-                browser = mThisPageContentControl;
-            } else {
-                browser = MakeBrowserForPage(position);
-            }
-            if (mThisPageIndex == position - 1) {
-                // we just advanced; current 'this' page becomes last page
-                mLastPageIndex = mThisPageIndex;
-                mLastPageContentControl = mThisPageContentControl;
-            } else {
-                // We just went back a page. Keep the current page as 'next'.
-                if (mThisPageIndex == position + 1) {
-                    mNextPageWrapper.setNextPage(mThisPageContentControl, mThisPageIndex);
-                }
-            }
-            mThisPageContentControl = browser;
-            mThisPageIndex = position;
+            WebView browser = MakeBrowserForPage(position);
 
-            // If relevant start a process to get the next page the user is likely to want.
-            if ( mNextPageWrapper.getNextPageIndex() != position + 1 && position < mHtmlPageDivs.size() - 1) {
-                new PageMaker().execute(position + 1);
-            }
-
+            assert(container.getChildCount() == 0);
             container.addView(browser);
             return browser;
         }
 
-        // class to manage async execution of work to get new page.
-        // unfortunately it isn't very async since most of the work has to be done on the UI thread.
-        // So at this point we might be better served by just posting the task.
-        // But at some point we may figure out parts of this that can really be done in the
-        // background. Then again, now that we're making pages that don't contain the
-        // whole book with all but one page hidden we might not need to.
-        private class PageMaker extends AsyncTask<Integer, Integer, Long> {
+        // position should in fact be the position of the pager.
+        public ScaledWebView getActiveView(int position) {
+            return mActiveViews.get(position);
+        }
 
-            @Override
-            protected Long doInBackground(Integer[] positions) {
-                final int position = positions[0]; // expect to be passed exactly one
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        WebView browser =  MakeBrowserForPage(position);
-                        BookPagerAdapter.this.mNextPageWrapper.setNextPage(browser, position);
-                    }
-                });
-                return 0L;
+        public void startNarrationForPage(int position) {
+            WebView pageView = mActiveViews.get(position);
+            if (pageView == null) {
+                Log.d("startNarration", "can't find page for " + position);
+                return;
             }
+            WebAppInterface appInterface = (WebAppInterface)pageView.getTag();
+            appInterface.startNarrationWhenDocLoaded();
         }
 
         private WebView MakeBrowserForPage(int position) {
-            WebView browser = null;
+            ScaledWebView browser = null;
             try {
                 browser = new ScaledWebView(mParent);
+                mActiveViews.put(position, browser);
+                if (mIsMultiMediaBook) {
+                    browser.getSettings().setJavaScriptEnabled(true); // allow Javascript for audio player
+                    WebAppInterface appInterface = new WebAppInterface(this.mParent, mBookHtmlPath.getParent(), browser, position);
+                    browser.addJavascriptInterface(appInterface, "Android");
+                    // Save the WebAppInterface in the browser's tag because there's no simple
+                    // way to get from the browser to the object we set as the JS interface.
+                    browser.setTag(appInterface);
+                }
                 String page = mHtmlPageDivs.get(position);
                 // Inserts the layout class we want and forces no border.
                 page = modifyPage(page, "Device16x9Portrait", "border:0 !important");
                 String doc = mHtmlBeforeFirstPageDiv + page + mHtmlAfterLastPageDiv;
 
                 browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc, "text/html", "utf-8", null);
-
             }catch (Exception ex) {
                 Log.e("Reader", "Error loading " + mFolderPath + "  " + ex);
             }
@@ -397,6 +497,28 @@ public class ReaderActivity extends BaseActivity {
             }
 
             super.onSizeChanged(w, h, ow, oh);
+        }
+
+        private long mTimeOfDownActionInTouchEvent;
+
+        // After trying many things this is the only approach that worked so far for detecting
+        // a tap on the window. Things I tried:
+        // - setOnClickListener on the ViewPager. This is known not to work, e.g.,
+        // https://stackoverflow.com/questions/21845779/onclick-on-view-pager-in-android-does-not-work-in-my-code
+        // - the ClickableViewPager described as an answer there (captures move events, but for
+        // no obvious reason does not capture down and up or detect clicks)
+        // - setOnClickListener on the WebView. This is also known not to work.
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                mTimeOfDownActionInTouchEvent = event.getEventTime();
+             } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                if (event.getEventTime() - mTimeOfDownActionInTouchEvent < 600) {
+                    WebAppInterface.playPause(!WebAppInterface.isNarrationPaused());
+                    narrationPausedChanged();
+                }
+            }
+            return super.onTouchEvent(event);
         }
     }
 }

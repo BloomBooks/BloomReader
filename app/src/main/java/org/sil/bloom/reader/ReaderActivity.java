@@ -49,6 +49,8 @@ public class ReaderActivity extends BaseActivity {
 
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
+    private BloomFileReader mFileReader;
+
     // Keeps track of whether we switched pages while audio paused. If so, we don't resume
     // the audio of the previously visible page, but start this page from the beginning.
     boolean mSwitchedPagesWhilePaused = false;
@@ -70,24 +72,7 @@ public class ReaderActivity extends BaseActivity {
 //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
 
-        Intent intent = getIntent();
-        String path = intent.getData().getPath();
-        if (path.toLowerCase().endsWith(Book.BOOK_FILE_EXTENSION)) { //.bloomd files are zip files
-            try {
-
-                String bookStagingPath = unzipBook(path);
-                String filenameWithExtension = new File(path).getName();
-                // strip off the extension (which we already know exactly)
-                String bookName = filenameWithExtension.substring(0, filenameWithExtension.length() - Book.BOOK_FILE_EXTENSION.length());
-
-                new Loader().execute(bookStagingPath, bookName);
-            } catch (IOException err) {
-
-                Toast.makeText(this.getApplicationContext(), "There was an error showing that book: " + err, Toast.LENGTH_LONG);
-            }
-        } else {
-            new Loader().execute(path, new File(path).getName()); // during stylesheet development, it's nice to be able to work with a folder rather than a zip
-        }
+        new Loader().execute();
     }
 
     @Override
@@ -97,11 +82,11 @@ public class ReaderActivity extends BaseActivity {
     }
 
     // class to run loadBook in the background (so the UI thread is available to animate the progress bar)
-    private class Loader extends AsyncTask<String, Integer, Long> {
+    private class Loader extends AsyncTask<Void, Integer, Long> {
 
         @Override
-        protected Long doInBackground(String... args) {
-            loadBook(args[0], args[1]);
+        protected Long doInBackground(Void... v) {
+            loadBook();
             return 0L;
         }
     }
@@ -219,35 +204,11 @@ public class ReaderActivity extends BaseActivity {
         finish();
     }
 
-    private String unzipBook(String zipPath) throws IOException {
-        File bookStagingDir = this.getApplicationContext().getDir("currentbook", Context.MODE_PRIVATE);
-        IOUtilities.emptyDirectory(bookStagingDir);
-        IOUtilities.unzip(new File(zipPath), bookStagingDir);
-        return bookStagingDir.getAbsolutePath();
-    }
-
-
-    private void loadBook(String path, String bookName) {
-
-        File bookFolder = new File(path);
-        File bookHtmlFile = new File(path + File.separator + bookName + ".htm");
-        if (!bookHtmlFile.exists()) {
-            // Maybe the book file was renamed. There should be just one .htm file.
-            File[] paths = bookFolder.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File file, String name) {
-                    return name.endsWith(".htm");
-                }
-            });
-            if (paths.length == 1) {
-                bookHtmlFile = paths[0];
-            }
-            else {
-                // what on earth do we try now??
-                return;
-            }
-        }
+    private void loadBook() {
+        String path = getIntent().getData().getPath();
+        mFileReader = new BloomFileReader(getApplicationContext(), path);
         try {
+            File bookHtmlFile = mFileReader.getHtmlFile();
             String html = IOUtilities.FileToString(bookHtmlFile);
             // Enhance: eventually also look for images with animation data.
             // This is a fairly crude search, we really want the doc to have spans with class
@@ -280,7 +241,7 @@ public class ReaderActivity extends BaseActivity {
                         + html.substring(endBody, html.length());
             }
 
-            mAdapter = new BookPagerAdapter(pages, this, bookHtmlFile, startFrame, endFrame, path);
+            mAdapter = new BookPagerAdapter(pages, this, bookHtmlFile, startFrame, endFrame);
 
         } catch (Exception ex) {
             Log.e("Reader", "Error loading " + path + "  " + ex);
@@ -389,7 +350,7 @@ public class ReaderActivity extends BaseActivity {
         private String mHtmlAfterLastPageDiv;
         ReaderActivity mParent;
         File mBookHtmlPath;
-        String mFolderPath;
+
         int mLastPageIndex;
         int mThisPageIndex;
         // This map allows us to convert from the page index we get from the ViewPager to
@@ -399,13 +360,16 @@ public class ReaderActivity extends BaseActivity {
         // yet destroyed; this is important to allow others to be garbage-collected.
         private HashMap<Integer, ScaledWebView> mActiveViews = new HashMap<Integer, ScaledWebView>();
 
-        BookPagerAdapter(List<String> htmlPageDivs, ReaderActivity parent, File bookHtmlPath, String htmlBeforeFirstPageDiv, String htmlAfterLastPageDiv, String folderPath) {
+        BookPagerAdapter(List<String> htmlPageDivs,
+                         ReaderActivity parent,
+                         File bookHtmlPath,
+                         String htmlBeforeFirstPageDiv,
+                         String htmlAfterLastPageDiv) {
             mHtmlPageDivs = htmlPageDivs;
             mParent = parent;
             mBookHtmlPath = bookHtmlPath;
             mHtmlBeforeFirstPageDiv = htmlBeforeFirstPageDiv;
             mHtmlAfterLastPageDiv = htmlAfterLastPageDiv;
-            mFolderPath = folderPath;
             mLastPageIndex = -1;
             mThisPageIndex = -1;
         }
@@ -470,7 +434,7 @@ public class ReaderActivity extends BaseActivity {
 
                 browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc, "text/html", "utf-8", null);
             }catch (Exception ex) {
-                Log.e("Reader", "Error loading " + mFolderPath + "  " + ex);
+                Log.e("Reader", "Error loading " + mBookHtmlPath.getAbsolutePath() + "  " + ex);
             }
             return browser;
         }

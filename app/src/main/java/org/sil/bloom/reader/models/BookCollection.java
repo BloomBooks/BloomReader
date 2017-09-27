@@ -2,9 +2,13 @@ package org.sil.bloom.reader.models;
 
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Environment;
+import android.provider.OpenableColumns;
 import android.util.Log;
 
+import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.IOUtilities;
 import org.sil.bloom.reader.WiFi.NewBookListenerService;
 
@@ -119,23 +123,29 @@ public class BookCollection {
 
     // is this coming from somewhere other than where we store books?
     // then move or copy it in
-    public String ensureBookIsInCollection(String path) {
-        if (path.indexOf(mLocalBooksDirectory.getAbsolutePath()) < 0) {
-            Log.d("BloomReader", "Moving book into Bloom directory");
-            File source = new File(path);
-            String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + source.getName();
-            IOUtilities.copyFile(path, destination);
+    public String ensureBookIsInCollection(Context context, Uri bookUri) {
+        if (bookUri.getPath().indexOf(mLocalBooksDirectory.getAbsolutePath()) >= 0)
+            return bookUri.getPath();
+        BloomFileReader fileReader = new BloomFileReader(context, bookUri);
+        String name = fileReader.bookNameIfValid();
+        if(name == null)
+            return null;
+
+        Log.d("BloomReader", "Moving book into Bloom directory");
+        String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + name;
+        boolean copied = IOUtilities.copyFile(context, bookUri, destination);
+        if(copied){
             // We assume that they will be happy with us removing from where ever the file was,
             // so long as it is on the same device (e.g. not coming from an sd card they plan to pass
             // around the room).
-            if(!IOUtilities.seemToBeDifferentVolumes(path,destination)) {
-                source.delete();
+            if(!IOUtilities.seemToBeDifferentVolumes(bookUri.getPath(),destination)) {
+                (new File(bookUri.getPath())).delete();
             }
             // we wouldn't have it in our list that we display yet, so make an entry there
             addBook(destination, true);
             return destination;
-        } else {
-            return path;
+        } else{
+            return null;
         }
     }
 }

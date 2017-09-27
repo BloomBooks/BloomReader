@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -84,11 +85,7 @@ public class MainActivity extends BaseActivity
         // we want copy it to where Bloom books live if it isn't already there,
         // make sure it is in our collection,
         // and then open the reader to view it.
-        Uri data = getIntent().getData();
-        if(data != null && data.getPath().toLowerCase().endsWith(Book.BOOK_FILE_EXTENSION)) {
-            String newpath = _bookCollection.ensureBookIsInCollection(data.getPath());
-            openBook(this, newpath);
-        }
+        importBookIfAttached(getIntent());
 
         // Insert the build version and date into the appropriate control.
         // We have to find it indirectly through the navView's header or it won't be found
@@ -103,6 +100,19 @@ public class MainActivity extends BaseActivity
             versionDate.setText(versionName + ", " + date);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void importBookIfAttached(Intent intent){
+        Uri bookUri = getIntent().getData();
+        if(bookUri == null)
+            return;
+        String newpath = _bookCollection.ensureBookIsInCollection(this, bookUri);
+        if(newpath != null) {
+            openBook(this, newpath);
+        } else{
+            Toast failToast = Toast.makeText(this, R.string.failed_book_import, Toast.LENGTH_LONG);
+            failToast.show();
         }
     }
 
@@ -175,9 +185,28 @@ public class MainActivity extends BaseActivity
     private void closeContextualActionBar() {
         contextualActionBarMode.finish();
     }
-    public void DeleteBook() {
+
+    private Book selectedBook(){
         int position = mListView.getCheckedItemPosition();
-        final Book book = _bookCollection.get(position);
+        return _bookCollection.get(position);
+    }
+
+    private void shareBook(){
+        Book book = selectedBook();
+        File bookFile = new File(book.path);
+        Uri fileUri = FileProvider.getUriForFile(this, "org.sil.bloom.reader.fileprovider", bookFile);
+
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+        shareIntent.setType("*/*");
+
+        startActivity(Intent.createChooser(shareIntent, getResources().getString(R.string.share) + " " + book.name));
+    }
+
+    public void DeleteBook() {
+        final Book book = selectedBook();
 
         AlertDialog x = new AlertDialog.Builder(this).setMessage(getString(R.string.deleteExplanation))
                 .setTitle(getString(R.string.deleteConfirmation))
@@ -198,7 +227,6 @@ public class MainActivity extends BaseActivity
                 })
                 .show();
     }
-
 
     private void SetupCollectionListView(final ListView listView) {
         final AppCompatActivity activity = this;
@@ -234,6 +262,10 @@ public class MainActivity extends BaseActivity
                 @Override
                 public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
                     switch(item.getItemId()) {
+                        case R.id.share:
+                            shareBook();
+                            mode.finish();
+                            return true;
                         case R.id.delete:
                             DeleteBook();
                             return true;
@@ -302,7 +334,6 @@ public class MainActivity extends BaseActivity
 //        getMenuInflater().inflate(R.menu.main, menu);
 //        return true;
 //    }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

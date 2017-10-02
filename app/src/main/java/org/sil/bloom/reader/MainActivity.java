@@ -193,16 +193,7 @@ public class MainActivity extends BaseActivity
 
     private void shareBook(){
         Book book = selectedBook();
-        File bookFile = new File(book.path);
-        Uri fileUri = FileProvider.getUriForFile(this, "org.sil.bloom.reader.fileprovider", bookFile);
-
-        Intent shareIntent = new Intent();
-        shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
-        shareIntent.setType("*/*");
-
-        startActivity(Intent.createChooser(shareIntent, getResources().getString(R.string.share) + " " + book.name));
+        new SharingManager(this).shareBook(book);
     }
 
     public void DeleteBook() {

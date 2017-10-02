@@ -86,9 +86,8 @@ public class ShareDialogFragment extends DialogFragment {
 
             btnShareApk.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-//                    SharingManager mgr = new SharingManager(getActivity(), getAppDefinition());
-//                    trackShare(SHARE_TYPE_FILE);
-//                    mgr.shareApkFile();
+                    SharingManager mgr = new SharingManager(getActivity());
+                    mgr.shareApkFile();
                     dismiss();
                 }
             });

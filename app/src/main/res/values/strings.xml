@@ -32,6 +32,7 @@
 
     <string name="share_app_link">Share Link to App on Google Play</string>
     <string name="share_app_apk">Share App Installer File</string>
+    <string name="share_app_via">Share App via</string>
 
     <string name="receive_over_wifi">Receive Books over Wifi</string>
     <string name="share_app">Share App</string>

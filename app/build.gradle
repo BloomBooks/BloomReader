@@ -108,6 +108,7 @@ dependencies {
     compile 'com.android.support:design:23.4.0'
     // Supports the WiFi module's 'server' used to receive books from Bloom desktop
     compile 'cz.msebera.android:httpclient:4.4.1.2'
+    compile 'com.segment.analytics.android:analytics:4.+'
     compile 'commons-io:commons-io:2.4'
     testCompile 'junit:junit:4.12'
 }

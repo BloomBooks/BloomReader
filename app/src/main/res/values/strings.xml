@@ -30,6 +30,9 @@
     <string name="bloomReaderUrl"><u>bloomlibrary.org</u></string>
     <string name="failed_book_import">Failed to import book.</string>
 
+    <string name="share_app_link">Share Link to App on Google Play</string>
+    <string name="share_app_apk">Share App Installer File</string>
+
     <string name="receive_over_wifi">Receive Books over Wifi</string>
     <string name="share_app">Share App</string>
     <string name="release_notes">Release Notes</string>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingBottom="0dp"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
+    android:paddingTop="0dp" >
+
+    <LinearLayout
+        android:id="@+id/insideView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingBottom="4dp"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp"
+        android:paddingTop="4dp" >
+
+        <ImageView
+            android:id="@+id/imgGraphic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:scaleType="fitStart"
+            android:paddingBottom="10dp"
+            android:src="@drawable/app_sharing_grey"/>
+
+        <Button
+            android:id="@+id/btnShareLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:textColor="#FFFFFF"
+            android:background="@color/colorPrimaryDark"
+            android:layout_margin="20px"
+            android:padding="12px"
+            android:text="@string/share_app_link"/>
+
+        <Button
+            android:id="@+id/btnShareApkFile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:textColor="#FFFFFF"
+            android:background="@color/colorPrimaryDark"
+            android:layout_margin="20px"
+            android:padding="12px"
+            android:text="@string/share_app_apk"/>
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:text="Cancel"/>
+
+    </LinearLayout>
+
+</FrameLayout>

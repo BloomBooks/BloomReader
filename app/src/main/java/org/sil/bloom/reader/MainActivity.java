@@ -372,6 +372,10 @@ public class MainActivity extends BaseActivity
                 Intent intent = new Intent(this, GetFromWiFiActivity.class);
                 this.startActivityForResult(intent, DOWNLOAD_BOOKS_REQUEST);
                 break;
+            case R.id.nav_share_app:
+                ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
+                shareDialogFragment.show(getFragmentManager(), "share_dialog");
+                break;
             case R.id.nav_release_notes:
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
                 break;

@@ -30,6 +30,8 @@
     <string name="bloomReaderUrl"><u>bloomlibrary.org</u></string>
     <string name="failed_book_import">Failed to import book.</string>
 
+    <string name="receive_over_wifi">Receive Books over Wifi</string>
+    <string name="share_app">Share App</string>
     <string name="release_notes">Release Notes</string>
     <string name="about_bloom_reader">About Bloom Reader</string>
     <string name="about_bloom">About Bloom</string>

@@ -15,6 +15,10 @@
             android:icon="@drawable/ic_menu_share"
             android:title="Share Books with Bluetooth (not yet)" /-->
         <item
+            android:id="@+id/nav_share_app"
+            android:icon="@drawable/ic_menu_share"
+            android:title="@string/share_app" />
+        <item
             android:id="@+id/nav_release_notes"
             android:title="@string/release_notes" />
         <item

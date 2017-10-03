@@ -65,6 +65,7 @@ public class ShareDialogFragment extends DialogFragment {
 
             btnShareLink.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
+                    new SharingManager(getActivity()).shareLinkToAppOnGooglePlay();
 //                    SharingManager mgr = new SharingManager(getActivity(), getAppDefinition());
 //                    trackShare(SHARE_TYPE_LINK);
 //                    mgr.shareLinkToAppOnGooglePlay();

@@ -2,8 +2,11 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
@@ -152,25 +155,25 @@ public class SharingManager {
     /**
      * Shares link to app on Google Play
      */
-//    public void shareLinkToAppOnGooglePlay() {
-//        try {
-//            Intent intent = new Intent(Intent.ACTION_SEND);
-//            intent.setType("text/plain");
-//
-//            intent.putExtra(Intent.EXTRA_SUBJECT, mApp.getAppName());
-//
-//            // "I can recommend this app:"
-//            String sAux = "\n" + getString(CommonStringId.SHARE_APP_LINK_RECOMMEND) + "\n\n" +
-//                    "https://play.google.com/store/apps/details?id=" + mApp.getPackageName() + " \n\n";
-//            intent.putExtra(Intent.EXTRA_TEXT, sAux);
-//
-//            Intent chooser = Intent.createChooser(intent, getString(CommonStringId.SHARE_APP_LINK_VIA)); // "Share Link via"
-//            mContext.startActivity(chooser);
-//        }
-//        catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
+    public void shareLinkToAppOnGooglePlay() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setType("text/plain");
+
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Bloom Reader");
+
+            // "I can recommend this app:"
+            String sAux = "\n" + mContext.getString(R.string.recommend_app) + "\n\n" +
+                    "https://play.google.com/store/apps/details?id=" + mContext.getPackageName() + " \n\n";
+            intent.putExtra(Intent.EXTRA_TEXT, sAux);
+
+            Intent chooser = Intent.createChooser(intent, mContext.getString(R.string.share_app_via)); // "Share Link via"
+            mContext.startActivity(chooser);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 //    private String getString(final String id) {
 //        return StringManager.INSTANCE.getString(id);

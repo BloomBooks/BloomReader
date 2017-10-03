@@ -26,14 +26,15 @@
             android:layout_gravity="center_horizontal"
             android:scaleType="fitStart"
             android:paddingBottom="10dp"
-            android:src="@drawable/app_sharing_grey"/>
+            android:src="@drawable/app_sharing_grey"
+            android:adjustViewBounds="true"/>
 
         <Button
             android:id="@+id/btnShareLink"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:textColor="#FFFFFF"
+            android:textColor="@android:color/white"
             android:background="@color/colorPrimaryDark"
             android:layout_margin="20px"
             android:padding="12px"
@@ -44,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:textColor="#FFFFFF"
+            android:textColor="@android:color/white"
             android:background="@color/colorPrimaryDark"
             android:layout_margin="20px"
             android:padding="12px"
@@ -56,7 +57,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             style="@style/Widget.AppCompat.Button.Borderless"
-            android:text="Cancel"/>
+            android:text="@string/cancel"/>
 
     </LinearLayout>
 

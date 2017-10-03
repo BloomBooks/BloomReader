@@ -16,9 +16,10 @@ import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.segment.analytics.Analytics;
+import com.segment.analytics.Properties;
+
 import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.sil.bloom.reader.models.Book;
 
 public class ReaderActivity extends BaseActivity {
 
+    private static final String TAG = "ReaderActivity";// https://developer.android.com/reference/android/util/Log.html
     private static final String sAssetsStylesheetLink = "<link rel=\"stylesheet\" href=\"file:///android_asset/book support files/assets.css\" type=\"text/css\"></link>";
     private static final String sAssetsBloomPlayerScript = "<script type=\"text/javascript\" src=\"file:///android_asset/book support files/bloomPagePlayer.js\"></script>";
     private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)\\b");
@@ -49,6 +51,7 @@ public class ReaderActivity extends BaseActivity {
 
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
+    private String mBookName ="?";
     private BloomFileReader mFileReader;
 
     // Keeps track of whether we switched pages while audio paused. If so, we don't resume
@@ -77,8 +80,31 @@ public class ReaderActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
+        if (isFinishing()) {
+           ReportPagesRead();
+        }
         super.onPause();
         WebAppInterface.stopPlaying();
+    }
+
+    private void ReportPagesRead()
+    {
+        try {
+            // TODO: I think it will be too complicated to analyze the last-page read.
+
+            // TODO: let's differentiate between pages read and audio book pages read: (BL-5082)
+//            Properties p = new Properties();
+//            p.putValue("title", mBookName);
+//            p.putValue("audioPages", mAdapter.mAudioPagesPlayed);
+//            p.putValue("nonAudioPages", mAdapter.mNonAudioPagesShown);
+//            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Pages Read", p);
+
+            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Pages Read",
+                    new Properties().putValue("title", mBookName).putValue("lastPage", mAdapter.mThisPageIndex));
+        } catch (Exception e) {
+            Log.e(TAG, "Pages Read", e);
+            BloomReaderApplication.VerboseToast("Error reporting Pages Read");
+        }
     }
 
     // class to run loadBook in the background (so the UI thread is available to animate the progress bar)
@@ -204,8 +230,22 @@ public class ReaderActivity extends BaseActivity {
         finish();
     }
 
+    private void reportLoadBook(String path)
+    {
+        try {
+            String filenameWithExtension = new File(path).getName();
+            // this mBookName is used by subsequent analytics reports
+            mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - Book.BOOK_FILE_EXTENSION.length());
+            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Book opened", new Properties().putValue("title", mBookName));
+        } catch (Exception error) {
+            Log.e("Reader", "Error reporting load of " + path + ".  "+ error);
+            BloomReaderApplication.VerboseToast("Error reporting load of "+path);
+        }
+    }
+
     private void loadBook() {
         String path = getIntent().getData().getPath();
+        reportLoadBook(path);
         mFileReader = new BloomFileReader(getApplicationContext(), path);
         try {
             File bookHtmlFile = mFileReader.getHtmlFile();
@@ -288,6 +328,7 @@ public class ReaderActivity extends BaseActivity {
                 });
             }
         });
+
     }
 
     private String addAssetsStylesheetLink(String htmlSnippet) {

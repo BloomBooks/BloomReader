@@ -44,16 +44,14 @@ public class SharingManager {
             String uri = mContext.getApplicationInfo().publicSourceDir;
 //            // Copy APK and rename it to the original APK filename
 //            // (The Android system often renames it to base.apk)
-            String destFolder = Environment.getExternalStorageDirectory().getAbsolutePath();
-            String destFilename = destFolder + "/" + "BloomReader.apk";
 
             File srcApk = new File(uri);
-            File destApk = new File(destFilename);
+            File destApk = new File(sharedApkPath());
 
             if (destApk.exists() && destApk.isFile()) {
                 // Delete destination file if it exists already
                 destApk.delete();
-                destApk = new File(destFilename);
+                destApk = new File(sharedApkPath());
             }
             FileUtils.copyFile(srcApk, destApk);
 
@@ -136,6 +134,19 @@ public class SharingManager {
         shareIntent.setType(fileType);
 
         mContext.startActivity(Intent.createChooser(shareIntent, dialogTitle));
+    }
+
+    public static void fileCleanup(){
+        File sharedApkFile = new File(sharedApkPath());
+        long yesterday = System.currentTimeMillis() - (1000 * 60 * 60 * 24);
+        if(sharedApkFile.exists() && sharedApkFile.lastModified() < yesterday)
+            sharedApkFile.delete();
+    }
+
+    private static String sharedApkPath(){
+        String sharedApkPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+        sharedApkPath += File.separator + "BloomReader.apk";
+        return sharedApkPath;
     }
 
     /**

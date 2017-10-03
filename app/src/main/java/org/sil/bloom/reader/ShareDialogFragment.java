@@ -1,11 +1,7 @@
 package org.sil.bloom.reader;
 
 import android.app.DialogFragment;
-import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v4.content.res.ResourcesCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;

@@ -48,7 +48,7 @@ public class SharingManager {
         }
 
         catch(IOException e){
-            Toast failToast = Toast.makeText(mContext, "Failed to share apk file.", Toast.LENGTH_LONG);
+            Toast failToast = Toast.makeText(mContext, mContext.getString(R.string.failed_to_share_apk), Toast.LENGTH_LONG);
             failToast.show();
         }
     }

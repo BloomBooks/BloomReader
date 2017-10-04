@@ -26,7 +26,7 @@
             android:layout_gravity="center_horizontal"
             android:scaleType="fitStart"
             android:paddingBottom="10dp"
-            android:src="@drawable/app_sharing_grey"
+            android:src="@drawable/app_sharing_red"
             android:adjustViewBounds="true"/>
 
         <Button

@@ -122,13 +122,18 @@ public class ReaderActivity extends BaseActivity {
     final int MIN_PAGE_SWITCH_MILLIS = 3000;
 
     // This is the routine that is invoked as a result of a call-back from javascript indicating
-    // that the current page is complete (which in turn typically follows a notifcation from
+    // that the current page is complete (which in turn typically follows a notification from
     // Java that a sound finished playing...but it is the JS that knows it is the last audio
     // on the page). Basically it is responsible for flipping to the next page (see goToNextPageNow).
     // But, we get the notification instantly if there is NO audio on the page.
     // So we do complicated things with a timer to make sure we don't flip the page too soon...
     // the minimum delay is specified in MIN_PAGE_SWITCH_MILLIS.
     public void pageAudioCompleted() {
+
+        // For now, we have decided we want to force the user to initiate page turning always (BL-5067).
+        if (true)
+            return;
+
         clearNextPageTimer();
         long millisSinceLastSwitch = System.currentTimeMillis() - mTimeLastPageSwitch;
         if (millisSinceLastSwitch >= MIN_PAGE_SWITCH_MILLIS) {

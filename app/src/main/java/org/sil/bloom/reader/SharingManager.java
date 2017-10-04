@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.support.v4.content.FileProvider;
+import android.util.Log;
 import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
@@ -46,8 +47,8 @@ public class SharingManager {
 
             shareFile(Uri.fromFile(apkFile), type, mContext.getString(R.string.share_app_via));
         }
-
         catch(IOException e){
+            Log.e("BlReader/SharingManager", e.toString());
             Toast failToast = Toast.makeText(mContext, mContext.getString(R.string.failed_to_share_apk), Toast.LENGTH_LONG);
             failToast.show();
         }
@@ -61,7 +62,7 @@ public class SharingManager {
             intent.putExtra(Intent.EXTRA_SUBJECT, "Bloom Reader");
 
             String sAux = "\n" + mContext.getString(R.string.recommend_app) + "\n\n" +
-                    "https://play.google.com/store/apps/details?id=" + mContext.getPackageName() + " \n\n";
+                    "https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&amp;c=apps" + " \n\n";
             intent.putExtra(Intent.EXTRA_TEXT, sAux);
 
             Intent chooser = Intent.createChooser(intent, mContext.getString(R.string.share_app_via));

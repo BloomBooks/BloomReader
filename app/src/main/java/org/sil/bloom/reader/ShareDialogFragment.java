@@ -13,6 +13,8 @@ import android.widget.Button;
  */
 
 public class ShareDialogFragment extends DialogFragment {
+    public static final String SHARE_DIALOG_FRAGMENT_TAG = "share_dialog";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

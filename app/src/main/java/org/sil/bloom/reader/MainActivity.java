@@ -367,7 +367,7 @@ public class MainActivity extends BaseActivity
                 break;
             case R.id.nav_share_app:
                 ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
-                shareDialogFragment.show(getFragmentManager(), "share_dialog");
+                shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
                 break;
             case R.id.nav_release_notes:
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);

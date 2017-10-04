@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.FileProvider;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -133,6 +132,9 @@ public class MainActivity extends BaseActivity
             // We could have gotten a new book while the app was not in the foreground
             updateDisplay();
         }
+
+        //Periodic cleanup
+        SharingManager.fileCleanup();
     }
 
     @Override
@@ -193,16 +195,7 @@ public class MainActivity extends BaseActivity
 
     private void shareBook(){
         Book book = selectedBook();
-        File bookFile = new File(book.path);
-        Uri fileUri = FileProvider.getUriForFile(this, "org.sil.bloom.reader.fileprovider", bookFile);
-
-        Intent shareIntent = new Intent();
-        shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
-        shareIntent.setType("*/*");
-
-        startActivity(Intent.createChooser(shareIntent, getResources().getString(R.string.share) + " " + book.name));
+        new SharingManager(this).shareBook(book);
     }
 
     public void DeleteBook() {
@@ -371,6 +364,10 @@ public class MainActivity extends BaseActivity
             case R.id.nav_get_wifi:
                 Intent intent = new Intent(this, GetFromWiFiActivity.class);
                 this.startActivityForResult(intent, DOWNLOAD_BOOKS_REQUEST);
+                break;
+            case R.id.nav_share_app:
+                ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
+                shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
                 break;
             case R.id.nav_release_notes:
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);

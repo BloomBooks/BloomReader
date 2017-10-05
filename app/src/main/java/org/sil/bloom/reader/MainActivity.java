@@ -393,7 +393,7 @@ public class MainActivity extends BaseActivity
         final SpannableString msg = new SpannableString(IOUtilities.InputStreamToString(getResources().openRawResource(fileResourceId)));
         Linkify.addLinks(msg, Linkify.ALL);
 
-        final AlertDialog d = new AlertDialog.Builder(this)
+        final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
                 .setPositiveButton(android.R.string.ok, null)
                 .setTitle(title)
                 .setMessage(msg)

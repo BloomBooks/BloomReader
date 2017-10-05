@@ -50,8 +50,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="right"
         android:background="#fff"
-        android:textColor="#000"
-        android:text="@string/ok"/>
+        android:textColor="@color/colorBloomRed"
+        android:text="@string/ok"
+        style="?android:attr/borderlessButtonStyle"/>
 
 
 </android.widget.LinearLayout>

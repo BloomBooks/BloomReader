@@ -39,4 +39,13 @@
         <item name="windowFixedWidthMinor">95%</item>
     </style>
 
+    <style name="SimpleDialogTheme" parent="Theme.AppCompat.Light.Dialog">
+        <item name="buttonBarPositiveButtonStyle">@style/PositiveButtonStyle</item>
+        <item name="android:textColorLink">@color/colorBloomRed</item>
+    </style>
+
+    <style name="PositiveButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/colorBloomRed</item>
+    </style>
+
 </resources>

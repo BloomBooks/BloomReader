@@ -9,12 +9,12 @@ import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
@@ -509,7 +509,8 @@ public class ReaderActivity extends BaseActivity {
             super.onSizeChanged(w, h, ow, oh);
         }
 
-        private long mTimeOfDownActionInTouchEvent;
+        private float mXLocationForActionDown;
+        private float mYLocationForActionDown;
 
         // After trying many things this is the only approach that worked so far for detecting
         // a tap on the window. Things I tried:
@@ -521,9 +522,17 @@ public class ReaderActivity extends BaseActivity {
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                mTimeOfDownActionInTouchEvent = event.getEventTime();
-             } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                if (event.getEventTime() - mTimeOfDownActionInTouchEvent < 600) {
+                mXLocationForActionDown = event.getX();
+                mYLocationForActionDown = event.getY();
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                ViewConfiguration viewConfiguration = ViewConfiguration.get(getContext());
+                if (Math.abs(event.getX() - mXLocationForActionDown) > viewConfiguration.getScaledTouchSlop() ||
+                        Math.abs(event.getY() - mYLocationForActionDown) > viewConfiguration.getScaledTouchSlop()) {
+                    // We don't want to register a touch if the user is swiping.
+                    // Without this, we had some bizarre behavior wherein the user could swipe slightly more
+                    // vertical distance than horizontal and cause a play/pause event.
+                    // See https://issues.bloomlibrary.org/youtrack/issue/BL-5068.
+                } else if (event.getEventTime() - event.getDownTime() < viewConfiguration.getJumpTapTimeout()) {
                     WebAppInterface.playPause(!WebAppInterface.isNarrationPaused());
                     narrationPausedChanged();
                 }

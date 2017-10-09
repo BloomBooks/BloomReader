@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 /**
  * Created by rick on 10/2/17.
@@ -26,8 +27,8 @@ public class ShareDialogFragment extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_share, container, false);
 
-        Button btnShareLink = (Button) view.findViewById(R.id.btnShareLink);
-        btnShareLink.setOnClickListener(new View.OnClickListener() {
+        TextView linkShareLink = (TextView) view.findViewById(R.id.linkShareLink);
+        linkShareLink.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 new SharingManager(getActivity()).shareLinkToAppOnGooglePlay();
                 dismiss();
@@ -48,7 +49,6 @@ public class ShareDialogFragment extends DialogFragment {
                 dismiss();
             }
         });
-        btnCancel.setTextColor(getResources().getColor(R.color.accent_material_light));
 
         getDialog().setCanceledOnTouchOutside(isCanceledOnTouchOutside());
 

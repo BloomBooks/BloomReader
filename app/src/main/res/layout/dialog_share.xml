@@ -21,41 +21,72 @@
 
         <ImageView
             android:id="@+id/imgGraphic"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:scaleType="fitStart"
-            android:paddingBottom="10dp"
-            android:src="@drawable/app_sharing_red"
-            android:adjustViewBounds="true"/>
-
-        <Button
-            android:id="@+id/btnShareLink"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:textColor="@android:color/white"
-            android:background="@color/colorPrimaryDark"
-            android:layout_margin="20px"
+            android:scaleType="fitStart"
+            android:paddingTop="10dp"
+            android:paddingBottom="20dp"
+            android:src="@drawable/share_apk"
+            android:adjustViewBounds="true"
+            android:gravity="center"/>
+
+        <TextView
+            android:id="@+id/txtShareAppWithFriend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="50px"
             android:padding="12px"
-            android:text="@string/share_app_link"/>
+            android:text="@string/share_app_with_friend"
+            android:textColor="@color/colorPrimary"
+            android:gravity="center"/>
 
         <Button
             android:id="@+id/btnShareApkFile"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:textColor="@android:color/white"
-            android:background="@color/colorPrimaryDark"
-            android:layout_margin="20px"
             android:padding="12px"
-            android:text="@string/share_app_apk"/>
+            android:layout_marginBottom="70dp"
+            android:text="@string/share"
+            android:background="@drawable/main_button"
+            style="@style/MainButton"/>
+
+        <TextView
+            android:id="@+id/txtOr"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="@string/or"
+            android:textColor="@color/colorPrimary" />
+
+        <TextView
+            android:id="@+id/linkShareLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="50px"
+            android:padding="12px"
+            android:text="@string/share_app_link"
+            android:textColor="@color/colorBloomRed"
+            android:onClick="onClick"
+            android:clickable="true"
+            android:gravity="center"/>
 
         <Button
             android:id="@+id/btnCancel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
+            android:textColor="@color/colorBloomRed"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:text="@string/cancel"/>
 

@@ -65,7 +65,7 @@ public class SharingManager {
                     "https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&amp;c=apps" + " \n\n";
             intent.putExtra(Intent.EXTRA_TEXT, sAux);
 
-            Intent chooser = Intent.createChooser(intent, mContext.getString(R.string.share_app_via));
+            Intent chooser = Intent.createChooser(intent, mContext.getString(R.string.share_link_via));
             mContext.startActivity(chooser);
         }
         catch (Exception e) {

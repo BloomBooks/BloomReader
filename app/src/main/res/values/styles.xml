@@ -6,6 +6,7 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textAllCaps">false</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -46,6 +47,13 @@
 
     <style name="PositiveButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
         <item name="android:textColor">@color/colorBloomRed</item>
+    </style>
+
+    <style name="MainButton" parent="Widget.AppCompat.Button">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:radius">10dp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:colorBackground">@color/colorBloomRed</item>
     </style>
 
 </resources>

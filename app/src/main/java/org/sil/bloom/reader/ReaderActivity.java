@@ -53,6 +53,8 @@ public class ReaderActivity extends BaseActivity {
     private BookPagerAdapter mAdapter;
     private String mBookName ="?";
     private BloomFileReader mFileReader;
+    private int mAudioPagesPlayed = 0;
+    private int mNonAudioPagesShown = 0;
 
     // Keeps track of whether we switched pages while audio paused. If so, we don't resume
     // the audio of the previously visible page, but start this page from the beginning.
@@ -90,17 +92,12 @@ public class ReaderActivity extends BaseActivity {
     private void ReportPagesRead()
     {
         try {
-            // TODO: I think it will be too complicated to analyze the last-page read.
-
-            // TODO: let's differentiate between pages read and audio book pages read: (BL-5082)
-//            Properties p = new Properties();
-//            p.putValue("title", mBookName);
-//            p.putValue("audioPages", mAdapter.mAudioPagesPlayed);
-//            p.putValue("nonAudioPages", mAdapter.mNonAudioPagesShown);
-//            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Pages Read", p);
-
-            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Pages Read",
-                    new Properties().putValue("title", mBookName).putValue("lastPage", mAdapter.mThisPageIndex));
+            // let's differentiate between pages read and audio book pages read: (BL-5082)
+            Properties p = new Properties();
+            p.putValue("title", mBookName);
+            p.putValue("audioPages", mAudioPagesPlayed);
+            p.putValue("nonAudioPages", mNonAudioPagesShown);
+            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Pages Read", p);
         } catch (Exception e) {
             Log.e(TAG, "Pages Read", e);
             BloomReaderApplication.VerboseToast("Error reporting Pages Read");
@@ -308,6 +305,13 @@ public class ReaderActivity extends BaseActivity {
                         WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
                         if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
                             mAdapter.startNarrationForPage(position);
+                            // Note: this isn't super-reliable. We tried to narrate this page, but it may not
+                            // have any audio. All we know is that it's part of a book which has
+                            // audio (or animation) somewhere, and we tried to play any audio it has.
+                            mAudioPagesPlayed++;
+                        }
+                        else {
+                            mNonAudioPagesShown++;
                         }
                     }
                 };

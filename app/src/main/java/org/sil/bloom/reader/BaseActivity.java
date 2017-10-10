@@ -4,14 +4,12 @@ import android.content.Context;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
-import java.io.IOException;
 
 // A base abstract class which every activity should extend
 public abstract class BaseActivity extends AppCompatActivity {

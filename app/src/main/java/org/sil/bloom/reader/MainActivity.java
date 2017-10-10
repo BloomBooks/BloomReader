@@ -32,6 +32,7 @@ import android.widget.Toast;
 import org.sil.bloom.reader.WiFi.GetFromWiFiActivity;
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
+import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
 import java.util.Date;
@@ -59,46 +60,51 @@ public class MainActivity extends BaseActivity
             return;
         }
 
-        _bookCollection.init(this.getApplicationContext());
-
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-        mListView = (ListView) findViewById(R.id.book_list2);
-        SetupCollectionListView(mListView);
-
-        // If we were started by some external process and given a path to a book file,
-        // we want copy it to where Bloom books live if it isn't already there,
-        // make sure it is in our collection,
-        // and then open the reader to view it.
-        importBookIfAttached(getIntent());
-
-        // Insert the build version and date into the appropriate control.
-        // We have to find it indirectly through the navView's header or it won't be found
-        // this early in the view construction.
-        NavigationView navView = (NavigationView)findViewById(R.id.nav_view);
-        TextView versionDate = (TextView)navView.getHeaderView(0).findViewById(R.id.versionDate);
         try {
-            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-            Date buildDate = new Date(BuildConfig.TIMESTAMP);
-            DateFormat df = new DateFormat();
-            String date = df.format("dd MMM yyyy", buildDate).toString();
-            versionDate.setText(versionName + ", " + date);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
+            _bookCollection.init(this.getApplicationContext());
+
+
+            Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+            setSupportActionBar(toolbar);
+
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+
+            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                    this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+            drawer.addDrawerListener(toggle);
+            toggle.syncState();
+
+            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+            navigationView.setNavigationItemSelectedListener(this);
+
+            mListView = (ListView) findViewById(R.id.book_list2);
+            SetupCollectionListView(mListView);
+
+            // If we were started by some external process and given a path to a book file,
+            // we want copy it to where Bloom books live if it isn't already there,
+            // make sure it is in our collection,
+            // and then open the reader to view it.
+            importBookIfAttached(getIntent());
+
+            // Insert the build version and date into the appropriate control.
+            // We have to find it indirectly through the navView's header or it won't be found
+            // this early in the view construction.
+            NavigationView navView = (NavigationView)findViewById(R.id.nav_view);
+            TextView versionDate = (TextView)navView.getHeaderView(0).findViewById(R.id.versionDate);
+            try {
+                String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+                Date buildDate = new Date(BuildConfig.TIMESTAMP);
+                DateFormat df = new DateFormat();
+                String date = df.format("dd MMM yyyy", buildDate).toString();
+                versionDate.setText(versionName + ", " + date);
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        catch(ExtStorageUnavailableException e){
+            externalStorageUnavailable(e);
         }
     }
 
@@ -118,23 +124,35 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
-        // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
-        // book to our directory using MTP.
-        startObserving();
-        // And right now we will trigger the notification if anyone or anything has changed a
-        // book in our folder while we were paused.
-        notifyIfNewFileChanges();
-        String bookToHighlight = ((BloomReaderApplication) this.getApplication()).getBookToHighlight();
-        if (bookToHighlight != null) {
-            updateForNewBook(bookToHighlight);
-            ((BloomReaderApplication) this.getApplication()).setBookToHighlight(null);
-        } else {
-            // We could have gotten a new book while the app was not in the foreground
-            updateDisplay();
-        }
+        try {
+            // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
+            // book to our directory using MTP.
+            startObserving();
+            // And right now we will trigger the notification if anyone or anything has changed a
+            // book in our folder while we were paused.
+            String booksDir = BookCollection.getLocalBooksDirectory().getPath();
+            notifyIfNewFileChanges(booksDir);
+            String bookToHighlight = ((BloomReaderApplication) this.getApplication()).getBookToHighlight();
+            if (bookToHighlight != null) {
+                updateForNewBook(bookToHighlight);
+                ((BloomReaderApplication) this.getApplication()).setBookToHighlight(null);
+            } else {
+                // We could have gotten a new book while the app was not in the foreground
+                updateDisplay();
+            }
 
-        //Periodic cleanup
-        SharingManager.fileCleanup();
+            //Periodic cleanup
+            SharingManager.fileCleanup();
+        }
+        catch (ExtStorageUnavailableException e){
+            externalStorageUnavailable(e);
+        }
+    }
+
+    private void externalStorageUnavailable(ExtStorageUnavailableException e){
+        Toast failToast = Toast.makeText(this, e.messageForUser(), Toast.LENGTH_LONG);
+        failToast.show();
+        finish();
     }
 
     @Override

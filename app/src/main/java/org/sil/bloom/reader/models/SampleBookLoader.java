@@ -17,8 +17,6 @@ class SampleBookLoader {
         //IOUtilities.copyAssetFolder(context.getAssets(), "sample books", directory.getAbsolutePath());
 
         // put a sample book in the public Bloom location
-        directory = Environment.getExternalStoragePublicDirectory("Bloom");
-        directory.mkdirs();
         if(!directory.exists()) {
             showError(context, "Could not create " + directory.getAbsolutePath());
         }

@@ -150,7 +150,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void externalStorageUnavailable(ExtStorageUnavailableException e){
-        Toast failToast = Toast.makeText(this, e.messageForUser(), Toast.LENGTH_LONG);
+        Toast failToast = Toast.makeText(this, getString(R.string.external_storage_unavailable), Toast.LENGTH_LONG);
         failToast.show();
         finish();
     }

@@ -7,7 +7,4 @@ import java.io.IOException;
  */
 
 public class ExtStorageUnavailableException extends IOException {
-    public String messageForUser(){
-        return "Unable to access file storage. Is the SD card missing?";
-    }
 }

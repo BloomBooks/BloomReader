@@ -29,6 +29,7 @@
     <string name="no_wifi_connected">The device does not appear to be connected to a WiFi network.</string>
     <string name="bloomReaderUrl"><u>bloomlibrary.org</u></string>
     <string name="failed_book_import">Failed to import book.</string>
+    <string name="external_storage_unavailable">Unable to access file storage. Is the SD card missing?</string>
 
     <string name="share_app_link">Share Link to App on Google Play</string>
     <string name="share_app_apk">Share App Installer File</string>

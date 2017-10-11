@@ -19,7 +19,7 @@ import java.io.File;
 // without creating new activity objects. So, null checks are always necessary.
 public class BloomReaderApplication extends Application {
     public static final String SHARED_PREFERENCES_TAG = "org.sil.bloom.reader.prefs";
-    public static final String FIRST_RUN = "firstRun";
+    public static final String LAST_RUN_BUILD_CODE = "lastRunBuildCode";
 
     private String bookToHighlight;
     private static Context sApplicationContext;

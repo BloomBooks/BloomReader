@@ -8,6 +8,7 @@ import android.util.Log;
 
 import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.BloomReaderApplication;
+import org.sil.bloom.reader.BuildConfig;
 import org.sil.bloom.reader.IOUtilities;
 
 import java.io.File;
@@ -57,9 +58,12 @@ public class BookCollection {
     public void init(Context context) throws ExtStorageUnavailableException {
         mLocalBooksDirectory = getLocalBooksDirectory();
         SharedPreferences values = context.getSharedPreferences(BloomReaderApplication.SHARED_PREFERENCES_TAG, 0);
-        if(values.getBoolean(BloomReaderApplication.FIRST_RUN, true)){
+        int buildCode = BuildConfig.VERSION_CODE;
+        if(buildCode > values.getInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, 0)){
             SampleBookLoader.CopySampleBooksFromAssetsIntoBooksFolder(context, mLocalBooksDirectory);
-            values.edit().putBoolean(BloomReaderApplication.FIRST_RUN, false);
+            SharedPreferences.Editor valuesEditor = values.edit();
+            valuesEditor.putInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, buildCode);
+            valuesEditor.commit();
         }
         LoadFromDirectory(mLocalBooksDirectory);
     }

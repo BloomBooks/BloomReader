@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 
 import org.sil.bloom.reader.models.Book;
 import org.sil.bloom.reader.models.BookCollection;
+import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
 
@@ -20,7 +21,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     abstract protected void onNewOrUpdatedBook(String fullPath);
 
     // Call in onResume() if subclass wants notifications.
-    protected void startObserving() {
+    protected void startObserving() throws ExtStorageUnavailableException{
         createFileObserver();
     }
 
@@ -47,7 +48,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     // notification.
     // There should be no contention for access to something.modified, because BloomReader never
     // accesses or locks it; all it does is check its modify time.
-    private void createFileObserver() {
+    private void createFileObserver() throws ExtStorageUnavailableException {
         final String pathToWatch = BookCollection.getLocalBooksDirectory().getPath();
         String [] mostRecent = new String[1];
         if (mHandler == null) {
@@ -74,7 +75,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                         return; // presume nothing changed
                     mostRecentMarkerFileModifiedTime = markerModified;
                     // Now look and see what actually changed (most recently)
-                    notifyIfNewFileChanges();
+                    notifyIfNewFileChanges(pathToWatch);
 
                 } finally {
                     // We will run this task again a second later (unless stopObserving is called).
@@ -87,8 +88,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     // Look for new changes to files and send notification if there have been any.
-    protected void notifyIfNewFileChanges() {
-        final String pathToWatch = BookCollection.getLocalBooksDirectory().getPath();
+    protected void notifyIfNewFileChanges(final String pathToWatch) {
         PathModifyTime newModifyData = getLatestModifedTimeAndFile(new File(pathToWatch));
         if (newModifyData.time > mostRecentlyModifiedBloomFileTime) {
             mostRecentlyModifiedBloomFileTime = newModifyData.time;

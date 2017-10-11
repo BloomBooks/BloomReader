@@ -3,12 +3,13 @@ package org.sil.bloom.reader;
 import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Build;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.segment.analytics.Analytics;
 
 import org.sil.bloom.reader.models.BookCollection;
+import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
 
@@ -17,6 +18,9 @@ import java.io.File;
 // If the Android OS needs memory, it can destroy this object and create a new one even
 // without creating new activity objects. So, null checks are always necessary.
 public class BloomReaderApplication extends Application {
+    public static final String SHARED_PREFERENCES_TAG = "org.sil.bloom.reader.prefs";
+    public static final String LAST_RUN_BUILD_CODE = "lastRunBuildCode";
+
     private String bookToHighlight;
     private static Context sApplicationContext;
 
@@ -59,12 +63,19 @@ public class BloomReaderApplication extends Application {
     }
 
     public static boolean InTestModeForAnalytics(){
-        return BuildConfig.DEBUG
-                || BuildConfig.FLAVOR.equals("alpha")
-                // We'd really like to just ignore case, but no easy way to do it.
-                || new File(BookCollection.getLocalBooksDirectory(), "UseTestAnalytics").exists()
-                || new File(BookCollection.getLocalBooksDirectory(), "useTestAnalytics").exists()
-                || new File(BookCollection.getLocalBooksDirectory(), "usetestanalytics").exists();
+        boolean testMode = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha");
+        if(testMode)
+            return true;
+        try{
+            // We'd really like to just ignore case, but no easy way to do it.
+            return new File(BookCollection.getLocalBooksDirectory(), "UseTestAnalytics").exists()
+                    || new File(BookCollection.getLocalBooksDirectory(), "useTestAnalytics").exists()
+                    || new File(BookCollection.getLocalBooksDirectory(), "usetestanalytics").exists();
+        }
+        catch (ExtStorageUnavailableException e){
+            Log.e("BloomReader/FileIO", e.getStackTrace().toString());
+            return false;
+        }
     }
 
 

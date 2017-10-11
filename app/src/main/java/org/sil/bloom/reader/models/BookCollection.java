@@ -1,16 +1,15 @@
 package org.sil.bloom.reader.models;
 
 import android.content.Context;
-import android.content.ContextWrapper;
-import android.database.Cursor;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Environment;
-import android.provider.OpenableColumns;
 import android.util.Log;
 
 import org.sil.bloom.reader.BloomFileReader;
+import org.sil.bloom.reader.BloomReaderApplication;
+import org.sil.bloom.reader.BuildConfig;
 import org.sil.bloom.reader.IOUtilities;
-import org.sil.bloom.reader.WiFi.NewBookListenerService;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -20,7 +19,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class BookCollection {
-
     private List<Book> _books = new ArrayList<Book>();
     private File mLocalBooksDirectory;
 
@@ -57,27 +55,25 @@ public class BookCollection {
         return null;
     }
 
-    public void init(Context context) {
-        ContextWrapper cw = new ContextWrapper(context);
-        //File directory = cw.getExternalFilesDir("books");
-        //IOUtilities.deleteFileOrDirectory(directory);
-
-        SampleBookLoader.CopySampleBooksFromAssetsIntoBooksFolder(context, mLocalBooksDirectory);
-
-//        for (int i = 2; i <= 4; i++) {
-//            createFilesForDummyBook(context, directory, i);
-//        }
-
-        // load from our private directory. We may get rid of this entirely
-        //LoadFromDirectory(directory);
-
-        // load from the directory the user can see
+    public void init(Context context) throws ExtStorageUnavailableException {
         mLocalBooksDirectory = getLocalBooksDirectory();
+        SharedPreferences values = context.getSharedPreferences(BloomReaderApplication.SHARED_PREFERENCES_TAG, 0);
+        int buildCode = BuildConfig.VERSION_CODE;
+        if(buildCode > values.getInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, 0)){
+            SampleBookLoader.CopySampleBooksFromAssetsIntoBooksFolder(context, mLocalBooksDirectory);
+            SharedPreferences.Editor valuesEditor = values.edit();
+            valuesEditor.putInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, buildCode);
+            valuesEditor.commit();
+        }
         LoadFromDirectory(mLocalBooksDirectory);
     }
 
-    public static File getLocalBooksDirectory() {
-        return Environment.getExternalStoragePublicDirectory("Bloom");
+    public static File getLocalBooksDirectory() throws ExtStorageUnavailableException {
+        if(!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
+            throw new ExtStorageUnavailableException();
+        File bloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
+        bloomDir.mkdirs();
+        return bloomDir;
     }
 
     private void LoadFromDirectory(File directory) {

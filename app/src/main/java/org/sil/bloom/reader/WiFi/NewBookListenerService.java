@@ -250,7 +250,8 @@ public class NewBookListenerService extends Service {
 
     void stopListen() {
         shouldRestartSocketListen = false;
-        socket.close();
+        if (socket != null)
+            socket.close();
     }
 
     @Override

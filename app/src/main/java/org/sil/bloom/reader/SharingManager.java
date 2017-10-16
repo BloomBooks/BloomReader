@@ -30,7 +30,7 @@ public class SharingManager {
 
     public void shareBook(Book book){
         File bookFile = new File(book.path);
-        String dialogTitle = mContext.getString(R.string.share) + " " + book.name;
+        String dialogTitle = String.format(mContext.getString(R.string.shareBook), book.name);
         Uri uri = FileProvider.getUriForFile(mContext, "org.sil.bloom.reader.fileprovider", bookFile);
         shareFile(uri, "*/*", dialogTitle);
     }

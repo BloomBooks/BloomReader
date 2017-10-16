@@ -32,7 +32,7 @@ public class SharingManager {
         File bookFile = new File(book.path);
         String dialogTitle = String.format(mContext.getString(R.string.shareBook), book.name);
         Uri uri = FileProvider.getUriForFile(mContext, "org.sil.bloom.reader.fileprovider", bookFile);
-        shareFile(uri, "*/*", dialogTitle);
+        shareFile(uri, "application/vm.sil.bloomd", dialogTitle);
     }
 
     public void shareApkFile() {

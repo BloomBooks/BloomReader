@@ -14,3 +14,6 @@ Book arrival sound: "You've Been Informed", CC-BY, notificationsounds.com.
 Apache Commons IO (http://commons.apache.org/io/)
 Licensed under Apache License, Version 2.0 - http://www.apache.org/licenses/LICENSE-2.0
 
+Bookshelf icon: Created by Lakshisha from the Noun Project
+Licensed under CC-BY 3.0
+

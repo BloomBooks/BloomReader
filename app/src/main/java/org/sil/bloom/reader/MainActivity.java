@@ -5,8 +5,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
@@ -20,11 +23,14 @@ import android.text.format.DateFormat;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -242,7 +248,34 @@ public class MainActivity extends BaseActivity
     private void SetupCollectionListView(final ListView listView) {
         final AppCompatActivity activity = this;
 
-        mListAdapter = new ArrayAdapter(this, R.layout.book_list_content, R.id.title, _bookCollection.getBooks());
+        mListAdapter = new ArrayAdapter(this, R.layout.book_list_content, R.id.title, _bookCollection.getBooks()) {
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                // It seems we should be able to use super.getView here, and only need to tweak the
+                // image if it's a shelf. But somehow that produces shelf icons on many of the book
+                // rows. I guess there's some sharing going on in the standard implementation.
+                // So we have to do the whole job.
+                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                View rowView = inflater.inflate(R.layout.book_list_content, parent, false);
+                TextView textView = (TextView) rowView.findViewById(R.id.title);
+                ImageView image = (ImageView) rowView.findViewById(R.id.imageView);
+                BookOrShelf bookOrShelf = _bookCollection.get(position);
+                textView.setText(bookOrShelf.name);
+                if (bookOrShelf.isShelf()) {
+                    image.setImageResource(R.drawable.bookshelf);
+                    try {
+                        image.setBackgroundColor(Color.parseColor("#" + bookOrShelf.backgroundColor));
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    image.setImageResource(R.drawable.book);
+                }
+                return rowView;
+            }
+        };
+
         mListAdapter.setNotifyOnChange(true);
         listView.setAdapter(mListAdapter);
 

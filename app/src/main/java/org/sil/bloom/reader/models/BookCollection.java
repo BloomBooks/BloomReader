@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.BloomReaderApplication;
 import org.sil.bloom.reader.BuildConfig;
@@ -40,11 +42,20 @@ public class BookCollection {
     }
 
     private BookOrShelf addBook(String path, boolean sortList) {
-        BookOrShelf book = new BookOrShelf(path);
-        _booksAndShelves.add(book);
+        BookOrShelf bookOrShelf = new BookOrShelf(path);
+        if (path.endsWith(BookOrShelf.BOOKSHELF_FILE_EXTENSION)) {
+            String json = IOUtilities.FileToString(new File(path));
+            try {
+                JSONObject data = new JSONObject(json);
+                bookOrShelf.backgroundColor = data.getString("color");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        _booksAndShelves.add(bookOrShelf);
         if (sortList)
             Collections.sort(_booksAndShelves, BookOrShelf.AlphabeticalComparator);
-        return book;
+        return bookOrShelf;
     }
 
     public BookOrShelf getBookByPath(String path) {
@@ -80,8 +91,10 @@ public class BookCollection {
         File[] files = directory.listFiles();
         if(files != null) {
             for (int i = 0; i < files.length; i++) {
-                if (!files[i].getName().endsWith(BookOrShelf.BOOK_FILE_EXTENSION))
-                    continue; // not a book!
+                final String name = files[i].getName();
+                if (!name.endsWith(BookOrShelf.BOOK_FILE_EXTENSION)
+                        && !name.endsWith(BookOrShelf.BOOKSHELF_FILE_EXTENSION))
+                    continue; // not a book (nor a shelf)!
                 addBook(files[i].getAbsolutePath(), false);
             }
             Collections.sort(_booksAndShelves, BookOrShelf.AlphabeticalComparator);

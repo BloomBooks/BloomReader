@@ -30,7 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.sil.bloom.reader.WiFi.GetFromWiFiActivity;
-import org.sil.bloom.reader.models.Book;
+import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
@@ -178,7 +178,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void updateForNewBook(String filePath) {
-        Book book = _bookCollection.addBookIfNeeded(filePath);
+        BookOrShelf book = _bookCollection.addBookIfNeeded(filePath);
         refreshList(book);
         if (sSkipNextNewFileSound) {
             sSkipNextNewFileSound = false;
@@ -193,7 +193,7 @@ public class MainActivity extends BaseActivity
         refreshList(null);
     }
 
-    private void refreshList(Book book) {
+    private void refreshList(BookOrShelf book) {
         mListView.invalidateViews();
         if (book != null) {
             int bookIndex = _bookCollection.indexOf(book);
@@ -206,18 +206,18 @@ public class MainActivity extends BaseActivity
         contextualActionBarMode.finish();
     }
 
-    private Book selectedBook(){
+    private BookOrShelf selectedBook(){
         int position = mListView.getCheckedItemPosition();
         return _bookCollection.get(position);
     }
 
     private void shareBook(){
-        Book book = selectedBook();
+        BookOrShelf book = selectedBook();
         new SharingManager(this).shareBook(book);
     }
 
     public void DeleteBook() {
-        final Book book = selectedBook();
+        final BookOrShelf book = selectedBook();
 
         AlertDialog x = new AlertDialog.Builder(this).setMessage(getString(R.string.deleteExplanation))
                 .setTitle(getString(R.string.deleteConfirmation))

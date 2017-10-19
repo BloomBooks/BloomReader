@@ -3,13 +3,13 @@ package org.sil.bloom.reader.models;
 import java.io.File;
 import java.util.Comparator;
 
-public class Book {
+public class BookOrShelf {
     public static final String BOOK_FILE_EXTENSION = ".bloomd";
 
     public final String path;
     public final String name;
 
-    public Book(String path) {
+    public BookOrShelf(String path) {
         //this.id = id;
         this.path = path;
         File f = new File(path);
@@ -21,15 +21,15 @@ public class Book {
         return this.name;
     }
 
-    public static final Comparator<Book> AlphabeticalComparator = new AlphabeticalBookComparator();
+    public static final Comparator<BookOrShelf> AlphabeticalComparator = new AlphabeticalBookComparator();
 
-    public static class AlphabeticalBookComparator implements Comparator<Book> {
+    public static class AlphabeticalBookComparator implements Comparator<BookOrShelf> {
         @Override
-        public int compare(Book book1, Book book2) {
-            int nameCompare = book1.name.compareToIgnoreCase(book2.name);
+        public int compare(BookOrShelf bookOrShelf1, BookOrShelf bookOrShelf2) {
+            int nameCompare = bookOrShelf1.name.compareToIgnoreCase(bookOrShelf2.name);
             if (nameCompare != 0)
                 return nameCompare;
-            return book1.path.compareToIgnoreCase(book2.path);
+            return bookOrShelf1.path.compareToIgnoreCase(bookOrShelf2.path);
         }
     }
 }

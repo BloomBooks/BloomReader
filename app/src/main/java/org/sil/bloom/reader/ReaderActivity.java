@@ -28,7 +28,7 @@ import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sil.bloom.reader.models.Book;
+import org.sil.bloom.reader.models.BookOrShelf;
 
 
 public class ReaderActivity extends BaseActivity {
@@ -237,8 +237,8 @@ public class ReaderActivity extends BaseActivity {
         try {
             String filenameWithExtension = new File(path).getName();
             // this mBookName is used by subsequent analytics reports
-            mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - Book.BOOK_FILE_EXTENSION.length());
-            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Book opened", new Properties().putValue("title", mBookName));
+            mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - BookOrShelf.BOOK_FILE_EXTENSION.length());
+            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("BookOrShelf opened", new Properties().putValue("title", mBookName));
         } catch (Exception error) {
             Log.e("Reader", "Error reporting load of " + path + ".  "+ error);
             BloomReaderApplication.VerboseToast("Error reporting load of "+path);

@@ -13,7 +13,7 @@ import org.sil.bloom.reader.BaseActivity;
 import org.sil.bloom.reader.IOUtilities;
 import org.sil.bloom.reader.MainActivity;
 import org.sil.bloom.reader.R;
-import org.sil.bloom.reader.models.Book;
+import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.io.File;
@@ -80,7 +80,7 @@ public class NewBookListenerService extends Service {
                 e.printStackTrace();
             }
             File localBookDirectory = BookCollection.getLocalBooksDirectory();
-            File bookFile = new File(localBookDirectory, title + Book.BOOK_FILE_EXTENSION);
+            File bookFile = new File(localBookDirectory, title + BookOrShelf.BOOK_FILE_EXTENSION);
             boolean bookExists = bookFile.exists();
             // If the book doesn't exist it can't be up to date.
             if (bookExists && IsBookUpToDate(bookFile, title, newBookVersion)) {

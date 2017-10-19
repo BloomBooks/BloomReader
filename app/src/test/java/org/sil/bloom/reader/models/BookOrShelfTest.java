@@ -9,17 +9,17 @@ import java.util.List;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class BookTest {
+public class BookOrShelfTest {
 
     @Test
     public void alphabeticalComparator_sortsAlphabetically() {
 
-        List<Book> books = Arrays.asList(
-            new Book("/dummypath/c"),
-            new Book("/dummypath/a"),
-            new Book("/dummypath/B")
+        List<BookOrShelf> books = Arrays.asList(
+            new BookOrShelf("/dummypath/c"),
+            new BookOrShelf("/dummypath/a"),
+            new BookOrShelf("/dummypath/B")
         );
-        Collections.sort(books, Book.AlphabeticalComparator);
+        Collections.sort(books, BookOrShelf.AlphabeticalComparator);
         assertThat(books.get(0).name, is("a"));
         assertThat(books.get(1).name, is("B"));
         assertThat(books.get(2).name, is("c"));

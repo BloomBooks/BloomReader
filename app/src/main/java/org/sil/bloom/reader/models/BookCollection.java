@@ -19,36 +19,36 @@ import java.util.Collections;
 import java.util.List;
 
 public class BookCollection {
-    private List<Book> _books = new ArrayList<Book>();
+    private List<BookOrShelf> _booksAndShelves = new ArrayList<BookOrShelf>();
     private File mLocalBooksDirectory;
 
-    public int indexOf(Book book) { return _books.indexOf(book); }
+    public int indexOf(BookOrShelf book) { return _booksAndShelves.indexOf(book); }
 
-    public Book get(int i) {
-        return _books.get(i);
+    public BookOrShelf get(int i) {
+        return _booksAndShelves.get(i);
     }
 
     public int size() {
-        return _books.size();
+        return _booksAndShelves.size();
     }
 
-    public Book addBookIfNeeded(String path) {
-        Book existingBook = getBookByPath(path);
+    public BookOrShelf addBookIfNeeded(String path) {
+        BookOrShelf existingBook = getBookByPath(path);
         if (existingBook != null)
             return existingBook;
         return addBook(path, true);
     }
 
-    private Book addBook(String path, boolean sortList) {
-        Book book = new Book(path);
-        _books.add(book);
+    private BookOrShelf addBook(String path, boolean sortList) {
+        BookOrShelf book = new BookOrShelf(path);
+        _booksAndShelves.add(book);
         if (sortList)
-            Collections.sort(_books, Book.AlphabeticalComparator);
+            Collections.sort(_booksAndShelves, BookOrShelf.AlphabeticalComparator);
         return book;
     }
 
-    public Book getBookByPath(String path) {
-        for (Book book:_books) {
+    public BookOrShelf getBookByPath(String path) {
+        for (BookOrShelf book: _booksAndShelves) {
             if (book.path.equals(path))
                 return book;
         }
@@ -80,11 +80,11 @@ public class BookCollection {
         File[] files = directory.listFiles();
         if(files != null) {
             for (int i = 0; i < files.length; i++) {
-                if (!files[i].getName().endsWith(Book.BOOK_FILE_EXTENSION))
+                if (!files[i].getName().endsWith(BookOrShelf.BOOK_FILE_EXTENSION))
                     continue; // not a book!
                 addBook(files[i].getAbsolutePath(), false);
             }
-            Collections.sort(_books, Book.AlphabeticalComparator);
+            Collections.sort(_booksAndShelves, BookOrShelf.AlphabeticalComparator);
         }
     }
 
@@ -105,16 +105,16 @@ public class BookCollection {
         }
     }
 
-    public  List<Book> getBooks() {
-        return _books;
+    public  List<BookOrShelf> getBooks() {
+        return _booksAndShelves;
     }
 
-    public void deleteFromDevice(Book book) {
+    public void deleteFromDevice(BookOrShelf book) {
         File file = new File(book.path);
         if(file.exists()){
             file.delete();
         }
-        _books.remove(book);
+        _booksAndShelves.remove(book);
     }
 
     // is this coming from somewhere other than where we store books?

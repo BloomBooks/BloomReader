@@ -5,12 +5,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
-import org.sil.bloom.reader.models.Book;
+import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +27,7 @@ public class SharingManager {
         mContext = context;
     }
 
-    public void shareBook(Book book){
+    public void shareBook(BookOrShelf book){
         File bookFile = new File(book.path);
         String dialogTitle = String.format(mContext.getString(R.string.shareBook), book.name);
         // This is the recommended way to get a URI to a file in BR's private storage and make it

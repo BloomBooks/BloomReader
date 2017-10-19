@@ -31,8 +31,17 @@ public class SharingManager {
     public void shareBook(Book book){
         File bookFile = new File(book.path);
         String dialogTitle = String.format(mContext.getString(R.string.shareBook), book.name);
-        Uri uri = FileProvider.getUriForFile(mContext, "org.sil.bloom.reader.fileprovider", bookFile);
-        shareFile(uri, "*/*", dialogTitle);
+        // This is the recommended way to get a URI to a file in BR's private storage and make it
+        // accessible to the sending code for a limited time.
+        //Uri uri = FileProvider.getUriForFile(mContext, "org.sil.bloom.reader.fileprovider", bookFile);
+        // But it does not work reliably; we've had some success (e.g., Bluetooth) but
+        // ShareIt gives a mysterious message saying it doesn't know how to transfer this kind
+        // of data, and Super Beam says "sorry, the file(s) you are trying to share are missing."
+        // Since Bloom is keeping its books in a public folder in a common part of the phone's
+        // storage, we don't need the special temporary-permission URI, and the one we get from the
+        // line below seems to work much more reliably.
+        Uri uri = Uri.fromFile(bookFile);
+        shareFile(uri, "application/zip", dialogTitle);
     }
 
     public void shareApkFile() {

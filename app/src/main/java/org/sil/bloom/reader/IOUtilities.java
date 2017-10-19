@@ -5,10 +5,15 @@ import android.content.res.AssetManager;
 import android.net.Uri;
 import android.widget.Toast;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -17,16 +22,24 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
+import static org.sil.bloom.reader.models.BookCollection.getLocalBooksDirectory;
 
 
 public class IOUtilities {
 
+    public static final String BLOOM_BUNDLE_FILE_EXTENSION = ".bloombundle";
+
+    private static final int BUFFER_SIZE = 8192;
 
     public static void showError(Context context, CharSequence message) {
         int duration = Toast.LENGTH_SHORT;
@@ -52,7 +65,7 @@ public class IOUtilities {
         try {
             ZipEntry ze;
             int count;
-            byte[] buffer = new byte[8192];
+            byte[] buffer = new byte[BUFFER_SIZE];
             while ((ze = zis.getNextEntry()) != null) {
                 File file = new File(targetDirectory, ze.getName());
                 File dir = ze.isDirectory() ? file : file.getParentFile();
@@ -229,5 +242,103 @@ public class IOUtilities {
         if (paths.length >= 1)
             return paths[0];
         return null;
+    }
+
+    // not used. Considered zipping for .bloombundle, but the .bloomd files are already zipped,
+    // so further compression is unlikely to be significant, and attempting it is likely to slow
+    // things down. Hence the use of tar.
+//    public static void zip(String directory, FilenameFilter filter, String destinationPath) throws IOException {
+//        File[] fileList = new File(directory).listFiles(filter);
+//        zip(fileList, destinationPath);
+//    }
+//
+//    public static void zip(File[] files, String destinationPath) throws IOException {
+//        ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationPath)));
+//        try {
+//            byte data[] = new byte[BUFFER_SIZE];
+//
+//            for (int i = 0; i < files.length; i++) {
+//                FileInputStream fi = new FileInputStream(files[i]);
+//                BufferedInputStream origin = new BufferedInputStream(fi, BUFFER_SIZE);
+//                try {
+//                    String filePath = files[i].getAbsolutePath();
+//                    ZipEntry entry = new ZipEntry(filePath.substring(filePath.lastIndexOf("/") + 1));
+//                    out.putNextEntry(entry);
+//                    int count;
+//                    while ((count = origin.read(data, 0, BUFFER_SIZE)) != -1) {
+//                        out.write(data, 0, count);
+//                    }
+//                }
+//                finally {
+//                    origin.close();
+//                }
+//            }
+//        }
+//        finally {
+//            out.close();
+//        }
+//    }
+
+    public static void tar(String directory, FilenameFilter filter, String destinationPath) throws IOException {
+        File[] fileList = new File(directory).listFiles(filter);
+        tar(fileList, destinationPath);
+    }
+
+    public static void tar(File[] files, String destinationPath) throws IOException {
+        TarArchiveOutputStream tarOutput = new TarArchiveOutputStream(new FileOutputStream(destinationPath));
+        for(File file : files) {
+            TarArchiveEntry entry = new TarArchiveEntry(file, file.getName());
+            tarOutput.putArchiveEntry(entry);
+            FileInputStream in = new FileInputStream(file);
+            IOUtils.copy(in, tarOutput);
+            in.close();
+            tarOutput.closeArchiveEntry();
+        }
+        tarOutput.close();
+    }
+
+    public static void makeBloomBundle(String destinationPath) throws IOException {
+        FilenameFilter filter = new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String filename) {
+                return filename.endsWith(BookOrShelf.BOOK_FILE_EXTENSION)
+                        || filename.endsWith(BookOrShelf.BOOKSHELF_FILE_EXTENSION);
+            }
+        };
+        tar(getLocalBooksDirectory().getAbsolutePath(), filter, destinationPath);
+        //zip(getLocalBooksDirectory().getAbsolutePath(), filter, destinationPath);
+    }
+
+    // Returns a list of paths to the books created.
+    public static List<String> untar(FileInputStream input, String targetPath) throws IOException {
+        TarArchiveInputStream tarInput = new TarArchiveInputStream(input);
+        ArrayList<String> result = new ArrayList<String>();
+
+        ArchiveEntry  entry;
+        while ((entry = tarInput.getNextEntry()) != null) {
+            File destPath=new File(targetPath,entry.getName());
+            result.add(destPath.getPath());
+            if (!entry.isDirectory()) {
+                FileOutputStream fout=new FileOutputStream(destPath);
+                final byte[] buffer=new byte[8192];
+                int n=0;
+                while (-1 != (n=tarInput.read(buffer))) {
+                    fout.write(buffer,0,n);
+                }
+                fout.close();
+            }
+            else {
+                destPath.mkdir();
+            }
+        }
+        tarInput.close();
+        return result;
+    }
+
+    // Returns a list of paths to the books created.
+    public static List<String> extractBloomBundle(Context context, Uri bloomBundleUri) throws IOException {
+        FileDescriptor fd = context.getContentResolver().openFileDescriptor(bloomBundleUri, "r").getFileDescriptor();
+        //Review: do we want to just put them all in the Bloom directory directly like this?
+        return untar(new FileInputStream(fd), getLocalBooksDirectory().getAbsolutePath());
     }
 }

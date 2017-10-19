@@ -148,6 +148,7 @@ public class BookCollection {
 
     private void LoadFromDirectory(File directory) {
         mShelfIds.clear();
+        _booksAndShelves.clear();
         File[] files = directory.listFiles();
         if(files != null) {
             for (int i = 0; i < files.length; i++) {

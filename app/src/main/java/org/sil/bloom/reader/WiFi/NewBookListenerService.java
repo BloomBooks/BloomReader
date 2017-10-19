@@ -28,6 +28,9 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.sil.bloom.reader.BloomReaderApplication.getOurDeviceName;
+
+
 /**
  * Created by Thomson on 7/22/2017.
  * This class listens for a computer on the local network running Bloom to advertise a book as
@@ -150,15 +153,6 @@ public class NewBookListenerService extends Service {
         sendMessageTask.ourIpAddress = getOurIpAddress();
         sendMessageTask.ourDeviceName = getOurDeviceName();
         sendMessageTask.execute();
-    }
-
-    // It's slightly odd to use the Bluetooth name for a WiFi function, but it's the only
-    // generally-available user-configurable device name we can find. (Some devices...e.g.,
-    // my Note 4...have a setting for a more general device name, but others (e.g., Nexus)
-    // do not.)
-    private String getOurDeviceName() {
-        BluetoothAdapter myDevice = BluetoothAdapter.getDefaultAdapter();
-        return myDevice.getName();
     }
 
     private void startSyncServer() {

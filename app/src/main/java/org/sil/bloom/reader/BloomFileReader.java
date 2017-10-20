@@ -3,7 +3,7 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.net.Uri;
 
-import org.sil.bloom.reader.models.Book;
+import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,7 +70,7 @@ public class BloomFileReader {
     }
 
     private File findHtmlFile() throws IOException{
-        String name = bookDirectory.getName().replace(Book.BOOK_FILE_EXTENSION, "");
+        String name = bookDirectory.getName().replace(BookOrShelf.BOOK_FILE_EXTENSION, "");
         File htmlFile = new File(bookDirectory + File.separator + HTM_EXTENSION);
         if(!htmlFile.exists()){
             htmlFile = IOUtilities.findFirstWithExtension(bookDirectory, HTM_EXTENSION);
@@ -84,13 +84,13 @@ public class BloomFileReader {
         String path = bloomFilePath;
         if(path == null)
             path = bookUri.getPath();
-        if(path.endsWith(Book.BOOK_FILE_EXTENSION)){
+        if(path.endsWith(BookOrShelf.BOOK_FILE_EXTENSION)){
             // The colon is necessary because the path for the SD card root is "1234-5678:myBook.bloomd"
             // where 1234-5678 is the SD card number
             int start = Math.max(path.lastIndexOf(File.separator), path.lastIndexOf(':')) + 1;
             return path.substring(start);
         }
-        return findHtmlFile().getName().replace(HTM_EXTENSION, Book.BOOK_FILE_EXTENSION);
+        return findHtmlFile().getName().replace(HTM_EXTENSION, BookOrShelf.BOOK_FILE_EXTENSION);
     }
 
     private void closeFile() {

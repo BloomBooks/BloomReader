@@ -1,7 +1,6 @@
 package org.sil.bloom.reader.models;
 
 import android.content.Context;
-import android.os.Environment;
 
 import org.sil.bloom.reader.IOUtilities;
 
@@ -21,7 +20,7 @@ class SampleBookLoader {
             showError(context, "Could not create " + directory.getAbsolutePath());
         }
 
-        String fileName = "The Moon and the Cap" + Book.BOOK_FILE_EXTENSION;
+        String fileName = "The Moon and the Cap" + BookOrShelf.BOOK_FILE_EXTENSION;
         IOUtilities.copyAsset(context.getAssets(), "sample books/" + fileName, directory.getAbsolutePath() + File.separator + fileName);
     }
 }

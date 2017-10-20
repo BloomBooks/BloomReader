@@ -42,9 +42,12 @@ public class BookOrShelf {
         return bookshelves.contains(shelf);
     }
 
-    // Review: do we need to restrict this to shelves that actually exist?
-    public boolean isBookInAnyShelf() {
-        return !bookshelves.isEmpty();
+    // Return true if the book is tagged as belonging to at least one of the shelves
+    // in the set passed in.
+    public boolean isBookInAnyShelf(Set<String> existingShelves) {
+        Set<String> intersection = new HashSet<String>(bookshelves);
+        intersection.retainAll(existingShelves);
+        return !intersection.isEmpty();
     }
 
     @Override

@@ -21,6 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class BookCollection {
     public static final String BOOKSHELF_PREFIX = "bookshelf:";
@@ -163,13 +164,15 @@ public class BookCollection {
 
     // Tests whether a book passes the current 'filter'.
     // A null (or empty) filter, used by the main activity, contains books that are not on any
-    // shelf. A non-empty filter, which is expected to be the ID of a shelf, contains books
-    // which are on that shelf.
+    // (existing) shelf. A non-empty filter, which is expected to be the ID of a shelf, contains books
+    // which are on that shelf. (existingShelves passes in the list of shelves that actually
+    // exist as files in the folder. a book tagged as being on a nonexistent shelf can still be
+    // in the root collection.)
     // Shelves themselves, since there is no way for a shelf to be on a shelf, are included
     // when the filter is null or empty.
-    public static boolean isBookInFilter(BookOrShelf book, String filter) {
+    public static boolean isBookInFilter(BookOrShelf book, String filter, Set<String> existingShelves) {
         if (filter == null || filter.length() == 0)
-            return !book.isBookInAnyShelf();
+            return !book.isBookInAnyShelf(existingShelves);
         else {
             return book.isBookInShelf(filter);
         }

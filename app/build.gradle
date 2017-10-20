@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.github.triplet.play'
 // This is the master definition of what version of Bloom Reader we are building
 def versionMajor = 1
-def versionMinor = 0
+def versionMinor = 1
 def versionRelease = project.ext.properties['build.number'] ?: 0 // default for non-tc
 
 // Load our credentials

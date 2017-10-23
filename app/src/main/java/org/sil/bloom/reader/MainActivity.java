@@ -48,7 +48,7 @@ public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     public static final String NEW_BOOKS = "newBooks";
-    private BookCollection _bookCollection = new BookCollection();
+    protected BookCollection _bookCollection;
     private ListView mListView;
     public android.view.ActionMode contextualActionBarMode;
     private static boolean sSkipNextNewFileSound;
@@ -67,8 +67,7 @@ public class MainActivity extends BaseActivity
         }
 
         try {
-            _bookCollection.init(this.getApplicationContext());
-
+            _bookCollection= setupBookCollection();
 
             Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
             setSupportActionBar(toolbar);
@@ -81,6 +80,7 @@ public class MainActivity extends BaseActivity
                     this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
             drawer.addDrawerListener(toggle);
             toggle.syncState();
+            configureActionBar(toggle);
 
             NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
             navigationView.setNavigationItemSelectedListener(this);
@@ -114,6 +114,18 @@ public class MainActivity extends BaseActivity
         }
     }
 
+    // This is a hook to allow ShelfActivity to disable the navigation drawer and replace it
+    // with a back button.
+    protected void configureActionBar(ActionBarDrawerToggle toggle) {
+    }
+
+    // ShelfActivity does this differently.
+    protected BookCollection setupBookCollection() throws ExtStorageUnavailableException {
+        BloomReaderApplication.theOneBookCollection = new BookCollection();
+        BloomReaderApplication.theOneBookCollection.init(this.getApplicationContext());
+        return BloomReaderApplication.theOneBookCollection;
+    }
+
     private void importBookIfAttached(Intent intent){
         Uri bookUri = getIntent().getData();
         if(bookUri == null)
@@ -130,6 +142,7 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
+        updateFilter();
         try {
             // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
             // book to our directory using MTP.
@@ -153,6 +166,12 @@ public class MainActivity extends BaseActivity
         catch (ExtStorageUnavailableException e){
             externalStorageUnavailable(e);
         }
+    }
+
+    // a hook to allow ShelfActivity to set a real filter.
+    // We need to set it to nothing here for when we return to the main activity from a shelf.
+    protected void updateFilter() {
+        _bookCollection.setFilter("");
     }
 
     private void externalStorageUnavailable(ExtStorageUnavailableException e){
@@ -355,9 +374,18 @@ public class MainActivity extends BaseActivity
             mListAdapter.notifyDataSetChanged();
             return;
         }
-        Intent intent = new Intent(context, ReaderActivity.class);
-        intent.setData(Uri.parse(path));
-        context.startActivity(intent);
+        BookOrShelf bookOrShelf = _bookCollection.getBookByPath(path);
+        if (bookOrShelf.isShelf()) {
+            Intent intent = new Intent(context, ShelfActivity.class);
+            intent.putExtra("filter", bookOrShelf.shelfId);
+            intent.putExtra("label", bookOrShelf.name); // Or get it from the appropriate ws of label
+            intent.putExtra("background", bookOrShelf.backgroundColor);
+            context.startActivity(intent);
+        } else {
+            Intent intent = new Intent(context, ReaderActivity.class);
+            intent.setData(Uri.parse(path));
+            context.startActivity(intent);
+        }
     }
 
     @Override

@@ -24,6 +24,9 @@ public class BloomReaderApplication extends Application {
     private String bookToHighlight;
     private static Context sApplicationContext;
 
+    // Created by main activity, used also by shelf activities. The active one controls its filter.
+    public static BookCollection theOneBookCollection;
+
     @Override
     public void onCreate() {
         super.onCreate();

@@ -20,14 +20,22 @@ public class BookOrShelf {
     public final String name;
     // currently only applies to bookshelf. But that could change.
     public String backgroundColor;
+    public String shelfId;
 
     private Set<String> bookshelves = new HashSet<String>();
 
-    public BookOrShelf(String path) {
+    public BookOrShelf(String path, String name) {
         //this.id = id;
         this.path = path;
-        File f = new File(path);
-        this.name = f.getName().replace(BOOK_FILE_EXTENSION,"");
+        this.name = name;
+    }
+
+    public BookOrShelf(String path) {
+        this(path, BookOrShelf.getNameFromPath(path));
+    }
+
+    public static String getNameFromPath(String path) {
+        return new File(path).getName().replace(BOOK_FILE_EXTENSION,"").replace(BOOKSHELF_FILE_EXTENSION,"");
     }
 
     public boolean isShelf() {

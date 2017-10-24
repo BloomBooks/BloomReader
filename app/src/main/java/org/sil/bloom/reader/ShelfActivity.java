@@ -78,8 +78,12 @@ public class ShelfActivity extends MainActivity {
 
     @Override
     protected BookCollection setupBookCollection() throws ExtStorageUnavailableException {
-        // Don't need (or want) to initialize it, assume main activity already did.
-        // Review: is there any way the system might start BR with this as the first activity?
+        if (BloomReaderApplication.theOneBookCollection == null) {
+            // Presume the OS threw away and re-created the BloomReaderApplication while we
+            // weren't looking. We need to do the full job of making one.
+            return super.setupBookCollection();
+        }
+        // normally we just want to use the one the main activity made.
         return BloomReaderApplication.theOneBookCollection;
     }
 }

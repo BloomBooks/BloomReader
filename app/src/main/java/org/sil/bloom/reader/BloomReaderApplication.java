@@ -3,11 +3,14 @@ package org.sil.bloom.reader;
 import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.segment.analytics.Analytics;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
@@ -20,6 +23,7 @@ import java.io.File;
 public class BloomReaderApplication extends Application {
     public static final String SHARED_PREFERENCES_TAG = "org.sil.bloom.reader.prefs";
     public static final String LAST_RUN_BUILD_CODE = "lastRunBuildCode";
+    public static final String DEVICE_ID_FILE = "deviceId.json";
 
     private String bookToHighlight;
     private static Context sApplicationContext;
@@ -60,9 +64,47 @@ public class BloomReaderApplication extends Application {
             e.printStackTrace();
         }
 
-
         // Set the initialized instance as a globally accessible instance.
         Analytics.setSingletonInstance(analytics);
+
+        // Check for deviceId json file and use its contents to identify this device
+        identifyDevice();
+    }
+
+    private static void identifyDevice(){
+        try {
+            String jsonString = getDeviceIdJson();
+            if (jsonString == null)
+                return;
+            JSONObject json = new JSONObject(jsonString);
+            String project = json.getString("project");
+            String device = json.getString("device");
+
+            // The value used with identify() needs to be globally unique. Just in case somebody
+            // might reuse a deviceId in a different project, we concatenate them.
+            String deviceId = project + "-" + device;
+            Analytics.with(getBloomApplicationContext()).identify(deviceId);
+            Analytics.with(getBloomApplicationContext()).group(project);
+        }
+        catch(JSONException e){
+            Log.e("Analytics", "Error processing deviceId file json.");
+            e.printStackTrace();
+        }
+    }
+
+    @Nullable
+    private static String getDeviceIdJson(){
+        try{
+            String filename = BookCollection.getLocalBooksDirectory().getPath() + File.separator + DEVICE_ID_FILE;
+            File deviceIdFile = new File(filename);
+            if(deviceIdFile.exists())
+                return IOUtilities.FileToString(deviceIdFile);
+            return null;
+        }
+        catch (ExtStorageUnavailableException e){
+            Log.e("Analytics", "Unable to check for deviceId file because external storage is unavailable.");
+            return null;
+        }
     }
 
     public static boolean InTestModeForAnalytics(){

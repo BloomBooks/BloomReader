@@ -272,6 +272,9 @@ public class BookCollection {
                         continue;
                     bookOrShelf.addBookshelf(tag.substring(BOOKSHELF_PREFIX.length()).trim());
                 }
+                if (data.has("brandingProjectName")) {
+                    bookOrShelf.brandingProjectName = data.getString("brandingProjectName");
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }

@@ -64,6 +64,7 @@ public class ReaderActivity extends BaseActivity {
     private long mTimeLastPageSwitch;
     private Timer mNextPageTimer;
     private boolean mIsMultiMediaBook;
+    private String mBrandingProjectName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +77,8 @@ public class ReaderActivity extends BaseActivity {
         setContentView(R.layout.activity_reader);
 //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
+
+        mBrandingProjectName = getIntent().getStringExtra("brandingProjectName");
 
         new Loader().execute();
     }
@@ -97,6 +100,9 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("title", mBookName);
             p.putValue("audioPages", mAudioPagesPlayed);
             p.putValue("nonAudioPages", mNonAudioPagesShown);
+            if (mBrandingProjectName != null) {
+                p.putValue("brandingProjectName", mBrandingProjectName);
+            }
             Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Pages Read", p);
         } catch (Exception e) {
             Log.e(TAG, "Pages Read", e);
@@ -238,7 +244,12 @@ public class ReaderActivity extends BaseActivity {
             String filenameWithExtension = new File(path).getName();
             // this mBookName is used by subsequent analytics reports
             mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - BookOrShelf.BOOK_FILE_EXTENSION.length());
-            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("BookOrShelf opened", new Properties().putValue("title", mBookName));
+            Properties p = new Properties();
+            p.putValue("title", mBookName);
+            if (mBrandingProjectName != null) {
+                p.putValue("brandingProjectName", mBrandingProjectName);
+            }
+            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("BookOrShelf opened", p);
         } catch (Exception error) {
             Log.e("Reader", "Error reporting load of " + path + ".  "+ error);
             BloomReaderApplication.VerboseToast("Error reporting load of "+path);

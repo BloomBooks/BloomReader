@@ -22,6 +22,9 @@ public class BookOrShelf {
     public String backgroundColor;
     public String shelfId;
 
+    // currently only applies to books
+    public String brandingProjectName;
+
     private Set<String> bookshelves = new HashSet<String>();
 
     public BookOrShelf(String path, String name) {

@@ -2,8 +2,8 @@ package org.sil.bloom.reader;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -23,6 +23,8 @@ import java.io.File;
 public class BloomReaderApplication extends Application {
     public static final String SHARED_PREFERENCES_TAG = "org.sil.bloom.reader.prefs";
     public static final String LAST_RUN_BUILD_CODE = "lastRunBuildCode";
+    public static final String ANALYTICS_DEVICE_PROJECT = "analyticsDeviceGroup";
+    public static final String ANALYTICS_DEVICE_ID = "analyticsDeviceId";
     public static final String DEVICE_ID_FILE = "deviceId.json";
 
     private String bookToHighlight;
@@ -69,39 +71,58 @@ public class BloomReaderApplication extends Application {
     }
 
     private static void identifyDevice(){
-        try {
-            String jsonString = getDeviceIdJson();
-            if (jsonString == null)
+        SharedPreferences values = getBloomApplicationContext().getSharedPreferences(SHARED_PREFERENCES_TAG, 0);
+        if(values.getString(ANALYTICS_DEVICE_ID, null) == null){
+            boolean deviceIdFromFile = parseDeviceIdFile(values.edit());
+            if(!deviceIdFromFile)
                 return;
-            JSONObject json = new JSONObject(jsonString);
-            String project = json.getString("project");
-            String device = json.getString("device");
+        }
+        String project = values.getString(ANALYTICS_DEVICE_PROJECT, "");
+        String device = values.getString(ANALYTICS_DEVICE_ID, "");
 
-            // The value used with identify() needs to be globally unique. Just in case somebody
-            // might reuse a deviceId in a different project, we concatenate them.
-            String deviceId = project + "-" + device;
-            Analytics.with(getBloomApplicationContext()).identify(deviceId);
-            Analytics.with(getBloomApplicationContext()).group(project);
-        }
-        catch(JSONException e){
-            Log.e("Analytics", "Error processing deviceId file json.");
-            e.printStackTrace();
-        }
+        // The value used with identify() needs to be globally unique. Just in case somebody
+        // might reuse a deviceId in a different project, we concatenate them.
+        String deviceId = project + "-" + device;
+        Analytics.with(getBloomApplicationContext()).identify(deviceId);
+        Analytics.with(getBloomApplicationContext()).group(project);
     }
 
-    @Nullable
-    private static String getDeviceIdJson(){
+    private static boolean parseDeviceIdFile(SharedPreferences.Editor valuesEditor){
         try{
             String filename = BookCollection.getLocalBooksDirectory().getPath() + File.separator + DEVICE_ID_FILE;
             File deviceIdFile = new File(filename);
-            if(deviceIdFile.exists())
-                return IOUtilities.FileToString(deviceIdFile);
-            return null;
+            if(!deviceIdFile.exists())
+                return false;
+            String jsonString = IOUtilities.FileToString(deviceIdFile);
+            JSONObject json = new JSONObject(jsonString);
+            String project = json.getString("project");
+            String device = json.getString("device");
+            valuesEditor.putString(ANALYTICS_DEVICE_PROJECT, project);
+            valuesEditor.putString(ANALYTICS_DEVICE_ID, device);
+            valuesEditor.commit();
+            reportDeviceIdParseSuccess(project, device);
+            return true;
         }
         catch (ExtStorageUnavailableException e){
             Log.e("Analytics", "Unable to check for deviceId file because external storage is unavailable.");
-            return null;
+            // No toast here, because we could end up here with regular users not even trying to load a device id.
+            return false;
         }
+        catch (JSONException e){
+            Log.e("Analytics", "Error processing deviceId file json.");
+            e.printStackTrace();
+
+            Toast failToast = Toast.makeText(getBloomApplicationContext(), R.string.metadata_error, Toast.LENGTH_LONG);
+            failToast.show();
+
+            return false;
+        }
+    }
+
+    private static void reportDeviceIdParseSuccess(String project, String device){
+        String successMessage = getBloomApplicationContext().getString(R.string.metadata_loaded) + "\nProject: " + project + "\nDevice: " + device;
+        Toast success = Toast.makeText(getBloomApplicationContext(), successMessage, Toast.LENGTH_LONG);
+        success.show();
     }
 
     public static boolean InTestModeForAnalytics(){

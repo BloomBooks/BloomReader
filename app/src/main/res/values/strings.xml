@@ -46,4 +46,7 @@
     <string name="about_bloom">About Bloom</string>
     <string name="about_sil">About SIL</string>
     <string name="or">or</string>
+
+    <string name="metadata_loaded">Device Metadata Loaded</string>
+    <string name="metadata_error">Unable to load device metadata. JSON formatting error.</string>
 </resources>

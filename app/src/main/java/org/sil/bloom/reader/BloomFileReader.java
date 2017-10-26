@@ -3,6 +3,7 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.net.Uri;
 
+import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.File;
@@ -22,6 +23,7 @@ public class BloomFileReader {
     private final String CURRENT_BOOK_FOLDER = "currentbook";
     private final String VALIDATE_BOOK_FILE_FOLDER = "validating";
     private final String HTM_EXTENSION = ".htm";
+    private final String THUMBNAIL_NAME = "thumbnail.png";
 
     public BloomFileReader(Context context, String bloomFilePath){
         this.context = context;
@@ -37,6 +39,24 @@ public class BloomFileReader {
         if(bookDirectory == null)
             openFile(CURRENT_BOOK_FOLDER);
         return findHtmlFile();
+    }
+
+    public Uri getThumbnail(File thumbsDirectory) throws IOException{
+        Uri thumbUri = null;
+        if(bookDirectory == null)
+            openFile(CURRENT_BOOK_FOLDER);
+        File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME);
+        if(thumb.exists()){
+            String toPath = thumbsDirectory.getPath() + File.separator + bookDirectory.getName() + BookCollection.PNG_EXTENSION;
+            if(IOUtilities.copyFile(thumb.getPath(), toPath));
+                thumbUri = Uri.fromFile(new File(toPath));
+        }
+        else{
+            String noThumbPath = thumbsDirectory + File.separator + BookCollection.NO_THUMBS_DIR + File.separator + bookDirectory.getName();
+            (new File(noThumbPath)).createNewFile();
+        }
+        closeFile();
+        return thumbUri;
     }
 
     public String bookNameIfValid() {

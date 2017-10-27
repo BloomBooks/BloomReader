@@ -45,14 +45,15 @@ public class BloomFileReader {
         Uri thumbUri = null;
         if(bookDirectory == null)
             openFile(CURRENT_BOOK_FOLDER);
+        String bookName = (new File(bloomFilePath)).getName().replace(BookOrShelf.BOOK_FILE_EXTENSION, "");
         File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME);
         if(thumb.exists()){
-            String toPath = thumbsDirectory.getPath() + File.separator + bookDirectory.getName() + BookCollection.PNG_EXTENSION;
+            String toPath = thumbsDirectory.getPath() + File.separator + bookName + BookCollection.PNG_EXTENSION;
             if(IOUtilities.copyFile(thumb.getPath(), toPath));
                 thumbUri = Uri.fromFile(new File(toPath));
         }
         else{
-            String noThumbPath = thumbsDirectory + File.separator + BookCollection.NO_THUMBS_DIR + File.separator + bookDirectory.getName();
+            String noThumbPath = thumbsDirectory + File.separator + BookCollection.NO_THUMBS_DIR + File.separator + bookName;
             (new File(noThumbPath)).createNewFile();
         }
         closeFile();

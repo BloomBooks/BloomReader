@@ -14,3 +14,8 @@
  font-family: 'Andika New Basic';
  src: url('file:///android_asset/fonts/Andika New Basic/AndikaNewBasic-R.ttf')
 }
+
+/* also a convenient place to define this, normally part of bloom player: */
+span.ui-audioCurrent {
+    background-color: yellow
+}

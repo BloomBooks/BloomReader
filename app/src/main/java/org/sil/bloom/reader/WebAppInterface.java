@@ -48,6 +48,8 @@ public class WebAppInterface {
     // Set true when we want to start narration, but haven't yet received domContentLoaded().
     // When we do receive the notification, narration will start at once.
     boolean shouldStartNarrationWhenDocLoaded = false;
+    // Similarly if we need a postponed call to handleBeforeDocumentLoaded.
+    boolean shouldPrepareDocumentWhenLoaded = false;
     // The index of the page we belong to. As well as being useful in debugging, it can be compared
     // with the index of the currently visible page, so we ignore playback completed messages
     // if this page isn't current (and so it's not our audio that just completed).
@@ -66,12 +68,24 @@ public class WebAppInterface {
         Toast.makeText(mContext, toast, Toast.LENGTH_SHORT).show();
     }
 
-    public static void playPause(boolean pause) {
+    public void setPaused(boolean pause) {
         mPaused = pause;
         if (pause) {
             mp.pause();
+            mContext.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mWebView.evaluateJavascript("Root.pauseAnimation()", null);
+                }
+            });
         } else {
             mp.start(); // Review: need to suppress if playback completed?
+            mContext.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mWebView.evaluateJavascript("Root.resumeAnimation()", null);
+                }
+            });
         }
     }
 
@@ -144,9 +158,14 @@ public class WebAppInterface {
     @JavascriptInterface
     public void domContentLoaded() {
         boolean shouldStart;
+        boolean shouldPrepare;
         synchronized (this) {
             mDocLoaded = true;
             shouldStart = shouldStartNarrationWhenDocLoaded;
+            shouldPrepare = shouldPrepareDocumentWhenLoaded;
+        }
+        if (shouldPrepare) {
+            prepareDocument();
         }
         if (shouldStart) {
             startNarration();
@@ -178,6 +197,29 @@ public class WebAppInterface {
             @Override
             public void run() {
                 mWebView.evaluateJavascript("Root.startNarration()", null);
+            }
+        });
+    }
+
+    // Based on the domContentLoaded notification, prepares the document for animation either at once if
+    // things are ready, or as soon as we can.
+    public void prepareDocumentWhenDocLoaded() {
+        boolean shouldPrepare;
+        synchronized (this) {
+            shouldPrepare = mDocLoaded; // we can do it right away if already loaded
+            if (!shouldPrepare)
+                shouldPrepareDocumentWhenLoaded = true; // we can't, domContentLoaded should.
+        }
+        if (shouldPrepare) {
+            prepareDocument();
+        }
+    }
+
+    private void prepareDocument() {
+        mContext.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mWebView.evaluateJavascript("Root.handlePageBeforeVisible()", null);
             }
         });
     }

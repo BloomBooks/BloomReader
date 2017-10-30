@@ -295,12 +295,22 @@ public class BookCollection {
             File thumbsDirectory = getThumbsDirectory();
             String thumbPath = thumbsDirectory.getPath() + File.separator + book.name + PNG_EXTENSION;
             File thumb = new File(thumbPath);
-            if (thumb.exists())
+            if (thumb.exists()) {
+                if (thumb.lastModified() < new File(book.path).lastModified()) {
+                    thumb.delete();
+                    return new BloomFileReader(context, book.path).getThumbnail(thumbsDirectory);
+                }
                 return Uri.fromFile(thumb);
+            }
 
             File noThumb = new File(thumbsDirectory.getPath() + File.separator + NO_THUMBS_DIR + File.separator + book.name);
-            if (noThumb.exists())
+            if (noThumb.exists()){
+                if (noThumb.lastModified() < new File(book.path).lastModified()) {
+                    noThumb.delete();
+                    return new BloomFileReader(context, book.path).getThumbnail(thumbsDirectory);
+                }
                 return null;
+            }
 
             return new BloomFileReader(context, book.path).getThumbnail(thumbsDirectory);
         }

@@ -110,9 +110,10 @@ public class BloomReaderApplication extends Application {
         }
         catch (JSONException e){
             Log.e("Analytics", "Error processing deviceId file json.");
+            Log.e("Analytics", e.getMessage());
             e.printStackTrace();
 
-            Toast failToast = Toast.makeText(getBloomApplicationContext(), R.string.metadata_error, Toast.LENGTH_LONG);
+            Toast failToast = Toast.makeText(getBloomApplicationContext(), "Unable to load device metadata. JSON formatting error.", Toast.LENGTH_LONG);
             failToast.show();
 
             return false;
@@ -120,7 +121,7 @@ public class BloomReaderApplication extends Application {
     }
 
     private static void reportDeviceIdParseSuccess(String project, String device){
-        String successMessage = getBloomApplicationContext().getString(R.string.metadata_loaded) + "\nProject: " + project + "\nDevice: " + device;
+        String successMessage = "Device Metadata Loaded\nProject: " + project + "\nDevice: " + device;
         Toast success = Toast.makeText(getBloomApplicationContext(), successMessage, Toast.LENGTH_LONG);
         success.show();
     }

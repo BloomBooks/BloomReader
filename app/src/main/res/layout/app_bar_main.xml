@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="org.sil.bloom.reader.MainActivity">
+    tools:context="org.sil.bloom.activities.MainActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -19,53 +19,23 @@
             android:background="?attr/colorPrimary"
             app:popupTheme="@style/AppTheme.PopupOverlay">
             <ImageView
+                android:id="@+id/bloom_icon"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 app:srcCompat="@drawable/bloom_against_dark"/>
-        </android.support.v7.widget.Toolbar>
-
-    </android.support.design.widget.AppBarLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_marginTop="?attr/actionBarSize" >
-        <!-- This component is made visible in the shelf activity-->
-        <LinearLayout
-            android:id="@+id/shelf_label_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingLeft="@dimen/activity_horizontal_margin"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
-            android:visibility="gone" >
-
-            <Button
-                android:id="@+id/back_button"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_marginEnd="30dp"
-                android:background="@drawable/ic_arrow_back_black_48dp" />
-            <ImageView
-                android:id="@+id/shelfImage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingEnd="10dp"
-                app:srcCompat="@drawable/bookshelf" />
-
             <TextView
                 android:id="@+id/shelfName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginLeft="5dp"
                 android:ems="10"
-                android:text="Name"
+                android:text=""
                 android:textAppearance="?attr/textAppearanceSearchResultTitle"/>
-        </LinearLayout>
+        </android.support.v7.widget.Toolbar>
+
+    </android.support.design.widget.AppBarLayout>
 
         <include layout="@layout/content_main" />
-    </LinearLayout>
 
 </android.support.design.widget.CoordinatorLayout>

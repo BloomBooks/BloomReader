@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Since its parent is a linear layout and it is the only thing with layout-weight,
-its height will actually be enough to fill the parent.-->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/content_main"
     android:layout_width="match_parent"
-    android:layout_height="100dp"
+    android:layout_height="match_parent"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:layout_weight="1"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="org.sil.bloom.reader.MainActivity"
+    tools:context="org.sil.bloom.activities.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
     <FrameLayout

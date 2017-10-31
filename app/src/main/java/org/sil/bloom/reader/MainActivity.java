@@ -28,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -41,7 +42,11 @@ import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
+import java.util.List;
+
+import static org.sil.bloom.reader.models.BookCollection.getLocalBooksDirectory;
 
 
 public class MainActivity extends BaseActivity
@@ -88,11 +93,9 @@ public class MainActivity extends BaseActivity
             mListView = (ListView) findViewById(R.id.book_list2);
             SetupCollectionListView(mListView);
 
-            // If we were started by some external process and given a path to a book file,
-            // we want copy it to where Bloom books live if it isn't already there,
-            // make sure it is in our collection,
-            // and then open the reader to view it.
-            importBookIfAttached(getIntent());
+            // If we were started by some external process, we need to process any file
+            // we were given (a book or bundle)
+            processIntentData();
 
             // Insert the build version and date into the appropriate control.
             // We have to find it indirectly through the navView's header or it won't be found
@@ -126,17 +129,55 @@ public class MainActivity extends BaseActivity
         return BloomReaderApplication.theOneBookCollection;
     }
 
-    private void importBookIfAttached(Intent intent){
-        Uri bookUri = getIntent().getData();
-        if(bookUri == null)
+    private void processIntentData() {
+        Uri uri = getIntent().getData();
+        if (uri == null)
             return;
-        String newpath = _bookCollection.ensureBookIsInCollection(this, bookUri);
-        if(newpath != null) {
-            openBook(this, newpath);
-        } else{
+        if (uri.getPath().endsWith(BookOrShelf.BOOK_FILE_EXTENSION)) {
+            importBook(uri);
+        } else if (uri.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION)) {
+            importBloomBundle(uri);
+        }
+    }
+
+    // If we were given a path to a book file,
+    // we want copy it to where Bloom books live if it isn't already there,
+    // make sure it is in our collection,
+    // and then open the reader to view it.
+    private void importBook(Uri bookUri){
+        String newPath = _bookCollection.ensureBookIsInCollection(this, bookUri);
+        if (newPath != null) {
+            openBook(this, newPath);
+        } else {
             Toast failToast = Toast.makeText(this, R.string.failed_book_import, Toast.LENGTH_LONG);
             failToast.show();
         }
+    }
+
+    private void importBloomBundle(Uri bloomBundleUri) {
+        Toast.makeText(this, "Got Bloom bundle: " + bloomBundleUri.getPath(), Toast.LENGTH_LONG).show();
+        List<String> newBooks = null;
+        try {
+            newBooks = IOUtilities.extractBloomBundle(this.getApplicationContext(), bloomBundleUri);
+            // We assume that they will be happy with us removing from where ever the bundle was,
+            // so long as it is on the same device (e.g. not coming from an sd card they plan to pass
+            // around the room).
+            if(!IOUtilities.seemToBeDifferentVolumes(bloomBundleUri.getPath(), BookCollection.getLocalBooksDirectory().getPath())) {
+                (new File(bloomBundleUri.getPath())).delete();
+            }
+        }
+        catch (IOException e) {
+            Log.e("BloomReader", "IO exception reading bloom bundle: " + e.getMessage());
+            Toast.makeText(this, "Had a problem reading the bundle", Toast.LENGTH_LONG).show();
+        }
+        try {
+            // Reinitialize completely to get the new state of things.
+            _bookCollection.init(this.getApplicationContext());
+        } catch (ExtStorageUnavailableException e) {
+            Log.wtf("BloomReader", "Could not use external storage when reloading project!", e); // should NEVER happen
+        }
+        updateDisplay();
+        highlightItems(newBooks);
     }
 
     @Override
@@ -227,6 +268,27 @@ public class MainActivity extends BaseActivity
         }
     }
 
+    private void highlightItems(List<String> items) {
+        if (items == null)
+            return;
+        if (items.size() > 1) {
+            // Required for us to select all the new items. Gets reset to normal when one is selected.
+            mListView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
+        }
+        int minIndex = Integer.MAX_VALUE;
+        for (String path: items) {
+            BookOrShelf item = _bookCollection.getBookByPath(path);
+            int bookIndex = _bookCollection.indexOf(item);
+            if (bookIndex >= 0) {
+                mListView.setItemChecked(bookIndex, true);
+                minIndex = Math.min(minIndex, bookIndex);
+            }
+        }
+        if (minIndex < Integer.MAX_VALUE) {
+            mListView.smoothScrollToPosition(minIndex);
+        }
+    }
+
     private void closeContextualActionBar() {
         contextualActionBarMode.finish();
     }
@@ -304,6 +366,13 @@ public class MainActivity extends BaseActivity
         {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long arg3) {
                     Context context = v.getContext();
+
+                    // These lines help set things back to normal in case we were temporarily
+                    // in multiple-item-select mode.
+                    mListView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
+                    mListView.setSelection(position);
+                    mListView.setItemChecked(position, true);
+
                     openBook(context, _bookCollection.get(position).path);
                 }
         });
@@ -350,6 +419,7 @@ public class MainActivity extends BaseActivity
                 if(contextualActionBarMode != null)
                     return false;
                 mListView.setSelected(true);
+                mListView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
                 mListView.setSelection(position);
                 mListView.setItemChecked(position, true);
 
@@ -448,6 +518,10 @@ public class MainActivity extends BaseActivity
             case R.id.nav_share_app:
                 ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
                 shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
+                break;
+            case R.id.nav_share_books:
+                ShareBooksDialogFragment shareBooksDialogFragment = new ShareBooksDialogFragment();
+                shareBooksDialogFragment.show(getFragmentManager(), ShareBooksDialogFragment.SHARE_BOOKS_DIALOG_FRAGMENT_TAG);
                 break;
             case R.id.nav_release_notes:
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);

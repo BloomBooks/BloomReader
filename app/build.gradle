@@ -110,5 +110,10 @@ dependencies {
     compile 'cz.msebera.android:httpclient:4.4.1.2'
     compile 'com.segment.analytics.android:analytics:4.+'
     compile 'commons-io:commons-io:2.4'
+    // Andrew tried this and had problems. I don't recall the details.
+    //compile 'commons-io:commons-compress:1.15'
+    // Needed (at least) for making tar archives to send multiple books.
+    compile 'org.apache.commons:commons-compress:1.14'
+
     testCompile 'junit:junit:4.12'
 }

@@ -58,6 +58,22 @@
                 <data
                     android:mimeType="application/bloom"
                     android:scheme="content" />
+                <!-- needed for properly formatted email messages -->
+                <data
+                    android:mimeType="application/vnd.bloomd"
+                    android:scheme="content" />
+                <!-- needed for mangled email messages -->
+                <data
+                    android:mimeType="application/bloomd"
+                    android:scheme="content" />
+                <!-- needed for properly formatted email messages -->
+                <data
+                    android:mimeType="application/vnd.bloombundle"
+                    android:scheme="content" />
+                <!-- needed for mangled email messages -->
+                <data
+                    android:mimeType="application/bloombundle"
+                    android:scheme="content" />
                 <!-- needed for mangled email messages -->
                 <data
                     android:mimeType="application/octet-stream"
@@ -96,6 +112,13 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
             </intent-filter>
 
             <!--
@@ -132,6 +155,13 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
             </intent-filter>
         </activity>
         <activity

@@ -27,6 +27,10 @@ import java.util.Locale;
 import java.util.Set;
 
 public class BookCollection {
+    public static final String THUMBS_DIR = ".thumbs";
+    public static final String NO_THUMBS_DIR = "no-thumbs";
+    public static final String PNG_EXTENSION = ".png";
+
     public static final String BOOKSHELF_PREFIX = "bookshelf:";
     // All the books and shelves loaded from the folder on 'disk'.
     private List<BookOrShelf> _booksAndShelves = new ArrayList<BookOrShelf>();
@@ -285,5 +289,50 @@ public class BookCollection {
             // the book shows up at the root instead of on a shelf.
             e.printStackTrace();
         }
+    }
+
+    public Uri getThumbnail(Context context, BookOrShelf book){
+        try {
+            File thumbsDirectory = getThumbsDirectory();
+            String thumbPath = thumbsDirectory.getPath() + File.separator + book.name + PNG_EXTENSION;
+            File thumb = new File(thumbPath);
+            if (thumb.exists()) {
+                if (thumb.lastModified() < new File(book.path).lastModified()) {
+                    thumb.delete();
+                    return new BloomFileReader(context, book.path).getThumbnail(thumbsDirectory);
+                }
+                return Uri.fromFile(thumb);
+            }
+
+            File noThumb = new File(thumbsDirectory.getPath() + File.separator + NO_THUMBS_DIR + File.separator + book.name);
+            if (noThumb.exists()){
+                if (noThumb.lastModified() < new File(book.path).lastModified()) {
+                    noThumb.delete();
+                    return new BloomFileReader(context, book.path).getThumbnail(thumbsDirectory);
+                }
+                return null;
+            }
+
+            return new BloomFileReader(context, book.path).getThumbnail(thumbsDirectory);
+        }
+        catch (IOException e){
+            Log.e("BookCollection", "IOException getting thumbnail: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private File getThumbsDirectory() throws IOException {
+        String bloomDirectoryPath = getLocalBooksDirectory().getPath();
+        String thumbsDirectoryPath = bloomDirectoryPath + File.separator + THUMBS_DIR;
+        File thumbsDirectory = new File(thumbsDirectoryPath);
+        if(!thumbsDirectory.exists()){
+            thumbsDirectory.mkdir();
+            File noMedia = new File(thumbsDirectoryPath + File.separator + ".nomedia");
+            noMedia.createNewFile();
+            File noThumb = new File(thumbsDirectoryPath + File.separator + NO_THUMBS_DIR);
+            noThumb.mkdir();
+        }
+        return thumbsDirectory;
     }
 }

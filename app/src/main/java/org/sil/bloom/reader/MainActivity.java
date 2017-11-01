@@ -351,7 +351,11 @@ public class MainActivity extends BaseActivity
                         e.printStackTrace();
                     }
                 } else {
-                    image.setImageResource(R.drawable.book);
+                    Uri image_uri = _bookCollection.getThumbnail(getContext(), bookOrShelf);
+                    if(image_uri == null)
+                        image.setImageResource(R.drawable.book);
+                    else
+                        image.setImageURI(image_uri);
                 }
                 return rowView;
             }

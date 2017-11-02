@@ -67,16 +67,16 @@ cd -
 
 
 # *** Results ***
-# build: BloomReader master alpha continuous publish (BloomReader_Build)
+# build: BloomReader Version1.0 beta publish (Bloom_BloomReader_BloomReaderVersion10betaPublish)
 # project: BloomReader
-# URL: http://build.palaso.org/viewType.html?buildTypeId=BloomReader_Build
-# VCS: https://github.com/BloomBooks/BloomReader [refs/heads/master]
+# URL: http://build.palaso.org/viewType.html?buildTypeId=Bloom_BloomReader_BloomReaderVersion10betaPublish
+# VCS: https://github.com/BloomBooks/BloomReader [Version1.0]
 # dependencies:
 # [0] build: BloomPlayer-Master-Continuous (BPContinuous)
 #     project: Bloom
 #     URL: http://build.palaso.org/viewType.html?buildTypeId=BPContinuous
 #     clean: false
-#     revision: latest.lastSuccessful
+#     revision: bloom-reader-1.0.tcbuildtag
 #     paths: {"bloomPagePlayer.js"=>"app/src/main/assets/book support files"}
 #     VCS: https://github.com/BloomBooks/BloomPlayer [refs/heads/master]
 
@@ -84,5 +84,5 @@ cd -
 mkdir -p "../app/src/main/assets/book support files"
 
 # download artifact dependencies
-copy_auto http://build.palaso.org/guestAuth/repository/download/BPContinuous/latest.lastSuccessful/bloomPagePlayer.js "../app/src/main/assets/book support files/bloomPagePlayer.js"
+copy_auto http://build.palaso.org/guestAuth/repository/download/BPContinuous/bloom-reader-1.0.tcbuildtag/bloomPagePlayer.js "../app/src/main/assets/book support files/bloomPagePlayer.js"
 # End of script

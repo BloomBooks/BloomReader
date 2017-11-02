@@ -55,6 +55,7 @@ public class ReaderActivity extends BaseActivity {
     private BloomFileReader mFileReader;
     private int mAudioPagesPlayed = 0;
     private int mNonAudioPagesShown = 0;
+    WebView mCurrentView;
 
     // Keeps track of whether we switched pages while audio paused. If so, we don't resume
     // the audio of the previously visible page, but start this page from the beginning.
@@ -202,7 +203,8 @@ public class ReaderActivity extends BaseActivity {
         } else {
             view.setImageResource(R.drawable.play_on_circle);
             if(mSwitchedPagesWhilePaused) {
-                mAdapter.startNarrationForPage(mPager.getCurrentItem());
+                final int position = mPager.getCurrentItem();
+                mAdapter.startNarrationForPage(position); // also starts animation if any
             }
         }
         mSwitchedPagesWhilePaused = false;
@@ -311,9 +313,17 @@ public class ReaderActivity extends BaseActivity {
                     public void onPageSelected(int position) {
                         super.onPageSelected(position);
                         clearNextPageTimer(); // in case user manually moved to a new page while waiting
+                        mCurrentView = mAdapter.getActiveView(position);
                         mTimeLastPageSwitch = System.currentTimeMillis();
                         mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
                         WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
+                        // This new page may not be in the correct paused state.
+                        // (a) maybe we paused this page, moved to another, started narration, moved
+                        // back to this (adapter decided to reuse it), this one needs to not be paused.
+                        // (b) maybe we moved to another page while not paused, paused there, moved
+                        // back to this one (again, reused) and old animation is still running
+                        WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
+                        appInterface.setPaused(WebAppInterface.isNarrationPaused());
                         if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
                             mAdapter.startNarrationForPage(position);
                             // Note: this isn't super-reliable. We tried to narrate this page, but it may not
@@ -431,8 +441,6 @@ public class ReaderActivity extends BaseActivity {
             mBookHtmlPath = bookHtmlPath;
             mHtmlBeforeFirstPageDiv = htmlBeforeFirstPageDiv;
             mHtmlAfterLastPageDiv = htmlAfterLastPageDiv;
-            mLastPageIndex = -1;
-            mThisPageIndex = -1;
         }
 
         @Override
@@ -465,6 +473,17 @@ public class ReaderActivity extends BaseActivity {
             return mActiveViews.get(position);
         }
 
+        public void prepareForAnimation(int position) {
+            final WebView pageView = mActiveViews.get(position);
+            if (pageView == null) {
+                Log.d("prepareForAnimation", "can't find page for " + position);
+                return;
+            }
+
+            WebAppInterface appInterface = (WebAppInterface)pageView.getTag();
+            appInterface.prepareDocumentWhenDocLoaded();
+        }
+
         public void startNarrationForPage(int position) {
             WebView pageView = mActiveViews.get(position);
             if (pageView == null) {
@@ -494,6 +513,7 @@ public class ReaderActivity extends BaseActivity {
                 String doc = mHtmlBeforeFirstPageDiv + page + mHtmlAfterLastPageDiv;
 
                 browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc, "text/html", "utf-8", null);
+                prepareForAnimation(position);
             }catch (Exception ex) {
                 Log.e("Reader", "Error loading " + mBookHtmlPath.getAbsolutePath() + "  " + ex);
             }
@@ -548,7 +568,8 @@ public class ReaderActivity extends BaseActivity {
                     // vertical distance than horizontal and cause a play/pause event.
                     // See https://issues.bloomlibrary.org/youtrack/issue/BL-5068.
                 } else if (event.getEventTime() - event.getDownTime() < viewConfiguration.getJumpTapTimeout()) {
-                    WebAppInterface.playPause(!WebAppInterface.isNarrationPaused());
+                    WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
+                    appInterface.setPaused(!WebAppInterface.isNarrationPaused());
                     narrationPausedChanged();
                 }
             }

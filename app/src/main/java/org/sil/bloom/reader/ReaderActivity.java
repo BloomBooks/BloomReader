@@ -315,24 +315,25 @@ public class ReaderActivity extends BaseActivity {
                         clearNextPageTimer(); // in case user manually moved to a new page while waiting
                         mCurrentView = mAdapter.getActiveView(position);
                         mTimeLastPageSwitch = System.currentTimeMillis();
-                        mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
-                        WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
-                        // This new page may not be in the correct paused state.
-                        // (a) maybe we paused this page, moved to another, started narration, moved
-                        // back to this (adapter decided to reuse it), this one needs to not be paused.
-                        // (b) maybe we moved to another page while not paused, paused there, moved
-                        // back to this one (again, reused) and old animation is still running
-                        WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
-                        appInterface.setPaused(WebAppInterface.isNarrationPaused());
-                        if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
-                            mAdapter.startNarrationForPage(position);
-                            // Note: this isn't super-reliable. We tried to narrate this page, but it may not
-                            // have any audio. All we know is that it's part of a book which has
-                            // audio (or animation) somewhere, and we tried to play any audio it has.
-                            mAudioPagesPlayed++;
-                        }
-                        else {
-                            mNonAudioPagesShown++;
+                        if (mIsMultiMediaBook) {
+                            mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
+                            WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
+                            // This new page may not be in the correct paused state.
+                            // (a) maybe we paused this page, moved to another, started narration, moved
+                            // back to this (adapter decided to reuse it), this one needs to not be paused.
+                            // (b) maybe we moved to another page while not paused, paused there, moved
+                            // back to this one (again, reused) and old animation is still running
+                            WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
+                            appInterface.setPaused(WebAppInterface.isNarrationPaused());
+                            if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
+                                mAdapter.startNarrationForPage(position);
+                                // Note: this isn't super-reliable. We tried to narrate this page, but it may not
+                                // have any audio. All we know is that it's part of a book which has
+                                // audio (or animation) somewhere, and we tried to play any audio it has.
+                                mAudioPagesPlayed++;
+                            } else {
+                                mNonAudioPagesShown++;
+                            }
                         }
                     }
                 };
@@ -569,8 +570,10 @@ public class ReaderActivity extends BaseActivity {
                     // See https://issues.bloomlibrary.org/youtrack/issue/BL-5068.
                 } else if (event.getEventTime() - event.getDownTime() < viewConfiguration.getJumpTapTimeout()) {
                     WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
-                    appInterface.setPaused(!WebAppInterface.isNarrationPaused());
-                    narrationPausedChanged();
+                    if (appInterface != null) { // may be null if this can happen in non-multimedia book
+                        appInterface.setPaused(!WebAppInterface.isNarrationPaused());
+                        narrationPausedChanged();
+                    }
                 }
             }
             return super.onTouchEvent(event);

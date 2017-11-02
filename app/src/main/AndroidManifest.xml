@@ -4,6 +4,8 @@
     android:installLocation="auto">
 
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- So that just for the duration of WiFi transfer we can hold a lock. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!-- Used at least for analytics, soon for Bloom Library download. Was present when I added
     analytics, so may be used for something else also. -->

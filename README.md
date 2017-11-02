@@ -121,7 +121,7 @@ The `ba-win10-64-s1-601` (in the Keyman pool) is currently the only agent config
 To update the sample book, *The Moon and the Cap*:
 
 - Open an English collection in the latest version of Bloom. Vernacular and National language should be English. 
-- Set xMatter to Super Paper Saver. 
+- Set xMatter to Device. 
 - Create a book using the sample shell.
 - Set the layout to Device16x9Portrait (this step is, theoretically, not necessary because Bloom Reader should display the correct layout, anyway, but it is probably a good idea).
 - Publish -> Android -> Save Bloom Reader File

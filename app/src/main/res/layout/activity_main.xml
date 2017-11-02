@@ -16,6 +16,8 @@
     <!-- Not sure how well 350dp will work in general but wrap-content did not.
     Made everything too narrow so menu items were truncated and header laid
     out poorly. -->
+    <!-- Oddly, we had to add itemTextColor and itemIconTint for Android 8.0
+    which was displaying text and icons as magenta. -->
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="350dp"
@@ -23,6 +25,8 @@
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
         app:headerLayout="@layout/nav_header_main"
-        app:menu="@menu/activity_main_drawer" />
+        app:menu="@menu/activity_main_drawer"
+        app:itemTextColor="@color/colorPrimaryDark"
+        app:itemIconTint="@color/colorPrimaryDark" />
 
 </android.support.v4.widget.DrawerLayout>

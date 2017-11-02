@@ -187,6 +187,14 @@
             android:name=".ShelfActivity"
             android:label="@string/title_activity_shelf"
             android:theme="@style/AppTheme.NoActionBar"></activity>
+
+        <receiver android:name="org.sil.bloom.reader.ConnectivityReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:authorities="${applicationId}.fileprovider"
             android:name="android.support.v4.content.FileProvider"

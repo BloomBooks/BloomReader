@@ -2,11 +2,19 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.Shader;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RectShape;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -14,12 +22,16 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +40,9 @@ import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookOrShelf;
 
 
@@ -38,6 +53,9 @@ public class ReaderActivity extends BaseActivity {
     private static final String sAssetsBloomPlayerScript = "<script type=\"text/javascript\" src=\"file:///android_asset/book support files/bloomPagePlayer.js\"></script>";
     private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)\\b");
     private static final Pattern sHeadElementEndPattern = Pattern.compile("</head");
+    private static final Pattern sQuestionClassPattern = Pattern.compile("<div [^>]*class=\"[^\"]*\\bquestions\\b");
+    private static final Pattern sEditableDivLangAndContent = Pattern.compile("<div [^>]*class=\"[^\"]*bloom-editable[^\"]*\"[^>]*lang=\"([^\"]*)\"[^>]*>([\\s\\S]*?)</div");
+    private static final Pattern sMainLangauge = Pattern.compile("<div data-book=\"contentLanguage1\"[^>]*>\\s*(\\S*)");
     // Matches a div with class bloom-page, that is, the start of the main content of one page.
     // (We're looking for the start of a div tag, then before finding the end wedge, we find
     // class<maybe space>=<maybe space><some sort of quote> and then bloom-page before we find
@@ -55,6 +73,8 @@ public class ReaderActivity extends BaseActivity {
     private BloomFileReader mFileReader;
     private int mAudioPagesPlayed = 0;
     private int mNonAudioPagesShown = 0;
+    int mFirstQuestionPage;
+    int mCountQuestionPages;
     WebView mCurrentView;
 
     // Keeps track of whether we switched pages while audio paused. If so, we don't resume
@@ -278,6 +298,10 @@ public class ReaderActivity extends BaseActivity {
             String startFrame = "";
             String endFrame = "";
             ArrayList<String> pages = new ArrayList<String>();
+            ArrayList<String> questionPages = new ArrayList<String>();
+            final String branding = getBranding();
+            boolean hasEnterpriseBranding = branding != null && !branding.toLowerCase().equals("default");
+            String primaryLanguage = getPrimaryLanguage(html);
 
             // if we don't find even one start of page, we have no pages, and don't need startFrame, endFrame, etc.
             if (matcher.find()) {
@@ -286,9 +310,19 @@ public class ReaderActivity extends BaseActivity {
                 startFrame = addAssetsStylesheetLink(startFrame);
                 int startPage = firstPageIndex;
                 while (matcher.find()) {
-                    pages.add(html.substring(startPage, matcher.start()));
+                    final String pageContent = html.substring(startPage, matcher.start());
+                    final boolean isQuestionPage = sQuestionClassPattern.matcher(pageContent).find();
+                    if (isQuestionPage) {
+                        if (hasEnterpriseBranding)
+                            MakeQuestionPages(questionPages, pageContent, primaryLanguage);
+                    } else {
+                        pages.add(pageContent);
+                    }
                     startPage = matcher.start();
                 }
+                mFirstQuestionPage = pages.size();
+                mCountQuestionPages = questionPages.size();
+                pages.addAll(questionPages);
                 int endBody = html.indexOf("</body>", startPage);
                 pages.add(html.substring(startPage, endBody));
                 // We can leave out the bloom player JS altogether if not needed.
@@ -323,16 +357,18 @@ public class ReaderActivity extends BaseActivity {
                             // back to this (adapter decided to reuse it), this one needs to not be paused.
                             // (b) maybe we moved to another page while not paused, paused there, moved
                             // back to this one (again, reused) and old animation is still running
-                            WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
-                            appInterface.setPaused(WebAppInterface.isNarrationPaused());
-                            if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
-                                mAdapter.startNarrationForPage(position);
-                                // Note: this isn't super-reliable. We tried to narrate this page, but it may not
-                                // have any audio. All we know is that it's part of a book which has
-                                // audio (or animation) somewhere, and we tried to play any audio it has.
-                                mAudioPagesPlayed++;
-                            } else {
-                                mNonAudioPagesShown++;
+                            if (mCurrentView.getTag() instanceof WebAppInterface) {
+                                WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
+                                appInterface.setPaused(WebAppInterface.isNarrationPaused());
+                                if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
+                                    mAdapter.startNarrationForPage(position);
+                                    // Note: this isn't super-reliable. We tried to narrate this page, but it may not
+                                    // have any audio. All we know is that it's part of a book which has
+                                    // audio (or animation) somewhere, and we tried to play any audio it has.
+                                    mAudioPagesPlayed++;
+                                } else {
+                                    mNonAudioPagesShown++;
+                                }
                             }
                         }
                     }
@@ -360,6 +396,85 @@ public class ReaderActivity extends BaseActivity {
             }
         });
 
+    }
+
+    private String getPrimaryLanguage(String html) {
+        Matcher matcher = sMainLangauge.matcher(html);
+        if (!matcher.find())
+            return "en";
+        return matcher.group(1);
+    }
+
+    String getBranding() {
+        String json = mFileReader.getMetaJson();
+
+        try {
+            JSONObject data = new JSONObject(json);
+            if (!data.has("brandingProjectName"))
+                return null;
+            return data.getString("brandingProjectName");
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    // questionSource is a 'page' with class 'questions'.
+    // We expect it to have one div with class bloom-translationGroup,
+    // with one or more children that have class bloom-editable, one of which we hope will have
+    // lang=the book language.
+    // That div is expected to have groups of lines like
+    // Question
+    // answer
+    // *correct answer
+    /// answer
+    // (Actually a 'line' is typically the contents of a <p>, but sometimes <br></br> breaks things.)
+    // Each group of lines is converted into a page and added to pages at the end of the book.
+    // The page produced does not start with <, which flags it as a question page.
+    public static void MakeQuestionPages(ArrayList<String> pages, String questionSource, String targetLang) {
+        final Matcher matcher = sEditableDivLangAndContent.matcher(questionSource);
+        while (matcher.find()) {
+            String lang = matcher.group(1);
+            if (!lang.equals(targetLang))
+                continue;
+            String questions = matcher.group(2);
+            String[] parts = questions.split("<p>|<br></br>\\s*");
+            boolean nextLineIsQuestion = true;
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < parts.length; i++) {
+                String current = parts[i];
+                // We want the text up to the </p> that corresponds to the <p> on which we split.
+                // There may be some white space before the first <p>; we can process that as
+                // a whitespace-only string.
+                // There may be no </p> if we split at a <br></br>
+                // Tried parts[i].split("</p>")[0] but that fails because when the whole parts[i]
+                // is </p> split counter-intuitively gives zero splits.
+                int endIndex = current.indexOf("</p>");
+                if (endIndex >= 0)
+                    current = current.substring(0,endIndex);
+                if (current.trim().equals("")) {
+                    // start a new question page; output the current one.
+                    nextLineIsQuestion = true;
+                    if (builder.length() > 0)
+                        pages.add(builder.toString());
+                    builder = new StringBuilder();
+                    continue;
+                }
+                if (nextLineIsQuestion) {
+                    //builder.append("<div class=\"question\">" + current + "</div>");
+                    builder.append(current);
+                    nextLineIsQuestion = false;
+                } else {
+                    builder.append("\n");
+                    builder.append(current);
+                }
+            }
+            if (builder.length() > 0) {
+                pages.add(builder.toString());
+            }
+            break;
+        }
     }
 
     private String addAssetsStylesheetLink(String htmlSnippet) {
@@ -461,12 +576,53 @@ public class ReaderActivity extends BaseActivity {
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
             Log.d("Reader", "instantiateItem " + position);
-
-            WebView browser = MakeBrowserForPage(position);
-
             assert(container.getChildCount() == 0);
-            container.addView(browser);
-            return browser;
+            String page = mHtmlPageDivs.get(position);
+            if (page.startsWith("<")) {
+                // normal content page
+                WebView browser = MakeBrowserForPage(position);
+                container.addView(browser);
+                return browser;
+            }
+            // question page
+            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LinearLayout questionPageView = (LinearLayout) inflater.inflate(R.layout.question_page, null);
+            String[] lines = page.split("\r?\n");
+            TextView questionView = (TextView)questionPageView.findViewById(R.id.question);
+            questionView.setText(lines[0]);
+            for (int i = 1; i < lines.length; i++) {
+                // Passing the intended parent view allows the button's margins to work properly.
+                // There's an explanation at https://stackoverflow.com/questions/5315529/layout-problem-with-button-margin.
+                Button answer = (Button) inflater.inflate(R.layout.question_answer_button, questionPageView, false);
+                String content = lines[i];
+                if (content.startsWith("*")) {
+                    content = content.substring(1).trim();
+                    answer.setTag("correct");
+                }
+                answer.setText(content);
+                answer.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        // Enhance: this is not meant to be the final feedback, just enough to test
+                        // that we know which one is right and can do something to indicate it.
+                        boolean correct = view.getTag() == "correct";
+                        ShapeDrawable shapedrawable = new ShapeDrawable();
+                        shapedrawable.setShape(new RectShape());
+                        shapedrawable.getPaint().setColor(correct ? Color.GREEN : Color.RED);
+                        shapedrawable.getPaint().setStrokeWidth(10f);
+                        shapedrawable.getPaint().setStyle(Paint.Style.STROKE);
+                        // An unsuccessful attempt to keep the gray button background.
+                        // Proved ridiculously difficult for a first-approximation feedback, so gave up.
+                        //shapedrawable.getPaint().setShader(new LinearGradient(0.0f, 0.0f, 0.0f, (float)view.getHeight(),Color.GRAY, Color.GRAY, Shader.TileMode.CLAMP));
+                        view.setBackground(shapedrawable);
+                    }
+                });
+                questionPageView.addView(answer);
+            }
+            TextView progressView = (TextView) questionPageView.findViewById(R.id.question_progress);
+            progressView.setText(String.format(progressView.getText().toString(), position - mFirstQuestionPage + 1, mCountQuestionPages));
+            container.addView(questionPageView);
+            return questionPageView;
         }
 
         // position should in fact be the position of the pager.
@@ -481,8 +637,10 @@ public class ReaderActivity extends BaseActivity {
                 return;
             }
 
-            WebAppInterface appInterface = (WebAppInterface)pageView.getTag();
-            appInterface.prepareDocumentWhenDocLoaded();
+            if (pageView.getTag() instanceof WebAppInterface) {
+                WebAppInterface appInterface = (WebAppInterface) pageView.getTag();
+                appInterface.prepareDocumentWhenDocLoaded();
+            }
         }
 
         public void startNarrationForPage(int position) {
@@ -491,8 +649,10 @@ public class ReaderActivity extends BaseActivity {
                 Log.d("startNarration", "can't find page for " + position);
                 return;
             }
-            WebAppInterface appInterface = (WebAppInterface)pageView.getTag();
-            appInterface.startNarrationWhenDocLoaded();
+            if (pageView.getTag() instanceof WebAppInterface) {
+                WebAppInterface appInterface = (WebAppInterface) pageView.getTag();
+                appInterface.startNarrationWhenDocLoaded();
+            }
         }
 
         private WebView MakeBrowserForPage(int position) {
@@ -569,10 +729,12 @@ public class ReaderActivity extends BaseActivity {
                     // vertical distance than horizontal and cause a play/pause event.
                     // See https://issues.bloomlibrary.org/youtrack/issue/BL-5068.
                 } else if (event.getEventTime() - event.getDownTime() < viewConfiguration.getJumpTapTimeout()) {
-                    WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
-                    if (appInterface != null) { // may be null if this can happen in non-multimedia book
-                        appInterface.setPaused(!WebAppInterface.isNarrationPaused());
-                        narrationPausedChanged();
+                    if (mCurrentView.getTag() instanceof WebAppInterface) {
+                        WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
+                        if (appInterface != null) { // may be null if this can happen in non-multimedia book
+                            appInterface.setPaused(!WebAppInterface.isNarrationPaused());
+                            narrationPausedChanged();
+                        }
                     }
                 }
             }

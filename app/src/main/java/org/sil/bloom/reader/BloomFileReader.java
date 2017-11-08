@@ -41,6 +41,22 @@ public class BloomFileReader {
         return findHtmlFile();
     }
 
+    // returns null if anything goes wrong reading it
+    public String getMetaJson() {
+        if(bookDirectory == null) {
+            try {
+                openFile(CURRENT_BOOK_FOLDER);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+        File metaJson = new File(bookDirectory + File.separator + "meta.json");
+        if (!metaJson.exists())
+            return null;
+        return IOUtilities.FileToString(metaJson);
+    }
+
     public Uri getThumbnail(File thumbsDirectory) throws IOException{
         Uri thumbUri = null;
         if(bookDirectory == null)

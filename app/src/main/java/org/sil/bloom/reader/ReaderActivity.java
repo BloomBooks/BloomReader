@@ -370,31 +370,24 @@ public class ReaderActivity extends BaseActivity {
         return htmlSnippet;
     }
 
-    // Forces the layout we want into the class, and inserts the specified style.
-    // assumes some layout is already present in classes attribute, and no style already exists.
-    private String modifyPage(String page, String newLayout, String style) {
-        // Get the content of the class attribute and its position
+    private int pageOrientation(String page){
         Matcher matcher = sClassAttrPattern.matcher(page);
-        if (!matcher.find())
-            return page; // don't think this can happen, we create pages by finding class attr.
-        int start = matcher.start(2);
-        int end = matcher.end(2);
-        String classNames = matcher.group(2);
-        String newClassNames = sLayoutPattern.matcher(classNames).replaceFirst(newLayout);
-        return page.substring(0,start) // everything up to the opening quote in class="
-                + newClassNames
-                + matcher.group(1) // proper matching closing quote ends class attr
-                + " style="
-                + matcher.group(1) // we need to use the same quote for style...
-                + style
-                + page.substring(end, page.length()); // because this includes the original closing quote from class attr
+        if (matcher.find()) {
+            String classNames = matcher.group(2);
+            if (classNames.contains("Device16x9Portrait"))
+                return ScaledWebView.BOOK_PORTRAIT;
+            if (classNames.contains("Device16x9Landscape"))
+                return ScaledWebView.BOOK_LANDSCAPE;
+        }
+        Log.e("Reader", "Could not read page orientation...going with portrait...");
+        return ScaledWebView.BOOK_PORTRAIT;
     }
 
-    private int getPageScale(int viewWidth, int viewHeight){
+    private int getPageScale(int viewWidth, int viewHeight, int bookOrientation){
         //we'll probably want to read or calculate these at some point...
         //but for now, they are the width and height of the Device16x9Portrait layout
-        int bookPageWidth = 378;
-        int bookPageHeight = 674;
+        int bookPageWidth = (bookOrientation == ScaledWebView.BOOK_PORTRAIT) ? 378 : 674;
+        int bookPageHeight = (bookOrientation == ScaledWebView.BOOK_PORTRAIT) ? 674 : 378;
 
         Double widthScale = new Double(viewWidth)/new Double(bookPageWidth);
         Double heightScale = new Double(viewHeight)/new Double(bookPageHeight);
@@ -498,7 +491,8 @@ public class ReaderActivity extends BaseActivity {
         private WebView MakeBrowserForPage(int position) {
             ScaledWebView browser = null;
             try {
-                browser = new ScaledWebView(mParent);
+                String page = mHtmlPageDivs.get(position);
+                browser = new ScaledWebView(mParent, pageOrientation(page));
                 mActiveViews.put(position, browser);
                 if (mIsMultiMediaBook) {
                     browser.getSettings().setJavaScriptEnabled(true); // allow Javascript for audio player
@@ -508,10 +502,9 @@ public class ReaderActivity extends BaseActivity {
                     // way to get from the browser to the object we set as the JS interface.
                     browser.setTag(appInterface);
                 }
-                String page = mHtmlPageDivs.get(position);
-                // Inserts the layout class we want and forces no border.
-                page = modifyPage(page, "Device16x9Portrait", "border:0 !important");
-                String doc = mHtmlBeforeFirstPageDiv + page + mHtmlAfterLastPageDiv;
+                // Styles to force 0 border and to vertically center landscape books in a portrait browser
+                String moreStyles = "<style>html{ height: 100%; }  body{ min-height:100%; display:flex; align-items:center; } div.bloom-page { border:0 !important; }</style>\n";
+                String doc = mHtmlBeforeFirstPageDiv + moreStyles + page + mHtmlAfterLastPageDiv;
 
                 browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc, "text/html", "utf-8", null);
                 prepareForAnimation(position);
@@ -529,9 +522,13 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private class ScaledWebView extends WebView {
+        public static final int BOOK_PORTRAIT = 0;
+        public static final int BOOK_LANDSCAPE = 1;
+        private int bookOrientation;
 
-        public ScaledWebView(Context context) {
+        public ScaledWebView(Context context, int bookOrientation) {
             super(context);
+            this.bookOrientation = bookOrientation;
         }
 
         @Override
@@ -539,7 +536,7 @@ public class ReaderActivity extends BaseActivity {
 
             // if width is zero, this method will be called again
             if (w != 0) {
-                setInitialScale(getPageScale(w, h));
+                setInitialScale(getPageScale(w, h, bookOrientation));
             }
 
             super.onSizeChanged(w, h, ow, oh);

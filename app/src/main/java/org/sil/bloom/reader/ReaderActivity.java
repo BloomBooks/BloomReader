@@ -3,14 +3,18 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.transition.Slide;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
@@ -71,6 +75,8 @@ public class ReaderActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setTransitions();
+
         //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             WebView.setWebContentsDebuggingEnabled(true);
         //}
@@ -82,6 +88,14 @@ public class ReaderActivity extends BaseActivity {
         mBrandingProjectName = getIntent().getStringExtra("brandingProjectName");
 
         new Loader().execute();
+    }
+
+    private void setTransitions(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            getWindow().requestFeature(Window.FEATURE_ACTIVITY_TRANSITIONS);
+            getWindow().setAllowEnterTransitionOverlap(true);
+            getWindow().setEnterTransition(new Slide(Gravity.RIGHT));
+        }
     }
 
     @Override

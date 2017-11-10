@@ -1,12 +1,14 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -22,12 +24,15 @@ import android.text.SpannableString;
 import android.text.format.DateFormat;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
+import android.transition.Slide;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -62,6 +67,7 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTransitions();
         setContentView(R.layout.activity_main);
 
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -117,6 +123,13 @@ public class MainActivity extends BaseActivity
         }
     }
 
+    private void setTransitions(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
+            getWindow().setAllowReturnTransitionOverlap(true);
+            getWindow().setExitTransition(new Slide(Gravity.LEFT));
+        }
+    }
     // This is a hook to allow ShelfActivity to disable the navigation drawer and replace it
     // with a back button.
     protected void configureActionBar(ActionBarDrawerToggle toggle) {
@@ -454,13 +467,20 @@ public class MainActivity extends BaseActivity
             intent.putExtra("filter", bookOrShelf.shelfId);
             intent.putExtra("label", bookOrShelf.name); // Or get it from the appropriate ws of label
             intent.putExtra("background", bookOrShelf.backgroundColor);
-            context.startActivity(intent);
+            startActivityWithTransition(intent);
         } else {
             Intent intent = new Intent(context, ReaderActivity.class);
             intent.setData(Uri.parse(path));
             intent.putExtra("brandingProjectName", bookOrShelf.brandingProjectName);
-            context.startActivity(intent);
+            startActivityWithTransition(intent);
         }
+    }
+
+    private void startActivityWithTransition(Intent intent){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(this).toBundle());
+        else
+            startActivity(intent);
     }
 
     @Override

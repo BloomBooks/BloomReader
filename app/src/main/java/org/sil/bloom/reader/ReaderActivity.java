@@ -3,10 +3,7 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.Shader;
-import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.os.AsyncTask;
@@ -31,7 +28,6 @@ import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -461,6 +457,14 @@ public class ReaderActivity extends BaseActivity {
         IOUtilities.copyAssetFolder(this.getApplicationContext().getAssets(), "book support files", bookFolderPath);
     }
 
+    enum pageAnswerState {
+        unanswered,
+        firstTimeCorrect,
+        secondTimeCorrect,
+        wrongOnce,
+        wrong
+    }
+
     // Class that provides individual page views as needed.
     // possible enhancement: can we reuse the same browser, just change which page is visible?
     private class BookPagerAdapter extends PagerAdapter {
@@ -472,6 +476,8 @@ public class ReaderActivity extends BaseActivity {
         // mHtmlAfterLastPageDiv is the content we put in a browser representing a single page.
         private List<String> mHtmlPageDivs;
         List<JSONObject> mQuestions;
+        pageAnswerState[] mAnswerStates;
+        boolean mQuestionAnalyticsSent;
         private String mHtmlBeforeFirstPageDiv;
         private String mHtmlAfterLastPageDiv;
         ReaderActivity mParent;
@@ -494,6 +500,10 @@ public class ReaderActivity extends BaseActivity {
                          String htmlAfterLastPageDiv) {
             mHtmlPageDivs = htmlPageDivs;
             mQuestions = questions;
+            mAnswerStates = new pageAnswerState[mQuestions.size()];
+            for (int i = 0; i < mAnswerStates.length; i++) {
+                mAnswerStates[i] = pageAnswerState.unanswered;
+            }
             mParent = parent;
             mBookHtmlPath = bookHtmlPath;
             mHtmlBeforeFirstPageDiv = htmlBeforeFirstPageDiv;
@@ -528,7 +538,8 @@ public class ReaderActivity extends BaseActivity {
             // question page
             LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             LinearLayout questionPageView = (LinearLayout) inflater.inflate(R.layout.question_page, null);
-            JSONObject question = mQuestions.get(position - mFirstQuestionPage);
+            final int questionIndex = position - mFirstQuestionPage;
+            JSONObject question = mQuestions.get(questionIndex);
             TextView questionView = (TextView)questionPageView.findViewById(R.id.question);
             try {
                 questionView.setText(question.getString("question"));
@@ -557,6 +568,47 @@ public class ReaderActivity extends BaseActivity {
                             // Proved ridiculously difficult for a first-approximation feedback, so gave up.
                             //shapedrawable.getPaint().setShader(new LinearGradient(0.0f, 0.0f, 0.0f, (float)view.getHeight(),Color.GRAY, Color.GRAY, Shader.TileMode.CLAMP));
                             view.setBackground(shapedrawable);
+                            pageAnswerState oldAnswerState = mAnswerStates[questionIndex];
+                            if (correct) {
+                                if (oldAnswerState == pageAnswerState.wrongOnce)
+                                    mAnswerStates[questionIndex] = pageAnswerState.secondTimeCorrect;
+                                else if (oldAnswerState == pageAnswerState.unanswered)
+                                    mAnswerStates[questionIndex] = pageAnswerState.firstTimeCorrect;
+                                // if they already got it wrong twice they get no credit.
+                                // if they already got it right no credit for clicking again.
+                            } else {
+                                if (oldAnswerState == pageAnswerState.unanswered)
+                                    mAnswerStates[questionIndex] = pageAnswerState.wrongOnce;
+                                else if (oldAnswerState == pageAnswerState.wrongOnce)
+                                    mAnswerStates[questionIndex] = pageAnswerState.wrong;
+                                // if they previously got it right we won't hold it against them
+                                // that they now get it wrong.
+                            }
+                            if (!mQuestionAnalyticsSent) {
+                                boolean allAnswered = true;
+                                int rightFirstTime = 0;
+                                for (int i = 0; i < mAnswerStates.length; i++) {
+                                    if (mAnswerStates[i] == pageAnswerState.unanswered) {
+                                        allAnswered = false;
+                                        break;
+                                    } else if (mAnswerStates[i] == pageAnswerState.firstTimeCorrect) {
+                                        rightFirstTime++;
+                                    }
+                                }
+                                if (allAnswered) {
+                                    Properties p = new Properties();
+                                    p.putValue("title", mBookName);
+                                    p.putValue("questionCount", mAnswerStates.length);
+                                    p.putValue("rightFirstTime", rightFirstTime);
+                                    p.putValue("percentRight", rightFirstTime * 100 / mAnswerStates.length);
+                                    if (mBrandingProjectName != null) {
+                                        p.putValue("brandingProjectName", mBrandingProjectName);
+                                    }
+                                    Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Questions correct", p);
+                                    // Don't send again unless they re-open the book and start over.
+                                    mQuestionAnalyticsSent = true;
+                                }
+                            }
                         }
                     });
                     questionPageView.addView(answer);
@@ -565,7 +617,7 @@ public class ReaderActivity extends BaseActivity {
                 e.printStackTrace();
             }
             TextView progressView = (TextView) questionPageView.findViewById(R.id.question_progress);
-            progressView.setText(String.format(progressView.getText().toString(), position - mFirstQuestionPage + 1, mCountQuestionPages));
+            progressView.setText(String.format(progressView.getText().toString(), questionIndex + 1, mCountQuestionPages));
             container.addView(questionPageView);
             return questionPageView;
         }

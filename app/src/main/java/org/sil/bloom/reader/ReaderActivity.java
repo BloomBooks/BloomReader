@@ -65,6 +65,7 @@ public class ReaderActivity extends BaseActivity {
     private long mTimeLastPageSwitch;
     private Timer mNextPageTimer;
     private boolean mIsMultiMediaBook;
+    private boolean mRTLBook;
     private String mBrandingProjectName;
 
     @Override
@@ -270,6 +271,7 @@ public class ReaderActivity extends BaseActivity {
             // audio-sentence; but I think it's a sufficiently unlikely string to find elsewhere
             // that this is good enough.
             mIsMultiMediaBook = html.indexOf("audio-sentence") >= 0;
+            mRTLBook = isRTLBook(html);
             // Break the html into everything before the first page, a sequence of pages,
             // and the bit after the last. Note: assumes there is nothing but the </body> after
             // the last page, that is, that pages are the direct children of <body> and
@@ -307,6 +309,8 @@ public class ReaderActivity extends BaseActivity {
             @Override
             public void run() {
                 mPager = (ViewPager) findViewById(R.id.book_pager);
+                if(mRTLBook)
+                    mPager.setRotationY(180);
                 mPager.setAdapter(mAdapter);
                 final ViewPager.SimpleOnPageChangeListener listener = new ViewPager.SimpleOnPageChangeListener() {
                     @Override
@@ -360,6 +364,12 @@ public class ReaderActivity extends BaseActivity {
             }
         });
 
+    }
+
+    private boolean isRTLBook(String html){
+        Pattern pattern = Pattern.compile("<div[^>]*contentLanguage1Rtl[^>]*>[^<]*[Tt]rue[^<]*</div>");
+        Matcher matcher = pattern.matcher(html);
+        return matcher.find();
     }
 
     private String addAssetsStylesheetLink(String htmlSnippet) {
@@ -482,7 +492,8 @@ public class ReaderActivity extends BaseActivity {
             }
 
             WebAppInterface appInterface = (WebAppInterface)pageView.getTag();
-            appInterface.prepareDocumentWhenDocLoaded();
+            if(appInterface != null)
+                appInterface.prepareDocumentWhenDocLoaded();
         }
 
         public void startNarrationForPage(int position) {
@@ -532,6 +543,8 @@ public class ReaderActivity extends BaseActivity {
 
         public ScaledWebView(Context context) {
             super(context);
+            if(mRTLBook)
+                setRotationY(180);
         }
 
         @Override

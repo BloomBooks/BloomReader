@@ -4,10 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -559,15 +563,20 @@ public class ReaderActivity extends BaseActivity {
                             // Enhance: this is not meant to be the final feedback, just enough to test
                             // that we know which one is right and can do something to indicate it.
                             boolean correct = view.getTag() == "correct";
-                            ShapeDrawable shapedrawable = new ShapeDrawable();
-                            shapedrawable.setShape(new RectShape());
-                            shapedrawable.getPaint().setColor(correct ? Color.GREEN : Color.RED);
-                            shapedrawable.getPaint().setStrokeWidth(10f);
-                            shapedrawable.getPaint().setStyle(Paint.Style.STROKE);
-                            // An unsuccessful attempt to keep the gray button background.
-                            // Proved ridiculously difficult for a first-approximation feedback, so gave up.
-                            //shapedrawable.getPaint().setShader(new LinearGradient(0.0f, 0.0f, 0.0f, (float)view.getHeight(),Color.GRAY, Color.GRAY, Shader.TileMode.CLAMP));
-                            view.setBackground(shapedrawable);
+
+                            final AnimationDrawable drawable = new AnimationDrawable();
+                            final Handler handler = new Handler();
+                            final int resultColor = correct ? Color.GREEN : Color.RED;
+                            final int interval = 100;
+                            for (int i = 0; i < (correct ? 4 : 2); i++) {
+                                drawable.addFrame(new ColorDrawable(resultColor), interval);
+                                drawable.addFrame(new ColorDrawable(Color.LTGRAY), interval);
+                            }
+                            drawable.addFrame(new ColorDrawable(resultColor), interval); // actually this one stays on
+                            drawable.setOneShot(true);
+                            view.setBackground(drawable);
+                            drawable.start();
+
                             pageAnswerState oldAnswerState = mAnswerStates[questionIndex];
                             if (correct) {
                                 if (oldAnswerState == pageAnswerState.wrongOnce)
@@ -576,6 +585,10 @@ public class ReaderActivity extends BaseActivity {
                                     mAnswerStates[questionIndex] = pageAnswerState.firstTimeCorrect;
                                 // if they already got it wrong twice they get no credit.
                                 // if they already got it right no credit for clicking again.
+                                // both sounds from
+                                // https://freesound.org/people/themusicalnomad/sounds/?page=2
+                                // cc0
+                                playSoundFile(R.raw.themusicalnomad__positive_beeps);
                             } else {
                                 if (oldAnswerState == pageAnswerState.unanswered)
                                     mAnswerStates[questionIndex] = pageAnswerState.wrongOnce;
@@ -583,6 +596,7 @@ public class ReaderActivity extends BaseActivity {
                                     mAnswerStates[questionIndex] = pageAnswerState.wrong;
                                 // if they previously got it right we won't hold it against them
                                 // that they now get it wrong.
+                                playSoundFile(R.raw.themusicalnomad__negative_beeps);
                             }
                             if (!mQuestionAnalyticsSent) {
                                 boolean allAnswered = true;

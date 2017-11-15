@@ -36,7 +36,7 @@ public class ReaderActivity extends BaseActivity {
     private static final String TAG = "ReaderActivity";// https://developer.android.com/reference/android/util/Log.html
     private static final String sAssetsStylesheetLink = "<link rel=\"stylesheet\" href=\"file:///android_asset/book support files/assets.css\" type=\"text/css\"></link>";
     private static final String sAssetsBloomPlayerScript = "<script type=\"text/javascript\" src=\"file:///android_asset/book support files/bloomPagePlayer.js\"></script>";
-    private static final Pattern sLayoutPattern = Pattern.compile("(\\S+)([P|p]ortrait|[L|l]andscape)\\b");
+    private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)\\b");
     private static final Pattern sHeadElementEndPattern = Pattern.compile("</head");
     // Matches a div with class bloom-page, that is, the start of the main content of one page.
     // (We're looking for the start of a div tag, then before finding the end wedge, we find
@@ -86,8 +86,7 @@ public class ReaderActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
-        if (isFinishing()) {
-           ReportPagesRead();
+        if (isFinishing()) {ReportPagesRead();
         }
         super.onPause();
         WebAppInterface.stopPlaying();
@@ -370,18 +369,17 @@ public class ReaderActivity extends BaseActivity {
         return htmlSnippet;
     }
 
-    private PageDimensions getPageDimensions(String page){
-        Matcher classesMatcher = sClassAttrPattern.matcher(page);
-        if(classesMatcher.find()) {
-            String classNames = classesMatcher.group(2);
-            Matcher layoutMatcher = sLayoutPattern.matcher(classNames);
-            if(layoutMatcher.find()) {
-                String layout = layoutMatcher.group(1);
-                boolean isLandscape = layoutMatcher.group(2).contains("andscape");
-                return PageDimensions.getPageDimensions(layout, isLandscape);
-            }
+    private int pageOrientation(String page){
+        Matcher matcher = sClassAttrPattern.matcher(page);
+        if (matcher.find()) {
+            String classNames = matcher.group(2);
+            if (classNames.contains("Portrait"))
+                return ScaledWebView.BOOK_PORTRAIT;
+            if (classNames.contains("Landscape"))
+                return ScaledWebView.BOOK_LANDSCAPE;
         }
-        return PageDimensions.defaultPageDimensions();
+        Log.e("Reader", "Could not read page orientation...going with portrait...");
+        return ScaledWebView.BOOK_PORTRAIT;
     }
 
     // Transforms [x]Portrait or [x]Landscape class to Device16x9Portrait / Device16x9Landscape
@@ -393,15 +391,18 @@ public class ReaderActivity extends BaseActivity {
         int start = matcher.start(2);
         int end = matcher.end(2);
         String classNames = matcher.group(2);
-        String newClassNames = sLayoutPattern.matcher(classNames).replaceFirst("Device16x9$2");
+        String newClassNames = sLayoutPattern.matcher(classNames).replaceFirst("Device16x9$1");
         return page.substring(0,start) // everything up to the opening quote in class="
                 + newClassNames
                 + page.substring(end, page.length()); // because this includes the original closing quote from class attr
     }
 
-    private int getPageScale(int viewWidth, int viewHeight, PageDimensions pageDimensions){
-        Double widthScale = new Double(viewWidth)/pageDimensions.getWidthInPx();
-        Double heightScale = new Double(viewHeight)/pageDimensions.getHeightInPx();
+    private int getPageScale(int viewWidth, int viewHeight, int bookOrientation){
+        int bookPageWidth = (bookOrientation == ScaledWebView.BOOK_PORTRAIT) ? 378 : 674;
+        int bookPageHeight = (bookOrientation == ScaledWebView.BOOK_PORTRAIT) ? 674 : 378;
+
+        Double widthScale = new Double(viewWidth)/new Double(bookPageWidth);
+        Double heightScale = new Double(viewHeight)/new Double(bookPageHeight);
         Double scale = Math.min(widthScale, heightScale);
         scale = scale * 100d;
         return scale.intValue();
@@ -503,8 +504,7 @@ public class ReaderActivity extends BaseActivity {
             ScaledWebView browser = null;
             try {
                 String page = mHtmlPageDivs.get(position);
-                PageDimensions pageDimensions = getPageDimensions(page);
-                browser = new ScaledWebView(mParent, pageDimensions);
+                browser = new ScaledWebView(mParent, pageOrientation(page));
                 mActiveViews.put(position, browser);
                 if (mIsMultiMediaBook) {
                     browser.getSettings().setJavaScriptEnabled(true); // allow Javascript for audio player
@@ -514,7 +514,9 @@ public class ReaderActivity extends BaseActivity {
                     // way to get from the browser to the object we set as the JS interface.
                     browser.setTag(appInterface);
                 }
-                String doc = mHtmlBeforeFirstPageDiv + moreStyles(pageDimensions) + pageUsingDeviceLayout(page) + mHtmlAfterLastPageDiv;
+                // Styles to force 0 border and to vertically center landscape books in a portrait browser
+                String moreStyles = "<style>html{ height: 100%; }  body{ min-height:100%; display:flex; align-items:center; } div.bloom-page { border:0 !important; }</style>\n";
+                String doc = mHtmlBeforeFirstPageDiv + moreStyles + pageUsingDeviceLayout(page) + mHtmlAfterLastPageDiv;
 
                 browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc, "text/html", "utf-8", null);
                 prepareForAnimation(position);
@@ -522,21 +524,6 @@ public class ReaderActivity extends BaseActivity {
                 Log.e("Reader", "Error loading " + mBookHtmlPath.getAbsolutePath() + "  " + ex);
             }
             return browser;
-        }
-
-        // Styles to force 0 border and
-        //   to vertically center landscape books in a portrait browser and
-        //   to match the dimensions of the original page
-        private String moreStyles(PageDimensions pageDimensions){
-            return "<style>html{ height: 100%; }  body{ min-height:100%; display:flex; align-items:center; } div.bloom-page{ border:0 !important; " +
-                    "min-height:" + String.valueOf(pageDimensions.getHeightInMM()) + "mm !important; " +
-                    "max-height:" + String.valueOf(pageDimensions.getHeightInMM()) + "mm !important; " +
-                    "min-width:" + String.valueOf(pageDimensions.getWidthInMM()) + "mm !important; " +
-                    "max-width:" + String.valueOf(pageDimensions.getWidthInMM()) + "mm !important; " +
-                    "} .marginBox{ " +
-                    "height:" + String.valueOf(pageDimensions.getHeightInMM() - 5.3) + "mm !important; " +
-                    "width:" + String.valueOf(pageDimensions.getWidthInMM() - 5.3) + "mm !important; " +
-                    " }</style>\n";
         }
 
         @Override
@@ -547,11 +534,13 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private class ScaledWebView extends WebView {
-        private PageDimensions pageDimensions;
+        public static final int BOOK_PORTRAIT = 0;
+        public static final int BOOK_LANDSCAPE = 1;
+        private int bookOrientation;
 
-        public ScaledWebView(Context context, PageDimensions pageDimensions) {
+        public ScaledWebView(Context context, int bookOrientation) {
             super(context);
-            this.pageDimensions = pageDimensions;
+            this.bookOrientation = bookOrientation;
         }
 
         @Override
@@ -559,7 +548,7 @@ public class ReaderActivity extends BaseActivity {
 
             // if width is zero, this method will be called again
             if (w != 0) {
-                setInitialScale(getPageScale(w, h, pageDimensions));
+                setInitialScale(getPageScale(w, h, bookOrientation));
             }
 
             super.onSizeChanged(w, h, ow, oh);

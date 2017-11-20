@@ -57,8 +57,6 @@ public class SyncServer extends Thread {
                 String uri = request.getRequestLine().getUri();
                 if (uri.contains("/putfile"))
                     return new AcceptFileHandler(_parent);
-                else if (uri.contains("/notify"))
-                    return new AcceptNotificationHandler();
                 return null;
             }
         };

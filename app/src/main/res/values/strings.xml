@@ -25,6 +25,7 @@
     <string name="found_file">Found \"%1$s\" from \"%2$s\", requesting...</string>
     <!-- As in, Done receiving a file-->
     <string name="done">Done.</string>
+    <string name="transferFailed">Something went wrong. If the source is still available, we\'ll try again soon.</string>
     <string name="downloading">Downloading...</string>
     <string name="looking_for_adds">Looking for book advertisements on WiFi network %1s...</string>
     <string name="no_wifi_connected">The device does not appear to be connected to a WiFi network.</string>

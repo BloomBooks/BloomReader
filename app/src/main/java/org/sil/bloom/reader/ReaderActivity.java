@@ -47,7 +47,13 @@ public class ReaderActivity extends BaseActivity {
     // it's good enough.)
     private static final Pattern sPagePattern = Pattern.compile("<div\\s+[^>]*class\\s*=\\s*['\"][^'\"]*bloom-page");
 
+    // Matches a page div with the class numberedPage...that string must occur in a class attribute before the
+    // close of the div element.
+    private static final Pattern sNumberedPagePattern = Pattern.compile("[^>]*?class\\s*=\\s*['\"][^'\"]*numberedPage");
+
     private static final Pattern sClassAttrPattern = Pattern.compile("class\\s*=\\s*(['\"])(.*?)\\1");
+
+    private static final Pattern sContentLangDiv = Pattern.compile("<div [^>]*?data-book=\"contentLanguage1\"[^>]*?>\\s*(\\S+)");
 
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
@@ -55,6 +61,10 @@ public class ReaderActivity extends BaseActivity {
     private BloomFileReader mFileReader;
     private int mAudioPagesPlayed = 0;
     private int mNonAudioPagesShown = 0;
+    private int mLastNumberedPageIndex = -1;
+    private int mNumberedPageCount = 0;
+    private boolean mLastNumberedPageRead = false;
+    private String mContentLang1 = "unknown";
 
     // Keeps track of whether we switched pages while audio paused. If so, we don't resume
     // the audio of the previously visible page, but start this page from the beginning.
@@ -97,6 +107,9 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("title", mBookName);
             p.putValue("audioPages", mAudioPagesPlayed);
             p.putValue("nonAudioPages", mNonAudioPagesShown);
+            p.putValue("totalNumberedPages", mNumberedPageCount);
+            p.putValue("lastNumberedPageRead", mLastNumberedPageRead);
+            p.putValue("contentLang", mContentLang1);
             Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Pages Read", p);
         } catch (Exception e) {
             Log.e(TAG, "Pages Read", e);
@@ -238,7 +251,11 @@ public class ReaderActivity extends BaseActivity {
             String filenameWithExtension = new File(path).getName();
             // this mBookName is used by subsequent analytics reports
             mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - Book.BOOK_FILE_EXTENSION.length());
-            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Book opened", new Properties().putValue("title", mBookName));
+            Properties p = new Properties();
+            p.putValue("title", mBookName);
+            p.putValue("totalNumberedPages", mNumberedPageCount);
+            p.putValue("contentLang", mContentLang1);
+            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Book opened", p);
         } catch (Exception error) {
             Log.e("Reader", "Error reporting load of " + path + ".  "+ error);
             BloomReaderApplication.VerboseToast("Error reporting load of "+path);
@@ -247,7 +264,6 @@ public class ReaderActivity extends BaseActivity {
 
     private void loadBook() {
         String path = getIntent().getData().getPath();
-        reportLoadBook(path);
         mFileReader = new BloomFileReader(getApplicationContext(), path);
         try {
             File bookHtmlFile = mFileReader.getHtmlFile();
@@ -270,18 +286,24 @@ public class ReaderActivity extends BaseActivity {
             if (matcher.find()) {
                 int firstPageIndex = matcher.start();
                 startFrame = html.substring(0, firstPageIndex);
+                Matcher match = sContentLangDiv.matcher(startFrame);
+                if (match.find()) {
+                    mContentLang1 = match.group(1);
+                }
                 startFrame = addAssetsStylesheetLink(startFrame);
                 int startPage = firstPageIndex;
                 while (matcher.find()) {
-                    pages.add(html.substring(startPage, matcher.start()));
+                    final String pageContent = html.substring(startPage, matcher.start());
+                    AddPage(pages, pageContent);
                     startPage = matcher.start();
                 }
                 int endBody = html.indexOf("</body>", startPage);
-                pages.add(html.substring(startPage, endBody));
+                AddPage(pages, html.substring(startPage, endBody));
                 // We can leave out the bloom player JS altogether if not needed.
                 endFrame = (mIsMultiMediaBook ? sAssetsBloomPlayerScript : "")
                         + html.substring(endBody, html.length());
             }
+            reportLoadBook(path);
 
             mAdapter = new BookPagerAdapter(pages, this, bookHtmlFile, startFrame, endFrame);
 
@@ -313,6 +335,8 @@ public class ReaderActivity extends BaseActivity {
                         else {
                             mNonAudioPagesShown++;
                         }
+                        if (position == mLastNumberedPageIndex)
+                            mLastNumberedPageRead = true;
                     }
                 };
                 mPager.addOnPageChangeListener(listener);
@@ -338,6 +362,14 @@ public class ReaderActivity extends BaseActivity {
             }
         });
 
+    }
+
+    private void AddPage(ArrayList<String> pages, String pageContent) {
+        pages.add(pageContent);
+        if (sNumberedPagePattern.matcher(pageContent).find()) {
+            mLastNumberedPageIndex = pages.size() - 1;
+            mNumberedPageCount++;
+        }
     }
 
     private String addAssetsStylesheetLink(String htmlSnippet) {

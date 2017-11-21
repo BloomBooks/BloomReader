@@ -32,7 +32,7 @@ At this point, literacy projects can seed books into the community and let the c
 
 ## Needed for SIL PNG literacy research project
 * [x] Plays talking books
-* [x] Book thumbnails
+* [x] Book thumbnails (Version 1.1, alpha)
 
 ## Tie into BloomLibrary.org
 * BloomLibrary.org publishes an [OPDS](http://opds-spec.org/specs/opds-catalog-1-1-20110627/) catalog of all its books.
@@ -44,11 +44,11 @@ At this point, literacy projects can seed books into the community and let the c
 At this point, anyone could publish a book using the existing Bloom mechanism, and have it immediately downloadable by anyone with Bloom Reader. Books would still spread mostly from person to person in expensive internet areas.
 
 ## Other things on the radar
-* Use [Crosswalk](https://crosswalk-project.org/) to get an up-to-date browser that can handle Bloom's Talking Books.
-* Use Graphite-enabled Crosswalk to support languages with the most complex scripts.
-* Support Ken Burns animation as we do in [BloomPlayer.js](https://github.com/BloomBooks/BloomPlayer)
-* Support background music that works across pages, as we do in BloomPlayer.js.
-* In-app sharing/synchronization via bluetooth and wifi-direct.
+* [ ] Use [Crosswalk](https://crosswalk-project.org/) to get an up-to-date browser that can handle Bloom's Talking Books.
+* [ ] Use Graphite-enabled Crosswalk to support languages with the most complex scripts.
+* [x] Support Ken Burns animation as we do in [BloomPlayer.js](https://github.com/BloomBooks/BloomPlayer) (Version 1.1, alpha)
+* [x] Support background music that works across pages, as we do in BloomPlayer.js. (Version 1.1, alpha)
+* [x] In-app sharing/synchronization via bluetooth and wifi-direct.
 
 # Building
 

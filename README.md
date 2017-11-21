@@ -12,12 +12,14 @@ Bloom Reader is a native java app with a WebView for displaying Bloom books (whi
 # Status
 Bloom Reader is in active development with an official MVP release expected Fall 2017.
 
+Try the beta now on the [Play Store](https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&amp;c=apps).
+
 # Road map
 ## Prototype
 * [x] Shows a list of books on the device's storage
-* [x] user can swipe through pages to read the book
+* [x] User can swipe through pages to read the book
 
-Books would get onto the device by plugging into a computer and transferring files over to some known location.
+Books get onto the device by plugging into a computer and transferring files over to some known location.
 
 ## MVP
 * [x] Works well with 3rd party file sharing apps.
@@ -26,11 +28,11 @@ Books would get onto the device by plugging into a computer and transferring fil
 * [x] Book scales to fit device screen
 * [x] Bloom desktop Publish tab offers a "Publish to Android Phone" option (Bloom version 4.0). That may have to reduce image resolution.
 
-At this point, literacy projects could seed books into the community and let the community distribute them virally.
+At this point, literacy projects can seed books into the community and let the community distribute them virally.
 
 ## Needed for SIL PNG literacy research project
-* Plays talking books
-* Book thumbnails
+* [x] Plays talking books
+* [x] Book thumbnails
 
 ## Tie into BloomLibrary.org
 * BloomLibrary.org publishes an [OPDS](http://opds-spec.org/specs/opds-catalog-1-1-20110627/) catalog of all its books.

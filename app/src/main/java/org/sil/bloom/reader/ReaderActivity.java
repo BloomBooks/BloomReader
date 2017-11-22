@@ -59,7 +59,13 @@ public class ReaderActivity extends BaseActivity {
     // it's good enough.)
     private static final Pattern sPagePattern = Pattern.compile("<div\\s+[^>]*class\\s*=\\s*['\"][^'\"]*bloom-page");
 
+    // Matches a page div with the class numberedPage...that string must occur in a class attribute before the
+    // close of the div element.
+    private static final Pattern sNumberedPagePattern = Pattern.compile("[^>]*?class\\s*=\\s*['\"][^'\"]*numberedPage");
+
     private static final Pattern sClassAttrPattern = Pattern.compile("class\\s*=\\s*(['\"])(.*?)\\1");
+
+    private static final Pattern sContentLangDiv = Pattern.compile("<div [^>]*?data-book=\"contentLanguage1\"[^>]*?>\\s*(\\S+)");
 
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
@@ -67,6 +73,10 @@ public class ReaderActivity extends BaseActivity {
     private BloomFileReader mFileReader;
     private int mAudioPagesPlayed = 0;
     private int mNonAudioPagesShown = 0;
+    private int mLastNumberedPageIndex = -1;
+    private int mNumberedPageCount = 0;
+    private boolean mLastNumberedPageRead = false;
+    private String mContentLang1 = "unknown";
     int mFirstQuestionPage;
     int mCountQuestionPages;
     WebView mCurrentView;
@@ -115,6 +125,9 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("title", mBookName);
             p.putValue("audioPages", mAudioPagesPlayed);
             p.putValue("nonAudioPages", mNonAudioPagesShown);
+            p.putValue("totalNumberedPages", mNumberedPageCount);
+            p.putValue("lastNumberedPageRead", mLastNumberedPageRead);
+            p.putValue("contentLang", mContentLang1);
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }
@@ -262,6 +275,8 @@ public class ReaderActivity extends BaseActivity {
             mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - BookOrShelf.BOOK_FILE_EXTENSION.length());
             Properties p = new Properties();
             p.putValue("title", mBookName);
+            p.putValue("totalNumberedPages", mNumberedPageCount);
+            p.putValue("contentLang", mContentLang1);
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }
@@ -274,7 +289,6 @@ public class ReaderActivity extends BaseActivity {
 
     private void loadBook() {
         String path = getIntent().getData().getPath();
-        reportLoadBook(path);
         mFileReader = new BloomFileReader(getApplicationContext(), path);
         try {
             File bookHtmlFile = mFileReader.getHtmlFile();
@@ -297,20 +311,25 @@ public class ReaderActivity extends BaseActivity {
             if (matcher.find()) {
                 int firstPageIndex = matcher.start();
                 startFrame = html.substring(0, firstPageIndex);
+                Matcher match = sContentLangDiv.matcher(startFrame);
+                if (match.find()) {
+                    mContentLang1 = match.group(1);
+                }
                 startFrame = addAssetsStylesheetLink(startFrame);
                 int startPage = firstPageIndex;
                 while (matcher.find()) {
                     final String pageContent = html.substring(startPage, matcher.start());
-                    pages.add(pageContent);
+                    AddPage(pages, pageContent);
                     startPage = matcher.start();
                 }
                 mFirstQuestionPage = pages.size();
                 int endBody = html.indexOf("</body>", startPage);
-                pages.add(html.substring(startPage, endBody));
+                AddPage(pages, html.substring(startPage, endBody));
                 // We can leave out the bloom player JS altogether if not needed.
                 endFrame = (mIsMultiMediaBook ? sAssetsBloomPlayerScript : "")
                         + html.substring(endBody, html.length());
             }
+            reportLoadBook(path);
 
             boolean hasEnterpriseBranding = mBrandingProjectName != null && !mBrandingProjectName.toLowerCase().equals("default");
             ArrayList<JSONObject> questions = new ArrayList<JSONObject>();
@@ -377,6 +396,11 @@ public class ReaderActivity extends BaseActivity {
                                 }
                             }
                         }
+                        else {
+                            mNonAudioPagesShown++;
+                        }
+                        if (position == mLastNumberedPageIndex)
+                            mLastNumberedPageRead = true;
                     }
                 };
                 mPager.addOnPageChangeListener(listener);
@@ -402,6 +426,14 @@ public class ReaderActivity extends BaseActivity {
             }
         });
 
+    }
+
+    private void AddPage(ArrayList<String> pages, String pageContent) {
+        pages.add(pageContent);
+        if (sNumberedPagePattern.matcher(pageContent).find()) {
+            mLastNumberedPageIndex = pages.size() - 1;
+            mNumberedPageCount++;
+        }
     }
 
     private String getPrimaryLanguage(String html) {

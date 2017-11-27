@@ -620,7 +620,7 @@ public class ReaderActivity extends BaseActivity {
                                 // both sounds from
                                 // https://freesound.org/people/themusicalnomad/sounds/?page=2
                                 // cc0
-                                playSoundFile(R.raw.themusicalnomad__positive_beeps);
+                                playSoundFile(R.raw.right_answer);
                             } else {
                                 if (oldAnswerState == pageAnswerState.unanswered)
                                     mAnswerStates[questionIndex] = pageAnswerState.wrongOnce;
@@ -628,7 +628,7 @@ public class ReaderActivity extends BaseActivity {
                                     mAnswerStates[questionIndex] = pageAnswerState.wrong;
                                 // if they previously got it right we won't hold it against them
                                 // that they now get it wrong.
-                                playSoundFile(R.raw.themusicalnomad__negative_beeps);
+                                playSoundFile(R.raw.wrong_answer);
                             }
                             if (!mQuestionAnalyticsSent) {
                                 boolean allAnswered = true;

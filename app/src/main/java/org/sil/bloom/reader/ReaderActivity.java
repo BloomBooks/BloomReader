@@ -2,13 +2,10 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.RectShape;
-import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -573,41 +570,43 @@ public class ReaderActivity extends BaseActivity {
             }
             // question page
             LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            LinearLayout questionPageView = (LinearLayout) inflater.inflate(R.layout.question_page, null);
+            final LinearLayout questionPageView = (LinearLayout) inflater.inflate(R.layout.question_page, null);
             final int questionIndex = position - mFirstQuestionPage;
             JSONObject question = mQuestions.get(questionIndex);
-            TextView questionView = (TextView)questionPageView.findViewById(R.id.question);
+            final TextView questionView = (TextView)questionPageView.findViewById(R.id.question);
             try {
                 questionView.setText(question.getString("question"));
                 JSONArray answers = question.getJSONArray("answers");
                 for (int i = 0; i < answers.length(); i++) {
                     // Passing the intended parent view allows the button's margins to work properly.
                     // There's an explanation at https://stackoverflow.com/questions/5315529/layout-problem-with-button-margin.
-                    Button answer = (Button) inflater.inflate(R.layout.question_answer_button, questionPageView, false);
+                    final LinearLayout answerLayout = (LinearLayout) inflater.inflate(R.layout.question_answer_item, questionPageView, false);
                     JSONObject answerObj = answers.getJSONObject(i);
+                    Button answer = (Button) answerLayout.findViewById(R.id.answerButton);
+                    final ImageView imageView = (ImageView) answerLayout.findViewById(R.id.checkImage);
                     if (answerObj.getBoolean("correct")) {
                         answer.setTag("correct");
                     }
+
                     answer.setText(answerObj.getString("text"));
                     answer.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            // Enhance: this is not meant to be the final feedback, just enough to test
-                            // that we know which one is right and can do something to indicate it.
                             boolean correct = view.getTag() == "correct";
 
-                            final AnimationDrawable drawable = new AnimationDrawable();
-                            final Handler handler = new Handler();
-                            final int resultColor = correct ? Color.GREEN : Color.RED;
-                            final int interval = 100;
-                            for (int i = 0; i < (correct ? 4 : 2); i++) {
-                                drawable.addFrame(new ColorDrawable(resultColor), interval);
-                                drawable.addFrame(new ColorDrawable(Color.LTGRAY), interval);
+                            if (correct) {
+                                // Clear any previous answers.
+                                for (int i = 0; i < questionPageView.getChildCount(); i++) {
+                                    View item = questionPageView.getChildAt(i);
+                                    ImageView imgItem = (ImageView) item.findViewById(R.id.checkImage);
+                                    if (imgItem != null) { // will be for initial text views.
+                                        imgItem.setImageResource(0);
+                                    }
+                                }
+                                imageView.setImageResource(R.drawable.check_green);
+                            } else {
+                                imageView.setImageResource(R.drawable.cancel); // A strong red x: android.R.drawable.ic_delete);
                             }
-                            drawable.addFrame(new ColorDrawable(resultColor), interval); // actually this one stays on
-                            drawable.setOneShot(true);
-                            view.setBackground(drawable);
-                            drawable.start();
 
                             pageAnswerState oldAnswerState = mAnswerStates[questionIndex];
                             if (correct) {
@@ -657,7 +656,7 @@ public class ReaderActivity extends BaseActivity {
                             }
                         }
                     });
-                    questionPageView.addView(answer);
+                    questionPageView.addView(answerLayout);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();

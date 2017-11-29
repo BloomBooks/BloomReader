@@ -480,6 +480,7 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private int getPageScale(int viewWidth, int viewHeight, int bookOrientation){
+        // 378 x 674 are the dimensions of the Device16x9 layouts in pixels
         int bookPageWidth = (bookOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? 378 : 674;
         int bookPageHeight = (bookOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? 674 : 378;
 
@@ -714,7 +715,7 @@ public class ReaderActivity extends BaseActivity {
                     // way to get from the browser to the object we set as the JS interface.
                     browser.setTag(appInterface);
                 }
-                // Styles to force 0 border and to vertically center landscape books in a portrait browser
+                // Styles to force 0 border and to vertically center books
                 String moreStyles = "<style>html{ height: 100%; }  body{ min-height:100%; display:flex; align-items:center; } div.bloom-page { border:0 !important; }</style>\n";
                 String doc = mHtmlBeforeFirstPageDiv + moreStyles + pageUsingDeviceLayout(page) + mHtmlAfterLastPageDiv;
 

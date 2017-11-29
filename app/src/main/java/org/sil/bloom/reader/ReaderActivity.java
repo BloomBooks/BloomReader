@@ -2,6 +2,7 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
@@ -86,7 +87,8 @@ public class ReaderActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
-        if (isFinishing()) {ReportPagesRead();
+        if (isFinishing()) {
+            ReportPagesRead();
         }
         super.onPause();
         WebAppInterface.stopPlaying();
@@ -369,17 +371,16 @@ public class ReaderActivity extends BaseActivity {
         return htmlSnippet;
     }
 
-    private int pageOrientation(String page){
+    private int getPageOrientationAndRotateScreen(String page){
+        int orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
         Matcher matcher = sClassAttrPattern.matcher(page);
         if (matcher.find()) {
             String classNames = matcher.group(2);
-            if (classNames.contains("Portrait"))
-                return ScaledWebView.BOOK_PORTRAIT;
             if (classNames.contains("Landscape"))
-                return ScaledWebView.BOOK_LANDSCAPE;
+                orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
         }
-        Log.e("Reader", "Could not read page orientation...going with portrait...");
-        return ScaledWebView.BOOK_PORTRAIT;
+        setRequestedOrientation(orientation);
+        return orientation;
     }
 
     // Transforms [x]Portrait or [x]Landscape class to Device16x9Portrait / Device16x9Landscape
@@ -398,8 +399,8 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private int getPageScale(int viewWidth, int viewHeight, int bookOrientation){
-        int bookPageWidth = (bookOrientation == ScaledWebView.BOOK_PORTRAIT) ? 378 : 674;
-        int bookPageHeight = (bookOrientation == ScaledWebView.BOOK_PORTRAIT) ? 674 : 378;
+        int bookPageWidth = (bookOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? 378 : 674;
+        int bookPageHeight = (bookOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? 674 : 378;
 
         Double widthScale = new Double(viewWidth)/new Double(bookPageWidth);
         Double heightScale = new Double(viewHeight)/new Double(bookPageHeight);
@@ -504,7 +505,7 @@ public class ReaderActivity extends BaseActivity {
             ScaledWebView browser = null;
             try {
                 String page = mHtmlPageDivs.get(position);
-                browser = new ScaledWebView(mParent, pageOrientation(page));
+                browser = new ScaledWebView(mParent, getPageOrientationAndRotateScreen(page));
                 mActiveViews.put(position, browser);
                 if (mIsMultiMediaBook) {
                     browser.getSettings().setJavaScriptEnabled(true); // allow Javascript for audio player
@@ -534,8 +535,6 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private class ScaledWebView extends WebView {
-        public static final int BOOK_PORTRAIT = 0;
-        public static final int BOOK_LANDSCAPE = 1;
         private int bookOrientation;
 
         public ScaledWebView(Context context, int bookOrientation) {

@@ -9,6 +9,8 @@ https://github.com/BloomBooks/BloomReader
 Credits:
 
 Book arrival sound: "You've Been Informed", CC-BY, notificationsounds.com.
+Right answer sound: "Oh, Finally", CC-BY, notificationsounds.com.
+Wrong answer sound: "Out of Bounds", CC-BY, notificationsounds.com.
 "Moon and The Cap" Copyright Pratham Books, CC-BY.
 
 Apache Commons IO (http://commons.apache.org/io/)

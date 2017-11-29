@@ -41,6 +41,22 @@ public class BloomFileReader {
         return findHtmlFile();
     }
 
+    // returns null if anything goes wrong reading it
+    public String getFileContent(String name) {
+        if(bookDirectory == null) {
+            try {
+                openFile(CURRENT_BOOK_FOLDER);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+        File file = new File(bookDirectory + File.separator + name);
+        if (!file.exists())
+            return null;
+        return IOUtilities.FileToString(file);
+    }
+
     public Uri getThumbnail(File thumbsDirectory) throws IOException{
         Uri thumbUri = null;
         if(bookDirectory == null)

@@ -15,17 +15,18 @@
     Using a fixed width helps keep the text column aligned. There's probably a better way.-->
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="38dp"
-        android:layout_height="38dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:scaleType="fitCenter"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="10dp"
         android:padding="2dp"
         app:srcCompat="@drawable/book" />
 
     <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_margin="@dimen/text_margin"
+        android:gravity="center_vertical"
         android:textAppearance="?attr/textAppearanceListItem"  />
 </LinearLayout>

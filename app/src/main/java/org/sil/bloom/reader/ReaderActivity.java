@@ -129,6 +129,7 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("nonAudioPages", mNonAudioPagesShown);
             p.putValue("totalNumberedPages", mNumberedPageCount);
             p.putValue("lastNumberedPageRead", mLastNumberedPageRead);
+            p.putValue("questionCount", mAdapter.mQuestions.size());
             p.putValue("contentLang", mContentLang1);
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
@@ -279,6 +280,7 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("title", mBookName);
             p.putValue("totalNumberedPages", mNumberedPageCount);
             p.putValue("contentLang", mContentLang1);
+            p.putValue("questionCount", mAdapter.mQuestions.size());
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }
@@ -331,7 +333,6 @@ public class ReaderActivity extends BaseActivity {
                 endFrame = (mIsMultiMediaBook ? sAssetsBloomPlayerScript : "")
                         + html.substring(endBody, html.length());
             }
-            reportLoadBook(path);
 
             boolean hasEnterpriseBranding = mBrandingProjectName != null && !mBrandingProjectName.toLowerCase().equals("default");
             ArrayList<JSONObject> questions = new ArrayList<JSONObject>();
@@ -359,6 +360,7 @@ public class ReaderActivity extends BaseActivity {
 
             mAdapter = new BookPagerAdapter(pages, questions, this, bookHtmlFile, startFrame, endFrame);
 
+            reportLoadBook(path);
         } catch (Exception ex) {
             Log.e("Reader", "Error loading " + path + "  " + ex);
             return;

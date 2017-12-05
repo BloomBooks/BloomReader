@@ -1,11 +1,8 @@
-1.1 (alpha)
-Display book thumbnails.
-Play Ken Burns animations along with audio.
-
-1.0 (beta)
+1.0
 Use WiFi or USB to publish a book from the Bloom program on a laptop to this app.
 Share books with other devices.
 Play audio books.
+Play Ken Burns animations along with audio.
 
 Future releases will include the following:
 * embed fonts in books (currently only supports Andika New Basic)

@@ -2,7 +2,10 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.BookOrShelf;
 
@@ -20,10 +23,11 @@ public class BloomFileReader {
     private Uri bookUri;
     private File bookDirectory;
 
-    private final String CURRENT_BOOK_FOLDER = "currentbook";
-    private final String VALIDATE_BOOK_FILE_FOLDER = "validating";
-    private final String HTM_EXTENSION = ".htm";
-    private final String THUMBNAIL_NAME = "thumbnail.png";
+    private static final String CURRENT_BOOK_FOLDER = "currentbook";
+    private static final String VALIDATE_BOOK_FILE_FOLDER = "validating";
+    private static final String HTM_EXTENSION = ".htm";
+    private static final String THUMBNAIL_NAME = "thumbnail.png";
+    private static final String META_JSON_FILE = "meta.json";
 
     public BloomFileReader(Context context, String bloomFilePath){
         this.context = context;
@@ -91,6 +95,28 @@ public class BloomFileReader {
             closeFile();
             return null;
         }
+    }
+
+    public boolean getBooleanMetaProperty(String property, boolean defaultIfNotFound){
+        JSONObject properties = metaProperties();
+        if(properties == null)
+            return defaultIfNotFound;
+        return properties.optBoolean(property, defaultIfNotFound);
+    }
+
+    private JSONObject metaProperties(){
+        try {
+            File metaFile = new File(bookDirectory + File.separator + META_JSON_FILE);
+            if (!metaFile.exists())
+                throw new IOException(META_JSON_FILE + " not found");
+            return new JSONObject(IOUtilities.FileToString(metaFile));
+        }
+        catch (JSONException | IOException e){
+            Log.e("BloomFileReader", "Error parsing meta.json: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+
     }
 
     private void openFile(String path) throws IOException{

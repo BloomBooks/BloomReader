@@ -337,7 +337,7 @@ public class ReaderActivity extends BaseActivity {
                 }
             }
 
-            mRTLBook = isRTLBook(startFrame);
+            mRTLBook = mFileReader.getBooleanMetaProperty("isRtl", false);
 
             mAdapter = new BookPagerAdapter(pages, questions, this, bookHtmlFile, startFrame, endFrame);
 
@@ -407,12 +407,6 @@ public class ReaderActivity extends BaseActivity {
             }
         });
 
-    }
-
-    private boolean isRTLBook(String html) {
-        Pattern pattern = Pattern.compile("<div[^>]*contentLanguage1Rtl[^>]*>[^<]*[Tt]rue[^<]*</div>");
-        Matcher matcher = pattern.matcher(html);
-        return matcher.find();
     }
 
     private String getPrimaryLanguage(String html) {

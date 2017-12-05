@@ -121,7 +121,13 @@ public abstract class BaseActivity extends AppCompatActivity {
         Context bloomApplicationContext = BloomReaderApplication.getBloomApplicationContext();
         if (bloomApplicationContext == null)
             return; // unlikely, but better to skip the sound than crash.
-        MediaPlayer mp = MediaPlayer.create(bloomApplicationContext, id);
+        final MediaPlayer mp = MediaPlayer.create(bloomApplicationContext, id);
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                mp.release();
+            }
+        });
         mp.start();
     }
 }

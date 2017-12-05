@@ -1,8 +1,9 @@
 package org.sil.bloom.reader.WiFi;
 
 import android.app.Service;
-import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -49,7 +50,11 @@ public class NewBookListenerService extends Service {
     // and SyncServer._serverPort.
     int desktopPort = 5915;
     boolean gettingBook = false;
+    boolean httpServiceRunning = false;
+    int addsToSkipBeforeRetry;
+    boolean reportedVersionProblem = false;
     private Set<String> _announcedBooks = new HashSet<String>();
+    WifiManager.MulticastLock multicastLock;
 
     @Nullable
     @Override
@@ -64,23 +69,51 @@ public class NewBookListenerService extends Service {
             socket.setBroadcast(true);
         }
 
-        DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
-        //Log.e("UDP", "Waiting for UDP broadcast");
-        socket.receive(packet);
-        if (gettingBook)
-            return; // ignore new advertisements while downloading. Will receive again later.
-        String senderIP = packet.getAddress().getHostAddress();
-        String message = new String(packet.getData()).trim();
+        // This seems to have become necessary for receiving a packet around Android 8.
+        WifiManager wifi;
+        wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        multicastLock = wifi.createMulticastLock("lock");
+        multicastLock.acquire();
 
         try {
+            DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
+            //Log.e("UDP", "Waiting for UDP broadcast");
+            socket.receive(packet);
+            if (gettingBook)
+                return; // ignore new advertisements while downloading. Will receive again later.
+            if (addsToSkipBeforeRetry > 0) {
+                // We ignore a few adds after requesting a book before we (hopefully) start receiving.
+                addsToSkipBeforeRetry--;
+                return;
+            }
+            String senderIP = packet.getAddress().getHostAddress();
+            String message = new String(packet.getData()).trim();
             JSONObject data = new JSONObject(message);
             String title = data.getString("title");
             String newBookVersion = data.getString("version");
             String sender = "unknown";
+            String protocolVersion = "0.0";
             try {
+                protocolVersion = data.getString("protocolVersion");
                 sender = data.getString("sender");
             } catch(JSONException e) {
                 e.printStackTrace();
+            }
+            float version = Float.parseFloat(protocolVersion);
+            if (version <  2.0f) {
+                if (!reportedVersionProblem) {
+                    GetFromWiFiActivity.sendProgressMessage(this, "You need a newer version of Bloom editor to exchange data with this BloomReader\n");
+                    reportedVersionProblem = true;
+                }
+                return;
+            } else if (version >= 3.0f) {
+                // Desktop currently uses 2.0 exactly; the plan is that non-breaking changes
+                // will tweak the minor version number, breaking will change the major.
+                if (!reportedVersionProblem) {
+                    GetFromWiFiActivity.sendProgressMessage(this, "You need a newer version of BloomReader to exchange data with this sender\n");
+                    reportedVersionProblem = true;
+                }
+                return;
             }
             File localBookDirectory = BookCollection.getLocalBooksDirectory();
             File bookFile = new File(localBookDirectory, title + BookOrShelf.BOOK_FILE_EXTENSION);
@@ -102,6 +135,7 @@ public class NewBookListenerService extends Service {
                 // mapping title to last-advertised-time, and if > 5s ago announce again.
                 if (!_announcedBooks.contains(title)) {
                     GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.already_have_version), title) + "\n\n");
+                    _announcedBooks.add(title); // don't keep saying this.
                 }
             }
             else {
@@ -109,41 +143,55 @@ public class NewBookListenerService extends Service {
                     GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_new_version), title, sender) + "\n");
                 else
                     GetFromWiFiActivity.sendProgressMessage(this, String.format(getString(R.string.found_file), title, sender) + "\n");
+                // It can take a few seconds for the transfer to get going. We won't ask for this again unless
+                // we don't start getting it in a reasonable time.
+                addsToSkipBeforeRetry = 3;
                 getBook(senderIP, title);
             }
-            // Whether we just got it or just said we already have it, we don't need to keep announcing
-            // that we have it.
-            _announcedBooks.add(title);
-
         } catch (JSONException e) {
             // This can stay in production. Just ignore any broadcast packet that doesn't have
             // the data we expect.
             e.printStackTrace();
         }
-        socket.close();
+        finally {
+            socket.close();
+            multicastLock.release();
+        }
     }
 
-    // Private class to handle receiving notification from AcceptNotificationHandler.
+    // Private class to handle receiving notification from AcceptFileHandler.
     // I can't figure out how to make an anonymous class which can keep a reference to itself
     // for use in removing itself later. The notification is sent when the transfer of a book
     // is complete.
-    class EndOfTransferListener implements AcceptNotificationHandler.NotificationListener {
+    class EndOfTransferListener implements AcceptFileHandler.IFileReceivedNotification {
 
         NewBookListenerService _parent;
-        public EndOfTransferListener(NewBookListenerService parent) {
+        String _title;
+        public EndOfTransferListener(NewBookListenerService parent, String title) {
             _parent = parent;
+            _title = title;
         }
 
         @Override
-        public void onNotification(String message) {
-            AcceptNotificationHandler.removeNotificationListener(this);
-            _parent.transferComplete();
+        public void receivingFile(String name) {
+            // Once the receive actually starts, don't start more receives until we deal with this.
+            // If our request for the book didn't produce a response, we'll ask again when we get
+            // the next notification.
+            gettingBook = true;
+        }
+
+        @Override
+        public void receivedFile(String name, boolean success) {
+            _parent.transferComplete(success);
+            if (success) {
+                // We won't announce subsequent up-to-date advertisements for this book.
+                _announcedBooks.add(_title);
+            }
         }
     }
 
     private void getBook(String sourceIP, String title) {
-        gettingBook = true; // don't start more receives until we deal with this.
-        AcceptNotificationHandler.addNotificationListener(new EndOfTransferListener(this));
+        AcceptFileHandler.requestFileReceivedNotification(new EndOfTransferListener(this, title));
         // This server will be sent the actual book data (and the final notification)
         startSyncServer();
         // Send one package to the desktop to request the book. Its contents tell the desktop
@@ -156,17 +204,30 @@ public class NewBookListenerService extends Service {
     }
 
     private void startSyncServer() {
+        if (httpServiceRunning)
+            return;
         Intent serviceIntent = new Intent(this, SyncService.class);
         startService(serviceIntent);
+        httpServiceRunning = true;
+    }
+
+    private void stopSyncServer() {
+        if (!httpServiceRunning)
+            return;
+        Intent serviceIntent = new Intent(this, SyncService.class);
+        stopService(serviceIntent);
+        httpServiceRunning = false;
     }
 
     // Called via EndOfTransferListener when desktop sends transfer complete notification.
-    private void transferComplete() {
+    private void transferComplete(boolean success) {
         // We can stop listening for file transfers and notifications from the desktop.
-        Intent serviceIntent = new Intent(this, SyncService.class);
-        stopService(serviceIntent);
+        stopSyncServer();
         gettingBook = false;
-        GetFromWiFiActivity.sendProgressMessage(this, getString(R.string.done) + "\n\n");
+
+        final int resultId = success ? R.string.done : R.string.transferFailed;
+        GetFromWiFiActivity.sendProgressMessage(this, getString(resultId) + "\n\n");
+
         BaseActivity.playSoundFile(R.raw.bookarrival);
         // We already played a sound for this file, don't need to play another when we resume
         // the main activity and notice the new file.

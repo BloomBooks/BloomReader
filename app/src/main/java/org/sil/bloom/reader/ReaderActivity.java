@@ -2,12 +2,14 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.res.Resources;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.RectShape;
+import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -59,7 +61,13 @@ public class ReaderActivity extends BaseActivity {
     // it's good enough.)
     private static final Pattern sPagePattern = Pattern.compile("<div\\s+[^>]*class\\s*=\\s*['\"][^'\"]*bloom-page");
 
+    // Matches a page div with the class numberedPage...that string must occur in a class attribute before the
+    // close of the div element.
+    private static final Pattern sNumberedPagePattern = Pattern.compile("[^>]*?class\\s*=\\s*['\"][^'\"]*numberedPage");
+
     private static final Pattern sClassAttrPattern = Pattern.compile("class\\s*=\\s*(['\"])(.*?)\\1");
+
+    private static final Pattern sContentLangDiv = Pattern.compile("<div [^>]*?data-book=\"contentLanguage1\"[^>]*?>\\s*(\\S+)");
 
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
@@ -67,6 +75,10 @@ public class ReaderActivity extends BaseActivity {
     private BloomFileReader mFileReader;
     private int mAudioPagesPlayed = 0;
     private int mNonAudioPagesShown = 0;
+    private int mLastNumberedPageIndex = -1;
+    private int mNumberedPageCount = 0;
+    private boolean mLastNumberedPageRead = false;
+    private String mContentLang1 = "unknown";
     int mFirstQuestionPage;
     int mCountQuestionPages;
     WebView mCurrentView;
@@ -102,7 +114,7 @@ public class ReaderActivity extends BaseActivity {
     @Override
     protected void onPause() {
         if (isFinishing()) {
-           ReportPagesRead();
+            ReportPagesRead();
         }
         super.onPause();
         WebAppInterface.stopPlaying();
@@ -116,6 +128,10 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("title", mBookName);
             p.putValue("audioPages", mAudioPagesPlayed);
             p.putValue("nonAudioPages", mNonAudioPagesShown);
+            p.putValue("totalNumberedPages", mNumberedPageCount);
+            p.putValue("lastNumberedPageRead", mLastNumberedPageRead);
+            p.putValue("questionCount", mAdapter.mQuestions.size());
+            p.putValue("contentLang", mContentLang1);
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }
@@ -263,6 +279,9 @@ public class ReaderActivity extends BaseActivity {
             mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - BookOrShelf.BOOK_FILE_EXTENSION.length());
             Properties p = new Properties();
             p.putValue("title", mBookName);
+            p.putValue("totalNumberedPages", mNumberedPageCount);
+            p.putValue("contentLang", mContentLang1);
+            p.putValue("questionCount", mAdapter.mQuestions.size());
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }
@@ -275,7 +294,6 @@ public class ReaderActivity extends BaseActivity {
 
     private void loadBook() {
         String path = getIntent().getData().getPath();
-        reportLoadBook(path);
         mFileReader = new BloomFileReader(getApplicationContext(), path);
         try {
             File bookHtmlFile = mFileReader.getHtmlFile();
@@ -298,16 +316,20 @@ public class ReaderActivity extends BaseActivity {
             if (matcher.find()) {
                 int firstPageIndex = matcher.start();
                 startFrame = html.substring(0, firstPageIndex);
+                Matcher match = sContentLangDiv.matcher(startFrame);
+                if (match.find()) {
+                    mContentLang1 = match.group(1);
+                }
                 startFrame = addAssetsStylesheetLink(startFrame);
                 int startPage = firstPageIndex;
                 while (matcher.find()) {
                     final String pageContent = html.substring(startPage, matcher.start());
-                    pages.add(pageContent);
+                    AddPage(pages, pageContent);
                     startPage = matcher.start();
                 }
                 mFirstQuestionPage = pages.size();
                 int endBody = html.indexOf("</body>", startPage);
-                pages.add(html.substring(startPage, endBody));
+                AddPage(pages, html.substring(startPage, endBody));
                 // We can leave out the bloom player JS altogether if not needed.
                 endFrame = (mIsMultiMediaBook ? sAssetsBloomPlayerScript : "")
                         + html.substring(endBody, html.length());
@@ -341,6 +363,7 @@ public class ReaderActivity extends BaseActivity {
 
             mAdapter = new BookPagerAdapter(pages, questions, this, bookHtmlFile, startFrame, endFrame);
 
+            reportLoadBook(path);
         } catch (Exception ex) {
             Log.e("Reader", "Error loading " + path + "  " + ex);
             return;
@@ -382,6 +405,11 @@ public class ReaderActivity extends BaseActivity {
                                 }
                             }
                         }
+                        else {
+                            mNonAudioPagesShown++;
+                        }
+                        if (position == mLastNumberedPageIndex)
+                            mLastNumberedPageRead = true;
                     }
                 };
                 mPager.addOnPageChangeListener(listener);
@@ -409,6 +437,14 @@ public class ReaderActivity extends BaseActivity {
 
     }
 
+    private void AddPage(ArrayList<String> pages, String pageContent) {
+        pages.add(pageContent);
+        if (sNumberedPagePattern.matcher(pageContent).find()) {
+            mLastNumberedPageIndex = pages.size() - 1;
+            mNumberedPageCount++;
+        }
+    }
+
     private String getPrimaryLanguage(String html) {
         Matcher matcher = sMainLangauge.matcher(html);
         if (!matcher.find())
@@ -424,9 +460,20 @@ public class ReaderActivity extends BaseActivity {
         return htmlSnippet;
     }
 
-    // Forces the layout we want into the class, and inserts the specified style.
-    // assumes some layout is already present in classes attribute, and no style already exists.
-    private String modifyPage(String page, String newLayout, String style) {
+    private int getPageOrientationAndRotateScreen(String page){
+        int orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+        Matcher matcher = sClassAttrPattern.matcher(page);
+        if (matcher.find()) {
+            String classNames = matcher.group(2);
+            if (classNames.contains("Landscape"))
+                orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+        }
+        setRequestedOrientation(orientation);
+        return orientation;
+    }
+
+    // Transforms [x]Portrait or [x]Landscape class to Device16x9Portrait / Device16x9Landscape
+    private String pageUsingDeviceLayout(String page) {
         // Get the content of the class attribute and its position
         Matcher matcher = sClassAttrPattern.matcher(page);
         if (!matcher.find())
@@ -434,21 +481,16 @@ public class ReaderActivity extends BaseActivity {
         int start = matcher.start(2);
         int end = matcher.end(2);
         String classNames = matcher.group(2);
-        String newClassNames = sLayoutPattern.matcher(classNames).replaceFirst(newLayout);
+        String newClassNames = sLayoutPattern.matcher(classNames).replaceFirst("Device16x9$1");
         return page.substring(0,start) // everything up to the opening quote in class="
                 + newClassNames
-                + matcher.group(1) // proper matching closing quote ends class attr
-                + " style="
-                + matcher.group(1) // we need to use the same quote for style...
-                + style
                 + page.substring(end, page.length()); // because this includes the original closing quote from class attr
     }
 
-    private int getPageScale(int viewWidth, int viewHeight){
-        //we'll probably want to read or calculate these at some point...
-        //but for now, they are the width and height of the Device16x9Portrait layout
-        int bookPageWidth = 378;
-        int bookPageHeight = 674;
+    private int getPageScale(int viewWidth, int viewHeight, int bookOrientation){
+        // 378 x 674 are the dimensions of the Device16x9 layouts in pixels
+        int bookPageWidth = (bookOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? 378 : 674;
+        int bookPageHeight = (bookOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? 674 : 378;
 
         Double widthScale = new Double(viewWidth)/new Double(bookPageWidth);
         Double heightScale = new Double(viewHeight)/new Double(bookPageHeight);
@@ -542,37 +584,44 @@ public class ReaderActivity extends BaseActivity {
             }
             // question page
             LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            LinearLayout questionPageView = (LinearLayout) inflater.inflate(R.layout.question_page, null);
+            final LinearLayout questionPageView = (LinearLayout) inflater.inflate(R.layout.question_page, null);
             final int questionIndex = position - mFirstQuestionPage;
             JSONObject question = mQuestions.get(questionIndex);
-            TextView questionView = (TextView)questionPageView.findViewById(R.id.question);
+            final TextView questionView = (TextView)questionPageView.findViewById(R.id.question);
             try {
                 questionView.setText(question.getString("question"));
                 JSONArray answers = question.getJSONArray("answers");
                 for (int i = 0; i < answers.length(); i++) {
                     // Passing the intended parent view allows the button's margins to work properly.
                     // There's an explanation at https://stackoverflow.com/questions/5315529/layout-problem-with-button-margin.
-                    Button answer = (Button) inflater.inflate(R.layout.question_answer_button, questionPageView, false);
+                    final LinearLayout answerLayout = (LinearLayout) inflater.inflate(R.layout.question_answer_item, questionPageView, false);
                     JSONObject answerObj = answers.getJSONObject(i);
+                    Button answer = (Button) answerLayout.findViewById(R.id.answerButton);
+                    final ImageView imageView = (ImageView) answerLayout.findViewById(R.id.checkImage);
                     if (answerObj.getBoolean("correct")) {
                         answer.setTag("correct");
                     }
+
                     answer.setText(answerObj.getString("text"));
                     answer.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            // Enhance: this is not meant to be the final feedback, just enough to test
-                            // that we know which one is right and can do something to indicate it.
                             boolean correct = view.getTag() == "correct";
-                            ShapeDrawable shapedrawable = new ShapeDrawable();
-                            shapedrawable.setShape(new RectShape());
-                            shapedrawable.getPaint().setColor(correct ? Color.GREEN : Color.RED);
-                            shapedrawable.getPaint().setStrokeWidth(10f);
-                            shapedrawable.getPaint().setStyle(Paint.Style.STROKE);
-                            // An unsuccessful attempt to keep the gray button background.
-                            // Proved ridiculously difficult for a first-approximation feedback, so gave up.
-                            //shapedrawable.getPaint().setShader(new LinearGradient(0.0f, 0.0f, 0.0f, (float)view.getHeight(),Color.GRAY, Color.GRAY, Shader.TileMode.CLAMP));
-                            view.setBackground(shapedrawable);
+
+                            if (correct) {
+                                // Clear any previous answers.
+                                for (int i = 0; i < questionPageView.getChildCount(); i++) {
+                                    View item = questionPageView.getChildAt(i);
+                                    ImageView imgItem = (ImageView) item.findViewById(R.id.checkImage);
+                                    if (imgItem != null) { // will be for initial text views.
+                                        imgItem.setImageResource(0);
+                                    }
+                                }
+                                imageView.setImageResource(R.drawable.check_green);
+                            } else {
+                                imageView.setImageResource(R.drawable.cancel); // A strong red x: android.R.drawable.ic_delete);
+                            }
+
                             pageAnswerState oldAnswerState = mAnswerStates[questionIndex];
                             if (correct) {
                                 if (oldAnswerState == pageAnswerState.wrongOnce)
@@ -581,6 +630,10 @@ public class ReaderActivity extends BaseActivity {
                                     mAnswerStates[questionIndex] = pageAnswerState.firstTimeCorrect;
                                 // if they already got it wrong twice they get no credit.
                                 // if they already got it right no credit for clicking again.
+                                // both sounds from
+                                // https://freesound.org/people/themusicalnomad/sounds/?page=2
+                                // cc0
+                                playSoundFile(R.raw.right_answer);
                             } else {
                                 if (oldAnswerState == pageAnswerState.unanswered)
                                     mAnswerStates[questionIndex] = pageAnswerState.wrongOnce;
@@ -588,6 +641,7 @@ public class ReaderActivity extends BaseActivity {
                                     mAnswerStates[questionIndex] = pageAnswerState.wrong;
                                 // if they previously got it right we won't hold it against them
                                 // that they now get it wrong.
+                                playSoundFile(R.raw.wrong_answer);
                             }
                             if (!mQuestionAnalyticsSent) {
                                 boolean allAnswered = true;
@@ -616,7 +670,7 @@ public class ReaderActivity extends BaseActivity {
                             }
                         }
                     });
-                    questionPageView.addView(answer);
+                    questionPageView.addView(answerLayout);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -660,7 +714,8 @@ public class ReaderActivity extends BaseActivity {
         private WebView MakeBrowserForPage(int position) {
             ScaledWebView browser = null;
             try {
-                browser = new ScaledWebView(mParent);
+                String page = mHtmlPageDivs.get(position);
+                browser = new ScaledWebView(mParent, getPageOrientationAndRotateScreen(page));
                 mActiveViews.put(position, browser);
                 if (mIsMultiMediaBook) {
                     browser.getSettings().setJavaScriptEnabled(true); // allow Javascript for audio player
@@ -670,10 +725,9 @@ public class ReaderActivity extends BaseActivity {
                     // way to get from the browser to the object we set as the JS interface.
                     browser.setTag(appInterface);
                 }
-                String page = mHtmlPageDivs.get(position);
-                // Inserts the layout class we want and forces no border.
-                page = modifyPage(page, "Device16x9Portrait", "border:0 !important");
-                String doc = mHtmlBeforeFirstPageDiv + page + mHtmlAfterLastPageDiv;
+                // Styles to force 0 border and to vertically center books
+                String moreStyles = "<style>html{ height: 100%; }  body{ min-height:100%; display:flex; align-items:center; } div.bloom-page { border:0 !important; }</style>\n";
+                String doc = mHtmlBeforeFirstPageDiv + moreStyles + pageUsingDeviceLayout(page) + mHtmlAfterLastPageDiv;
 
                 browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc, "text/html", "utf-8", null);
                 prepareForAnimation(position);
@@ -691,9 +745,11 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private class ScaledWebView extends WebView {
+        private int bookOrientation;
 
-        public ScaledWebView(Context context) {
+        public ScaledWebView(Context context, int bookOrientation) {
             super(context);
+            this.bookOrientation = bookOrientation;
             if(mRTLBook)
                 setRotationY(180);
         }
@@ -703,7 +759,7 @@ public class ReaderActivity extends BaseActivity {
 
             // if width is zero, this method will be called again
             if (w != 0) {
-                setInitialScale(getPageScale(w, h));
+                setInitialScale(getPageScale(w, h, bookOrientation));
             }
 
             super.onSizeChanged(w, h, ow, oh);

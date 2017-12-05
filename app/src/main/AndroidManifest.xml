@@ -10,6 +10,10 @@
     <!-- Used at least for analytics, soon for Bloom Library download. Was present when I added
     analytics, so may be used for something else also. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- On later versions of Android this seems to be needed for receiving UDP broadcasts. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- On later versions of Android this seems to be needed for receiving UDP broadcasts. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- currently just because it's how we get the device name for WiFi, but eventually we will have
     other Bluetooth functions. -->
     <uses-permission android:name="android.permission.BLUETOOTH"/>

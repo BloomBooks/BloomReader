@@ -91,6 +91,7 @@ public class ReaderActivity extends BaseActivity {
     private long mTimeLastPageSwitch;
     private Timer mNextPageTimer;
     private boolean mIsMultiMediaBook;
+    private boolean mRTLBook;
     private String mBrandingProjectName;
 
     @Override
@@ -358,6 +359,8 @@ public class ReaderActivity extends BaseActivity {
                 }
             }
 
+            mRTLBook = mFileReader.getBooleanMetaProperty("isRtl", false);
+
             mAdapter = new BookPagerAdapter(pages, questions, this, bookHtmlFile, startFrame, endFrame);
 
             reportLoadBook(path);
@@ -370,6 +373,8 @@ public class ReaderActivity extends BaseActivity {
             @Override
             public void run() {
                 mPager = (ViewPager) findViewById(R.id.book_pager);
+                if(mRTLBook)
+                    mPager.setRotationY(180);
                 mPager.setAdapter(mAdapter);
                 final ViewPager.SimpleOnPageChangeListener listener = new ViewPager.SimpleOnPageChangeListener() {
                     @Override
@@ -745,6 +750,8 @@ public class ReaderActivity extends BaseActivity {
         public ScaledWebView(Context context, int bookOrientation) {
             super(context);
             this.bookOrientation = bookOrientation;
+            if(mRTLBook)
+                setRotationY(180);
         }
 
         @Override

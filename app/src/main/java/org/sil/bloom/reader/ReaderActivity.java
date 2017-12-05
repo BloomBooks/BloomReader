@@ -2,11 +2,18 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -14,7 +21,10 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
@@ -28,7 +38,10 @@ import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sil.bloom.reader.models.Book;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.sil.bloom.reader.models.BookOrShelf;
 
 
 public class ReaderActivity extends BaseActivity {
@@ -38,6 +51,7 @@ public class ReaderActivity extends BaseActivity {
     private static final String sAssetsBloomPlayerScript = "<script type=\"text/javascript\" src=\"file:///android_asset/book support files/bloomPagePlayer.js\"></script>";
     private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)\\b");
     private static final Pattern sHeadElementEndPattern = Pattern.compile("</head");
+    private static final Pattern sMainLangauge = Pattern.compile("<div data-book=\"contentLanguage1\"[^>]*>\\s*(\\S*)");
     // Matches a div with class bloom-page, that is, the start of the main content of one page.
     // (We're looking for the start of a div tag, then before finding the end wedge, we find
     // class<maybe space>=<maybe space><some sort of quote> and then bloom-page before we find
@@ -65,6 +79,9 @@ public class ReaderActivity extends BaseActivity {
     private int mNumberedPageCount = 0;
     private boolean mLastNumberedPageRead = false;
     private String mContentLang1 = "unknown";
+    int mFirstQuestionPage;
+    int mCountQuestionPages;
+    WebView mCurrentView;
 
     // Keeps track of whether we switched pages while audio paused. If so, we don't resume
     // the audio of the previously visible page, but start this page from the beginning.
@@ -74,6 +91,8 @@ public class ReaderActivity extends BaseActivity {
     private long mTimeLastPageSwitch;
     private Timer mNextPageTimer;
     private boolean mIsMultiMediaBook;
+    private boolean mRTLBook;
+    private String mBrandingProjectName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,13 +106,15 @@ public class ReaderActivity extends BaseActivity {
 //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
 
+        mBrandingProjectName = getIntent().getStringExtra("brandingProjectName");
+
         new Loader().execute();
     }
 
     @Override
     protected void onPause() {
         if (isFinishing()) {
-           ReportPagesRead();
+            ReportPagesRead();
         }
         super.onPause();
         WebAppInterface.stopPlaying();
@@ -109,7 +130,11 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("nonAudioPages", mNonAudioPagesShown);
             p.putValue("totalNumberedPages", mNumberedPageCount);
             p.putValue("lastNumberedPageRead", mLastNumberedPageRead);
+            p.putValue("questionCount", mAdapter.mQuestions.size());
             p.putValue("contentLang", mContentLang1);
+            if (mBrandingProjectName != null) {
+                p.putValue("brandingProjectName", mBrandingProjectName);
+            }
             Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Pages Read", p);
         } catch (Exception e) {
             Log.e(TAG, "Pages Read", e);
@@ -209,7 +234,8 @@ public class ReaderActivity extends BaseActivity {
         } else {
             view.setImageResource(R.drawable.play_on_circle);
             if(mSwitchedPagesWhilePaused) {
-                mAdapter.startNarrationForPage(mPager.getCurrentItem());
+                final int position = mPager.getCurrentItem();
+                mAdapter.startNarrationForPage(position); // also starts animation if any
             }
         }
         mSwitchedPagesWhilePaused = false;
@@ -250,12 +276,16 @@ public class ReaderActivity extends BaseActivity {
         try {
             String filenameWithExtension = new File(path).getName();
             // this mBookName is used by subsequent analytics reports
-            mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - Book.BOOK_FILE_EXTENSION.length());
+            mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - BookOrShelf.BOOK_FILE_EXTENSION.length());
             Properties p = new Properties();
             p.putValue("title", mBookName);
             p.putValue("totalNumberedPages", mNumberedPageCount);
             p.putValue("contentLang", mContentLang1);
-            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Book opened", p);
+            p.putValue("questionCount", mAdapter.mQuestions.size());
+            if (mBrandingProjectName != null) {
+                p.putValue("brandingProjectName", mBrandingProjectName);
+            }
+            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("BookOrShelf opened", p);
         } catch (Exception error) {
             Log.e("Reader", "Error reporting load of " + path + ".  "+ error);
             BloomReaderApplication.VerboseToast("Error reporting load of "+path);
@@ -297,16 +327,43 @@ public class ReaderActivity extends BaseActivity {
                     AddPage(pages, pageContent);
                     startPage = matcher.start();
                 }
+                mFirstQuestionPage = pages.size();
                 int endBody = html.indexOf("</body>", startPage);
                 AddPage(pages, html.substring(startPage, endBody));
                 // We can leave out the bloom player JS altogether if not needed.
                 endFrame = (mIsMultiMediaBook ? sAssetsBloomPlayerScript : "")
                         + html.substring(endBody, html.length());
             }
+
+            boolean hasEnterpriseBranding = mBrandingProjectName != null && !mBrandingProjectName.toLowerCase().equals("default");
+            ArrayList<JSONObject> questions = new ArrayList<JSONObject>();
+            if (hasEnterpriseBranding) {
+                String primaryLanguage = getPrimaryLanguage(html);
+                String questionSource = mFileReader.getFileContent("questions.json");
+                if (questionSource != null) {
+                    JSONArray groups = new JSONArray(questionSource);
+                    for(int i = 0; i < groups.length(); i++) {
+                        JSONObject group = groups.getJSONObject(i);
+                        if (!group.getString("lang").equals(primaryLanguage))
+                            continue;
+                        JSONArray groupQuestions = group.getJSONArray("questions");
+                        for (int j = 0; j < groupQuestions.length(); j++) {
+                            questions.add(groupQuestions.getJSONObject(j));
+                        }
+                    }
+                }
+                mCountQuestionPages = questions.size();
+                for (int i = 0; i < mCountQuestionPages; i++) {
+                    // insert all these pages just before the final 'end' page.
+                    pages.add(mFirstQuestionPage, "Q");
+                }
+            }
+
+            mRTLBook = mFileReader.getBooleanMetaProperty("isRtl", false);
+
+            mAdapter = new BookPagerAdapter(pages, questions, this, bookHtmlFile, startFrame, endFrame);
+
             reportLoadBook(path);
-
-            mAdapter = new BookPagerAdapter(pages, this, bookHtmlFile, startFrame, endFrame);
-
         } catch (Exception ex) {
             Log.e("Reader", "Error loading " + path + "  " + ex);
             return;
@@ -316,21 +373,37 @@ public class ReaderActivity extends BaseActivity {
             @Override
             public void run() {
                 mPager = (ViewPager) findViewById(R.id.book_pager);
+                if(mRTLBook)
+                    mPager.setRotationY(180);
                 mPager.setAdapter(mAdapter);
                 final ViewPager.SimpleOnPageChangeListener listener = new ViewPager.SimpleOnPageChangeListener() {
                     @Override
                     public void onPageSelected(int position) {
                         super.onPageSelected(position);
                         clearNextPageTimer(); // in case user manually moved to a new page while waiting
+                        mCurrentView = mAdapter.getActiveView(position);
                         mTimeLastPageSwitch = System.currentTimeMillis();
-                        mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
-                        WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
-                        if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
-                            mAdapter.startNarrationForPage(position);
-                            // Note: this isn't super-reliable. We tried to narrate this page, but it may not
-                            // have any audio. All we know is that it's part of a book which has
-                            // audio (or animation) somewhere, and we tried to play any audio it has.
-                            mAudioPagesPlayed++;
+                        if (mIsMultiMediaBook) {
+                            mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
+                            WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
+                            // This new page may not be in the correct paused state.
+                            // (a) maybe we paused this page, moved to another, started narration, moved
+                            // back to this (adapter decided to reuse it), this one needs to not be paused.
+                            // (b) maybe we moved to another page while not paused, paused there, moved
+                            // back to this one (again, reused) and old animation is still running
+                            if (mCurrentView.getTag() instanceof WebAppInterface) {
+                                WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
+                                appInterface.setPaused(WebAppInterface.isNarrationPaused());
+                                if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
+                                    mAdapter.startNarrationForPage(position);
+                                    // Note: this isn't super-reliable. We tried to narrate this page, but it may not
+                                    // have any audio. All we know is that it's part of a book which has
+                                    // audio (or animation) somewhere, and we tried to play any audio it has.
+                                    mAudioPagesPlayed++;
+                                } else {
+                                    mNonAudioPagesShown++;
+                                }
+                            }
                         }
                         else {
                             mNonAudioPagesShown++;
@@ -372,6 +445,13 @@ public class ReaderActivity extends BaseActivity {
         }
     }
 
+    private String getPrimaryLanguage(String html) {
+        Matcher matcher = sMainLangauge.matcher(html);
+        if (!matcher.find())
+            return "en";
+        return matcher.group(1);
+    }
+
     private String addAssetsStylesheetLink(String htmlSnippet) {
         final Matcher matcher = sHeadElementEndPattern.matcher(htmlSnippet);
         if (matcher.find()) {
@@ -380,9 +460,20 @@ public class ReaderActivity extends BaseActivity {
         return htmlSnippet;
     }
 
-    // Forces the layout we want into the class, and inserts the specified style.
-    // assumes some layout is already present in classes attribute, and no style already exists.
-    private String modifyPage(String page, String newLayout, String style) {
+    private int getPageOrientationAndRotateScreen(String page){
+        int orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+        Matcher matcher = sClassAttrPattern.matcher(page);
+        if (matcher.find()) {
+            String classNames = matcher.group(2);
+            if (classNames.contains("Landscape"))
+                orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+        }
+        setRequestedOrientation(orientation);
+        return orientation;
+    }
+
+    // Transforms [x]Portrait or [x]Landscape class to Device16x9Portrait / Device16x9Landscape
+    private String pageUsingDeviceLayout(String page) {
         // Get the content of the class attribute and its position
         Matcher matcher = sClassAttrPattern.matcher(page);
         if (!matcher.find())
@@ -390,21 +481,16 @@ public class ReaderActivity extends BaseActivity {
         int start = matcher.start(2);
         int end = matcher.end(2);
         String classNames = matcher.group(2);
-        String newClassNames = sLayoutPattern.matcher(classNames).replaceFirst(newLayout);
+        String newClassNames = sLayoutPattern.matcher(classNames).replaceFirst("Device16x9$1");
         return page.substring(0,start) // everything up to the opening quote in class="
                 + newClassNames
-                + matcher.group(1) // proper matching closing quote ends class attr
-                + " style="
-                + matcher.group(1) // we need to use the same quote for style...
-                + style
                 + page.substring(end, page.length()); // because this includes the original closing quote from class attr
     }
 
-    private int getPageScale(int viewWidth, int viewHeight){
-        //we'll probably want to read or calculate these at some point...
-        //but for now, they are the width and height of the Device16x9Portrait layout
-        int bookPageWidth = 378;
-        int bookPageHeight = 674;
+    private int getPageScale(int viewWidth, int viewHeight, int bookOrientation){
+        // 378 x 674 are the dimensions of the Device16x9 layouts in pixels
+        int bookPageWidth = (bookOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? 378 : 674;
+        int bookPageHeight = (bookOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? 674 : 378;
 
         Double widthScale = new Double(viewWidth)/new Double(bookPageWidth);
         Double heightScale = new Double(viewHeight)/new Double(bookPageHeight);
@@ -418,6 +504,14 @@ public class ReaderActivity extends BaseActivity {
         IOUtilities.copyAssetFolder(this.getApplicationContext().getAssets(), "book support files", bookFolderPath);
     }
 
+    enum pageAnswerState {
+        unanswered,
+        firstTimeCorrect,
+        secondTimeCorrect,
+        wrongOnce,
+        wrong
+    }
+
     // Class that provides individual page views as needed.
     // possible enhancement: can we reuse the same browser, just change which page is visible?
     private class BookPagerAdapter extends PagerAdapter {
@@ -428,6 +522,9 @@ public class ReaderActivity extends BaseActivity {
         // The concatenation of mHtmlBeforeFirstPageDiv, one item from mHtmlPageDivs, and
         // mHtmlAfterLastPageDiv is the content we put in a browser representing a single page.
         private List<String> mHtmlPageDivs;
+        List<JSONObject> mQuestions;
+        pageAnswerState[] mAnswerStates;
+        boolean mQuestionAnalyticsSent;
         private String mHtmlBeforeFirstPageDiv;
         private String mHtmlAfterLastPageDiv;
         ReaderActivity mParent;
@@ -443,17 +540,21 @@ public class ReaderActivity extends BaseActivity {
         private HashMap<Integer, ScaledWebView> mActiveViews = new HashMap<Integer, ScaledWebView>();
 
         BookPagerAdapter(List<String> htmlPageDivs,
+                         List<JSONObject> questions,
                          ReaderActivity parent,
                          File bookHtmlPath,
                          String htmlBeforeFirstPageDiv,
                          String htmlAfterLastPageDiv) {
             mHtmlPageDivs = htmlPageDivs;
+            mQuestions = questions;
+            mAnswerStates = new pageAnswerState[mQuestions.size()];
+            for (int i = 0; i < mAnswerStates.length; i++) {
+                mAnswerStates[i] = pageAnswerState.unanswered;
+            }
             mParent = parent;
             mBookHtmlPath = bookHtmlPath;
             mHtmlBeforeFirstPageDiv = htmlBeforeFirstPageDiv;
             mHtmlAfterLastPageDiv = htmlAfterLastPageDiv;
-            mLastPageIndex = -1;
-            mThisPageIndex = -1;
         }
 
         @Override
@@ -473,17 +574,129 @@ public class ReaderActivity extends BaseActivity {
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
             Log.d("Reader", "instantiateItem " + position);
-
-            WebView browser = MakeBrowserForPage(position);
-
             assert(container.getChildCount() == 0);
-            container.addView(browser);
-            return browser;
+            String page = mHtmlPageDivs.get(position);
+            if (page.startsWith("<")) {
+                // normal content page
+                WebView browser = MakeBrowserForPage(position);
+                container.addView(browser);
+                return browser;
+            }
+            // question page
+            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            final LinearLayout questionPageView = (LinearLayout) inflater.inflate(R.layout.question_page, null);
+            final int questionIndex = position - mFirstQuestionPage;
+            JSONObject question = mQuestions.get(questionIndex);
+            final TextView questionView = (TextView)questionPageView.findViewById(R.id.question);
+            try {
+                questionView.setText(question.getString("question"));
+                JSONArray answers = question.getJSONArray("answers");
+                for (int i = 0; i < answers.length(); i++) {
+                    // Passing the intended parent view allows the button's margins to work properly.
+                    // There's an explanation at https://stackoverflow.com/questions/5315529/layout-problem-with-button-margin.
+                    final LinearLayout answerLayout = (LinearLayout) inflater.inflate(R.layout.question_answer_item, questionPageView, false);
+                    JSONObject answerObj = answers.getJSONObject(i);
+                    Button answer = (Button) answerLayout.findViewById(R.id.answerButton);
+                    final ImageView imageView = (ImageView) answerLayout.findViewById(R.id.checkImage);
+                    if (answerObj.getBoolean("correct")) {
+                        answer.setTag("correct");
+                    }
+
+                    answer.setText(answerObj.getString("text"));
+                    answer.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            boolean correct = view.getTag() == "correct";
+
+                            if (correct) {
+                                // Clear any previous answers.
+                                for (int i = 0; i < questionPageView.getChildCount(); i++) {
+                                    View item = questionPageView.getChildAt(i);
+                                    ImageView imgItem = (ImageView) item.findViewById(R.id.checkImage);
+                                    if (imgItem != null) { // will be for initial text views.
+                                        imgItem.setImageResource(0);
+                                    }
+                                }
+                                imageView.setImageResource(R.drawable.check_green);
+                            } else {
+                                imageView.setImageResource(R.drawable.cancel); // A strong red x: android.R.drawable.ic_delete);
+                            }
+
+                            pageAnswerState oldAnswerState = mAnswerStates[questionIndex];
+                            if (correct) {
+                                if (oldAnswerState == pageAnswerState.wrongOnce)
+                                    mAnswerStates[questionIndex] = pageAnswerState.secondTimeCorrect;
+                                else if (oldAnswerState == pageAnswerState.unanswered)
+                                    mAnswerStates[questionIndex] = pageAnswerState.firstTimeCorrect;
+                                // if they already got it wrong twice they get no credit.
+                                // if they already got it right no credit for clicking again.
+                                // both sounds from
+                                // https://freesound.org/people/themusicalnomad/sounds/?page=2
+                                // cc0
+                                playSoundFile(R.raw.right_answer);
+                            } else {
+                                if (oldAnswerState == pageAnswerState.unanswered)
+                                    mAnswerStates[questionIndex] = pageAnswerState.wrongOnce;
+                                else if (oldAnswerState == pageAnswerState.wrongOnce)
+                                    mAnswerStates[questionIndex] = pageAnswerState.wrong;
+                                // if they previously got it right we won't hold it against them
+                                // that they now get it wrong.
+                                playSoundFile(R.raw.wrong_answer);
+                            }
+                            if (!mQuestionAnalyticsSent) {
+                                boolean allAnswered = true;
+                                int rightFirstTime = 0;
+                                for (int i = 0; i < mAnswerStates.length; i++) {
+                                    if (mAnswerStates[i] == pageAnswerState.unanswered) {
+                                        allAnswered = false;
+                                        break;
+                                    } else if (mAnswerStates[i] == pageAnswerState.firstTimeCorrect) {
+                                        rightFirstTime++;
+                                    }
+                                }
+                                if (allAnswered) {
+                                    Properties p = new Properties();
+                                    p.putValue("title", mBookName);
+                                    p.putValue("questionCount", mAnswerStates.length);
+                                    p.putValue("rightFirstTime", rightFirstTime);
+                                    p.putValue("percentRight", rightFirstTime * 100 / mAnswerStates.length);
+                                    if (mBrandingProjectName != null) {
+                                        p.putValue("brandingProjectName", mBrandingProjectName);
+                                    }
+                                    Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Questions correct", p);
+                                    // Don't send again unless they re-open the book and start over.
+                                    mQuestionAnalyticsSent = true;
+                                }
+                            }
+                        }
+                    });
+                    questionPageView.addView(answerLayout);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            TextView progressView = (TextView) questionPageView.findViewById(R.id.question_progress);
+            progressView.setText(String.format(progressView.getText().toString(), questionIndex + 1, mCountQuestionPages));
+            container.addView(questionPageView);
+            return questionPageView;
         }
 
         // position should in fact be the position of the pager.
         public ScaledWebView getActiveView(int position) {
             return mActiveViews.get(position);
+        }
+
+        public void prepareForAnimation(int position) {
+            final WebView pageView = mActiveViews.get(position);
+            if (pageView == null) {
+                Log.d("prepareForAnimation", "can't find page for " + position);
+                return;
+            }
+
+            if (pageView.getTag() instanceof WebAppInterface) {
+                WebAppInterface appInterface = (WebAppInterface) pageView.getTag();
+                appInterface.prepareDocumentWhenDocLoaded();
+            }
         }
 
         public void startNarrationForPage(int position) {
@@ -492,14 +705,17 @@ public class ReaderActivity extends BaseActivity {
                 Log.d("startNarration", "can't find page for " + position);
                 return;
             }
-            WebAppInterface appInterface = (WebAppInterface)pageView.getTag();
-            appInterface.startNarrationWhenDocLoaded();
+            if (pageView.getTag() instanceof WebAppInterface) {
+                WebAppInterface appInterface = (WebAppInterface) pageView.getTag();
+                appInterface.startNarrationWhenDocLoaded();
+            }
         }
 
         private WebView MakeBrowserForPage(int position) {
             ScaledWebView browser = null;
             try {
-                browser = new ScaledWebView(mParent);
+                String page = mHtmlPageDivs.get(position);
+                browser = new ScaledWebView(mParent, getPageOrientationAndRotateScreen(page));
                 mActiveViews.put(position, browser);
                 if (mIsMultiMediaBook) {
                     browser.getSettings().setJavaScriptEnabled(true); // allow Javascript for audio player
@@ -509,12 +725,12 @@ public class ReaderActivity extends BaseActivity {
                     // way to get from the browser to the object we set as the JS interface.
                     browser.setTag(appInterface);
                 }
-                String page = mHtmlPageDivs.get(position);
-                // Inserts the layout class we want and forces no border.
-                page = modifyPage(page, "Device16x9Portrait", "border:0 !important");
-                String doc = mHtmlBeforeFirstPageDiv + page + mHtmlAfterLastPageDiv;
+                // Styles to force 0 border and to vertically center books
+                String moreStyles = "<style>html{ height: 100%; }  body{ min-height:100%; display:flex; align-items:center; } div.bloom-page { border:0 !important; }</style>\n";
+                String doc = mHtmlBeforeFirstPageDiv + moreStyles + pageUsingDeviceLayout(page) + mHtmlAfterLastPageDiv;
 
                 browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc, "text/html", "utf-8", null);
+                prepareForAnimation(position);
             }catch (Exception ex) {
                 Log.e("Reader", "Error loading " + mBookHtmlPath.getAbsolutePath() + "  " + ex);
             }
@@ -529,9 +745,13 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private class ScaledWebView extends WebView {
+        private int bookOrientation;
 
-        public ScaledWebView(Context context) {
+        public ScaledWebView(Context context, int bookOrientation) {
             super(context);
+            this.bookOrientation = bookOrientation;
+            if(mRTLBook)
+                setRotationY(180);
         }
 
         @Override
@@ -539,7 +759,7 @@ public class ReaderActivity extends BaseActivity {
 
             // if width is zero, this method will be called again
             if (w != 0) {
-                setInitialScale(getPageScale(w, h));
+                setInitialScale(getPageScale(w, h, bookOrientation));
             }
 
             super.onSizeChanged(w, h, ow, oh);
@@ -569,8 +789,13 @@ public class ReaderActivity extends BaseActivity {
                     // vertical distance than horizontal and cause a play/pause event.
                     // See https://issues.bloomlibrary.org/youtrack/issue/BL-5068.
                 } else if (event.getEventTime() - event.getDownTime() < viewConfiguration.getJumpTapTimeout()) {
-                    WebAppInterface.playPause(!WebAppInterface.isNarrationPaused());
-                    narrationPausedChanged();
+                    if (mCurrentView.getTag() instanceof WebAppInterface) {
+                        WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
+                        if (appInterface != null) { // may be null if this can happen in non-multimedia book
+                            appInterface.setPaused(!WebAppInterface.isNarrationPaused());
+                            narrationPausedChanged();
+                        }
+                    }
                 }
             }
             return super.onTouchEvent(event);

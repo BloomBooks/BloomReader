@@ -25,6 +25,9 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <!-- Some activities which declare android:theme="@style/AppTheme.NoActionBar" actually
+        do have action bars, but we're choosing to configure a toolbar as our action bar
+        using setSupportActionBar() -->
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
@@ -60,6 +63,22 @@
                 <!-- needed for mangled email messages -->
                 <data
                     android:mimeType="application/bloom"
+                    android:scheme="content" />
+                <!-- needed for properly formatted email messages -->
+                <data
+                    android:mimeType="application/vnd.bloomd"
+                    android:scheme="content" />
+                <!-- needed for mangled email messages -->
+                <data
+                    android:mimeType="application/bloomd"
+                    android:scheme="content" />
+                <!-- needed for properly formatted email messages -->
+                <data
+                    android:mimeType="application/vnd.bloombundle"
+                    android:scheme="content" />
+                <!-- needed for mangled email messages -->
+                <data
+                    android:mimeType="application/bloombundle"
                     android:scheme="content" />
                 <!-- needed for mangled email messages -->
                 <data
@@ -99,6 +118,13 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
             </intent-filter>
 
             <!--
@@ -135,6 +161,13 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
             </intent-filter>
         </activity>
         <activity
@@ -156,6 +189,18 @@
             android:label="@string/title_activity_get_from_wi_fi"
             android:excludeFromRecents="true"
             android:theme="@style/WiFiDialogTheme"></activity>
+        <activity
+            android:name=".ShelfActivity"
+            android:label="@string/title_activity_shelf"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+
+        <receiver android:name="org.sil.bloom.reader.ConnectivityReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:authorities="${applicationId}.fileprovider"
             android:name="android.support.v4.content.FileProvider"

@@ -1,7 +1,6 @@
 package org.sil.bloom.reader.WiFi;
 
 import android.app.Service;
-import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
@@ -15,7 +14,7 @@ import org.sil.bloom.reader.BaseActivity;
 import org.sil.bloom.reader.IOUtilities;
 import org.sil.bloom.reader.MainActivity;
 import org.sil.bloom.reader.R;
-import org.sil.bloom.reader.models.Book;
+import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.io.File;
@@ -29,6 +28,9 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.sil.bloom.reader.BloomReaderApplication.getOurDeviceName;
+
 
 /**
  * Created by Thomson on 7/22/2017.
@@ -114,7 +116,7 @@ public class NewBookListenerService extends Service {
                 return;
             }
             File localBookDirectory = BookCollection.getLocalBooksDirectory();
-            File bookFile = new File(localBookDirectory, title + Book.BOOK_FILE_EXTENSION);
+            File bookFile = new File(localBookDirectory, title + BookOrShelf.BOOK_FILE_EXTENSION);
             boolean bookExists = bookFile.exists();
             // If the book doesn't exist it can't be up to date.
             if (bookExists && IsBookUpToDate(bookFile, title, newBookVersion)) {
@@ -199,15 +201,6 @@ public class NewBookListenerService extends Service {
         sendMessageTask.ourIpAddress = getOurIpAddress();
         sendMessageTask.ourDeviceName = getOurDeviceName();
         sendMessageTask.execute();
-    }
-
-    // It's slightly odd to use the Bluetooth name for a WiFi function, but it's the only
-    // generally-available user-configurable device name we can find. (Some devices...e.g.,
-    // my Note 4...have a setting for a more general device name, but others (e.g., Nexus)
-    // do not.)
-    private String getOurDeviceName() {
-        BluetoothAdapter myDevice = BluetoothAdapter.getDefaultAdapter();
-        return myDevice.getName();
     }
 
     private void startSyncServer() {

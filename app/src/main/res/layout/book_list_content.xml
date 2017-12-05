@@ -8,17 +8,25 @@
     android:orientation="horizontal">
 
 
+    <!-- the 2dp is useful for bookshelves, to make the background color a big bigger than
+    the actual image. the marginTop (which with the padding should add up to the layout margin
+    of the text) aligns it with the text (but doesn't get the background color).
+    The 38dp is just big enough for the bigger of the two icons we use here...the bookshelf one.
+    Using a fixed width helps keep the text column aligned. There's probably a better way.-->
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingTop="@dimen/nav_header_vertical_spacing"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:scaleType="fitCenter"
+        android:layout_marginTop="10dp"
+        android:padding="2dp"
         app:srcCompat="@drawable/book" />
 
     <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_margin="@dimen/text_margin"
-        android:textAppearance="?attr/textAppearanceListItem" />
+        android:gravity="center_vertical"
+        android:textAppearance="?attr/textAppearanceListItem"  />
 </LinearLayout>

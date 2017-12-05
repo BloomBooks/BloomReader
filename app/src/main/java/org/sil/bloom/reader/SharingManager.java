@@ -5,12 +5,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
-import org.sil.bloom.reader.models.Book;
+import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +27,7 @@ public class SharingManager {
         mContext = context;
     }
 
-    public void shareBook(Book book){
+    public void shareBook(BookOrShelf book){
         File bookFile = new File(book.path);
         String dialogTitle = String.format(mContext.getString(R.string.shareBook), book.name);
         // This is the recommended way to get a URI to a file in BR's private storage and make it
@@ -82,13 +81,30 @@ public class SharingManager {
         }
     }
 
-    // We have to stage the apk file in public storage for sharing.
-    // This gets called now and then to delete the file there if it's more than a day old.
+    public void shareBooks() {
+        try {
+            IOUtilities.makeBloomBundle(sharedBloomBundlePath());
+            shareFile(Uri.fromFile(new File(sharedBloomBundlePath())), "application/zip", mContext.getString(R.string.share_books_via));
+        }
+        catch (Exception e) {
+            Log.e("BlReader/SharingManager", e.toString());
+            Toast failToast = Toast.makeText(mContext, mContext.getString(R.string.failed_to_share_books), Toast.LENGTH_LONG);
+            failToast.show();
+        }
+    }
+
+    // We have to stage the apk to share in public storage, and bloom bundles have to be
+    // created somewhere.
+    // This gets called now and then to delete the files there if they are more than a day old.
     public static void fileCleanup(){
-        File sharedApkFile = new File(sharedApkPath());
         long yesterday = System.currentTimeMillis() - (1000 * 60 * 60 * 24);
-        if(sharedApkFile.exists() && sharedApkFile.lastModified() < yesterday)
-            sharedApkFile.delete();
+
+        for (String filePath : new String[] {sharedApkPath(), sharedBloomBundlePath()}) {
+            File file = new File(filePath);
+
+            if (file.exists() && file.lastModified() < yesterday)
+                file.delete();
+        }
     }
 
     private void shareFile(Uri uri, String fileType, String dialogTitle){
@@ -113,9 +129,20 @@ public class SharingManager {
         return destApk;
     }
 
-    private static String sharedApkPath(){
+    private static String sharedFilePath(String fileName) {
         String sharedApkPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-        sharedApkPath += File.separator + "BloomReader.apk";
+        sharedApkPath += File.separator + fileName;
         return sharedApkPath;
+    }
+
+    private static String sharedApkPath() {
+        return sharedFilePath("BloomReader.apk");
+    }
+
+    private static String sharedBloomBundlePath() {
+        String deviceName = BloomReaderApplication.getOurDeviceName();
+        deviceName = (deviceName != null && !deviceName.isEmpty()) ? deviceName : "my";
+
+        return sharedFilePath(deviceName + IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION);
     }
 }

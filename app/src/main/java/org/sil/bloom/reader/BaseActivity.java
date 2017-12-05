@@ -5,7 +5,7 @@ import android.media.MediaPlayer;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 
-import org.sil.bloom.reader.models.Book;
+import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
@@ -102,7 +102,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         String lastModFile = null;
         long latestTime = 0;
         for (File file : files) {
-            if (!file.isDirectory() && file.getName().endsWith(Book.BOOK_FILE_EXTENSION)) {
+            if (!file.isDirectory() && file.getName().endsWith(BookOrShelf.BOOK_FILE_EXTENSION)) {
                 long modified = file.lastModified();
                 if (modified > latestTime) {
                     latestTime = modified;
@@ -121,7 +121,13 @@ public abstract class BaseActivity extends AppCompatActivity {
         Context bloomApplicationContext = BloomReaderApplication.getBloomApplicationContext();
         if (bloomApplicationContext == null)
             return; // unlikely, but better to skip the sound than crash.
-        MediaPlayer mp = MediaPlayer.create(bloomApplicationContext, id);
+        final MediaPlayer mp = MediaPlayer.create(bloomApplicationContext, id);
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                mp.release();
+            }
+        });
         mp.start();
     }
 }

@@ -1,4 +1,5 @@
 1.1 (alpha)
+Display book thumbnails.
 Play Ken Burns animations along with audio.
 
 1.0 (beta)

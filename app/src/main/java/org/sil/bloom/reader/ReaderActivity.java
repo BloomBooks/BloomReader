@@ -383,6 +383,9 @@ public class ReaderActivity extends BaseActivity {
                         clearNextPageTimer(); // in case user manually moved to a new page while waiting
                         mCurrentView = mAdapter.getActiveView(position);
                         mTimeLastPageSwitch = System.currentTimeMillis();
+
+                       mCurrentView.evaluateJavascript("document.getElementsByTagName('video')[0].play();", null);
+
                         if (mIsMultiMediaBook) {
                             mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
                             WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
@@ -752,6 +755,8 @@ public class ReaderActivity extends BaseActivity {
             this.bookOrientation = bookOrientation;
             if(mRTLBook)
                 setRotationY(180);
+            getSettings().setJavaScriptEnabled(true);
+            getSettings().setMediaPlaybackRequiresUserGesture(false);
         }
 
         @Override

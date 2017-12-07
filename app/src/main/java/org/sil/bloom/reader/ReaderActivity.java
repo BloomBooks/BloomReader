@@ -384,7 +384,8 @@ public class ReaderActivity extends BaseActivity {
                         mCurrentView = mAdapter.getActiveView(position);
                         mTimeLastPageSwitch = System.currentTimeMillis();
 
-                       mCurrentView.evaluateJavascript("document.getElementsByTagName('video')[0].play();", null);
+                        // Auto play the first video on the page (if any)
+                        mCurrentView.evaluateJavascript("document.getElementsByTagName('video')[0].play();", null);
 
                         if (mIsMultiMediaBook) {
                             mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
@@ -721,7 +722,6 @@ public class ReaderActivity extends BaseActivity {
                 browser = new ScaledWebView(mParent, getPageOrientationAndRotateScreen(page));
                 mActiveViews.put(position, browser);
                 if (mIsMultiMediaBook) {
-                    browser.getSettings().setJavaScriptEnabled(true); // allow Javascript for audio player
                     WebAppInterface appInterface = new WebAppInterface(this.mParent, mBookHtmlPath.getParent(), browser, position);
                     browser.addJavascriptInterface(appInterface, "Android");
                     // Save the WebAppInterface in the browser's tag because there's no simple

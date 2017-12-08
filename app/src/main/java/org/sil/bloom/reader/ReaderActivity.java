@@ -3,13 +3,8 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.res.Resources;
-import android.graphics.Color;
-import android.graphics.drawable.AnimationDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -381,8 +376,12 @@ public class ReaderActivity extends BaseActivity {
                     public void onPageSelected(int position) {
                         super.onPageSelected(position);
                         clearNextPageTimer(); // in case user manually moved to a new page while waiting
+                        WebView oldView = mCurrentView;
                         mCurrentView = mAdapter.getActiveView(position);
                         mTimeLastPageSwitch = System.currentTimeMillis();
+
+                        stopAndStartVideos(oldView, mCurrentView);
+
                         if (mIsMultiMediaBook) {
                             mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
                             WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
@@ -435,6 +434,15 @@ public class ReaderActivity extends BaseActivity {
             }
         });
 
+    }
+
+    private void stopAndStartVideos(WebView oldView, WebView currentView){
+        // Selects the first (and presumably only) video on the page if any exists
+        String videoSelector = "document.getElementsByTagName('video')[0]";
+
+        if(oldView != null)
+            oldView.evaluateJavascript(videoSelector + ".pause();", null);
+        currentView.evaluateJavascript(videoSelector + ".play();", null);
     }
 
     private void AddPage(ArrayList<String> pages, String pageContent) {
@@ -718,7 +726,6 @@ public class ReaderActivity extends BaseActivity {
                 browser = new ScaledWebView(mParent, getPageOrientationAndRotateScreen(page));
                 mActiveViews.put(position, browser);
                 if (mIsMultiMediaBook) {
-                    browser.getSettings().setJavaScriptEnabled(true); // allow Javascript for audio player
                     WebAppInterface appInterface = new WebAppInterface(this.mParent, mBookHtmlPath.getParent(), browser, position);
                     browser.addJavascriptInterface(appInterface, "Android");
                     // Save the WebAppInterface in the browser's tag because there's no simple
@@ -752,6 +759,8 @@ public class ReaderActivity extends BaseActivity {
             this.bookOrientation = bookOrientation;
             if(mRTLBook)
                 setRotationY(180);
+            getSettings().setJavaScriptEnabled(true);
+            getSettings().setMediaPlaybackRequiresUserGesture(false);
         }
 
         @Override

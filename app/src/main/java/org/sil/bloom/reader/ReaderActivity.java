@@ -3,13 +3,8 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.res.Resources;
-import android.graphics.Color;
-import android.graphics.drawable.AnimationDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -381,11 +376,11 @@ public class ReaderActivity extends BaseActivity {
                     public void onPageSelected(int position) {
                         super.onPageSelected(position);
                         clearNextPageTimer(); // in case user manually moved to a new page while waiting
+                        WebView oldView = mCurrentView;
                         mCurrentView = mAdapter.getActiveView(position);
                         mTimeLastPageSwitch = System.currentTimeMillis();
 
-                        // Auto play the first video on the page (if any)
-                        mCurrentView.evaluateJavascript("document.getElementsByTagName('video')[0].play();", null);
+                        stopAndStartVideos(oldView, mCurrentView);
 
                         if (mIsMultiMediaBook) {
                             mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
@@ -439,6 +434,15 @@ public class ReaderActivity extends BaseActivity {
             }
         });
 
+    }
+
+    private void stopAndStartVideos(WebView oldView, WebView currentView){
+        // Selects the first (and presumably only) video on the page if any exists
+        String videoSelector = "document.getElementsByTagName('video')[0]";
+
+        if(oldView != null)
+            oldView.evaluateJavascript(videoSelector + ".pause();", null);
+        currentView.evaluateJavascript(videoSelector + ".play();", null);
     }
 
     private void AddPage(ArrayList<String> pages, String pageContent) {

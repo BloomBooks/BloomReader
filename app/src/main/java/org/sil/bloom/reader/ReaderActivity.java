@@ -442,7 +442,8 @@ public class ReaderActivity extends BaseActivity {
 
         if(oldView != null)
             oldView.evaluateJavascript(videoSelector + ".pause();", null);
-        currentView.evaluateJavascript(videoSelector + ".play();", null);
+        if(currentView != null)
+            currentView.evaluateJavascript(videoSelector + ".play();", null);
     }
 
     private void AddPage(ArrayList<String> pages, String pageContent) {

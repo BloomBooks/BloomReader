@@ -56,6 +56,10 @@ public class ReaderActivity extends BaseActivity {
     // it's good enough.)
     private static final Pattern sPagePattern = Pattern.compile("<div\\s+[^>]*class\\s*=\\s*['\"][^'\"]*bloom-page");
 
+    // For searching in a page string to see whether it's a back-matter page. Looks for bloom-backmatter
+    // in a class attribute in the first opening tag.
+    private static final Pattern sBackPagePattern = Pattern.compile("[^>]*class\\s*=\\s*['\"][^'\"]*bloom-backMatter");
+
     // Matches a page div with the class numberedPage...that string must occur in a class attribute before the
     // close of the div element.
     private static final Pattern sNumberedPagePattern = Pattern.compile("[^>]*?class\\s*=\\s*['\"][^'\"]*numberedPage");
@@ -323,6 +327,12 @@ public class ReaderActivity extends BaseActivity {
                     startPage = matcher.start();
                 }
                 mFirstQuestionPage = pages.size();
+                for (; mFirstQuestionPage > 0; mFirstQuestionPage--) {
+                    String pageContent = pages.get(mFirstQuestionPage-1);
+                    if (!sBackPagePattern.matcher(pageContent).find()) {
+                        break;
+                    }
+                }
                 int endBody = html.indexOf("</body>", startPage);
                 AddPage(pages, html.substring(startPage, endBody));
                 // We can leave out the bloom player JS altogether if not needed.

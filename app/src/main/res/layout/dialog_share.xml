@@ -77,9 +77,9 @@
             android:padding="12px"
             android:text="@string/share_app_link"
             android:textColor="@color/colorBloomRed"
-            android:onClick="onClick"
             android:clickable="true"
-            android:gravity="center"/>
+            android:gravity="center"
+            android:focusable="true" />
 
         <Button
             android:id="@+id/btnCancel"

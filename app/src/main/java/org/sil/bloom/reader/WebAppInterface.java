@@ -1,12 +1,16 @@
 package org.sil.bloom.reader;
 
 import android.media.MediaPlayer;
+import android.media.SoundPool;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.widget.Toast;
 
 import java.io.IOException;
+
+import static android.media.AudioManager.STREAM_MUSIC;
 
 /**
  * This class exists to provide methods that Javascript in a WebView can make callbacks on.
@@ -15,6 +19,7 @@ import java.io.IOException;
  * only one narration media player, though each WebView has its own WebAppInterface.
  * Since the app can also interact with the narration, this class has methods to pause/resume
  * and stop the narration.
+ * Then, to keep all the audio stuff together, it also has the player that handles background audio.
  * Finally, since this class receives a notification from the Javascript when the page is
  * ready to receive commands, it also handles sending the command that starts the narration
  * playing.
@@ -42,6 +47,11 @@ public class WebAppInterface {
     private static boolean mPaused;
     // The one (shared) media player used for narration.
     private static MediaPlayer mp = new MediaPlayer();
+    // And the one used for background audio
+    private static MediaPlayer mpBackground = new MediaPlayer();
+
+    // The background audio for the current page
+    private static String backgroundAudioPath;
     // Set true when our Web View has loaded its document. This depends on the JavaScript
     // appropriately calling domContentLoaded().
     private boolean mDocLoaded = false;
@@ -72,6 +82,8 @@ public class WebAppInterface {
         mPaused = pause;
         if (pause) {
             mp.pause();
+            mpBackground.pause();
+
             mContext.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -80,6 +92,8 @@ public class WebAppInterface {
             });
         } else {
             mp.start(); // Review: need to suppress if playback completed?
+            if (backgroundAudioPath.length() > 0)
+                mpBackground.start();
             mContext.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -93,8 +107,36 @@ public class WebAppInterface {
         return mPaused;
     }
 
-    public static void stopPlaying() {
+    public static void stopNarration() {
         mp.stop();
+    }
+
+    // When our app no longer in foreground
+    public static void stopAllAudio() {
+        stopNarration();
+        mpBackground.stop();
+    }
+
+    public static void SetBackgroundAudio(String path, float volume) {
+        if (path.equals(backgroundAudioPath))
+            return;
+        backgroundAudioPath = path;
+        mpBackground.stop();
+        mpBackground.reset();
+        if (backgroundAudioPath == null || backgroundAudioPath.length() == 0)
+            return;
+        mpBackground.setLooping(true);
+        try {
+            mpBackground.setDataSource(backgroundAudioPath);
+            mpBackground.prepare();
+            mpBackground.setVolume(volume, volume);
+            if (!mPaused)
+            {
+                mpBackground.start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     // Play an audio file from the webpage. The argument comes from the JavaScript function

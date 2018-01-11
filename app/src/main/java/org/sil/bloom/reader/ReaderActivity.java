@@ -64,6 +64,8 @@ public class ReaderActivity extends BaseActivity {
     // close of the div element.
     private static final Pattern sNumberedPagePattern = Pattern.compile("[^>]*?class\\s*=\\s*['\"][^'\"]*numberedPage");
 
+    private static final Pattern sBackgroundAudio = Pattern.compile("[^>]*?data-backgroundaudio\\s*=\\s*['\"]([^'\"]*)?['\"]");
+    private static final Pattern sBackgroundVolume = Pattern.compile("[^>]*?data-backgroundaudiovolume\\s*=\\s*['\"]([^'\"]*)?['\"]");
     private static final Pattern sClassAttrPattern = Pattern.compile("class\\s*=\\s*(['\"])(.*?)\\1");
 
     private static final Pattern sContentLangDiv = Pattern.compile("<div [^>]*?data-book=\"contentLanguage1\"[^>]*?>\\s*(\\S+)");
@@ -81,6 +83,8 @@ public class ReaderActivity extends BaseActivity {
     int mFirstQuestionPage;
     int mCountQuestionPages;
     WebView mCurrentView;
+    String[] mBackgroundAudioFiles;
+    float[] mBackgroundAudioVolumes;
 
     // Keeps track of whether we switched pages while audio paused. If so, we don't resume
     // the audio of the previously visible page, but start this page from the beginning.
@@ -116,7 +120,7 @@ public class ReaderActivity extends BaseActivity {
             ReportPagesRead();
         }
         super.onPause();
-        WebAppInterface.stopPlaying();
+        WebAppInterface.stopAllAudio();
     }
 
     private void ReportPagesRead()
@@ -292,10 +296,12 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private void loadBook() {
-        String path = getIntent().getData().getPath();
+        final String path = getIntent().getData().getPath();
         mFileReader = new BloomFileReader(getApplicationContext(), path);
+        String bookDirectory;
         try {
-            File bookHtmlFile = mFileReader.getHtmlFile();
+            final File bookHtmlFile = mFileReader.getHtmlFile();
+            bookDirectory = bookHtmlFile.getParent();
             String html = IOUtilities.FileToString(bookHtmlFile);
             // Enhance: eventually also look for images with animation data.
             // This is a fairly crude search, we really want the doc to have spans with class
@@ -363,6 +369,36 @@ public class ReaderActivity extends BaseActivity {
                     pages.add(mFirstQuestionPage, "Q");
                 }
             }
+            mBackgroundAudioFiles = new String[pages.size()];
+            mBackgroundAudioVolumes = new float[pages.size()];
+            String currentBackgroundAudio = "";
+            float currentVolume = 1.0f;
+            for (int i = 0; i < pages.size(); i++) {
+                if (pages.get(i) == "Q") {
+                    mBackgroundAudioFiles[i] = "";
+                    currentBackgroundAudio = "";
+                    continue;
+                }
+                Matcher bgMatcher =sBackgroundAudio.matcher(pages.get(i));
+                if (bgMatcher.find()) {
+                    currentBackgroundAudio = bgMatcher.group(1);
+                    if (currentBackgroundAudio == null) // may never happen?
+                        currentBackgroundAudio = "";
+                    // Getting a new background file implies full volume unless specified.
+                    currentVolume = 1.0f;
+                }
+                Matcher bgvMatcher =sBackgroundVolume.matcher(pages.get(i));
+                if (bgvMatcher.find()) {
+                    try {
+                        currentVolume = Float.parseFloat(bgvMatcher.group(1));
+                    }
+                    catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
+                }
+                mBackgroundAudioFiles[i] = currentBackgroundAudio;
+                mBackgroundAudioVolumes[i] = currentVolume;
+            }
 
             mRTLBook = mFileReader.getBooleanMetaProperty("isRtl", false);
 
@@ -373,6 +409,8 @@ public class ReaderActivity extends BaseActivity {
             Log.e("Reader", "Error loading " + path + "  " + ex);
             return;
         }
+
+        final String audioDirectoryPath = bookDirectory + "/audio/";
 
         runOnUiThread(new Runnable() {
             @Override
@@ -394,7 +432,12 @@ public class ReaderActivity extends BaseActivity {
 
                         if (mIsMultiMediaBook) {
                             mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
-                            WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
+                            WebAppInterface.stopNarration(); // don't want to hear rest of anything on another page
+                            String backgroundAudioPath = "";
+                            if (mBackgroundAudioFiles[position].length() > 0) {
+                                backgroundAudioPath = audioDirectoryPath + mBackgroundAudioFiles[position];
+                            }
+                            WebAppInterface.SetBackgroundAudio(backgroundAudioPath, mBackgroundAudioVolumes[position]);
                             // This new page may not be in the correct paused state.
                             // (a) maybe we paused this page, moved to another, started narration, moved
                             // back to this (adapter decided to reuse it), this one needs to not be paused.

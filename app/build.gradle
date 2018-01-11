@@ -16,7 +16,7 @@ if (rootProject.file(fileName).exists()) {
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "25.0.0"
+    buildToolsVersion '26.0.2'
 
     playAccountConfigs {
         defaultAccountConfig {
@@ -60,20 +60,25 @@ android {
         }
     }
 
+    flavorDimensions "default" // To satisfy stupid new requirement in AS3.0.1
+
     productFlavors {
         alpha {
             applicationIdSuffix ".alpha"
             versionNameSuffix "-alpha"
             signingConfig signingConfigs.release
+            dimension 'default'
         }
         beta {
             applicationIdSuffix ".beta"
             versionNameSuffix "-beta"
             signingConfig signingConfigs.release
+            dimension 'default'
         }
         production {
             // no id or version name suffix; this is the main product.
             signingConfig signingConfigs.release
+            dimension 'default'
         }
     }
 

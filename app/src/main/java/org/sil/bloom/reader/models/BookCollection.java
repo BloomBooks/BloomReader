@@ -111,8 +111,8 @@ public class BookCollection {
         } else {
             // book.
             bookOrShelf = new BookOrShelf(path);
-            BookCollection.setShelvesOfBook(bookOrShelf);
         }
+        BookCollection.setShelvesOfBook(bookOrShelf);
         _booksAndShelves.add(bookOrShelf);
         if (addingJustOne) {
             mFilteredBooksAndShelves.add(bookOrShelf);
@@ -240,8 +240,6 @@ public class BookCollection {
     // which are on that shelf. (existingShelves passes in the list of shelves that actually
     // exist as files in the folder. a book tagged as being on a nonexistent shelf can still be
     // in the root collection.)
-    // Shelves themselves, since there is no way for a shelf to be on a shelf, are included
-    // when the filter is null or empty.
     public static boolean isBookInFilter(BookOrShelf book, String filter, Set<String> existingShelves) {
         if (filter == null || filter.length() == 0)
             return !book.isBookInAnyShelf(existingShelves);
@@ -250,38 +248,30 @@ public class BookCollection {
         }
     }
 
-    // Set the shelves if any that a book belongs to. (May be called for shelves, but does nothing.)
+    // Set the shelves if any that a book or shelf belongs to.
     // Extracts the meta.json entry from the bloomd file, extracts the tags from that,
     // finds any that start with "bookshelf:", and sets the balance of the tag as one of the
     // book's shelves.
     public static void setShelvesOfBook(BookOrShelf bookOrShelf) {
-        if (bookOrShelf.isShelf())
-            return;
+        String json;
         try {
-            byte[] jsonBytes = IOUtilities.ExtractZipEntry(new File(bookOrShelf.path), "meta.json");
-            if (jsonBytes == null)
-                return; // paranoia
-            String json = "";
-            try {
-                json = new String(jsonBytes, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-                return;
+            if (bookOrShelf.isShelf()) {
+                json = IOUtilities.FileToString(new File(bookOrShelf.path));
             }
-            try {
-                JSONObject data = new JSONObject(json);
-                JSONArray tags = data.getJSONArray("tags");
-                for (int i = 0; i < tags.length(); i++) {
-                    String tag = tags.getString(i);
-                    if (!tag.startsWith(BOOKSHELF_PREFIX))
-                        continue;
-                    bookOrShelf.addBookshelf(tag.substring(BOOKSHELF_PREFIX.length()).trim());
-                }
-                if (data.has("brandingProjectName")) {
-                    bookOrShelf.brandingProjectName = data.getString("brandingProjectName");
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
+            else {
+                byte[] jsonBytes = IOUtilities.ExtractZipEntry(new File(bookOrShelf.path), "meta.json");
+                json = new String(jsonBytes, "UTF-8");
+            }
+            JSONObject data = new JSONObject(json);
+            JSONArray tags = data.getJSONArray("tags");
+            for (int i = 0; i < tags.length(); i++) {
+                String tag = tags.getString(i);
+                if (!tag.startsWith(BOOKSHELF_PREFIX))
+                    continue;
+                bookOrShelf.addBookshelf(tag.substring(BOOKSHELF_PREFIX.length()).trim());
+            }
+            if (data.has("brandingProjectName")) {
+                bookOrShelf.brandingProjectName = data.getString("brandingProjectName");
             }
         } catch (Exception e) {
             // Not sure about just catching everything like this. But the worst that happens if

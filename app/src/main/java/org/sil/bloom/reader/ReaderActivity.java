@@ -401,7 +401,7 @@ public class ReaderActivity extends BaseActivity {
                             // back to this (adapter decided to reuse it), this one needs to not be paused.
                             // (b) maybe we moved to another page while not paused, paused there, moved
                             // back to this one (again, reused) and old animation is still running
-                            if (mCurrentView.getTag() instanceof WebAppInterface) {
+                            if (mCurrentView != null && mCurrentView.getTag() instanceof WebAppInterface) {
                                 WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
                                 appInterface.setPaused(WebAppInterface.isNarrationPaused());
                                 if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
@@ -799,7 +799,7 @@ public class ReaderActivity extends BaseActivity {
                     // vertical distance than horizontal and cause a play/pause event.
                     // See https://issues.bloomlibrary.org/youtrack/issue/BL-5068.
                 } else if (event.getEventTime() - event.getDownTime() < viewConfiguration.getJumpTapTimeout()) {
-                    if (mCurrentView.getTag() instanceof WebAppInterface) {
+                    if (mCurrentView != null && mCurrentView.getTag() instanceof WebAppInterface) {
                         WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
                         if (appInterface != null) { // may be null if this can happen in non-multimedia book
                             appInterface.setPaused(!WebAppInterface.isNarrationPaused());

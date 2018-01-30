@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">Bloom Reader</string>
     <string name="delete">Delete</string>
     <string name="deleteConfirmation">Delete from device?</string>
@@ -8,18 +8,11 @@
     <string name="shareBook">Share %1$s</string>
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
-    <string name="title_activity_book_reader">BookReader</string>
 
     <string name="action_settings">Settings</string>
 
-    <string name="title_activity_fullscreen">FullscreenActivity</string>
-    <string name="title_activity_reader">Bloom Reader</string>
-    <string name="title_activity_main">Bloom Reader</string>
-
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="title_activity_get_from_wi_fi">GetFromWiFiActivity</string>
-    <string name="title_activity_shelf">ShelfActivity</string>
     <string name="get_books_local_wifi">Receive books from Bloom on a computer, over Wifi</string>
     <string name="already_have_version">Found \"%1$s\", already have this version.</string>
     <string name="found_new_version">Found new version of \"%1$s\" from \"%2$s\", requesting...</string>
@@ -30,7 +23,7 @@
     <string name="downloading">Downloading...</string>
     <string name="looking_for_adds">Looking for book advertisements on WiFi network %1s...</string>
     <string name="no_wifi_connected">The device does not appear to be connected to a WiFi network.</string>
-    <string name="bloomReaderUrl"><u>bloomlibrary.org</u></string>
+    <string name="bloomReaderUrl"><xliff:g id="website_url"><u>bloomlibrary.org</u></xliff:g></string>
     <string name="failed_book_import">Failed to import book.</string>
     <string name="external_storage_unavailable">Unable to access file storage. Is the SD card missing?</string>
 

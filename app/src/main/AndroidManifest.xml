@@ -30,7 +30,7 @@
         using setSupportActionBar() -->
         <activity
             android:name=".MainActivity"
-            android:label="@string/title_activity_main"
+            android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -172,7 +172,7 @@
         </activity>
         <activity
             android:name=".ReaderActivity"
-            android:label="@string/title_activity_reader"
+            android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <service
@@ -186,12 +186,12 @@
 
         <activity
             android:name=".WiFi.GetFromWiFiActivity"
-            android:label="@string/title_activity_get_from_wi_fi"
+            android:label="@string/app_name"
             android:excludeFromRecents="true"
             android:theme="@style/WiFiDialogTheme"></activity>
         <activity
             android:name=".ShelfActivity"
-            android:label="@string/title_activity_shelf"
+            android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar"></activity>
 
         <receiver android:name="org.sil.bloom.reader.ConnectivityReceiver"

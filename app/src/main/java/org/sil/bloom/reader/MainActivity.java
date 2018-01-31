@@ -167,7 +167,8 @@ public class MainActivity extends BaseActivity
             }
         }
         catch (IOException e) {
-            Log.e("BloomReader", "IO exception reading bloom bundle: " + e.getMessage());
+            Log.e("BundleIO", "IO exception reading bloom bundle: " + e.getMessage());
+            e.printStackTrace();
             Toast.makeText(this, "Had a problem reading the bundle", Toast.LENGTH_LONG).show();
         }
         try {

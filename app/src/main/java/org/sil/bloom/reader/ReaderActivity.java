@@ -126,12 +126,6 @@ public class ReaderActivity extends BaseActivity {
         WebAppInterface.stopPlaying();
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig){
-        // This prevents the activity from restarting when we change the orientation
-        super.onConfigurationChanged(newConfig);
-    }
-
     private void ReportPagesRead()
     {
         try {

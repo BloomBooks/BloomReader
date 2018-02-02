@@ -7,6 +7,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
+import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -82,6 +83,7 @@ public class ReaderActivity extends BaseActivity {
     private int mLastNumberedPageIndex = -1;
     private int mNumberedPageCount = 0;
     private boolean mLastNumberedPageRead = false;
+    private int mOrientation = -1;
     private String mContentLang1 = "unknown";
     int mFirstQuestionPage;
     int mCountQuestionPages;
@@ -394,9 +396,15 @@ public class ReaderActivity extends BaseActivity {
                         WebView oldView = mCurrentView;
                         mCurrentView = mAdapter.getActiveView(position);
                         mTimeLastPageSwitch = System.currentTimeMillis();
-
+                      
                         if (oldView != null)
                             oldView.clearCache(false); // Fix for BL-5555
+
+                        // Question page
+                        if(position >= mFirstQuestionPage && position < (mFirstQuestionPage + mCountQuestionPages))
+                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                        else
+                            setRequestedOrientation(mOrientation);
 
                         if (mIsMultiMediaBook) {
                             mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
@@ -476,15 +484,17 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private int getPageOrientationAndRotateScreen(String page){
-        int orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
-        Matcher matcher = sClassAttrPattern.matcher(page);
-        if (matcher.find()) {
-            String classNames = matcher.group(2);
-            if (classNames.contains("Landscape"))
-                orientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+        if(mOrientation == -1) {
+            mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+            Matcher matcher = sClassAttrPattern.matcher(page);
+            if (matcher.find()) {
+                String classNames = matcher.group(2);
+                if (classNames.contains("Landscape"))
+                    mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+            }
+            setRequestedOrientation(mOrientation);
         }
-        setRequestedOrientation(orientation);
-        return orientation;
+        return mOrientation;
     }
 
     // Transforms [x]Portrait or [x]Landscape class to Device16x9Portrait / Device16x9Landscape

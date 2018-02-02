@@ -67,9 +67,11 @@ public class SharingManager {
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("text/plain");
 
-            intent.putExtra(Intent.EXTRA_SUBJECT, "Bloom Reader");
+            String appName = mContext.getString(R.string.app_name);
 
-            String sAux = "\n" + mContext.getString(R.string.recommend_app) + "\n\n" +
+            intent.putExtra(Intent.EXTRA_SUBJECT, appName);
+
+            String sAux = "\n" + mContext.getString(R.string.recommend_app, appName) + "\n\n" +
                     "https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&amp;c=apps" + " \n\n";
             intent.putExtra(Intent.EXTRA_TEXT, sAux);
 

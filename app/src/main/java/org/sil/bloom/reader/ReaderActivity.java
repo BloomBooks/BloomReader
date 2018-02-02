@@ -24,6 +24,11 @@ import android.widget.TextView;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.sil.bloom.reader.models.BookOrShelf;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,11 +37,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.sil.bloom.reader.models.BookOrShelf;
 
 
 public class ReaderActivity extends BaseActivity {
@@ -429,6 +429,9 @@ public class ReaderActivity extends BaseActivity {
                         mTimeLastPageSwitch = System.currentTimeMillis();
 
                         stopAndStartVideos(oldView, mCurrentView);
+
+                        if (oldView != null)
+                            oldView.clearCache(false); // Fix for BL-5555
 
                         if (mIsMultiMediaBook) {
                             mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();

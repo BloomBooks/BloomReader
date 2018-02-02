@@ -391,8 +391,13 @@ public class ReaderActivity extends BaseActivity {
                     public void onPageSelected(int position) {
                         super.onPageSelected(position);
                         clearNextPageTimer(); // in case user manually moved to a new page while waiting
+                        WebView oldView = mCurrentView;
                         mCurrentView = mAdapter.getActiveView(position);
                         mTimeLastPageSwitch = System.currentTimeMillis();
+
+                        if (oldView != null)
+                            oldView.clearCache(false); // Fix for BL-5555
+
                         if (mIsMultiMediaBook) {
                             mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
                             WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page

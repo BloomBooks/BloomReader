@@ -24,6 +24,11 @@ import android.widget.TextView;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.sil.bloom.reader.models.BookOrShelf;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,11 +37,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.sil.bloom.reader.models.BookOrShelf;
 
 
 public class ReaderActivity extends BaseActivity {
@@ -493,8 +493,10 @@ public class ReaderActivity extends BaseActivity {
         // Selects the first (and presumably only) video on the page if any exists
         String videoSelector = "document.getElementsByTagName('video')[0]";
 
-        if(oldView != null)
+        if(oldView != null) {
             oldView.evaluateJavascript(videoSelector + ".pause();", null);
+            oldView.clearCache(false);  // Fix for BL-5555
+        }
         if(currentView != null)
             currentView.evaluateJavascript(videoSelector + ".play();", null);
     }

@@ -430,6 +430,9 @@ public class ReaderActivity extends BaseActivity {
 
                         stopAndStartVideos(oldView, mCurrentView);
 
+                        if (oldView != null)
+                            oldView.clearCache(false); // Fix for BL-5555
+
                         if (mIsMultiMediaBook) {
                             mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
                             WebAppInterface.stopNarration(); // don't want to hear rest of anything on another page
@@ -493,10 +496,8 @@ public class ReaderActivity extends BaseActivity {
         // Selects the first (and presumably only) video on the page if any exists
         String videoSelector = "document.getElementsByTagName('video')[0]";
 
-        if(oldView != null) {
+        if(oldView != null)
             oldView.evaluateJavascript(videoSelector + ".pause();", null);
-            oldView.clearCache(false);  // Fix for BL-5555
-        }
         if(currentView != null)
             currentView.evaluateJavascript(videoSelector + ".play();", null);
     }

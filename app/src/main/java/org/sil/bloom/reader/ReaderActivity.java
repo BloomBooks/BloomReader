@@ -24,6 +24,11 @@ import android.widget.TextView;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.sil.bloom.reader.models.BookOrShelf;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,11 +37,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.sil.bloom.reader.models.BookOrShelf;
 
 
 public class ReaderActivity extends BaseActivity {
@@ -121,6 +121,17 @@ public class ReaderActivity extends BaseActivity {
         }
         super.onPause();
         WebAppInterface.stopAllAudio();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(mCurrentView != null) {
+            // BL-5555
+            mCurrentView.clearCache(false); // Clear images from memory when the backbutton is pressed
+            // After clearing the cache bloomPlayer.js is missing and so loading the next book does not play the initial audio. Reloading the WebView fixes that issue.
+            mCurrentView.reload();
+        }
+        super.onBackPressed();
     }
 
     private void ReportPagesRead()

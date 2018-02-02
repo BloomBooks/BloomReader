@@ -3,7 +3,6 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
@@ -80,7 +79,7 @@ public class ReaderActivity extends BaseActivity {
     private int mLastNumberedPageIndex = -1;
     private int mNumberedPageCount = 0;
     private boolean mLastNumberedPageRead = false;
-    private int mOrientation = -1;
+    private int mOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
     private String mContentLang1 = "unknown";
     int mFirstQuestionPage;
     int mCountQuestionPages;
@@ -534,7 +533,7 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private int getPageOrientationAndRotateScreen(String page){
-        if(mOrientation == -1) {
+        if(mOrientation == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
             mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
             Matcher matcher = sClassAttrPattern.matcher(page);
             if (matcher.find()) {

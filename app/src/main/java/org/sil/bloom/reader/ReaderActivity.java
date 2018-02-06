@@ -20,6 +20,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
@@ -30,6 +31,7 @@ import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -142,7 +144,9 @@ public class ReaderActivity extends BaseActivity {
             Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Pages Read", p);
         } catch (Exception e) {
             Log.e(TAG, "Pages Read", e);
-            BloomReaderApplication.VerboseToast("Error reporting Pages Read");
+            // I doubt this message will help the user, and will probably just be confusing when it
+            // comes up because a book failed to open in the first place.
+            // BloomReaderApplication.VerboseToast("Error reporting Pages Read");
         }
     }
 
@@ -349,26 +353,30 @@ public class ReaderActivity extends BaseActivity {
 
             boolean hasEnterpriseBranding = mBrandingProjectName != null && !mBrandingProjectName.toLowerCase().equals("default");
             ArrayList<JSONObject> questions = new ArrayList<JSONObject>();
-            if (hasEnterpriseBranding) {
-                String primaryLanguage = getPrimaryLanguage(html);
-                String questionSource = mFileReader.getFileContent("questions.json");
-                if (questionSource != null) {
-                    JSONArray groups = new JSONArray(questionSource);
-                    for(int i = 0; i < groups.length(); i++) {
-                        JSONObject group = groups.getJSONObject(i);
-                        if (!group.getString("lang").equals(primaryLanguage))
-                            continue;
-                        JSONArray groupQuestions = group.getJSONArray("questions");
-                        for (int j = 0; j < groupQuestions.length(); j++) {
-                            questions.add(groupQuestions.getJSONObject(j));
+            try {
+                if (hasEnterpriseBranding) {
+                    String primaryLanguage = getPrimaryLanguage(html);
+                    String questionSource = mFileReader.getFileContent("questions.json");
+                    if (questionSource != null) {
+                        JSONArray groups = new JSONArray(questionSource);
+                        for (int i = 0; i < groups.length(); i++) {
+                            JSONObject group = groups.getJSONObject(i);
+                            if (!group.getString("lang").equals(primaryLanguage))
+                                continue;
+                            JSONArray groupQuestions = group.getJSONArray("questions");
+                            for (int j = 0; j < groupQuestions.length(); j++) {
+                                questions.add(groupQuestions.getJSONObject(j));
+                            }
                         }
                     }
+                    mCountQuestionPages = questions.size();
+                    for (int i = 0; i < mCountQuestionPages; i++) {
+                        // insert all these pages just before the final 'end' page.
+                        pages.add(mFirstQuestionPage, "Q");
+                    }
                 }
-                mCountQuestionPages = questions.size();
-                for (int i = 0; i < mCountQuestionPages; i++) {
-                    // insert all these pages just before the final 'end' page.
-                    pages.add(mFirstQuestionPage, "Q");
-                }
+            } catch(JSONException ex){
+                Log.e("Reader", "Error parsing questions.json for " + path + "  " + ex);
             }
             mBackgroundAudioFiles = new String[pages.size()];
             mBackgroundAudioVolumes = new float[pages.size()];
@@ -406,8 +414,16 @@ public class ReaderActivity extends BaseActivity {
             mAdapter = new BookPagerAdapter(pages, questions, this, bookHtmlFile, startFrame, endFrame);
 
             reportLoadBook(path);
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             Log.e("Reader", "Error loading " + path + "  " + ex);
+            final String msg = (ex.getMessage().contains("ENOSPC")) ? getString(R.string.device_storage_is_full) : getString(R.string.failed_to_open_book);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(ReaderActivity.this, msg, Toast.LENGTH_LONG).show();
+                    finish();
+                }
+            });
             return;
         }
 

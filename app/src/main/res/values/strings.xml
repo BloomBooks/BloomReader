@@ -40,6 +40,8 @@
     <string name="recommend_app">Read Bloom books with the %1$s app:</string>
     <string name="failed_to_share_apk">Failed to share app file.</string>
     <string name="failed_to_share_books">Failed to share books</string>
+    <string name="failed_to_open_book">Unable to open book</string>
+    <string name="device_storage_is_full">Unable to open book. The device storage is full. Free up some space and try again.</string>
 
     <string name="share_app">Share <xliff:g id="do_not_translate">Bloom Reader</xliff:g> app</string>
     <string name="share_books">Share Books</string>

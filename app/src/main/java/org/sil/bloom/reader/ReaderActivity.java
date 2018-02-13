@@ -7,7 +7,6 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.ColorDrawable;
-import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -77,13 +76,13 @@ public class ReaderActivity extends BaseActivity {
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
     private String mBookName ="?";
+    private int mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
     private BloomFileReader mFileReader;
     private int mAudioPagesPlayed = 0;
     private int mNonAudioPagesShown = 0;
     private int mLastNumberedPageIndex = -1;
     private int mNumberedPageCount = 0;
     private boolean mLastNumberedPageRead = false;
-    private int mOrientation = -1;
     private String mContentLang1 = "unknown";
     int mFirstQuestionPage;
     int mCountQuestionPages;
@@ -400,12 +399,6 @@ public class ReaderActivity extends BaseActivity {
                         if (oldView != null)
                             oldView.clearCache(false); // Fix for BL-5555
 
-                        // Question page
-                        if(position >= mFirstQuestionPage && position < (mFirstQuestionPage + mCountQuestionPages))
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-                        else
-                            setRequestedOrientation(mOrientation);
-
                         if (mIsMultiMediaBook) {
                             mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
                             WebAppInterface.stopPlaying(); // don't want to hear rest of anything on another page
@@ -484,16 +477,14 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private int getPageOrientationAndRotateScreen(String page){
-        if(mOrientation == -1) {
-            mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
-            Matcher matcher = sClassAttrPattern.matcher(page);
-            if (matcher.find()) {
-                String classNames = matcher.group(2);
-                if (classNames.contains("Landscape"))
-                    mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
-            }
-            setRequestedOrientation(mOrientation);
+        mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+        Matcher matcher = sClassAttrPattern.matcher(page);
+        if (matcher.find()) {
+            String classNames = matcher.group(2);
+            if (classNames.contains("Landscape"))
+                mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
         }
+        setRequestedOrientation(mOrientation);
         return mOrientation;
     }
 
@@ -616,10 +607,14 @@ public class ReaderActivity extends BaseActivity {
             try {
                 questionView.setText(question.getString("question"));
                 JSONArray answers = question.getJSONArray("answers");
+                final LinearLayout answersLayout = (LinearLayout) questionPageView.findViewById(R.id.answers_layout);
+                int orientation = (mOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL;
+                answersLayout.setOrientation(orientation);
                 for (int i = 0; i < answers.length(); i++) {
                     // Passing the intended parent view allows the button's margins to work properly.
                     // There's an explanation at https://stackoverflow.com/questions/5315529/layout-problem-with-button-margin.
-                    final LinearLayout answerLayout = (LinearLayout) inflater.inflate(R.layout.question_answer_item, questionPageView, false);
+                    int layout = (mOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? R.layout.question_answer_item_vertical : R.layout.question_answer_item_horizontal;
+                    final LinearLayout answerLayout = (LinearLayout) inflater.inflate(layout, answersLayout, false);
                     JSONObject answerObj = answers.getJSONObject(i);
                     Button answer = (Button) answerLayout.findViewById(R.id.answerButton);
                     final ImageView imageView = (ImageView) answerLayout.findViewById(R.id.checkImage);
@@ -635,8 +630,8 @@ public class ReaderActivity extends BaseActivity {
 
                             if (correct) {
                                 // Clear any previous answers.
-                                for (int i = 0; i < questionPageView.getChildCount(); i++) {
-                                    View item = questionPageView.getChildAt(i);
+                                for (int i = 0; i < answersLayout.getChildCount(); i++) {
+                                    View item = answersLayout.getChildAt(i);
                                     ImageView imgItem = (ImageView) item.findViewById(R.id.checkImage);
                                     if (imgItem != null) { // will be for initial text views.
                                         imgItem.setImageResource(0);
@@ -695,7 +690,7 @@ public class ReaderActivity extends BaseActivity {
                             }
                         }
                     });
-                    questionPageView.addView(answerLayout);
+                    answersLayout.addView(answerLayout);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();

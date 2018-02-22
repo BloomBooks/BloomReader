@@ -72,6 +72,12 @@ public class WebAppInterface {
         mPosition = position;
     }
 
+    // Mainly this is to prevent the Paused state from persisting from one book to another
+    public static void resetAll(){
+        mPaused = false;
+        mp = new MediaPlayer();
+    }
+
     // This can be helpful in debugging. It's not currently used in production.
     @JavascriptInterface
     public void showToast(String toast) {

@@ -313,6 +313,7 @@ public class ReaderActivity extends BaseActivity {
             // audio-sentence; but I think it's a sufficiently unlikely string to find elsewhere
             // that this is good enough.
             mIsMultiMediaBook = html.indexOf("audio-sentence") >= 0;
+            WebAppInterface.resetAll();
             // Break the html into everything before the first page, a sequence of pages,
             // and the bit after the last. Note: assumes there is nothing but the </body> after
             // the last page, that is, that pages are the direct children of <body> and

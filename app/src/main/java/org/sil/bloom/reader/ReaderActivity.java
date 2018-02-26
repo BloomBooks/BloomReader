@@ -3,8 +3,11 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
+import android.support.constraint.ConstraintSet;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -16,7 +19,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
-import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -666,7 +669,9 @@ public class ReaderActivity extends BaseActivity {
             }
             // question page
             LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            final LinearLayout questionPageView = (LinearLayout) inflater.inflate(R.layout.question_page, null);
+            final ConstraintLayout questionPageView = (ConstraintLayout) inflater.inflate(R.layout.question_page, null);
+            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+                putQuestionTextBesideProgressText(questionPageView);
             final int questionIndex = position - mFirstQuestionPage;
             JSONObject question = mQuestions.get(questionIndex);
             final TextView questionView = (TextView)questionPageView.findViewById(R.id.question);
@@ -674,38 +679,29 @@ public class ReaderActivity extends BaseActivity {
                 questionView.setText(question.getString("question"));
                 JSONArray answers = question.getJSONArray("answers");
                 final LinearLayout answersLayout = (LinearLayout) questionPageView.findViewById(R.id.answers_layout);
-                int orientation = (mOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL;
-                answersLayout.setOrientation(orientation);
                 for (int i = 0; i < answers.length(); i++) {
                     // Passing the intended parent view allows the button's margins to work properly.
                     // There's an explanation at https://stackoverflow.com/questions/5315529/layout-problem-with-button-margin.
-                    int layout = (mOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? R.layout.question_answer_item_vertical : R.layout.question_answer_item_horizontal;
-                    final LinearLayout answerLayout = (LinearLayout) inflater.inflate(layout, answersLayout, false);
+                    final CheckBox answerCheck = (CheckBox) inflater.inflate(R.layout.question_answer_check, answersLayout, false);
                     JSONObject answerObj = answers.getJSONObject(i);
-                    Button answer = (Button) answerLayout.findViewById(R.id.answerButton);
-                    final ImageView imageView = (ImageView) answerLayout.findViewById(R.id.checkImage);
-                    if (answerObj.getBoolean("correct")) {
-                        answer.setTag("correct");
-                    }
+                    answerCheck.setText(answerObj.getString("text"));
+                    if (answerObj.getBoolean("correct"))
+                        answerCheck.setTag("correct");
 
-                    answer.setText(answerObj.getString("text"));
-                    answer.setOnClickListener(new View.OnClickListener() {
+                    answerCheck.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
                             boolean correct = view.getTag() == "correct";
 
                             if (correct) {
-                                // Clear any previous answers.
                                 for (int i = 0; i < answersLayout.getChildCount(); i++) {
-                                    View item = answersLayout.getChildAt(i);
-                                    ImageView imgItem = (ImageView) item.findViewById(R.id.checkImage);
-                                    if (imgItem != null) { // will be for initial text views.
-                                        imgItem.setImageResource(0);
-                                    }
+                                    CheckBox check = (CheckBox) answersLayout.getChildAt(i);
+                                    if (check != answerCheck)
+                                        check.setEnabled(false);
                                 }
-                                imageView.setImageResource(R.drawable.check_green);
                             } else {
-                                imageView.setImageResource(R.drawable.cancel); // A strong red x: android.R.drawable.ic_delete);
+                                answerCheck.setEnabled(false);
+                                answerCheck.setChecked(false);
                             }
 
                             pageAnswerState oldAnswerState = mAnswerStates[questionIndex];
@@ -756,7 +752,7 @@ public class ReaderActivity extends BaseActivity {
                             }
                         }
                     });
-                    answersLayout.addView(answerLayout);
+                    answersLayout.addView(answerCheck);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -765,6 +761,14 @@ public class ReaderActivity extends BaseActivity {
             progressView.setText(String.format(progressView.getText().toString(), questionIndex + 1, mCountQuestionPages));
             container.addView(questionPageView);
             return questionPageView;
+        }
+
+        private void putQuestionTextBesideProgressText(ConstraintLayout questionPageView) {
+            ConstraintSet questionConstraints = new ConstraintSet();
+            questionConstraints.clone(questionPageView);
+            questionConstraints.connect(R.id.question, ConstraintSet.RIGHT, R.id.question_progress, ConstraintSet.RIGHT);
+            questionConstraints.connect(R.id.question, ConstraintSet.TOP, R.id.question_header, ConstraintSet.BOTTOM);
+            questionConstraints.applyTo(questionPageView);
         }
 
         // position should in fact be the position of the pager.

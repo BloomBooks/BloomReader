@@ -1,4 +1,5 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Bloom Reader</string>
     <string name="delete">Delete</string>
     <string name="deleteConfirmation">Delete from device?</string>
     <string name="deleteExplanation">This book will disappear from your device.</string>
@@ -13,7 +14,7 @@
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="get_books_local_wifi">Receive books from <xliff:g id="do_not_translate">Bloom</xliff:g> on a computer, over Wifi</string>
+    <string name="get_books_local_wifi">Receive books from Bloom on a computer, over Wifi</string>
     <!-- %1$s is a book title -->
     <string name="already_have_version">Found \"%1$s\", already have this version.</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
@@ -30,28 +31,30 @@
     <string name="failed_book_import">Failed to import book.</string>
     <string name="external_storage_unavailable">Unable to access file storage. Is the SD card missing?</string>
 
-    <string name="share_app_link"><u>Share the link to get <xliff:g id="do_not_translate">Bloom Reader</xliff:g> on <xliff:g id="do_not_translate">Google Play</xliff:g></u></string>
-    <string name="share_app_with_friend">Share this <xliff:g id="do_not_translate">Bloom Reader</xliff:g> app with a friend!</string>
-    <string name="share_books_with_friend">Share all your books with a friend who already has <xliff:g id="do_not_translate">Bloom Reader</xliff:g> installed.</string>
+    <string name="share_app_link"><u>Share the link to get Bloom Reader on Google Play</u></string>
+    <string name="share_app_with_friend">Share this Bloom Reader app with a friend!</string>
+    <string name="share_books_with_friend">Share all your books with a friend who already has Bloom Reader installed.</string>
     <string name="share_app_via">Share App via</string>
     <string name="share_link_via">Share Link via</string>
     <string name="share_books_via">Share Books via</string>
-    <!-- %1$s is the app name (Bloom Reader) -->
+    <!-- %1$s is the app name (defined by app_name) -->
     <string name="recommend_app">Read Bloom books with the %1$s app:</string>
     <string name="failed_to_share_apk">Failed to share app file.</string>
     <string name="failed_to_share_books">Failed to share books</string>
     <string name="failed_to_open_book">Unable to open book</string>
     <string name="device_storage_is_full">Unable to open book. The device storage is full. Free up some space and try again.</string>
 
-    <string name="share_app">Share <xliff:g id="do_not_translate">Bloom Reader</xliff:g> app</string>
+    <string name="share_app">Share Bloom Reader app</string>
     <string name="share_books">Share Books</string>
     <string name="release_notes">Release Notes</string>
-    <string name="about_bloom_reader">About <xliff:g id="do_not_translate">Bloom Reader</xliff:g></string>
-    <string name="about_bloom">About <xliff:g id="do_not_translate">Bloom</xliff:g></string>
-    <string name="about_sil">About <xliff:g id="do_not_translate">SIL</xliff:g></string>
+    <string name="about_bloom_reader">About Bloom Reader</string>
+    <string name="about_bloom">About Bloom</string>
+    <string name="about_sil">About SIL</string>
     <string name="or">or</string>
     <string name="check_comprehension">Check Your Understanding</string>
     <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
     <string name="question_n_of_m">Question %1$d of %2$d</string>
     <string name="receive_books_over_wifi">Receive books from computer</string>
+
+    <string name="bloomReaderUrl" translatable="false"><u>bloomlibrary.org</u></string>
 </resources>

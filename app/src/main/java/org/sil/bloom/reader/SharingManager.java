@@ -13,6 +13,7 @@ import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by rick on 10/2/17.
@@ -83,7 +84,23 @@ public class SharingManager {
         }
     }
 
-    public void shareBooks() {
+    public void shareShelf(BookOrShelf shelf, List<BookOrShelf> booksAndShelves){
+        File[] files = new File[booksAndShelves.size()];
+        for (int i=0; i<booksAndShelves.size(); ++i)
+            files[i] = new File(booksAndShelves.get(i).path);
+        try {
+            String path = sharedBloomBundlePath(shelf.name);
+            IOUtilities.tar(files, path);
+            shareFile(Uri.fromFile(new File(path)), "application/zip", mContext.getString(R.string.share_books_via));
+        }
+        catch (IOException e){
+            Log.e("BlReader/SharingManager", e.toString());
+            Toast failToast = Toast.makeText(mContext, mContext.getString(R.string.failed_to_share_books), Toast.LENGTH_LONG);
+            failToast.show();
+        }
+    }
+
+    public void shareAllBooksAndShelves() {
         try {
             IOUtilities.makeBloomBundle(sharedBloomBundlePath());
             shareFile(Uri.fromFile(new File(sharedBloomBundlePath())), "application/zip", mContext.getString(R.string.share_books_via));
@@ -146,5 +163,9 @@ public class SharingManager {
         deviceName = (deviceName != null && !deviceName.isEmpty()) ? deviceName : "my";
 
         return sharedFilePath(deviceName + IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION);
+    }
+
+    private static String sharedBloomBundlePath(String shelfName) {
+        return sharedFilePath(shelfName + IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION);
     }
 }

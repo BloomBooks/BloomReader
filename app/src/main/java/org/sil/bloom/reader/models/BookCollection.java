@@ -129,6 +129,19 @@ public class BookCollection {
         return null;
     }
 
+    public List<BookOrShelf> getAllBooksWithinShelf(BookOrShelf targetShelf){
+        ArrayList<BookOrShelf> booksAndShelves = new ArrayList();
+        booksAndShelves.add(targetShelf);
+        for(BookOrShelf bookOrShelf : _booksAndShelves){
+            if (isBookInFilter(bookOrShelf, targetShelf.shelfId, mShelfIds)) {
+                booksAndShelves.add(bookOrShelf);
+                if (bookOrShelf.isShelf())
+                    booksAndShelves.addAll(getAllBooksWithinShelf(bookOrShelf));
+            }
+        }
+        return booksAndShelves;
+    }
+
     public void init(Context context) throws ExtStorageUnavailableException {
         mLocalBooksDirectory = getLocalBooksDirectory();
         SharedPreferences values = context.getSharedPreferences(BloomReaderApplication.SHARED_PREFERENCES_TAG, 0);

@@ -46,8 +46,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
-import static org.sil.bloom.reader.models.BookCollection.getLocalBooksDirectory;
-
 
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -299,9 +297,21 @@ public class MainActivity extends BaseActivity
         return _bookCollection.get(position);
     }
 
-    private void shareBook(){
-        BookOrShelf book = selectedBook();
+    private void shareBookOrShelf(){
+        BookOrShelf bookOrShelf = selectedBook();
+        if (bookOrShelf.isShelf())
+            shareShelf(bookOrShelf);
+        else
+            shareBook(bookOrShelf);
+    }
+
+    private void shareBook(BookOrShelf book){
         new SharingManager(this).shareBook(book);
+    }
+
+    private void shareShelf(BookOrShelf shelf){
+        List<BookOrShelf> booksAndShelves = _bookCollection.getAllBooksWithinShelf(shelf);
+        new SharingManager(this).shareShelf(shelf, booksAndShelves);
     }
 
     public void DeleteBook() {
@@ -400,7 +410,7 @@ public class MainActivity extends BaseActivity
                 public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
                     switch(item.getItemId()) {
                         case R.id.share:
-                            shareBook();
+                            shareBookOrShelf();
                             mode.finish();
                             return true;
                         case R.id.delete:

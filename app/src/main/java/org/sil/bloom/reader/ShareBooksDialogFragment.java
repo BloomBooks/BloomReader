@@ -25,7 +25,7 @@ public class ShareBooksDialogFragment extends DialogFragment {
         Button btnShareBooks = (Button) view.findViewById(R.id.btnShareBooks);
         btnShareBooks.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                new SharingManager(getActivity()).shareBooks();
+                new SharingManager(getActivity()).shareAllBooksAndShelves();
                 dismiss();
             }
         });

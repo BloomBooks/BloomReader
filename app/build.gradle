@@ -121,4 +121,5 @@ dependencies {
     compile 'org.apache.commons:commons-compress:1.14'
 
     testCompile 'junit:junit:4.12'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
 }

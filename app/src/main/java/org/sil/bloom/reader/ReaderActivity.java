@@ -126,6 +126,12 @@ public class ReaderActivity extends BaseActivity {
         WebAppInterface.stopAllAudio();
     }
 
+    @Override
+    protected void onResume(){
+        super.onResume();
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN + View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+    }
+
     private void ReportPagesRead()
     {
         try {

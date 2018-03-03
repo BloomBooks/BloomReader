@@ -773,7 +773,7 @@ public class ReaderActivity extends BaseActivity {
         private void putQuestionTextBesideProgressText(ConstraintLayout questionPageView) {
             ConstraintSet questionConstraints = new ConstraintSet();
             questionConstraints.clone(questionPageView);
-            questionConstraints.connect(R.id.question, ConstraintSet.RIGHT, R.id.question_progress, ConstraintSet.RIGHT);
+            questionConstraints.connect(R.id.question, ConstraintSet.END, R.id.question_progress, ConstraintSet.START);
             questionConstraints.connect(R.id.question, ConstraintSet.TOP, R.id.question_header, ConstraintSet.BOTTOM);
             questionConstraints.applyTo(questionPageView);
         }

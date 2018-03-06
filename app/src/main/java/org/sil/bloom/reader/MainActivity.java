@@ -314,26 +314,52 @@ public class MainActivity extends BaseActivity
         new SharingManager(this).shareShelf(shelf, booksAndShelves);
     }
 
-    public void DeleteBook() {
-        final BookOrShelf book = selectedBook();
+    private void deleteBookOrShelf(){
+        BookOrShelf bookOrShelf = selectedBook();
+        if (bookOrShelf.isShelf())
+            deleteShelf(bookOrShelf);
+        else
+            deleteBook(bookOrShelf);
+    }
 
-        AlertDialog x = new AlertDialog.Builder(this).setMessage(getString(R.string.deleteExplanation))
+    private void deleteShelf(final BookOrShelf shelf){
+        final List<BookOrShelf> booksAndShelves = _bookCollection.getAllBooksWithinShelf(shelf);
+        String message;
+        if (booksAndShelves.size() == 1)
+            message = getString(R.string.deleteExplanationEmptyShelf, shelf.name);
+        else
+            message = getString(R.string.deleteExplanationShelf, booksAndShelves.size(), shelf.name);
+        new AlertDialog.Builder(this).setMessage(message)
+                .setTitle(R.string.deleteConfirmation)
+                .setPositiveButton(R.string.deleteConfirmButton, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int i) {
+                        Log.i("BloomReader", "DeleteShelf " + shelf.toString());
+                        for(BookOrShelf b : booksAndShelves)
+                            _bookCollection.deleteFromDevice(b);
+                        mListAdapter.notifyDataSetChanged();
+                        closeContextualActionBar();
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .show();
+    }
+
+    private void deleteBook(final BookOrShelf book) {
+        new AlertDialog.Builder(this).setMessage(getString(R.string.deleteExplanationBook, book.name))
                 .setTitle(getString(R.string.deleteConfirmation))
                 .setPositiveButton(getString(R.string.deleteConfirmButton), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Log.i("BloomReader", "DeleteBook "+ book.toString());
                         _bookCollection.deleteFromDevice(book);
+                        mListAdapter.notifyDataSetChanged();
                         closeContextualActionBar();
                         dialog.dismiss();
                     }
                 })
-                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                })
+                .setNegativeButton(android.R.string.no, null)
                 .show();
     }
 
@@ -414,7 +440,7 @@ public class MainActivity extends BaseActivity
                             mode.finish();
                             return true;
                         case R.id.delete:
-                            DeleteBook();
+                            deleteBookOrShelf();
                             return true;
                         default:
                             return false;

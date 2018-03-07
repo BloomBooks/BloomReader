@@ -10,7 +10,7 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="org.sil.bloom.activities.MainActivity"
+    tools:context="org.sil.bloom.reader.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
     <FrameLayout
@@ -19,11 +19,11 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <ListView
+        <android.support.v7.widget.RecyclerView
             android:id="@+id/book_list2"
             android:layout_height="wrap_content"
             android:layout_width="match_parent">
-        </ListView>
+        </android.support.v7.widget.RecyclerView>
     </FrameLayout>
 
 </RelativeLayout>

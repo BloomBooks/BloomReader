@@ -5,7 +5,8 @@
     android:layout_height="wrap_content"
     android:background="?android:attr/activatedBackgroundIndicator"
     android:descendantFocusability="blocksDescendants"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:clickable="true">
 
 
     <!-- the 2dp is useful for bookshelves, to make the background color a big bigger than

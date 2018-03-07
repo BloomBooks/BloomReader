@@ -18,6 +18,7 @@ public class BookOrShelf {
 
     public final String path;
     public final String name;
+    public boolean highlighted = false;
     // currently only applies to bookshelf. But that could change.
     public String backgroundColor;
     public String shelfId;

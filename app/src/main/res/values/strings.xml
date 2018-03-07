@@ -2,8 +2,11 @@
     <string name="app_name">Bloom Reader</string>
     <string name="delete">Delete</string>
     <string name="deleteConfirmation">Delete from device?</string>
+    <!-- %1$s is a book title -->
     <string name="deleteExplanationBook">%1$s will disappear from your device.</string>
+    <!-- %1$s is the name of the shelf -->
     <string name="deleteExplanationEmptyShelf">The %1$s bookshelf will disappear from your device.</string>
+    <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
     <string name="deleteExplanationShelf">All %1$d books and shelves in the %2$s bookshelf will disappear from your device.</string>
     <string name="deleteConfirmButton">Delete now</string>
     <string name="share">Share</string>

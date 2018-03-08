@@ -113,6 +113,9 @@ public class MainActivity extends BaseActivity
         catch(ExtStorageUnavailableException e){
             externalStorageUnavailable(e);
         }
+
+        // Cleans up old-style thumbnails - could be removed someday after it's run on most devices with old-style thumbnails
+        BookCollection.cleanUpOldThumbs(this);
     }
 
     // This is a hook to allow ShelfActivity to disable the navigation drawer and replace it

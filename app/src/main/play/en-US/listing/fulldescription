@@ -1,8 +1,9 @@
 Bloom is used around the world to make libraries of books in local languages, quickly and easily. In addition to paper and epub, those books can be published to this app, the Bloom Reader.
 
-In this initial release, you can:
+In this version, you can:
 * Use WiFi or USB to publish a book from the Bloom program on a laptop to this app.
 * Share books with other devices.
 * Play audio books.
+* Play books with background music and with images which pan and zoom.
 
 Future releases will include the ability to get books from bloomlibrary.org.

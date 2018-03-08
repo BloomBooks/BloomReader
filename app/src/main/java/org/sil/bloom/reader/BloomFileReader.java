@@ -12,10 +12,6 @@ import org.sil.bloom.reader.models.BookOrShelf;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * Created by rick on 9/26/17.
- */
-
 public class BloomFileReader {
 
     private Context context;
@@ -26,7 +22,8 @@ public class BloomFileReader {
     private static final String CURRENT_BOOK_FOLDER = "currentbook";
     private static final String VALIDATE_BOOK_FILE_FOLDER = "validating";
     private static final String HTM_EXTENSION = ".htm";
-    private static final String THUMBNAIL_NAME = "thumbnail.png";
+    private static final String THUMBNAIL_NAME_1 = "thumbnail.png";
+    private static final String THUMBNAIL_NAME_2 = "thumbnail.jpg";
     private static final String META_JSON_FILE = "meta.json";
 
     public BloomFileReader(Context context, String bloomFilePath){
@@ -66,9 +63,11 @@ public class BloomFileReader {
         if(bookDirectory == null)
             openFile(CURRENT_BOOK_FOLDER);
         String bookName = (new File(bloomFilePath)).getName().replace(BookOrShelf.BOOK_FILE_EXTENSION, "");
-        File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME);
+        File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_1);
+        if (!thumb.exists())
+            thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_2);
         if(thumb.exists()){
-            String toPath = thumbsDirectory.getPath() + File.separator + bookName + BookCollection.PNG_EXTENSION;
+            String toPath = thumbsDirectory.getPath() + File.separator + bookName;
             if(IOUtilities.copyFile(thumb.getPath(), toPath));
                 thumbUri = Uri.fromFile(new File(toPath));
         }

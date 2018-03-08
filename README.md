@@ -9,10 +9,11 @@ people can use to read and share Bloom books.
 
 Bloom Reader is a native java app with a WebView for displaying Bloom books (which are HTML). We want to support the older Android versions and devices that are common in the developing world.
 
-# Status
-Bloom Reader is in active development with an official MVP release expected Fall 2017.
+# Distribution
+Bloom Reader is distributed through the Google Play Store.
+[Try it out](https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&amp;c=apps).
 
-Try the beta now on the [Play Store](https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&amp;c=apps).
+Soon we hope to distribute the apks through bloomlibrary.org as well.
 
 # Road map
 ## Prototype
@@ -32,7 +33,7 @@ At this point, literacy projects can seed books into the community and let the c
 
 ## Needed for SIL PNG literacy research project
 * [x] Plays talking books
-* [x] Book thumbnails (Version 1.1, alpha)
+* [x] Book thumbnails
 
 ## Tie into BloomLibrary.org
 * BloomLibrary.org publishes an [OPDS](http://opds-spec.org/specs/opds-catalog-1-1-20110627/) catalog of all its books.
@@ -46,8 +47,8 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
 ## Other things on the radar
 * [ ] Use [Crosswalk](https://crosswalk-project.org/) to get an up-to-date browser that can handle Bloom's Talking Books.
 * [ ] Use Graphite-enabled Crosswalk to support languages with the most complex scripts.
-* [x] Support Ken Burns animation as we do in [BloomPlayer.js](https://github.com/BloomBooks/BloomPlayer) (Version 1.1, alpha)
-* [x] Support background music that works across pages, as we do in BloomPlayer.js. (Version 1.1, alpha)
+* [x] Support Ken Burns animation as we do in [BloomPlayer.js](https://github.com/BloomBooks/BloomPlayer).
+* [x] Support background music that works across pages, as we do in BloomPlayer.js.
 * [x] In-app sharing/synchronization via bluetooth and wifi-direct.
 
 # Building
@@ -55,9 +56,9 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
     git clone https://github.com/BloomBooks/BloomReader
     cd BloomReader
     getDependencies.sh
-    gradlew (or, more likely open project in Android Studio)
-	
-To use the audio player (and eventually pan and zoom) features requires a JavaScript file,
+    gradlew (or, more likely, open the project in Android Studio)
+
+To use the audio player (and pan and zoom) features requires a JavaScript file,
 app\src\main\assets\book support files\bloomPagePlayer.js, which is one of the outputs of
 the BloomPlayer project. On TeamCity, this is configured as a dependency.
 
@@ -86,7 +87,7 @@ To sign a release build, you need the following file.
 
 	{UserHome}/keystore/keystore_bloom_reader.properties
 
-The contents of this file are: 
+The contents of this file are:
 
     storeFile=
     storePassword=
@@ -108,7 +109,7 @@ Gradle tasks which can be called with the plugin include:
 - publishListing{Alpha/Beta/Production}Release
 	- pushes only the listing metadata to the Play Store
 
-TeamCity builds are configured to publish the alpha, beta, and production flavors to three respective apps on the Play Store. 
+TeamCity builds are configured to publish the alpha, beta, and production flavors to three respective apps on the Play Store.
 
 - The alpha build is a continuous publish to the alpha track of the alpha app.
 - The beta build is a manual publish to the beta track of the beta app.
@@ -122,8 +123,8 @@ The `ba-win10-64-s1-601` (in the Keyman pool) is currently the only agent config
 
 To update the sample book, *The Moon and the Cap*:
 
-- Open an English collection in the latest version of Bloom. Vernacular and National language should be English. 
-- Set xMatter to Device. 
+- Open an English collection in the latest version of Bloom. Vernacular and National language should be English.
+- Set xMatter to Device.
 - Create a book using the sample shell.
 - Set the layout to Device16x9Portrait (this step is, theoretically, not necessary because Bloom Reader should display the correct layout, anyway, but it is probably a good idea).
 - Publish -> Android -> Save Bloom Reader File

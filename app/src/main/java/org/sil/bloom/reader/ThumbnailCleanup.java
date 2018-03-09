@@ -18,7 +18,7 @@ import java.io.File;
 
 public class ThumbnailCleanup extends AsyncTask<File, Void, Void> {
 
-    public static final String DID_THUMB_CLEANUP = "didThumbCleanup";
+    public static final String DID_THUMB_CLEANUP = "didThumbCleanupRight";
 
     private SharedPreferences values;
 
@@ -34,10 +34,10 @@ public class ThumbnailCleanup extends AsyncTask<File, Void, Void> {
             return null;
 
         File thumbsDirectory = files[0];
-        String[] paths = thumbsDirectory.list();
-        for(String path : paths){
-            if (path.endsWith(".png"))
-                new File(path).delete();
+        String[] filenames = thumbsDirectory.list();
+        for(String filename : filenames){
+            if (filename.endsWith(".png"))
+                new File(thumbsDirectory + File.separator + filename).delete();
         }
 
         SharedPreferences.Editor valuesEditor = values.edit();

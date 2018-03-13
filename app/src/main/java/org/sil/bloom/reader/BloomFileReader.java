@@ -18,6 +18,7 @@ public class BloomFileReader {
     private String bloomFilePath;
     private Uri bookUri;
     private File bookDirectory;
+    private JSONObject metaProperties;
 
     private static final String CURRENT_BOOK_FOLDER = "currentbook";
     private static final String VALIDATE_BOOK_FILE_FOLDER = "validating";
@@ -97,25 +98,33 @@ public class BloomFileReader {
     }
 
     public boolean getBooleanMetaProperty(String property, boolean defaultIfNotFound){
-        JSONObject properties = metaProperties();
+        JSONObject properties = getMetaProperties();
         if(properties == null)
             return defaultIfNotFound;
         return properties.optBoolean(property, defaultIfNotFound);
     }
 
-    private JSONObject metaProperties(){
-        try {
-            File metaFile = new File(bookDirectory + File.separator + META_JSON_FILE);
-            if (!metaFile.exists())
-                throw new IOException(META_JSON_FILE + " not found");
-            return new JSONObject(IOUtilities.FileToString(metaFile));
-        }
-        catch (JSONException | IOException e){
-            Log.e("BloomFileReader", "Error parsing meta.json: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
+    public String getStringMetaProperty(String property, String defaultIfNotFound){
+        JSONObject properties = getMetaProperties();
+        if(properties == null)
+            return defaultIfNotFound;
+        return properties.optString(property, defaultIfNotFound);
+    }
 
+    private JSONObject getMetaProperties(){
+        if(metaProperties == null) {
+            try {
+                File metaFile = new File(bookDirectory + File.separator + META_JSON_FILE);
+                if (!metaFile.exists())
+                    throw new IOException(META_JSON_FILE + " not found");
+                metaProperties = new JSONObject(IOUtilities.FileToString(metaFile));
+            } catch (JSONException | IOException e) {
+                Log.e("BloomFileReader", "Error parsing meta.json: " + e.getMessage());
+                e.printStackTrace();
+                return null;
+            }
+        }
+        return metaProperties;
     }
 
     private void openFile(String path) throws IOException{

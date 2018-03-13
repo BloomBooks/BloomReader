@@ -8,6 +8,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
+import android.support.annotation.Nullable;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -74,21 +75,25 @@ public class ReaderActivity extends BaseActivity {
     private static final Pattern sClassAttrPattern = Pattern.compile("class\\s*=\\s*(['\"])(.*?)\\1");
 
     private static final Pattern sContentLangDiv = Pattern.compile("<div [^>]*?data-book=\"contentLanguage1\"[^>]*?>\\s*(\\S+)");
+    private static final Pattern sBodyPattern = Pattern.compile("<body [^>]*?>");
 
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
     private String mBookName ="?";
-    private int mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
-    private BloomFileReader mFileReader;
     private int mAudioPagesPlayed = 0;
     private int mNonAudioPagesShown = 0;
     private int mLastNumberedPageIndex = -1;
     private int mNumberedPageCount = 0;
     private boolean mLastNumberedPageRead = false;
+    private boolean mAutoAdvance = false; // automatically advance to next page at end of narration
+    private boolean mPlayMusic = true; // play background music if present
+    private int mOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+    private boolean mPlayAnimation = true; // play animations (pan and zoom) if present.
     private String mContentLang1 = "unknown";
+    private String mBodyTag;
     int mFirstQuestionPage;
     int mCountQuestionPages;
-    WebView mCurrentView;
+    ScaledWebView mCurrentView;
     String[] mBackgroundAudioFiles;
     float[] mBackgroundAudioVolumes;
 
@@ -102,6 +107,7 @@ public class ReaderActivity extends BaseActivity {
     private boolean mIsMultiMediaBook;
     private boolean mRTLBook;
     private String mBrandingProjectName;
+    private String mFailedToLoadBookMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -160,14 +166,236 @@ public class ReaderActivity extends BaseActivity {
     }
 
     // class to run loadBook in the background (so the UI thread is available to animate the progress bar)
-    private class Loader extends AsyncTask<Void, Integer, Long> {
+    private class Loader extends AsyncTask<Void, Integer, String> {
 
         @Override
-        protected Long doInBackground(Void... v) {
-            loadBook();
-            return 0L;
+        protected String doInBackground(Void... v) {
+            final String path = getIntent().getData().getPath();
+            BloomFileReader fileReader = new BloomFileReader(getApplicationContext(), path);
+            String bookDirectory;
+            try {
+                final File bookHtmlFile = fileReader.getHtmlFile();
+                bookDirectory = bookHtmlFile.getParent();
+                String html = IOUtilities.FileToString(bookHtmlFile);
+                // Enhance: eventually also look for images with animation data.
+                // This is a fairly crude search, we really want the doc to have spans with class
+                // audio-sentence; but I think it's a sufficiently unlikely string to find elsewhere
+                // that this is good enough.
+                mIsMultiMediaBook = html.indexOf("audio-sentence") >= 0;
+                WebAppInterface.resetAll();
+                // Break the html into everything before the first page, a sequence of pages,
+                // and the bit after the last. Note: assumes there is nothing but the </body> after
+                // the last page, that is, that pages are the direct children of <body> and
+                // nothing follows the last page.
+                final Matcher matcher = sPagePattern.matcher(html);
+                String startFrame = "";
+                String endFrame = "";
+                ArrayList<String> pages = new ArrayList<String>();
+
+                // if we don't find even one start of page, we have no pages, and don't need startFrame, endFrame, etc.
+                if (matcher.find()) {
+                    int firstPageIndex = matcher.start();
+                    startFrame = html.substring(0, firstPageIndex);
+                    Matcher match = sContentLangDiv.matcher(startFrame);
+                    if (match.find()) {
+                        mContentLang1 = match.group(1);
+                    }
+                    startFrame = addAssetsStylesheetLink(startFrame);
+                    int startPage = firstPageIndex;
+                    while (matcher.find()) {
+                        final String pageContent = html.substring(startPage, matcher.start());
+                        AddPage(pages, pageContent);
+                        startPage = matcher.start();
+                    }
+                    mFirstQuestionPage = pages.size();
+                    for (; mFirstQuestionPage > 0; mFirstQuestionPage--) {
+                        String pageContent = pages.get(mFirstQuestionPage-1);
+                        if (!sBackPagePattern.matcher(pageContent).find()) {
+                            break;
+                        }
+                    }
+                    int endBody = html.indexOf("</body>", startPage);
+                    AddPage(pages, html.substring(startPage, endBody));
+                    // We can leave out the bloom player JS altogether if not needed.
+                    endFrame = (mIsMultiMediaBook ? sAssetsBloomPlayerScript : "")
+                            + html.substring(endBody, html.length());
+                }
+
+                boolean hasEnterpriseBranding = mBrandingProjectName != null && !mBrandingProjectName.toLowerCase().equals("default");
+                ArrayList<JSONObject> questions = new ArrayList<JSONObject>();
+                try {
+                    if (hasEnterpriseBranding) {
+                        String primaryLanguage = getPrimaryLanguage(html);
+                        String questionSource = fileReader.getFileContent("questions.json");
+                        if (questionSource != null) {
+                            JSONArray groups = new JSONArray(questionSource);
+                            for (int i = 0; i < groups.length(); i++) {
+                                JSONObject group = groups.getJSONObject(i);
+                                if (!group.getString("lang").equals(primaryLanguage))
+                                    continue;
+                                JSONArray groupQuestions = group.getJSONArray("questions");
+                                for (int j = 0; j < groupQuestions.length(); j++) {
+                                    questions.add(groupQuestions.getJSONObject(j));
+                                }
+                            }
+                        }
+                        mCountQuestionPages = questions.size();
+                        for (int i = 0; i < mCountQuestionPages; i++) {
+                            // insert all these pages just before the final 'end' page.
+                            pages.add(mFirstQuestionPage, "Q");
+                        }
+                    }
+                } catch(JSONException ex){
+                    Log.e("Reader", "Error parsing questions.json for " + path + "  " + ex);
+                }
+                mBackgroundAudioFiles = new String[pages.size()];
+                mBackgroundAudioVolumes = new float[pages.size()];
+                String currentBackgroundAudio = "";
+                float currentVolume = 1.0f;
+                for (int i = 0; i < pages.size(); i++) {
+                    if (pages.get(i) == "Q") {
+                        mBackgroundAudioFiles[i] = "";
+                        currentBackgroundAudio = "";
+                        continue;
+                    }
+                    Matcher bgMatcher =sBackgroundAudio.matcher(pages.get(i));
+                    if (bgMatcher.find()) {
+                        currentBackgroundAudio = bgMatcher.group(1);
+                        if (currentBackgroundAudio == null) // may never happen?
+                            currentBackgroundAudio = "";
+                        // Getting a new background file implies full volume unless specified.
+                        currentVolume = 1.0f;
+                    }
+                    Matcher bgvMatcher =sBackgroundVolume.matcher(pages.get(i));
+                    if (bgvMatcher.find()) {
+                        try {
+                            currentVolume = Float.parseFloat(bgvMatcher.group(1));
+                        }
+                        catch (NumberFormatException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    mBackgroundAudioFiles[i] = currentBackgroundAudio;
+                    mBackgroundAudioVolumes[i] = currentVolume;
+                }
+
+                mRTLBook = fileReader.getBooleanMetaProperty("isRtl", false);
+                // The body tag captured here is parsed in setFeatureEffects after we know our orientation.
+                Matcher bodyMatcher = sBodyPattern.matcher(startFrame);
+                if (bodyMatcher.find()){
+                    mBodyTag = bodyMatcher.group(0);
+                } else {
+                    mBodyTag = "<body>"; // a trivial default, saves messing with nulls.
+                }
+
+                mAdapter = new BookPagerAdapter(pages, questions, ReaderActivity.this, bookHtmlFile, startFrame, endFrame);
+
+                reportLoadBook(path);
+            } catch (IOException ex) {
+                Log.e("Reader", "Error loading " + path + "  " + ex);
+                mFailedToLoadBookMessage = (ex.getMessage().contains("ENOSPC")) ? getString(R.string.device_storage_is_full) : getString(R.string.failed_to_open_book);
+                return null;
+            }
+            return bookDirectory;
+        }
+
+        @Override
+        protected void onPostExecute(String bookDirectory){
+            if(bookDirectory == null){
+                if(mFailedToLoadBookMessage != null)
+                    Toast.makeText(ReaderActivity.this, mFailedToLoadBookMessage, Toast.LENGTH_LONG).show();
+                finish();
+                return;
+            }
+
+            final String audioDirectoryPath = bookDirectory + "/audio/";
+            mPager = (ViewPager) findViewById(R.id.book_pager);
+            if(mRTLBook)
+                mPager.setRotationY(180);
+            mPager.setAdapter(mAdapter);
+            final BloomPageChangeListener listener = new BloomPageChangeListener(audioDirectoryPath);
+            mPager.addOnPageChangeListener(listener);
+            // Now we're ready to display the book, so hide the 'progress bar' (spinning circle)
+            findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+
+            // A design flaw in the ViewPager is that its onPageSelected method does not
+            // get called for the page that is initially displayed. But we want to do all the
+            // same things to the first page as the others. So we will call it
+            // manually. Using post delays this until everything is initialized and the view
+            // starts to process events. I'm not entirely sure why this should be done;
+            // I copied this from something on StackOverflow. Probably it means that the
+            // first-page call happens in a more similar situation to the change-page calls.
+            // It might work to just call it immediately.
+            mPager.post(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    listener.onPageSelected(mPager.getCurrentItem());
+                }
+            });
         }
     }
+
+    private class BloomPageChangeListener extends ViewPager.SimpleOnPageChangeListener {
+        String audioDirectoryPath;
+
+        BloomPageChangeListener(String audioDirectoryPath){
+            this.audioDirectoryPath = audioDirectoryPath;
+        }
+
+        @Override
+        public void onPageSelected(int position) {
+            super.onPageSelected(position);
+            clearNextPageTimer(); // in case user manually moved to a new page while waiting
+            WebView oldView = mCurrentView;
+            mCurrentView = mAdapter.getActiveView(position);
+            mTimeLastPageSwitch = System.currentTimeMillis();
+
+            stopAndStartVideos(oldView, mCurrentView);
+
+            if (oldView != null)
+                oldView.clearCache(false); // Fix for BL-5555
+
+            if (mIsMultiMediaBook) {
+                mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
+                WebAppInterface.stopNarration(); // don't want to hear rest of anything on another page
+                String backgroundAudioPath = "";
+                if (mPlayMusic) {
+                    if (mBackgroundAudioFiles[position].length() > 0) {
+                        backgroundAudioPath = audioDirectoryPath + mBackgroundAudioFiles[position];
+                    }
+                    WebAppInterface.SetBackgroundAudio(backgroundAudioPath, mBackgroundAudioVolumes[position]);
+                }
+                // This new page may not be in the correct paused state.
+                // (a) maybe we paused this page, moved to another, started narration, moved
+                // back to this (adapter decided to reuse it), this one needs to not be paused.
+                // (b) maybe we moved to another page while not paused, paused there, moved
+                // back to this one (again, reused) and old animation is still running
+                if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
+                    WebAppInterface appInterface = mCurrentView.getWebAppInterface();
+                    appInterface.setPaused(WebAppInterface.isNarrationPaused());
+                    if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
+                        appInterface.enableAnimation(mPlayAnimation);
+                        // startNarration also starts the animation (both handled by the BloomPlayer
+                        // code) iff we passed true to enableAnimation().
+                        mAdapter.startNarrationForPage(position);
+                        // Note: this isn't super-reliable. We tried to narrate this page, but it may not
+                        // have any audio. All we know is that it's part of a book which has
+                        // audio (or animation) somewhere, and we tried to play any audio it has.
+                        mAudioPagesPlayed++;
+                    } else {
+                        mNonAudioPagesShown++;
+                    }
+                }
+            }
+            else {
+                mNonAudioPagesShown++;
+            }
+            if (position == mLastNumberedPageIndex)
+                mLastNumberedPageRead = true;
+        }
+    };
 
     // Minimum time a page must be visible before we automatically switch to the next
     // (if playing audio...usually this only affects pages with no audio)
@@ -181,9 +409,7 @@ public class ReaderActivity extends BaseActivity {
     // So we do complicated things with a timer to make sure we don't flip the page too soon...
     // the minimum delay is specified in MIN_PAGE_SWITCH_MILLIS.
     public void pageAudioCompleted() {
-
-        // For now, we have decided we want to force the user to initiate page turning always (BL-5067).
-        if (true)
+        if (!mAutoAdvance)
             return;
 
         clearNextPageTimer();
@@ -217,8 +443,6 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private void goToNextPageNow() {
-        if (!mIsMultiMediaBook)
-            return;
         clearNextPageTimer();
         runOnUiThread(new Runnable() {
               @Override
@@ -242,8 +466,6 @@ public class ReaderActivity extends BaseActivity {
     }
 
     public void narrationPausedChanged() {
-        if (!mIsMultiMediaBook)
-            return; // no media visual effects.
         final ImageView view = (ImageView)findViewById(R.id.playPause);
         if (WebAppInterface.isNarrationPaused()) {
             clearNextPageTimer(); // any pending automatic page flip should be prevented.
@@ -309,214 +531,36 @@ public class ReaderActivity extends BaseActivity {
         }
     }
 
-    private void loadBook() {
-        final String path = getIntent().getData().getPath();
-        mFileReader = new BloomFileReader(getApplicationContext(), path);
-        String bookDirectory;
-        try {
-            final File bookHtmlFile = mFileReader.getHtmlFile();
-            bookDirectory = bookHtmlFile.getParent();
-            String html = IOUtilities.FileToString(bookHtmlFile);
-            // Enhance: eventually also look for images with animation data.
-            // This is a fairly crude search, we really want the doc to have spans with class
-            // audio-sentence; but I think it's a sufficiently unlikely string to find elsewhere
-            // that this is good enough.
-            mIsMultiMediaBook = html.indexOf("audio-sentence") >= 0;
-            WebAppInterface.resetAll();
-            // Break the html into everything before the first page, a sequence of pages,
-            // and the bit after the last. Note: assumes there is nothing but the </body> after
-            // the last page, that is, that pages are the direct children of <body> and
-            // nothing follows the last page.
-            final Matcher matcher = sPagePattern.matcher(html);
-            String startFrame = "";
-            String endFrame = "";
-            ArrayList<String> pages = new ArrayList<String>();
-
-            // if we don't find even one start of page, we have no pages, and don't need startFrame, endFrame, etc.
-            if (matcher.find()) {
-                int firstPageIndex = matcher.start();
-                startFrame = html.substring(0, firstPageIndex);
-                Matcher match = sContentLangDiv.matcher(startFrame);
-                if (match.find()) {
-                    mContentLang1 = match.group(1);
-                }
-                startFrame = addAssetsStylesheetLink(startFrame);
-                int startPage = firstPageIndex;
-                while (matcher.find()) {
-                    final String pageContent = html.substring(startPage, matcher.start());
-                    AddPage(pages, pageContent);
-                    startPage = matcher.start();
-                }
-                mFirstQuestionPage = pages.size();
-                for (; mFirstQuestionPage > 0; mFirstQuestionPage--) {
-                    String pageContent = pages.get(mFirstQuestionPage-1);
-                    if (!sBackPagePattern.matcher(pageContent).find()) {
-                        break;
-                    }
-                }
-                int endBody = html.indexOf("</body>", startPage);
-                AddPage(pages, html.substring(startPage, endBody));
-                // We can leave out the bloom player JS altogether if not needed.
-                endFrame = (mIsMultiMediaBook ? sAssetsBloomPlayerScript : "")
-                        + html.substring(endBody, html.length());
-            }
-
-            boolean hasEnterpriseBranding = mBrandingProjectName != null && !mBrandingProjectName.toLowerCase().equals("default");
-            ArrayList<JSONObject> questions = new ArrayList<JSONObject>();
-            try {
-                if (hasEnterpriseBranding) {
-                    String primaryLanguage = getPrimaryLanguage(html);
-                    String questionSource = mFileReader.getFileContent("questions.json");
-                    if (questionSource != null) {
-                        JSONArray groups = new JSONArray(questionSource);
-                        for (int i = 0; i < groups.length(); i++) {
-                            JSONObject group = groups.getJSONObject(i);
-                            if (!group.getString("lang").equals(primaryLanguage))
-                                continue;
-                            JSONArray groupQuestions = group.getJSONArray("questions");
-                            for (int j = 0; j < groupQuestions.length(); j++) {
-                                questions.add(groupQuestions.getJSONObject(j));
-                            }
-                        }
-                    }
-                    mCountQuestionPages = questions.size();
-                    for (int i = 0; i < mCountQuestionPages; i++) {
-                        // insert all these pages just before the final 'end' page.
-                        pages.add(mFirstQuestionPage, "Q");
-                    }
-                }
-            } catch(JSONException ex){
-                Log.e("Reader", "Error parsing questions.json for " + path + "  " + ex);
-            }
-            mBackgroundAudioFiles = new String[pages.size()];
-            mBackgroundAudioVolumes = new float[pages.size()];
-            String currentBackgroundAudio = "";
-            float currentVolume = 1.0f;
-            for (int i = 0; i < pages.size(); i++) {
-                if (pages.get(i) == "Q") {
-                    mBackgroundAudioFiles[i] = "";
-                    currentBackgroundAudio = "";
-                    continue;
-                }
-                Matcher bgMatcher =sBackgroundAudio.matcher(pages.get(i));
-                if (bgMatcher.find()) {
-                    currentBackgroundAudio = bgMatcher.group(1);
-                    if (currentBackgroundAudio == null) // may never happen?
-                        currentBackgroundAudio = "";
-                    // Getting a new background file implies full volume unless specified.
-                    currentVolume = 1.0f;
-                }
-                Matcher bgvMatcher =sBackgroundVolume.matcher(pages.get(i));
-                if (bgvMatcher.find()) {
-                    try {
-                        currentVolume = Float.parseFloat(bgvMatcher.group(1));
-                    }
-                    catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
-                }
-                mBackgroundAudioFiles[i] = currentBackgroundAudio;
-                mBackgroundAudioVolumes[i] = currentVolume;
-            }
-
-            mRTLBook = mFileReader.getBooleanMetaProperty("isRtl", false);
-
-            mAdapter = new BookPagerAdapter(pages, questions, this, bookHtmlFile, startFrame, endFrame);
-
-            reportLoadBook(path);
-        } catch (IOException ex) {
-            Log.e("Reader", "Error loading " + path + "  " + ex);
-            final String msg = (ex.getMessage().contains("ENOSPC")) ? getString(R.string.device_storage_is_full) : getString(R.string.failed_to_open_book);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(ReaderActivity.this, msg, Toast.LENGTH_LONG).show();
-                    finish();
-                }
-            });
-            return;
+    // Given something like <body data-bfplaymusic="landscape;bloomReader"> for bodyTag
+    // and a request to find the playmusic feature, returns landscape.
+    // defValue is returned if
+    // - the relevant attribute is not found
+    // - bloomReader does not occur in the value (after the semi-colon)
+    private String getFeatureValue(String featureName, String defValue) {
+        final Pattern featurePattern = Pattern.compile("data-bf" + featureName + "\\s*=\\s*['\"]([^'\"]*?);([^'\"]*?)bloomReader");
+        Matcher matcher = featurePattern.matcher(mBodyTag);
+        if (!matcher.find()) {
+            return defValue;
         }
+        return matcher.group(1);
+    }
 
-        final String audioDirectoryPath = bookDirectory + "/audio/";
+    private boolean getBooleanFeature(String featureName, boolean defValue, boolean inLandscape) {
+        String rawValue = getFeatureValue(featureName, defValue ? "allOrientations" : "never");
+        if (rawValue.equals("allOrientations"))
+            return true;
+        if (inLandscape && rawValue.equals("landscape"))
+            return true;
+        if (!inLandscape && rawValue.equals("portrait"))
+            return true;
+        return false;
+    }
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mPager = (ViewPager) findViewById(R.id.book_pager);
-                if(mRTLBook)
-                    mPager.setRotationY(180);
-                mPager.setAdapter(mAdapter);
-                final ViewPager.SimpleOnPageChangeListener listener = new ViewPager.SimpleOnPageChangeListener() {
-                    @Override
-                    public void onPageSelected(int position) {
-                        super.onPageSelected(position);
-                        clearNextPageTimer(); // in case user manually moved to a new page while waiting
-                        WebView oldView = mCurrentView;
-                        mCurrentView = mAdapter.getActiveView(position);
-                        mTimeLastPageSwitch = System.currentTimeMillis();
-
-                        stopAndStartVideos(oldView, mCurrentView);
-
-                        if (oldView != null)
-                            oldView.clearCache(false); // Fix for BL-5555
-
-                        if (mIsMultiMediaBook) {
-                            mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
-                            WebAppInterface.stopNarration(); // don't want to hear rest of anything on another page
-                            String backgroundAudioPath = "";
-                            if (mBackgroundAudioFiles[position].length() > 0) {
-                                backgroundAudioPath = audioDirectoryPath + mBackgroundAudioFiles[position];
-                            }
-                            WebAppInterface.SetBackgroundAudio(backgroundAudioPath, mBackgroundAudioVolumes[position]);
-                            // This new page may not be in the correct paused state.
-                            // (a) maybe we paused this page, moved to another, started narration, moved
-                            // back to this (adapter decided to reuse it), this one needs to not be paused.
-                            // (b) maybe we moved to another page while not paused, paused there, moved
-                            // back to this one (again, reused) and old animation is still running
-                            if (mCurrentView != null && mCurrentView.getTag() instanceof WebAppInterface) {
-                                WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
-                                appInterface.setPaused(WebAppInterface.isNarrationPaused());
-                                if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
-                                    mAdapter.startNarrationForPage(position);
-                                    // Note: this isn't super-reliable. We tried to narrate this page, but it may not
-                                    // have any audio. All we know is that it's part of a book which has
-                                    // audio (or animation) somewhere, and we tried to play any audio it has.
-                                    mAudioPagesPlayed++;
-                                } else {
-                                    mNonAudioPagesShown++;
-                                }
-                            }
-                        }
-                        else {
-                            mNonAudioPagesShown++;
-                        }
-                        if (position == mLastNumberedPageIndex)
-                            mLastNumberedPageRead = true;
-                    }
-                };
-                mPager.addOnPageChangeListener(listener);
-                // Now we're ready to display the book, so hide the 'progress bar' (spinning circle)
-                findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-
-                // A design flaw in the ViewPager is that its onPageSelected method does not
-                // get called for the page that is initially displayed. But we want to do all the
-                // same things to the first page as the others. So we will call it
-                // manually. Using post delays this until everything is initialized and the view
-                // starts to process events. I'm not entirely sure why this should be done;
-                // I copied this from something on StackOverflow. Probably it means that the
-                // first-page call happens in a more similar situation to the change-page calls.
-                // It might work to just call it immediately.
-                mPager.post(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        listener.onPageSelected(mPager.getCurrentItem());
-                    }
-                });
-            }
-        });
-
+    private void setFeatureEffects() {
+        boolean inLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        mAutoAdvance = getBooleanFeature("autoadvance", false, inLandscape);
+        mPlayMusic = getBooleanFeature("playmusic", true, inLandscape);
+        mPlayAnimation = getBooleanFeature("playanimations", true, inLandscape);
     }
 
     private void stopAndStartVideos(WebView oldView, WebView currentView){
@@ -524,9 +568,9 @@ public class ReaderActivity extends BaseActivity {
         String videoSelector = "document.getElementsByTagName('video')[0]";
 
         if(oldView != null)
-            oldView.evaluateJavascript(videoSelector + ".pause();", null);
+            oldView.evaluateJavascript("if(" + videoSelector + ") {" + videoSelector + ".pause();}", null);
         if(currentView != null)
-            currentView.evaluateJavascript(videoSelector + ".play();", null);
+            currentView.evaluateJavascript("if(" + videoSelector + ") {" + videoSelector + ".play();}", null);
     }
 
     private void AddPage(ArrayList<String> pages, String pageContent) {
@@ -553,13 +597,17 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private int getPageOrientationAndRotateScreen(String page){
+        // default: fixed in portrait mode
         mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
         Matcher matcher = sClassAttrPattern.matcher(page);
         if (matcher.find()) {
             String classNames = matcher.group(2);
             if (classNames.contains("Landscape"))
-                mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+                mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE; // fixed landscape
         }
+        if (getFeatureValue("canrotate", "never").equals("allOrientations"))
+            mOrientation = ActivityInfo.SCREEN_ORIENTATION_USER; // change as rotated
+
         setRequestedOrientation(mOrientation);
         return mOrientation;
     }
@@ -573,20 +621,21 @@ public class ReaderActivity extends BaseActivity {
         int start = matcher.start(2);
         int end = matcher.end(2);
         String classNames = matcher.group(2);
-        String newClassNames = sLayoutPattern.matcher(classNames).replaceFirst("Device16x9$1");
+        String replacementClass = "Device16x9$1";
+        String newClassNames = sLayoutPattern.matcher(classNames).replaceFirst(replacementClass);
         return page.substring(0,start) // everything up to the opening quote in class="
                 + newClassNames
                 + page.substring(end, page.length()); // because this includes the original closing quote from class attr
     }
 
-    private int getPageScale(int viewWidth, int viewHeight, int bookOrientation){
+    private int getPageScale(int viewWidth, int viewHeight){
         // 378 x 674 are the dimensions of the Device16x9 layouts in pixels
-        int bookPageWidth = (bookOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? 378 : 674;
-        int bookPageHeight = (bookOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) ? 674 : 378;
 
-        Double widthScale = new Double(viewWidth)/new Double(bookPageWidth);
-        Double heightScale = new Double(viewHeight)/new Double(bookPageHeight);
-        Double scale = Math.min(widthScale, heightScale);
+        int longSide = (viewWidth > viewHeight) ? viewWidth : viewHeight;
+        int shortSide = (viewWidth > viewHeight) ? viewHeight : viewWidth;
+        Double longScale = new Double(longSide / new Double(674));
+        Double shortScale = new Double(shortSide / new Double(378));
+        Double scale = Math.min(longScale, shortScale);
         scale = scale * 100d;
         return scale.intValue();
     }
@@ -783,49 +832,47 @@ public class ReaderActivity extends BaseActivity {
             return mActiveViews.get(position);
         }
 
+
         public void prepareForAnimation(int position) {
-            final WebView pageView = mActiveViews.get(position);
+            final ScaledWebView pageView = mActiveViews.get(position);
             if (pageView == null) {
                 Log.d("prepareForAnimation", "can't find page for " + position);
                 return;
             }
 
-            if (pageView.getTag() instanceof WebAppInterface) {
-                WebAppInterface appInterface = (WebAppInterface) pageView.getTag();
-                appInterface.prepareDocumentWhenDocLoaded();
-            }
+            if (pageView.getWebAppInterface() != null)
+                pageView.getWebAppInterface().prepareDocumentWhenDocLoaded();
         }
 
         public void startNarrationForPage(int position) {
-            WebView pageView = mActiveViews.get(position);
+            ScaledWebView pageView = mActiveViews.get(position);
             if (pageView == null) {
                 Log.d("startNarration", "can't find page for " + position);
                 return;
             }
-            if (pageView.getTag() instanceof WebAppInterface) {
-                WebAppInterface appInterface = (WebAppInterface) pageView.getTag();
-                appInterface.startNarrationWhenDocLoaded();
-            }
+            if (pageView.getWebAppInterface() != null)
+                pageView.getWebAppInterface().startNarrationWhenDocLoaded();
         }
 
         private WebView MakeBrowserForPage(int position) {
             ScaledWebView browser = null;
             try {
                 String page = mHtmlPageDivs.get(position);
-                browser = new ScaledWebView(mParent, getPageOrientationAndRotateScreen(page));
+                if(position == 0) {
+                    getPageOrientationAndRotateScreen(page);
+                    setFeatureEffects(); // depends on what orientation we're actually in, so can't do sooner.
+                }
+                browser = new ScaledWebView(mParent, position);
                 mActiveViews.put(position, browser);
                 if (mIsMultiMediaBook) {
                     WebAppInterface appInterface = new WebAppInterface(this.mParent, mBookHtmlPath.getParent(), browser, position);
-                    browser.addJavascriptInterface(appInterface, "Android");
-                    // Save the WebAppInterface in the browser's tag because there's no simple
-                    // way to get from the browser to the object we set as the JS interface.
-                    browser.setTag(appInterface);
+                    browser.setWebAppInterface(appInterface);
                 }
                 // Styles to force 0 border and to vertically center books
                 String moreStyles = "<style>html{ height: 100%; }  body{ min-height:100%; display:flex; align-items:center; } div.bloom-page { border:0 !important; }</style>\n";
                 String doc = mHtmlBeforeFirstPageDiv + moreStyles + pageUsingDeviceLayout(page) + mHtmlAfterLastPageDiv;
 
-                browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc, "text/html", "utf-8", null);
+                browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc);
                 prepareForAnimation(position);
             }catch (Exception ex) {
                 Log.e("Reader", "Error loading " + mBookHtmlPath.getAbsolutePath() + "  " + ex);
@@ -841,25 +888,82 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private class ScaledWebView extends WebView {
-        private int bookOrientation;
+        private String data;
+        private String baseUrl;
+        private int page;
 
-        public ScaledWebView(Context context, int bookOrientation) {
+        public ScaledWebView(Context context, int page) {
             super(context);
-            this.bookOrientation = bookOrientation;
+            this.page = page;
             if(mRTLBook)
                 setRotationY(180);
             getSettings().setJavaScriptEnabled(true);
             getSettings().setMediaPlaybackRequiresUserGesture(false);
         }
 
-        @Override
-        protected void onSizeChanged(int w, int h, int ow, int oh) {
+        public void loadDataWithBaseURL(String baseUrl, String data){
+            this.baseUrl = baseUrl;
+            boolean inLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+            if (inLandscape)
+                data = data.replace("Device16x9Portrait", "Device16x9Landscape");
+            else
+                data = data.replace("Device16x9Landscape", "Device16x9Portrait");
+            this.data = data;
+            loadDataWithBaseURL(baseUrl, data, "text/html", "utf-8", null);
+        }
 
-            // if width is zero, this method will be called again
-            if (w != 0) {
-                setInitialScale(getPageScale(w, h, bookOrientation));
+        public void setWebAppInterface(WebAppInterface appInterface){
+            addJavascriptInterface(appInterface, "Android");
+            // Save the WebAppInterface in the browser's tag because there's no simple
+            // way to get from the browser to the object we set as the JS interface.
+            setTag(appInterface);
+        }
+
+        @Nullable
+        public WebAppInterface getWebAppInterface(){
+            if(getTag() instanceof WebAppInterface)
+                return (WebAppInterface) getTag();
+            return null;
+        }
+
+        // This method will be called on all Webviews in memory when orientation changes
+        public void reload(){
+            setFeatureEffects();
+            loadDataWithBaseURL(baseUrl, data);
+            resetMultiMedia();
+        }
+
+        // This method will be called on all Webviews in memory when orientation changes
+        // Actions that should only run once are in the if block that checks the current page
+        private void resetMultiMedia(){
+            WebAppInterface appInterface = getWebAppInterface();
+            if (appInterface != null) {
+                appInterface.reset();
+                appInterface.prepareDocumentWhenDocLoaded();
             }
 
+            if(page == mPager.getCurrentItem()){
+                mTimeLastPageSwitch = System.currentTimeMillis();
+                clearNextPageTimer();
+                WebAppInterface.stopAllAudio();
+                if (appInterface != null)
+                    appInterface.startNarrationWhenDocLoaded();
+            }
+        }
+
+        @Override
+        protected void onSizeChanged(int w, int h, int ow, int oh){
+            // if width is zero, this method will be called again
+            if (w != 0) {
+                boolean inLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+                if (inLandscape && data.contains("Device16x9Landscape") || (!inLandscape && data.contains("Device16x9Portrait"))) {
+                    // device orientation matches data class
+                    setInitialScale(getPageScale(w, h));
+                } else{
+                    // They don't match, presumably we've been rotated.
+                    reload();
+                }
+            }
             super.onSizeChanged(w, h, ow, oh);
         }
 
@@ -887,12 +991,11 @@ public class ReaderActivity extends BaseActivity {
                     // vertical distance than horizontal and cause a play/pause event.
                     // See https://issues.bloomlibrary.org/youtrack/issue/BL-5068.
                 } else if (event.getEventTime() - event.getDownTime() < viewConfiguration.getJumpTapTimeout()) {
-                    if (mCurrentView != null && mCurrentView.getTag() instanceof WebAppInterface) {
-                        WebAppInterface appInterface = (WebAppInterface) mCurrentView.getTag();
-                        if (appInterface != null) { // may be null if this can happen in non-multimedia book
-                            appInterface.setPaused(!WebAppInterface.isNarrationPaused());
-                            narrationPausedChanged();
-                        }
+                    if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
+                        WebAppInterface appInterface = mCurrentView.getWebAppInterface();
+                        appInterface.setPaused(!WebAppInterface.isNarrationPaused());
+                        narrationPausedChanged();
+
                     }
                 }
             }

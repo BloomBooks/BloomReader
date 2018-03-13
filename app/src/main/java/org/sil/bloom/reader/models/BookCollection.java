@@ -14,6 +14,7 @@ import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.BloomReaderApplication;
 import org.sil.bloom.reader.BuildConfig;
 import org.sil.bloom.reader.IOUtilities;
+import org.sil.bloom.reader.ThumbnailCleanup;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -297,7 +298,7 @@ public class BookCollection {
     public Uri getThumbnail(Context context, BookOrShelf book){
         try {
             File thumbsDirectory = getThumbsDirectory();
-            String thumbPath = thumbsDirectory.getPath() + File.separator + book.name + PNG_EXTENSION;
+            String thumbPath = thumbsDirectory.getPath() + File.separator + book.name;
             File thumb = new File(thumbPath);
             if (thumb.exists()) {
                 if (thumb.lastModified() < new File(book.path).lastModified()) {
@@ -325,7 +326,7 @@ public class BookCollection {
         }
     }
 
-    private File getThumbsDirectory() throws IOException {
+    private static File getThumbsDirectory() throws IOException {
         String bloomDirectoryPath = getLocalBooksDirectory().getPath();
         String thumbsDirectoryPath = bloomDirectoryPath + File.separator + THUMBS_DIR;
         File thumbsDirectory = new File(thumbsDirectoryPath);
@@ -337,5 +338,14 @@ public class BookCollection {
             noThumb.mkdir();
         }
         return thumbsDirectory;
+    }
+
+    public static void cleanUpOldThumbs(Context context){
+        try {
+            new ThumbnailCleanup(context).execute(getThumbsDirectory());
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
     }
 }

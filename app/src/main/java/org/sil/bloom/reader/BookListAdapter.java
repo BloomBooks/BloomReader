@@ -1,7 +1,6 @@
 package org.sil.bloom.reader;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
@@ -15,18 +14,22 @@ import android.widget.TextView;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.BookOrShelf;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BookAdapter extends RecyclerView.Adapter<BookAdapter.ViewHolder> implements View.OnClickListener, View.OnLongClickListener {
+/**
+ * Adapter for the RecyclerView used by MainActivity and ShelfActivity
+ *
+ */
+
+public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHolder> implements View.OnClickListener, View.OnLongClickListener {
 
     private BookCollection bookCollection;
     private BookClickListener bookClickListener;
     private BookOrShelf selectedItem;
     private boolean inHighlightedState = false;
 
-    public BookAdapter(BookCollection bookCollection, BookClickListener bookClickListener){
+    public BookListAdapter(BookCollection bookCollection, BookClickListener bookClickListener){
         this.bookCollection = bookCollection;
         this.bookClickListener = bookClickListener;
     }

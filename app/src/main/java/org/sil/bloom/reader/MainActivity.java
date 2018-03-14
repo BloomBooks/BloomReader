@@ -43,7 +43,7 @@ import java.util.List;
 
 
 public class MainActivity extends BaseActivity
-        implements NavigationView.OnNavigationItemSelectedListener, BookAdapter.BookClickListener{
+        implements NavigationView.OnNavigationItemSelectedListener, BookListAdapter.BookClickListener{
 
     public static final String NEW_BOOKS = "newBooks";
     protected BookCollection _bookCollection;
@@ -51,7 +51,7 @@ public class MainActivity extends BaseActivity
     private static boolean sSkipNextNewFileSound;
 
     private RecyclerView mBookRecyclerView;
-    private BookAdapter mBookAdapter;
+    private BookListAdapter mBookListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -258,14 +258,14 @@ public class MainActivity extends BaseActivity
         if (book == null)
             return;
 
-        int bookPosition = mBookAdapter.highlightItem(book);
+        int bookPosition = mBookListAdapter.highlightItem(book);
         smoothScrollToPosition(bookPosition);
     }
 
     private void highlightItems(List<String> paths) {
         if (paths == null)
             return;
-        int firstHighlightedIndex = mBookAdapter.highlightItems(paths);
+        int firstHighlightedIndex = mBookListAdapter.highlightItems(paths);
         if (firstHighlightedIndex > -1)
             smoothScrollToPosition(firstHighlightedIndex);
     }
@@ -293,7 +293,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void shareBookOrShelf(){
-        BookOrShelf bookOrShelf = mBookAdapter.getSelectedItem();
+        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItem();
         if (bookOrShelf.isShelf())
             shareShelf(bookOrShelf);
         else
@@ -310,7 +310,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void deleteBookOrShelf(){
-        BookOrShelf bookOrShelf = mBookAdapter.getSelectedItem();
+        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItem();
         if (bookOrShelf.isShelf())
             deleteShelf(bookOrShelf);
         else
@@ -332,7 +332,7 @@ public class MainActivity extends BaseActivity
                         Log.i("BloomReader", "DeleteShelf " + shelf.toString());
                         for(BookOrShelf b : booksAndShelves)
                             _bookCollection.deleteFromDevice(b);
-                        mBookAdapter.notifyDataSetChanged();
+                        mBookListAdapter.notifyDataSetChanged();
                         closeContextualActionBar();
                         dialog.dismiss();
                     }
@@ -349,7 +349,7 @@ public class MainActivity extends BaseActivity
                     public void onClick(DialogInterface dialog, int which) {
                         Log.i("BloomReader", "DeleteBook "+ book.toString());
                         _bookCollection.deleteFromDevice(book);
-                        mBookAdapter.notifyDataSetChanged();
+                        mBookListAdapter.notifyDataSetChanged();
                         closeContextualActionBar();
                         dialog.dismiss();
                     }
@@ -361,8 +361,8 @@ public class MainActivity extends BaseActivity
     private void SetupCollectionListView(final RecyclerView listView) {
         final AppCompatActivity activity = this;
         listView.setLayoutManager(new LinearLayoutManager(this));
-        mBookAdapter = new BookAdapter(_bookCollection, this);
-        listView.setAdapter(mBookAdapter);
+        mBookListAdapter = new BookListAdapter(_bookCollection, this);
+        listView.setAdapter(mBookListAdapter);
     }
 
     @Override
@@ -401,7 +401,7 @@ public class MainActivity extends BaseActivity
 
             @Override
             public void onDestroyActionMode(android.view.ActionMode mode) {
-                mBookAdapter.clearSelection();
+                mBookListAdapter.clearSelection();
                 contextualActionBarMode = null;
             }
         });
@@ -421,10 +421,7 @@ public class MainActivity extends BaseActivity
             // clean it up. (Since it already doesn't exist, deleteFromDevice just
             // removes it from the collection.)
             _bookCollection.deleteFromDevice(_bookCollection.getBookByPath(path));
-            // JT: without this an exception is thrown saying we should have called it.
-            // I cannot figure out why other things that change the list...especially our own
-            // delete command...do not need this.
-            mBookAdapter.notifyDataSetChanged();
+            mBookListAdapter.notifyDataSetChanged();
             return;
         }
         BookOrShelf bookOrShelf = _bookCollection.getBookByPath(path);

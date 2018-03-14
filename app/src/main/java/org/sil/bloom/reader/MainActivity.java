@@ -5,11 +5,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
+import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
@@ -17,22 +15,19 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.LinearSmoothScroller;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.SpannableString;
 import android.text.format.DateFormat;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 import android.util.Log;
-import android.view.LayoutInflater;
+import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,14 +43,15 @@ import java.util.List;
 
 
 public class MainActivity extends BaseActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, BookListAdapter.BookClickListener{
 
     public static final String NEW_BOOKS = "newBooks";
     protected BookCollection _bookCollection;
-    private ListView mListView;
     public android.view.ActionMode contextualActionBarMode;
     private static boolean sSkipNextNewFileSound;
-    ArrayAdapter mListAdapter;
+
+    private RecyclerView mBookRecyclerView;
+    private BookListAdapter mBookListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,8 +84,8 @@ public class MainActivity extends BaseActivity
             NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
             navigationView.setNavigationItemSelectedListener(this);
 
-            mListView = (ListView) findViewById(R.id.book_list2);
-            SetupCollectionListView(mListView);
+            mBookRecyclerView = (RecyclerView) findViewById(R.id.book_list2);
+            SetupCollectionListView(mBookRecyclerView);
 
             // If we were started by some external process, we need to process any file
             // we were given (a book or bundle)
@@ -262,46 +258,45 @@ public class MainActivity extends BaseActivity
     }
 
     private void refreshList(BookOrShelf book) {
-        mListView.invalidateViews();
-        if (book != null) {
-            int bookIndex = _bookCollection.indexOf(book);
-            mListView.smoothScrollToPosition(bookIndex);
-            mListView.setItemChecked(bookIndex, true);
-        }
+        if (book == null)
+            return;
+
+        int bookPosition = mBookListAdapter.highlightItem(book);
+        smoothScrollToPosition(bookPosition);
     }
 
-    private void highlightItems(List<String> items) {
-        if (items == null)
+    private void highlightItems(List<String> paths) {
+        if (paths == null)
             return;
-        if (items.size() > 1) {
-            // Required for us to select all the new items. Gets reset to normal when one is selected.
-            mListView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
-        }
-        int minIndex = Integer.MAX_VALUE;
-        for (String path: items) {
-            BookOrShelf item = _bookCollection.getBookByPath(path);
-            int bookIndex = _bookCollection.indexOf(item);
-            if (bookIndex >= 0) {
-                mListView.setItemChecked(bookIndex, true);
-                minIndex = Math.min(minIndex, bookIndex);
+        int firstHighlightedIndex = mBookListAdapter.highlightItems(paths);
+        if (firstHighlightedIndex > -1)
+            smoothScrollToPosition(firstHighlightedIndex);
+    }
+
+    private void smoothScrollToPosition(int position){
+        final LinearLayoutManager layoutManager = (LinearLayoutManager) mBookRecyclerView.getLayoutManager();
+        RecyclerView.SmoothScroller scroller = new LinearSmoothScroller(this) {
+            @Override
+            public PointF computeScrollVectorForPosition(int targetPosition) {
+                return layoutManager.computeScrollVectorForPosition(targetPosition);
             }
-        }
-        if (minIndex < Integer.MAX_VALUE) {
-            mListView.smoothScrollToPosition(minIndex);
-        }
+
+            @Override
+            protected int getVerticalSnapPreference() {
+                return LinearSmoothScroller.SNAP_TO_START;
+            }
+        };
+        scroller.setTargetPosition(position);
+        layoutManager.startSmoothScroll(scroller);
     }
 
     private void closeContextualActionBar() {
-        contextualActionBarMode.finish();
-    }
-
-    private BookOrShelf selectedBook(){
-        int position = mListView.getCheckedItemPosition();
-        return _bookCollection.get(position);
+        if (contextualActionBarMode != null)
+            contextualActionBarMode.finish();
     }
 
     private void shareBookOrShelf(){
-        BookOrShelf bookOrShelf = selectedBook();
+        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItem();
         if (bookOrShelf.isShelf())
             shareShelf(bookOrShelf);
         else
@@ -318,7 +313,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void deleteBookOrShelf(){
-        BookOrShelf bookOrShelf = selectedBook();
+        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItem();
         if (bookOrShelf.isShelf())
             deleteShelf(bookOrShelf);
         else
@@ -340,7 +335,7 @@ public class MainActivity extends BaseActivity
                         Log.i("BloomReader", "DeleteShelf " + shelf.toString());
                         for(BookOrShelf b : booksAndShelves)
                             _bookCollection.deleteFromDevice(b);
-                        mListAdapter.notifyDataSetChanged();
+                        mBookListAdapter.notifyDataSetChanged();
                         closeContextualActionBar();
                         dialog.dismiss();
                     }
@@ -357,7 +352,7 @@ public class MainActivity extends BaseActivity
                     public void onClick(DialogInterface dialog, int which) {
                         Log.i("BloomReader", "DeleteBook "+ book.toString());
                         _bookCollection.deleteFromDevice(book);
-                        mListAdapter.notifyDataSetChanged();
+                        mBookListAdapter.notifyDataSetChanged();
                         closeContextualActionBar();
                         dialog.dismiss();
                     }
@@ -366,113 +361,60 @@ public class MainActivity extends BaseActivity
                 .show();
     }
 
-    private void SetupCollectionListView(final ListView listView) {
+    private void SetupCollectionListView(final RecyclerView listView) {
         final AppCompatActivity activity = this;
+        listView.setLayoutManager(new LinearLayoutManager(this));
+        mBookListAdapter = new BookListAdapter(_bookCollection, this);
+        listView.setAdapter(mBookListAdapter);
+    }
 
-        mListAdapter = new ArrayAdapter(this, R.layout.book_list_content, R.id.title, _bookCollection.getBooks()) {
-            @NonNull
+    @Override
+    public void onBookClick(BookOrShelf bookOrShelf){
+        openBook(this, bookOrShelf.path);
+    }
+
+    @Override
+    public boolean onBookLongClick(){
+        contextualActionBarMode = startActionMode(new ActionMode.Callback() {
             @Override
-            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                // It seems we should be able to use super.getView here, and only need to tweak the
-                // image if it's a shelf. But somehow that produces shelf icons on many of the book
-                // rows. I guess there's some sharing going on in the standard implementation.
-                // So we have to do the whole job.
-                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                View rowView = inflater.inflate(R.layout.book_list_content, parent, false);
-                TextView textView = (TextView) rowView.findViewById(R.id.title);
-                ImageView image = (ImageView) rowView.findViewById(R.id.imageView);
-                BookOrShelf bookOrShelf = _bookCollection.get(position);
-                textView.setText(bookOrShelf.name);
-                if (bookOrShelf.isShelf()) {
-                    image.setImageResource(R.drawable.bookshelf);
-                    try {
-                        image.setBackgroundColor(Color.parseColor("#" + bookOrShelf.backgroundColor));
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    Uri image_uri = _bookCollection.getThumbnail(getContext(), bookOrShelf);
-                    if(image_uri == null)
-                        image.setImageResource(R.drawable.book);
-                    else
-                        image.setImageURI(image_uri);
-                }
-                return rowView;
-            }
-        };
-
-        mListAdapter.setNotifyOnChange(true);
-        listView.setAdapter(mListAdapter);
-
-        listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
-                public void onItemClick(AdapterView<?> adapter, View v, int position, long arg3) {
-                    Context context = v.getContext();
-
-                    // These lines help set things back to normal in case we were temporarily
-                    // in multiple-item-select mode.
-                    mListView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
-                    mListView.setSelection(position);
-                    mListView.setItemChecked(position, true);
-
-                    openBook(context, _bookCollection.get(position).path);
-                }
-        });
-
-        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-
-            private android.view.ActionMode.Callback mActionModeCallback = new android.view.ActionMode.Callback() {
-                @Override
-                public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                     mode.getMenuInflater().inflate(R.menu.book_item_menu, menu);
                     return true;
-                }
-
-                @Override
-                public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
-                    return false;
-                }
-
-                @Override
-                public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
-                    switch(item.getItemId()) {
-                        case R.id.share:
-                            shareBookOrShelf();
-                            mode.finish();
-                            return true;
-                        case R.id.delete:
-                            deleteBookOrShelf();
-                            return true;
-                        default:
-                            return false;
-                    }
-                }
-
-                @Override
-                public void onDestroyActionMode(android.view.ActionMode mode) {
-                    contextualActionBarMode = null;
-                    mListView.setItemChecked(mListView.getCheckedItemPosition(), false);
-                    //mListView.setSelection(-1);
-                }
-            };
+            }
 
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                if(contextualActionBarMode != null)
-                    return false;
-                mListView.setSelected(true);
-                mListView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
-                mListView.setSelection(position);
-                mListView.setItemChecked(position, true);
+            public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
+                return false;
+            }
 
-                contextualActionBarMode= activity.startActionMode(mActionModeCallback);
+            @Override
+            public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
+                switch(item.getItemId()) {
+                    case R.id.share:
+                        shareBookOrShelf();
+                        mode.finish();
+                        return true;
+                    case R.id.delete:
+                        deleteBookOrShelf();
+                        return true;
+                    default:
+                        return false;
+                }
+            }
 
-                return true;
+            @Override
+            public void onDestroyActionMode(android.view.ActionMode mode) {
+                mBookListAdapter.clearSelection();
+                contextualActionBarMode = null;
             }
         });
 
+        return true;
+    }
+
+    @Override
+    public void onClearBookSelection(){
+        closeContextualActionBar();
     }
 
     private void openBook(Context context, String path) {
@@ -482,10 +424,7 @@ public class MainActivity extends BaseActivity
             // clean it up. (Since it already doesn't exist, deleteFromDevice just
             // removes it from the collection.)
             _bookCollection.deleteFromDevice(_bookCollection.getBookByPath(path));
-            // JT: without this an exception is thrown saying we should have called it.
-            // I cannot figure out why other things that change the list...especially our own
-            // delete command...do not need this.
-            mListAdapter.notifyDataSetChanged();
+            mBookListAdapter.notifyDataSetChanged();
             return;
         }
         BookOrShelf bookOrShelf = _bookCollection.getBookByPath(path);

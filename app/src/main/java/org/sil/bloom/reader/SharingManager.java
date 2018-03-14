@@ -89,7 +89,7 @@ public class SharingManager {
         for (int i=0; i<booksAndShelves.size(); ++i)
             files[i] = new File(booksAndShelves.get(i).path);
         try {
-            String path = sharedBloomBundlePath(shelf.name);
+            String path = sharedBloomBundlePath();
             IOUtilities.tar(files, path);
             shareFile(Uri.fromFile(new File(path)), "application/zip", mContext.getString(R.string.share_books_via));
         }
@@ -163,9 +163,5 @@ public class SharingManager {
         deviceName = (deviceName != null && !deviceName.isEmpty()) ? deviceName : "my";
 
         return sharedFilePath(deviceName + IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION);
-    }
-
-    private static String sharedBloomBundlePath(String shelfName) {
-        return sharedFilePath(shelfName + IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION);
     }
 }

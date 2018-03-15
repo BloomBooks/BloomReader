@@ -606,7 +606,7 @@ public class ReaderActivity extends BaseActivity {
                 mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE; // fixed landscape
         }
         if (getFeatureValue("canrotate", "never").equals("allOrientations"))
-            mOrientation = ActivityInfo.SCREEN_ORIENTATION_USER; // change as rotated
+            mOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR; // change as rotated
 
         setRequestedOrientation(mOrientation);
         return mOrientation;

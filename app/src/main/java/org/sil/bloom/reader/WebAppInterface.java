@@ -6,6 +6,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.io.IOException;
 
 import static android.media.AudioManager.STREAM_MUSIC;
@@ -157,6 +158,15 @@ public class WebAppInterface {
         }
     }
 
+    // Return true if the necessary file exists so that playAudio with the same argument will
+    // actually play something. The argument comes from the JavaScript function
+    // and is a path relative to the location of the HTML file.
+    @JavascriptInterface
+    public boolean audioExists(String aud) {
+        String dataSource = mHtmlDirPath + "/" + aud;
+        return new File(dataSource).exists();
+    }
+
     // Play an audio file from the webpage. The argument comes from the JavaScript function
     // and is a path relative to the location of the HTML file.
     @JavascriptInterface
@@ -166,7 +176,21 @@ public class WebAppInterface {
             Log.d("JSEvent", "mp.stop && mp.reset && mp.setDataSource && mp.prepare, page " + String.valueOf(mPosition));
             mp.stop();
             mp.reset();
-            mp.setDataSource(mHtmlDirPath + "/" + aud);
+            String dataSource = mHtmlDirPath + "/" + aud;
+            if (!new File(dataSource).exists()) {
+                // Usually we expect audioExists() to be called and this function NOT to be called
+                // if the audio doesn't exist. But in case it is, it MIGHT be helpful to the client
+                // to indicate immediately that the audio is done, at least in the sense that
+                // there is nothing yet to happen in connection with this play attempt.
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d("JSEvent", "fake playback completed for missing audio, page " + String.valueOf(mPosition));
+                        mWebView.evaluateJavascript("Root.playbackCompleted()", null);
+                    }
+                });
+            }
+            mp.setDataSource(dataSource);
             mp.prepare();
             mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override

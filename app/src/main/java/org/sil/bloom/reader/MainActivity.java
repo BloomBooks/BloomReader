@@ -5,9 +5,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
@@ -41,6 +43,9 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
+import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
+import static org.sil.bloom.reader.models.BookOrShelf.BOOK_FILE_EXTENSION;
+
 
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener, BookListAdapter.BookClickListener{
@@ -49,6 +54,10 @@ public class MainActivity extends BaseActivity
     protected BookCollection _bookCollection;
     public android.view.ActionMode contextualActionBarMode;
     private static boolean sSkipNextNewFileSound;
+    // OnCreate may run a second time if the activity gets recycled and the user navigates back to it
+    // but we don't want to reopen the book if we already did
+    private boolean alreadyOpenedFileFromIntent = false;
+    private static final String ALREADY_OPENED_FILE_FROM_INTENT_KEY = "alreadyOpenedFileFromIntent";
 
     private RecyclerView mBookRecyclerView;
     private BookListAdapter mBookListAdapter;
@@ -89,6 +98,8 @@ public class MainActivity extends BaseActivity
 
             // If we were started by some external process, we need to process any file
             // we were given (a book or bundle)
+            if (savedInstanceState != null)
+                alreadyOpenedFileFromIntent = savedInstanceState.getBoolean(ALREADY_OPENED_FILE_FROM_INTENT_KEY, false);
             processIntentData();
 
             // Insert the build version and date into the appropriate control.
@@ -128,13 +139,23 @@ public class MainActivity extends BaseActivity
 
     private void processIntentData() {
         Uri uri = getIntent().getData();
-        if (uri == null)
+        if (uri == null || alreadyOpenedFileFromIntent)
             return;
-        if (uri.getPath().endsWith(BookOrShelf.BOOK_FILE_EXTENSION)) {
-            importBook(uri);
-        } else if (uri.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION)) {
-            importBloomBundle(uri);
+        String nameOrPath = uri.getPath();
+        // Content URI's do not use the actual filename in the "path"
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst())
+                nameOrPath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
         }
+        if (nameOrPath.endsWith(BOOK_FILE_EXTENSION)) {
+            importBook(uri);
+        } else if (nameOrPath.endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {
+            importBloomBundle(uri);
+        } else {
+            Log.e("Intents", "Couldn't figure out how to open URI: " + uri.toString());
+        }
+        alreadyOpenedFileFromIntent = true;
     }
 
     // If we were given a path to a book file,
@@ -563,5 +584,11 @@ public class MainActivity extends BaseActivity
                 onNewOrUpdatedBook(newBooks[newBooks.length - 1]);
             }
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putBoolean(ALREADY_OPENED_FILE_FROM_INTENT_KEY, alreadyOpenedFileFromIntent);
     }
 }

@@ -5,9 +5,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
@@ -40,6 +42,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+
+import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
+import static org.sil.bloom.reader.models.BookOrShelf.BOOK_FILE_EXTENSION;
 
 
 public class MainActivity extends BaseActivity
@@ -130,10 +135,19 @@ public class MainActivity extends BaseActivity
         Uri uri = getIntent().getData();
         if (uri == null)
             return;
-        if (uri.getPath().endsWith(BookOrShelf.BOOK_FILE_EXTENSION)) {
+        String nameOrPath = uri.getPath();
+        // Content URI's do not use the actual filename in the "path"
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst())
+                nameOrPath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+        }
+        if (nameOrPath.endsWith(BOOK_FILE_EXTENSION)) {
             importBook(uri);
-        } else if (uri.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION)) {
+        } else if (nameOrPath.endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {
             importBloomBundle(uri);
+        } else {
+            Log.e("Intents", "Couldn't figure out how to open URI: " + uri.toString());
         }
     }
 

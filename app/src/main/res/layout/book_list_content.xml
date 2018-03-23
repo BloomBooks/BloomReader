@@ -20,6 +20,7 @@
         android:layout_height="64dp"
         android:scaleType="fitCenter"
         android:layout_marginTop="10dp"
+        android:layout_marginLeft="16dp"
         android:padding="2dp"
         app:srcCompat="@drawable/book" />
 

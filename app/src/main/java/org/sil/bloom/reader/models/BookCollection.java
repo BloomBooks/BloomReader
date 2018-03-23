@@ -240,7 +240,8 @@ public class BookCollection {
             if(!IOUtilities.seemToBeDifferentVolumes(bookUri.getPath(),destination)) {
                 (new File(bookUri.getPath())).delete();
             }
-            // we wouldn't have it in our list that we display yet, so make an entry there
+
+            // it's probably not in our list that we display yet, so make an entry there
             addBookIfNeeded(destination);
             return destination;
         } else{

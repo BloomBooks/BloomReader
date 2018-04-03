@@ -318,6 +318,10 @@ public class MainActivity extends BaseActivity
 
     private void shareBookOrShelf(){
         BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItem();
+        if (bookOrShelf == null) {
+            // Not sure how this can happen, but it did
+            return;
+        }
         if (bookOrShelf.isShelf())
             shareShelf(bookOrShelf);
         else

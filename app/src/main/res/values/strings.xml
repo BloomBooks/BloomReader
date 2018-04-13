@@ -32,6 +32,7 @@
     <string name="downloading">Downloading…</string>
     <!-- %1$s is a description of the sending network -->
     <string name="looking_for_adds">Looking for book advertisements on WiFi network %1s…</string>
+    <string name="device_hotspot">Device Hotspot</string>
     <string name="no_wifi_connected">The device does not appear to be connected to a WiFi network.</string>
     <string name="failed_book_import">Failed to import book.</string>
     <string name="external_storage_unavailable">Unable to access file storage. Is the SD card missing?</string>

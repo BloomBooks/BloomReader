@@ -19,6 +19,7 @@ import org.sil.bloom.reader.BaseActivity;
 import org.sil.bloom.reader.MainActivity;
 import org.sil.bloom.reader.R;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 // An activity that is made to look like a dialog (see the theme associated with it in
@@ -134,7 +135,25 @@ public class GetFromWiFiActivity extends BaseActivity {
                 }
             }
         }
+
+        if (deviceHotspotActive(manager))
+            return getString(R.string.device_hotspot);
+
         return null;
+    }
+
+    // Android doesn't have a public API for finding this out,
+    // but that's nothing a Reflection hack can't solve...
+    private boolean deviceHotspotActive(WifiManager manager) {
+        try {
+            final Method method = manager.getClass().getDeclaredMethod("isWifiApEnabled");
+            method.setAccessible(true);
+            return (Boolean) method.invoke(manager);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private void startBookListener() {

@@ -891,6 +891,7 @@ public class ReaderActivity extends BaseActivity {
         private String data;
         private String baseUrl;
         private int page;
+        private int scale = 0;
 
         public ScaledWebView(Context context, int page) {
             super(context);
@@ -955,13 +956,20 @@ public class ReaderActivity extends BaseActivity {
         protected void onSizeChanged(int w, int h, int ow, int oh){
             // if width is zero, this method will be called again
             if (w != 0) {
-                boolean inLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-                if (inLandscape && data.contains("Device16x9Landscape") || (!inLandscape && data.contains("Device16x9Portrait"))) {
-                    // device orientation matches data class
-                    setInitialScale(getPageScale(w, h));
-                } else{
-                    // They don't match, presumably we've been rotated.
+                if (scale == 0) {
+                    scale = getPageScale(w, h);
+                    setInitialScale(scale);
+                }
+                // boolean deviceInLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;  // This method seems to lag and give wrong results
+                boolean deviceInLandscape = w > h;
+                boolean pageInLandscape = data.contains("Device16x9Landscape");
+                if (deviceInLandscape != pageInLandscape) {
                     reload();
+
+                    // The viewport ratio can change with orientation changes when the Back/Home/Recent menu moves to a different side
+                    // Unfortunately we can't rescale a Webview once it's been scaled, so if we want to fix this, we'll have to make a new Webview
+                    if (scale > getPageScale(w, h))
+                        Log.w("BloomScale", "The viewport size has changed and now the page is too big. Some elements may go off-screen.");
                 }
             }
             super.onSizeChanged(w, h, ow, oh);

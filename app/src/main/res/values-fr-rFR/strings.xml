@@ -32,7 +32,6 @@
   <string name="downloading">Téléchargement en cours…</string>
   <!-- %1$s is a description of the sending network -->
   <string name="looking_for_adds">Recherche en cours de la publicité pour des livres sur le réseau WiFi %1s…</string>
-  <string name="device_hotspot">Device Hotspot</string>
   <string name="no_wifi_connected">Cet appareil n\'est pas connecté à un réseau WiFi.</string>
   <string name="failed_book_import">Échec de l\'importation de ce livre.</string>
   <string name="external_storage_unavailable">Impossible d\'accéder à l\'emplacement où sont conservés les fichiers. Manquerait-il la carte SD ?</string>

@@ -556,8 +556,7 @@ public class ReaderActivity extends BaseActivity {
         return false;
     }
 
-    private void setFeatureEffects() {
-        boolean inLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+    private void setFeatureEffects(boolean inLandscape) {
         mAutoAdvance = getBooleanFeature("autoadvance", false, inLandscape);
         mPlayMusic = getBooleanFeature("playmusic", true, inLandscape);
         mPlayAnimation = getBooleanFeature("playanimations", true, inLandscape);
@@ -594,6 +593,19 @@ public class ReaderActivity extends BaseActivity {
             return htmlSnippet.substring(0, matcher.start()) + sAssetsStylesheetLink + htmlSnippet.substring(matcher.start());
         }
         return htmlSnippet;
+    }
+
+    // Prefer to base device landscape on mOrientation if it's determinative
+    private boolean isDeviceInLandscape() {
+        switch (mOrientation) {
+            case ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE:
+                return true;
+            case ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT:
+                return false;
+            case ActivityInfo.SCREEN_ORIENTATION_SENSOR:
+            default:
+                return getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        }
     }
 
     private int getPageOrientationAndRotateScreen(String page){
@@ -856,11 +868,16 @@ public class ReaderActivity extends BaseActivity {
 
         private WebView MakeBrowserForPage(int position) {
             ScaledWebView browser = null;
+            boolean inLandscape;
             try {
                 String page = mHtmlPageDivs.get(position);
                 if(position == 0) {
                     getPageOrientationAndRotateScreen(page);
-                    setFeatureEffects(); // depends on what orientation we're actually in, so can't do sooner.
+                    inLandscape = isDeviceInLandscape();
+                    setFeatureEffects(inLandscape); // depends on what orientation we're actually in, so can't do sooner.
+                }
+                else {
+                    inLandscape = isDeviceInLandscape();
                 }
                 browser = new ScaledWebView(mParent, position);
                 mActiveViews.put(position, browser);
@@ -872,7 +889,7 @@ public class ReaderActivity extends BaseActivity {
                 String moreStyles = "<style>html{ height: 100%; }  body{ min-height:100%; display:flex; align-items:center; } div.bloom-page { border:0 !important; }</style>\n";
                 String doc = mHtmlBeforeFirstPageDiv + moreStyles + pageUsingDeviceLayout(page) + mHtmlAfterLastPageDiv;
 
-                browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc);
+                browser.loadDataWithBaseURL("file:///" + mBookHtmlPath.getAbsolutePath(), doc, inLandscape);
                 prepareForAnimation(position);
             }catch (Exception ex) {
                 Log.e("Reader", "Error loading " + mBookHtmlPath.getAbsolutePath() + "  " + ex);
@@ -902,9 +919,8 @@ public class ReaderActivity extends BaseActivity {
             getSettings().setMediaPlaybackRequiresUserGesture(false);
         }
 
-        public void loadDataWithBaseURL(String baseUrl, String data){
+        public void loadDataWithBaseURL(String baseUrl, String data, boolean inLandscape){
             this.baseUrl = baseUrl;
-            boolean inLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
             if (inLandscape)
                 data = data.replace("Device16x9Portrait", "Device16x9Landscape");
             else
@@ -928,9 +944,9 @@ public class ReaderActivity extends BaseActivity {
         }
 
         // This method will be called on all Webviews in memory when orientation changes
-        public void reload(){
-            setFeatureEffects();
-            loadDataWithBaseURL(baseUrl, data);
+        public void reloadPage(boolean inLandscape){
+            setFeatureEffects(inLandscape);
+            loadDataWithBaseURL(baseUrl, data, inLandscape);
             resetMultiMedia();
         }
 
@@ -964,7 +980,7 @@ public class ReaderActivity extends BaseActivity {
                 boolean deviceInLandscape = w > h;
                 boolean pageInLandscape = data.contains("Device16x9Landscape");
                 if (deviceInLandscape != pageInLandscape) {
-                    reload();
+                    reloadPage(deviceInLandscape);
 
                     // The viewport ratio can change with orientation changes when the Back/Home/Recent menu moves to a different side
                     // Unfortunately we can't rescale a Webview once it's been scaled, so if we want to fix this, we'll have to make a new Webview

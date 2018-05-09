@@ -173,22 +173,11 @@ public class MainActivity extends BaseActivity
     }
 
     private void importBloomBundle(Uri bloomBundleUri) {
-        Toast.makeText(this, "Got Bloom bundle: " + bloomBundleUri.getPath(), Toast.LENGTH_LONG).show();
-        List<String> newBooks = null;
-        try {
-            newBooks = IOUtilities.extractBloomBundle(this.getApplicationContext(), bloomBundleUri);
-            // We assume that they will be happy with us removing from where ever the bundle was,
-            // so long as it is on the same device (e.g. not coming from an sd card they plan to pass
-            // around the room).
-            if(!IOUtilities.seemToBeDifferentVolumes(bloomBundleUri.getPath(), BookCollection.getLocalBooksDirectory().getPath())) {
-                (new File(bloomBundleUri.getPath())).delete();
-            }
-        }
-        catch (IOException e) {
-            Log.e("BundleIO", "IO exception reading bloom bundle: " + e.getMessage());
-            e.printStackTrace();
-            Toast.makeText(this, "Had a problem reading the bundle", Toast.LENGTH_LONG).show();
-        }
+        new ImportBundleTask(this).execute(bloomBundleUri);
+    }
+
+    // Called by ImportBundleTask with the list of new books and shelves
+    public void bloomBundleImported(List<String> newBookPaths) {
         try {
             // Reinitialize completely to get the new state of things.
             _bookCollection.init(this.getApplicationContext());
@@ -196,7 +185,7 @@ public class MainActivity extends BaseActivity
             Log.wtf("BloomReader", "Could not use external storage when reloading project!", e); // should NEVER happen
         }
         updateDisplay();
-        highlightItems(newBooks);
+        highlightItems(newBookPaths);
     }
 
     @Override

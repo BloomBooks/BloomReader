@@ -49,6 +49,10 @@
     <string name="failed_to_share_books">Failed to share books</string>
     <string name="failed_to_open_book">Unable to open book</string>
     <string name="device_storage_is_full">Unable to open book. The device storage is full. Free up some space and try again.</string>
+    <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
+    <string name="adding_book">Adding %1$s...</string>
+    <string name="bundle_import_out_of_space">Not enough space on the device for all the books in this bundle.</string>
+    <string name="bundle_import_error">There was a problem reading the Bloom bundle.</string>
 
     <string name="share_app">Share Bloom Reader app</string>
     <string name="share_books">Share Books</string>

@@ -310,60 +310,29 @@ public class IOUtilities {
         //zip(getLocalBooksDirectory().getAbsolutePath(), filter, destinationPath);
     }
 
-    // Returns a list of paths to the books created.
-    public static List<String> untar(FileInputStream input, String targetPath) throws IOException {
-        TarArchiveInputStream tarInput = new TarArchiveInputStream(input);
-        ArrayList<String> result = new ArrayList<String>();
-        ArchiveEntry  entry;
-        while ((entry = tarInput.getNextEntry()) != null) {
-            File destPath=new File(targetPath,entry.getName());
-            result.add(destPath.getPath());
-            if (!entry.isDirectory()) {
-                FileOutputStream fout=new FileOutputStream(destPath);
-                try{
-                    final byte[] buffer=new byte[8192];
-                    int n=0;
-                    while (-1 != (n=tarInput.read(buffer))) {
-                        fout.write(buffer,0,n);
-                    }
-                    fout.close();
+    public static String extractTarEntry(TarArchiveInputStream tarInput, String targetPath) throws IOException {
+        ArchiveEntry entry = tarInput.getCurrentEntry();
+        File destPath=new File(targetPath,entry.getName());
+        if (!entry.isDirectory()) {
+            FileOutputStream fout=new FileOutputStream(destPath);
+            try{
+                final byte[] buffer=new byte[8192];
+                int n=0;
+                while (-1 != (n=tarInput.read(buffer))) {
+                    fout.write(buffer,0,n);
                 }
-                catch (IOException e) {
-                    fout.close();
-                    destPath.delete();
-                    tarInput.close();
-                    throw e;
-                }
+                fout.close();
             }
-            else {
-                destPath.mkdir();
-            }
-        }
-        tarInput.close();
-        return result;
-    }
-
-    // Returns a list of paths to the books created.
-    public static List<String> extractBloomBundle(Context context, Uri bloomBundleUri) throws IOException {
-        FileDescriptor fd = context.getContentResolver().openFileDescriptor(bloomBundleUri, "r").getFileDescriptor();
-        if(fd.valid()) {
-            try {
-                //Review: do we want to just put them all in the Bloom directory directly like this?
-                return untar(new FileInputStream(fd), getLocalBooksDirectory().getAbsolutePath());
-            } catch (IOException e) {
-                Log.e("BundleIO", e.getMessage());
-                // Maybe 10-20% of the time (with a medium sized bundle),
-                // a valid FileDescriptor becomes invalid during the unpacking process
-                // Having not found a way to prevent this, we catch it and try again
-                // If the IOException is something else, it should go through
-                if (!fd.valid())
-                    return extractBloomBundle(context, bloomBundleUri);
-                else
-                    throw e;
+            catch (IOException e) {
+                fout.close();
+                destPath.delete();
+                tarInput.close();
+                throw e;
             }
         }
         else {
-            throw new IOException("Invalid FileDescriptor from bloombundle");
+            destPath.mkdir();
         }
+        return destPath.getPath();
     }
 }

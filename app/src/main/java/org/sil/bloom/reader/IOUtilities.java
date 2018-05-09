@@ -309,4 +309,30 @@ public class IOUtilities {
         tar(getLocalBooksDirectory().getAbsolutePath(), filter, destinationPath);
         //zip(getLocalBooksDirectory().getAbsolutePath(), filter, destinationPath);
     }
+
+    public static String extractTarEntry(TarArchiveInputStream tarInput, String targetPath) throws IOException {
+        ArchiveEntry entry = tarInput.getCurrentEntry();
+        File destPath=new File(targetPath,entry.getName());
+        if (!entry.isDirectory()) {
+            FileOutputStream fout=new FileOutputStream(destPath);
+            try{
+                final byte[] buffer=new byte[8192];
+                int n=0;
+                while (-1 != (n=tarInput.read(buffer))) {
+                    fout.write(buffer,0,n);
+                }
+                fout.close();
+            }
+            catch (IOException e) {
+                fout.close();
+                destPath.delete();
+                tarInput.close();
+                throw e;
+            }
+        }
+        else {
+            destPath.mkdir();
+        }
+        return destPath.getPath();
+    }
 }

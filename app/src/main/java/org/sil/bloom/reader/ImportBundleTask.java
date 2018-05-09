@@ -12,7 +12,6 @@ import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,7 +92,7 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
                 final String booksDirectoryPath = getLocalBooksDirectory().getAbsolutePath();
                 while ((entry = tarInput.getNextEntry()) != null) {
                     publishProgress(entry.getName());
-                    newBookPaths.add(extractTarEntry(tarInput, booksDirectoryPath));
+                    newBookPaths.add(IOUtilities.extractTarEntry(tarInput, booksDirectoryPath));
                     lastSuccessfulEntryName = entry.getName();
                 }
                 tarInput.close();
@@ -104,6 +103,8 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
                 // Having not found a way to prevent this, we catch it and try again
                 // If the IOException is something else, it will go through
                 if (!fd.valid()) {
+                    Log.e("BundleIO", "Bad file descriptor while importing bundle. Trying again...");
+                    tarInput.close();
                     fd = mainActivity.getContentResolver().openFileDescriptor(bloomBundleUri, "r").getFileDescriptor();
                     tarInput = new TarArchiveInputStream(new FileInputStream(fd));
                     // Fast-forward to the entry that failed
@@ -117,31 +118,5 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
                 }
             }
         }
-    }
-
-    private static String extractTarEntry(TarArchiveInputStream tarInput, String targetPath) throws IOException {
-        ArchiveEntry entry = tarInput.getCurrentEntry();
-        File destPath=new File(targetPath,entry.getName());
-        if (!entry.isDirectory()) {
-            FileOutputStream fout=new FileOutputStream(destPath);
-            try{
-                final byte[] buffer=new byte[8192];
-                int n=0;
-                while (-1 != (n=tarInput.read(buffer))) {
-                    fout.write(buffer,0,n);
-                }
-                fout.close();
-            }
-            catch (IOException e) {
-                fout.close();
-                destPath.delete();
-                tarInput.close();
-                throw e;
-            }
-        }
-        else {
-            destPath.mkdir();
-        }
-        return destPath.getPath();
     }
 }

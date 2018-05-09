@@ -77,6 +77,8 @@ public class ReaderActivity extends BaseActivity {
     private static final Pattern sContentLangDiv = Pattern.compile("<div [^>]*?data-book=\"contentLanguage1\"[^>]*?>\\s*(\\S+)");
     private static final Pattern sBodyPattern = Pattern.compile("<body [^>]*?>");
 
+    private static final Pattern sAutoAdvance = Pattern.compile("data-bfautoadvance\\s*?=\\s*?\"[^\"]*?\\bbloomReader\\b.*?\"");
+
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
     private String mBookName ="?";
@@ -177,11 +179,7 @@ public class ReaderActivity extends BaseActivity {
                 final File bookHtmlFile = fileReader.getHtmlFile();
                 bookDirectory = bookHtmlFile.getParent();
                 String html = IOUtilities.FileToString(bookHtmlFile);
-                // Enhance: eventually also look for images with animation data.
-                // This is a fairly crude search, we really want the doc to have spans with class
-                // audio-sentence; but I think it's a sufficiently unlikely string to find elsewhere
-                // that this is good enough.
-                mIsMultiMediaBook = html.indexOf("audio-sentence") >= 0;
+                mIsMultiMediaBook = isMultiMediaBook(html);
                 WebAppInterface.resetAll();
                 // Break the html into everything before the first page, a sequence of pages,
                 // and the bit after the last. Note: assumes there is nothing but the </body> after
@@ -335,6 +333,16 @@ public class ReaderActivity extends BaseActivity {
                 }
             });
         }
+    }
+
+    private boolean isMultiMediaBook(String html) {
+        // Enhance: eventually also look for images with animation data?
+
+        return sAutoAdvance.matcher(html).find() ||
+        // This is a fairly crude search, we really want the doc to have spans with class
+        // audio-sentence; but I think it's a sufficiently unlikely string to find elsewhere
+        // that this is good enough.
+        html.indexOf("audio-sentence") >= 0;
     }
 
     private class BloomPageChangeListener extends ViewPager.SimpleOnPageChangeListener {

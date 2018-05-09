@@ -96,6 +96,10 @@ android {
 
         uploadImages = true
     }
+
+    lintOptions {
+        warning "MissingTranslation"
+    }
 }
 
 repositories {

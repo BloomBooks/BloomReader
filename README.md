@@ -13,7 +13,7 @@ Bloom Reader is a native java app with a WebView for displaying Bloom books (whi
 Bloom Reader is distributed through the Google Play Store.
 [Try it out](https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&amp;c=apps).
 
-Soon we hope to distribute the apks through bloomlibrary.org as well.
+Apks are also distributed through out [website](https://bloomlibrary.org/installers).
 
 # Road map
 ## Prototype

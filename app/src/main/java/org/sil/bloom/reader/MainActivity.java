@@ -184,7 +184,6 @@ public class MainActivity extends BaseActivity
         } catch (ExtStorageUnavailableException e) {
             Log.wtf("BloomReader", "Could not use external storage when reloading project!", e); // should NEVER happen
         }
-        updateDisplay();
         highlightItems(newBookPaths);
     }
 
@@ -204,9 +203,6 @@ public class MainActivity extends BaseActivity
             if (bookToHighlight != null) {
                 updateForNewBook(bookToHighlight);
                 ((BloomReaderApplication) this.getApplication()).setBookToHighlight(null);
-            } else {
-                // We could have gotten a new book while the app was not in the foreground
-                updateDisplay();
             }
 
             //Periodic cleanup
@@ -261,10 +257,6 @@ public class MainActivity extends BaseActivity
             playSoundFile(R.raw.bookarrival);
         }
         Toast.makeText(MainActivity.this, book.name + " added or updated", Toast.LENGTH_SHORT).show();
-    }
-
-    private void updateDisplay() {
-        refreshList(null);
     }
 
     private void refreshList(BookOrShelf book) {

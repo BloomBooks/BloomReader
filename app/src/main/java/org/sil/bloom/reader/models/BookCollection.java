@@ -131,7 +131,7 @@ public class BookCollection {
     }
 
     public List<BookOrShelf> getAllBooksWithinShelf(BookOrShelf targetShelf){
-        ArrayList<BookOrShelf> booksAndShelves = new ArrayList();
+        ArrayList<BookOrShelf> booksAndShelves = new ArrayList<>();
         booksAndShelves.add(targetShelf);
         for(BookOrShelf bookOrShelf : _booksAndShelves){
             if (isBookInFilter(bookOrShelf, targetShelf.shelfId, mShelfIds)) {

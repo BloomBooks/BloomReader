@@ -16,7 +16,7 @@ if (rootProject.file(fileName).exists()) {
 
 android {
     compileSdkVersion 23
-    buildToolsVersion '26.0.2'
+    buildToolsVersion '27.0.3'
 
     playAccountConfigs {
         defaultAccountConfig {
@@ -107,23 +107,23 @@ repositories {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestImplementation ('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:23.4.0'
-    compile 'com.android.support:support-v4:23.4.0'
-    compile 'com.android.support:recyclerview-v7:23.4.0'
-    compile 'com.android.support:design:23.4.0'
+    implementation 'com.android.support:appcompat-v7:23.4.0'
+    implementation  'com.android.support:support-v4:23.4.0'
+    implementation  'com.android.support:recyclerview-v7:23.4.0'
+    implementation  'com.android.support:design:23.4.0'
     // Supports the WiFi module's 'server' used to receive books from Bloom desktop
-    compile 'cz.msebera.android:httpclient:4.4.1.2'
-    compile 'com.segment.analytics.android:analytics:4.+'
-    compile 'commons-io:commons-io:2.4'
+    implementation  'cz.msebera.android:httpclient:4.4.1.2'
+    implementation  'com.segment.analytics.android:analytics:4.+'
+    implementation  'commons-io:commons-io:2.4'
     // Andrew tried this and had problems. I don't recall the details.
-    //compile 'commons-io:commons-compress:1.15'
+    //implementation  'commons-io:commons-compress:1.15'
     // Needed (at least) for making tar archives to send multiple books.
-    compile 'org.apache.commons:commons-compress:1.14'
+    implementation  'org.apache.commons:commons-compress:1.14'
 
-    testCompile 'junit:junit:4.12'
+    testImplementation  'junit:junit:4.12'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
 }

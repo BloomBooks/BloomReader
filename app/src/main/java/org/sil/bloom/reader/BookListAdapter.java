@@ -3,6 +3,7 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -73,9 +74,9 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     private void setBackgroundColor(BookOrShelf bookOrShelf, ViewHolder holder){
         if (bookOrShelf == selectedItem)
-            holder.linearLayout.setBackgroundColor(holder.getContext().getResources().getColor(R.color.colorAccent));
+            holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.colorAccent));
         else if (bookOrShelf.highlighted)
-            holder.linearLayout.setBackgroundColor(holder.getContext().getResources().getColor(R.color.new_book_highlight));
+            holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.new_book_highlight));
         else
             holder.linearLayout.setBackgroundColor(Color.WHITE);
     }

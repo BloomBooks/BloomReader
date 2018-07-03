@@ -426,7 +426,9 @@ public class ReaderActivity extends BaseActivity {
             reportLoadBook(path);
         } catch (IOException ex) {
             Log.e("Reader", "Error loading " + path + "  " + ex);
-            final String msg = (ex.getMessage().contains("ENOSPC")) ? getString(R.string.device_storage_is_full) : getString(R.string.failed_to_open_book);
+            final String msg = (ex.getMessage() != null && ex.getMessage().contains("ENOSPC")) ?
+                    getString(R.string.device_storage_is_full) :
+                    getString(R.string.failed_to_open_book);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

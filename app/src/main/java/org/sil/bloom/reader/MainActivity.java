@@ -148,6 +148,8 @@ public class MainActivity extends BaseActivity
             if (cursor != null && cursor.moveToFirst())
                 nameOrPath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
         }
+        if (nameOrPath == null) // reported as crash on Play console
+            return;
         if (nameOrPath.endsWith(BOOK_FILE_EXTENSION)) {
             importBook(uri);
         } else if (nameOrPath.endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {

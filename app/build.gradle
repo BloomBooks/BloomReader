@@ -15,7 +15,7 @@ if (rootProject.file(fileName).exists()) {
 }
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 26
     buildToolsVersion '27.0.3'
 
     playAccountConfigs {
@@ -29,7 +29,7 @@ android {
     defaultConfig {
         applicationId "org.sil.bloom.reader"
         minSdkVersion 19
-        targetSdkVersion 22
+        targetSdkVersion 26
         versionCode versionMajor * 100000 + versionMinor * 1000 + versionRelease.toInteger()
         versionName "${versionMajor}.${versionMinor}.${versionRelease}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

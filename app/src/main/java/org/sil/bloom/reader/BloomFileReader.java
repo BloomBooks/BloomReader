@@ -2,6 +2,7 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -41,6 +42,20 @@ public class BloomFileReader {
         if(bookDirectory == null)
             openFile(CURRENT_BOOK_FOLDER);
         return findHtmlFile();
+    }
+
+    @Nullable // If no font file matches the give name
+    public File getFontFile(String fontName) {
+        try {
+            if (bookDirectory == null)
+                openFile(CURRENT_BOOK_FOLDER);
+            File fontFile = new File(bookDirectory + File.separator + fontName);
+            return fontFile.exists() ? fontFile : null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
     }
 
     // returns null if anything goes wrong reading it

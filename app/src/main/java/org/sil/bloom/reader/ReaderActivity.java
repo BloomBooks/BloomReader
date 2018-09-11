@@ -153,7 +153,7 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("nonAudioPages", mNonAudioPagesShown);
             p.putValue("totalNumberedPages", mNumberedPageCount);
             p.putValue("lastNumberedPageRead", mLastNumberedPageRead);
-            p.putValue("questionCount", mAdapter.mQuestions.size());
+            p.putValue("questionCount", mAdapter.mQuiz.numberOfQuestions());
             p.putValue("contentLang", mContentLang1);
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
@@ -220,32 +220,18 @@ public class ReaderActivity extends BaseActivity {
                 }
 
                 boolean hasEnterpriseBranding = mBrandingProjectName != null && !mBrandingProjectName.toLowerCase().equals("default");
-                ArrayList<JSONObject> questions = new ArrayList<JSONObject>();
-                try {
-                    if (hasEnterpriseBranding) {
-                        String primaryLanguage = getPrimaryLanguage(html);
-                        String questionSource = fileReader.getFileContent("questions.json");
-                        if (questionSource != null) {
-                            JSONArray groups = new JSONArray(questionSource);
-                            for (int i = 0; i < groups.length(); i++) {
-                                JSONObject group = groups.getJSONObject(i);
-                                if (!group.getString("lang").equals(primaryLanguage))
-                                    continue;
-                                JSONArray groupQuestions = group.getJSONArray("questions");
-                                for (int j = 0; j < groupQuestions.length(); j++) {
-                                    questions.add(groupQuestions.getJSONObject(j));
-                                }
-                            }
-                        }
-                        mCountQuestionPages = questions.size();
-                        for (int i = 0; i < mCountQuestionPages; i++) {
-                            // insert all these pages just before the final 'end' page.
-                            pages.add(mFirstQuestionPage, "Q");
-                        }
+                Quiz quiz = new Quiz();
+                if (hasEnterpriseBranding) {
+                    String primaryLanguage = getPrimaryLanguage(html);
+                    quiz = Quiz.readQuizFromFile(fileReader, primaryLanguage);
+
+                    mCountQuestionPages = quiz.numberOfQuestions();
+                    for (int i = 0; i < mCountQuestionPages; i++) {
+                        // insert all these pages just before the final 'end' page.
+                        pages.add(mFirstQuestionPage, "Q");
                     }
-                } catch(JSONException ex){
-                    Log.e("Reader", "Error parsing questions.json for " + path + "  " + ex);
                 }
+
                 mBackgroundAudioFiles = new String[pages.size()];
                 mBackgroundAudioVolumes = new float[pages.size()];
                 String currentBackgroundAudio = "";
@@ -286,7 +272,7 @@ public class ReaderActivity extends BaseActivity {
                     mBodyTag = "<body>"; // a trivial default, saves messing with nulls.
                 }
 
-                mAdapter = new BookPagerAdapter(pages, questions, ReaderActivity.this, bookHtmlFile, startFrame, endFrame);
+                mAdapter = new BookPagerAdapter(pages, quiz, ReaderActivity.this, bookHtmlFile, startFrame, endFrame);
 
                 reportLoadBook(path);
             } catch (IOException ex) {
@@ -528,7 +514,7 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("title", mBookName);
             p.putValue("totalNumberedPages", mNumberedPageCount);
             p.putValue("contentLang", mContentLang1);
-            p.putValue("questionCount", mAdapter.mQuestions.size());
+            p.putValue("questionCount", mAdapter.mQuiz.numberOfQuestions());
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }
@@ -675,7 +661,7 @@ public class ReaderActivity extends BaseActivity {
 
     // Class that provides individual page views as needed.
     // possible enhancement: can we reuse the same browser, just change which page is visible?
-    private class BookPagerAdapter extends PagerAdapter {
+    private class BookPagerAdapter extends PagerAdapter implements QuestionAnsweredHandler {
         // Each item is the full HTML text of one page div (div with class bloom-page).
         // the concatenation of mHtmlBeforeFirstPageDiv, mHtmlPageDivs, and mHtmlAfterLastPageDiv
         // is the whole book HTML file. (The code here assumes there is nothing in the body
@@ -683,7 +669,7 @@ public class ReaderActivity extends BaseActivity {
         // The concatenation of mHtmlBeforeFirstPageDiv, one item from mHtmlPageDivs, and
         // mHtmlAfterLastPageDiv is the content we put in a browser representing a single page.
         private List<String> mHtmlPageDivs;
-        List<JSONObject> mQuestions;
+        Quiz mQuiz;
         pageAnswerState[] mAnswerStates;
         boolean mQuestionAnalyticsSent;
         private String mHtmlBeforeFirstPageDiv;
@@ -701,14 +687,14 @@ public class ReaderActivity extends BaseActivity {
         private HashMap<Integer, ScaledWebView> mActiveViews = new HashMap<Integer, ScaledWebView>();
 
         BookPagerAdapter(List<String> htmlPageDivs,
-                         List<JSONObject> questions,
+                         Quiz quiz,
                          ReaderActivity parent,
                          File bookHtmlPath,
                          String htmlBeforeFirstPageDiv,
                          String htmlAfterLastPageDiv) {
             mHtmlPageDivs = htmlPageDivs;
-            mQuestions = questions;
-            mAnswerStates = new pageAnswerState[mQuestions.size()];
+            mQuiz = quiz;
+            mAnswerStates = new pageAnswerState[mQuiz.numberOfQuestions()];
             for (int i = 0; i < mAnswerStates.length; i++) {
                 mAnswerStates[i] = pageAnswerState.unanswered;
             }
@@ -737,114 +723,63 @@ public class ReaderActivity extends BaseActivity {
             Log.d("Reader", "instantiateItem " + position);
             assert(container.getChildCount() == 0);
             String page = mHtmlPageDivs.get(position);
+
+            View pageView;
             if (page.startsWith("<")) {
                 // normal content page
-                WebView browser = MakeBrowserForPage(position);
-                container.addView(browser);
-                return browser;
+                pageView = MakeBrowserForPage(position);
             }
-            // question page
-            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            final ConstraintLayout questionPageView = (ConstraintLayout) inflater.inflate(R.layout.question_page, null);
-            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
-                putQuestionTextBesideProgressText(questionPageView);
-            final int questionIndex = position - mFirstQuestionPage;
-            JSONObject question = mQuestions.get(questionIndex);
-            final TextView questionView = (TextView)questionPageView.findViewById(R.id.question);
-            try {
-                questionView.setText(question.getString("question"));
-                JSONArray answers = question.getJSONArray("answers");
-                final LinearLayout answersLayout = (LinearLayout) questionPageView.findViewById(R.id.answers_layout);
-                for (int i = 0; i < answers.length(); i++) {
-                    // Passing the intended parent view allows the button's margins to work properly.
-                    // There's an explanation at https://stackoverflow.com/questions/5315529/layout-problem-with-button-margin.
-                    final CheckBox answerCheck = (CheckBox) inflater.inflate(R.layout.question_answer_check, answersLayout, false);
-                    JSONObject answerObj = answers.getJSONObject(i);
-                    answerCheck.setText(answerObj.getString("text"));
-                    if (answerObj.getBoolean("correct"))
-                        answerCheck.setTag("correct");
-
-                    answerCheck.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            boolean correct = view.getTag() == "correct";
-
-                            if (correct) {
-                                for (int i = 0; i < answersLayout.getChildCount(); i++) {
-                                    CheckBox check = (CheckBox) answersLayout.getChildAt(i);
-                                    if (check != answerCheck)
-                                        check.setEnabled(false);
-                                }
-                            } else {
-                                answerCheck.setEnabled(false);
-                                answerCheck.setChecked(false);
-                            }
-
-                            pageAnswerState oldAnswerState = mAnswerStates[questionIndex];
-                            if (correct) {
-                                if (oldAnswerState == pageAnswerState.wrongOnce)
-                                    mAnswerStates[questionIndex] = pageAnswerState.secondTimeCorrect;
-                                else if (oldAnswerState == pageAnswerState.unanswered)
-                                    mAnswerStates[questionIndex] = pageAnswerState.firstTimeCorrect;
-                                // if they already got it wrong twice they get no credit.
-                                // if they already got it right no credit for clicking again.
-                                // both sounds from
-                                // https://freesound.org/people/themusicalnomad/sounds/?page=2
-                                // cc0
-                                playSoundFile(R.raw.right_answer);
-                            } else {
-                                if (oldAnswerState == pageAnswerState.unanswered)
-                                    mAnswerStates[questionIndex] = pageAnswerState.wrongOnce;
-                                else if (oldAnswerState == pageAnswerState.wrongOnce)
-                                    mAnswerStates[questionIndex] = pageAnswerState.wrong;
-                                // if they previously got it right we won't hold it against them
-                                // that they now get it wrong.
-                                playSoundFile(R.raw.wrong_answer);
-                            }
-                            if (!mQuestionAnalyticsSent) {
-                                boolean allAnswered = true;
-                                int rightFirstTime = 0;
-                                for (int i = 0; i < mAnswerStates.length; i++) {
-                                    if (mAnswerStates[i] == pageAnswerState.unanswered) {
-                                        allAnswered = false;
-                                        break;
-                                    } else if (mAnswerStates[i] == pageAnswerState.firstTimeCorrect) {
-                                        rightFirstTime++;
-                                    }
-                                }
-                                if (allAnswered) {
-                                    Properties p = new Properties();
-                                    p.putValue("title", mBookName);
-                                    p.putValue("questionCount", mAnswerStates.length);
-                                    p.putValue("rightFirstTime", rightFirstTime);
-                                    p.putValue("percentRight", rightFirstTime * 100 / mAnswerStates.length);
-                                    if (mBrandingProjectName != null) {
-                                        p.putValue("brandingProjectName", mBrandingProjectName);
-                                    }
-                                    Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Questions correct", p);
-                                    // Don't send again unless they re-open the book and start over.
-                                    mQuestionAnalyticsSent = true;
-                                }
-                            }
-                        }
-                    });
-                    answersLayout.addView(answerCheck);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
+            else {
+                final int questionIndex = position - mFirstQuestionPage;
+                QuestionPageGenerator questionPageGenerator = new QuestionPageGenerator(ReaderActivity.this);
+                pageView = questionPageGenerator.generate(mQuiz.getQuizQuestion(questionIndex), mQuiz.numberOfQuestions(), this);
             }
-            TextView progressView = (TextView) questionPageView.findViewById(R.id.question_progress);
-            progressView.setText(String.format(progressView.getText().toString(), questionIndex + 1, mCountQuestionPages));
-            container.addView(questionPageView);
-            return questionPageView;
+
+            container.addView(pageView);
+            return pageView;
         }
 
-        private void putQuestionTextBesideProgressText(ConstraintLayout questionPageView) {
-            ConstraintSet questionConstraints = new ConstraintSet();
-            questionConstraints.clone(questionPageView);
-            questionConstraints.connect(R.id.question, ConstraintSet.END, R.id.question_progress, ConstraintSet.START);
-            questionConstraints.connect(R.id.question, ConstraintSet.TOP, R.id.question_header, ConstraintSet.BOTTOM);
-            questionConstraints.applyTo(questionPageView);
+        public void questionAnswered(int questionIndex, boolean correct) { ReaderActivity.pageAnswerState oldAnswerState = mAnswerStates[questionIndex];
+            if (correct) {
+                if (oldAnswerState == ReaderActivity.pageAnswerState.wrongOnce)
+                    mAnswerStates[questionIndex] = ReaderActivity.pageAnswerState.secondTimeCorrect;
+                else if (oldAnswerState == ReaderActivity.pageAnswerState.unanswered)
+                    mAnswerStates[questionIndex] = ReaderActivity.pageAnswerState.firstTimeCorrect;
+                // if they already got it wrong twice they get no credit.
+                // if they already got it right no credit for clicking again.
+            } else {
+                if (oldAnswerState == ReaderActivity.pageAnswerState.unanswered)
+                    mAnswerStates[questionIndex] = ReaderActivity.pageAnswerState.wrongOnce;
+                else if (oldAnswerState == ReaderActivity.pageAnswerState.wrongOnce)
+                    mAnswerStates[questionIndex] = ReaderActivity.pageAnswerState.wrong;
+                // if they previously got it right we won't hold it against them
+                // that they now get it wrong.
+            }
+            if (!mQuestionAnalyticsSent) {
+                boolean allAnswered = true;
+                int rightFirstTime = 0;
+                for (int i = 0; i < mAnswerStates.length; i++) {
+                    if (mAnswerStates[i] == ReaderActivity.pageAnswerState.unanswered) {
+                        allAnswered = false;
+                        break;
+                    } else if (mAnswerStates[i] == ReaderActivity.pageAnswerState.firstTimeCorrect) {
+                        rightFirstTime++;
+                    }
+                }
+                if (allAnswered) {
+                    Properties p = new Properties();
+                    p.putValue("title", mBookName);
+                    p.putValue("questionCount", mAnswerStates.length);
+                    p.putValue("rightFirstTime", rightFirstTime);
+                    p.putValue("percentRight", rightFirstTime * 100 / mAnswerStates.length);
+                    if (mBrandingProjectName != null) {
+                        p.putValue("brandingProjectName", mBrandingProjectName);
+                    }
+                    Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Questions correct", p);
+                    // Don't send again unless they re-open the book and start over.
+                    mQuestionAnalyticsSent = true;
+                }
+            }
         }
 
         // position should in fact be the position of the pager.

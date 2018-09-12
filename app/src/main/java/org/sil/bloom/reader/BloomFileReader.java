@@ -45,11 +45,11 @@ public class BloomFileReader {
     }
 
     @Nullable // If no font file matches the give name
-    public File getFontFile(String fontName) {
+    public File getFontFile(String fontFileName) {
         try {
             if (bookDirectory == null)
                 openFile(CURRENT_BOOK_FOLDER);
-            File fontFile = new File(bookDirectory + File.separator + fontName);
+            File fontFile = new File(bookDirectory + File.separator + fontFileName);
             return fontFile.exists() ? fontFile : null;
         } catch (IOException e) {
             e.printStackTrace();

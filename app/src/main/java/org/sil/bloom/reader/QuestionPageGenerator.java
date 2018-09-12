@@ -11,6 +11,11 @@ import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+/*
+    Responsible for creating an Android View for a Comprehension Question (QuizQuestion) to be
+    used as a page in the book.
+ */
+
 public class QuestionPageGenerator {
     private ReaderActivity readerActivity;
 

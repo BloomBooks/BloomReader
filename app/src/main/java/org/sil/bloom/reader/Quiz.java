@@ -12,6 +12,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+    Represents a series of comprehension questions derived from a questions.json included in the
+    bloomd file.
+ */
+
 public class Quiz {
     private List<QuizQuestion> questions = new ArrayList<>();
     private Typeface font = null;

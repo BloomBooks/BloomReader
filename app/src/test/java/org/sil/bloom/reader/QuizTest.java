@@ -6,6 +6,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.File;
+
+import static junit.framework.Assert.assertNotNull;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertNull;
@@ -33,7 +36,8 @@ public class QuizTest {
     public void customFont() throws Exception {
         BloomFileReader mockFileReader = mockBloomFileReader(customFontQuizJSON());
         Quiz quiz = Quiz.readQuizFromFile(mockFileReader, "en");
-        verify(mockFileReader).getFontFile("GamjaFlower-Regular.ttf");
+        assertNotNull(quiz.getFont());
+        assertNotNull(quiz.getQuizQuestion(0).getFont());
     }
 
     @Test
@@ -61,6 +65,7 @@ public class QuizTest {
     private BloomFileReader mockBloomFileReader(String questionsJSON) {
         BloomFileReader mockFileReader = mock(BloomFileReader.class);
         when(mockFileReader.getFileContent("questions.json")).thenReturn(questionsJSON);
+        when(mockFileReader.getFontFile("GamjaFlower-Regular.ttf")).thenReturn(new File("mock"));
         return mockFileReader;
     }
 

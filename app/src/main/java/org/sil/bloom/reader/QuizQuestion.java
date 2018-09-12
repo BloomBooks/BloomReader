@@ -7,12 +7,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/*
+    Represents a single comprehension questions included in a Quiz object
+ */
+
 public class QuizQuestion {
     private String question;
     private int questionIndex;
-    private int numberOfAnswers;
     private String[] answers;
-    private boolean[] correctAnswers;
+    private boolean[] answersCorrectness;  // Parallel array to answers[]. True if the corresponding answer is correct
     private Typeface font;
 
     public QuizQuestion(JSONObject questionJSON, int questionIndex, Typeface font) throws JSONException{
@@ -25,14 +28,14 @@ public class QuizQuestion {
 
     public int getQuestionIndex() { return questionIndex; }
 
-    public int getNumberOfAnswers() { return numberOfAnswers; }
+    public int getNumberOfAnswers() { return answers.length; }
 
     public String getAnswer(int index) {
         return answers[index];
     }
 
     public boolean answerIsCorrect(int index) {
-        return correctAnswers[index];
+        return answersCorrectness[index];
     }
 
     @Nullable // If no custom font was set
@@ -42,14 +45,14 @@ public class QuizQuestion {
         question = questionJSON.getString("question");
 
         JSONArray answersJSON = questionJSON.getJSONArray("answers");
-        numberOfAnswers = answersJSON.length();
+        int numberOfAnswers = answersJSON.length();
         answers = new String[numberOfAnswers];
-        correctAnswers = new boolean[numberOfAnswers];
+        answersCorrectness = new boolean[numberOfAnswers];
 
         for(int i=0; i<numberOfAnswers; ++i) {
             JSONObject answerJSON = answersJSON.getJSONObject(i);
             answers[i] = answerJSON.getString("text");
-            correctAnswers[i] = answerJSON.getBoolean("correct");
+            answersCorrectness[i] = answerJSON.getBoolean("correct");
         }
     }
 }

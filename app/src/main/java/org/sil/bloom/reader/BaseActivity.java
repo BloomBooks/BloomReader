@@ -27,7 +27,8 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     // Call in onPause if subclass calls startObserving in OnResume.
     protected void stopObserving() {
-        mHandler.removeCallbacks(mObserver);
+        if (mHandler != null)
+            mHandler.removeCallbacks(mObserver);
     }
 
     // We want to monitor for new and changed books. We ought to be able to get notifications

@@ -3,10 +3,10 @@
     package="org.sil.bloom.reader"
     android:installLocation="auto">
 
+    <!-- Normal Permissions - granted by being in Manifest -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!-- So that just for the duration of WiFi transfer we can hold a lock. -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!-- Used at least for analytics, soon for Bloom Library download. Was present when I added
     analytics, so may be used for something else also. -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -17,6 +17,10 @@
     <!-- currently just because it's how we get the device name for WiFi, but eventually we will have
     other Bluetooth functions. -->
     <uses-permission android:name="android.permission.BLUETOOTH"/>
+
+    <!-- Dangerous Permissions - must be requested at runtime -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name=".BloomReaderApplication"

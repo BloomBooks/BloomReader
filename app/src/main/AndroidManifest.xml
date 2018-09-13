@@ -208,7 +208,7 @@
         </receiver>
 
         <provider
-            android:authorities="${applicationId}.fileprovider"
+            android:authorities="org.sil.bloom.reader.fileprovider"
             android:name="android.support.v4.content.FileProvider"
             android:grantUriPermissions="true"
             android:exported="false">

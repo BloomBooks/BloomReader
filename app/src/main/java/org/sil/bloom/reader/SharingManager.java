@@ -1,10 +1,12 @@
 package org.sil.bloom.reader;
 
-import android.content.Context;
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.support.v4.app.ShareCompat;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -22,26 +24,16 @@ import java.util.List;
 
 public class SharingManager {
 
-    private Context mContext;
+    private Activity mActivity;
 
-    public SharingManager(Context context) {
-        mContext = context;
+    public SharingManager(Activity activity) {
+        mActivity = activity;
     }
 
     public void shareBook(BookOrShelf book){
         File bookFile = new File(book.path);
-        String dialogTitle = String.format(mContext.getString(R.string.shareBook), book.name);
-        // This is the recommended way to get a URI to a file in BR's private storage and make it
-        // accessible to the sending code for a limited time.
-        //Uri uri = FileProvider.getUriForFile(mContext, "org.sil.bloom.reader.fileprovider", bookFile);
-        // But it does not work reliably; we've had some success (e.g., Bluetooth) but
-        // ShareIt gives a mysterious message saying it doesn't know how to transfer this kind
-        // of data, and Super Beam says "sorry, the file(s) you are trying to share are missing."
-        // Since Bloom is keeping its books in a public folder in a common part of the phone's
-        // storage, we don't need the special temporary-permission URI, and the one we get from the
-        // line below seems to work much more reliably.
-        Uri uri = Uri.fromFile(bookFile);
-        shareFile(uri, "application/zip", dialogTitle);
+        String dialogTitle = String.format(mActivity.getString(R.string.shareBook), book.name);
+        shareFile(bookFile, "application/zip", dialogTitle);
     }
 
     public void shareApkFile() {
@@ -54,11 +46,11 @@ public class SharingManager {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
                 type = "application/vnd.android.package-archive";
 
-            shareFile(Uri.fromFile(apkFile), type, mContext.getString(R.string.share_app_via));
+            shareFile(apkFile, type, mActivity.getString(R.string.share_app_via));
         }
         catch(IOException e){
             Log.e("BlReader/SharingManager", e.toString());
-            Toast failToast = Toast.makeText(mContext, mContext.getString(R.string.failed_to_share_apk), Toast.LENGTH_LONG);
+            Toast failToast = Toast.makeText(mActivity, mActivity.getString(R.string.failed_to_share_apk), Toast.LENGTH_LONG);
             failToast.show();
         }
     }
@@ -68,16 +60,16 @@ public class SharingManager {
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("text/plain");
 
-            String appName = mContext.getString(R.string.app_name);
+            String appName = mActivity.getString(R.string.app_name);
 
             intent.putExtra(Intent.EXTRA_SUBJECT, appName);
 
-            String sAux = "\n" + mContext.getString(R.string.recommend_app, appName) + "\n\n" +
+            String sAux = "\n" + mActivity.getString(R.string.recommend_app, appName) + "\n\n" +
                     "https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&amp;c=apps" + " \n\n";
             intent.putExtra(Intent.EXTRA_TEXT, sAux);
 
-            Intent chooser = Intent.createChooser(intent, mContext.getString(R.string.share_link_via));
-            mContext.startActivity(chooser);
+            Intent chooser = Intent.createChooser(intent, mActivity.getString(R.string.share_link_via));
+            mActivity.startActivity(chooser);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -91,11 +83,11 @@ public class SharingManager {
         try {
             String path = sharedBloomBundlePath();
             IOUtilities.tar(files, path);
-            shareFile(Uri.fromFile(new File(path)), "application/zip", mContext.getString(R.string.share_books_via));
+            shareFile(new File(path), "application/zip", mActivity.getString(R.string.share_books_via));
         }
         catch (IOException e){
             Log.e("BlReader/SharingManager", e.toString());
-            Toast failToast = Toast.makeText(mContext, mContext.getString(R.string.failed_to_share_books), Toast.LENGTH_LONG);
+            Toast failToast = Toast.makeText(mActivity, mActivity.getString(R.string.failed_to_share_books), Toast.LENGTH_LONG);
             failToast.show();
         }
     }
@@ -103,11 +95,11 @@ public class SharingManager {
     public void shareAllBooksAndShelves() {
         try {
             IOUtilities.makeBloomBundle(sharedBloomBundlePath());
-            shareFile(Uri.fromFile(new File(sharedBloomBundlePath())), "application/zip", mContext.getString(R.string.share_books_via));
+            shareFile(new File(sharedBloomBundlePath()), "application/zip", mActivity.getString(R.string.share_books_via));
         }
         catch (Exception e) {
             Log.e("BlReader/SharingManager", e.toString());
-            Toast failToast = Toast.makeText(mContext, mContext.getString(R.string.failed_to_share_books), Toast.LENGTH_LONG);
+            Toast failToast = Toast.makeText(mActivity, mActivity.getString(R.string.failed_to_share_books), Toast.LENGTH_LONG);
             failToast.show();
         }
     }
@@ -126,18 +118,18 @@ public class SharingManager {
         }
     }
 
-    private void shareFile(Uri uri, String fileType, String dialogTitle){
-        Intent shareIntent = new Intent();
-        shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-        shareIntent.setType(fileType);
-
-        mContext.startActivity(Intent.createChooser(shareIntent, dialogTitle));
+    private void shareFile(File file, String fileType, String dialogTitle){
+        Uri uri = FileProvider.getUriForFile(mActivity, "org.sil.bloom.reader.fileprovider", file);
+        Intent shareIntent = ShareCompat.IntentBuilder.from(mActivity)
+                .setStream(uri)
+                .getIntent()
+                .setDataAndType(uri, fileType)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        mActivity.startActivity(Intent.createChooser(shareIntent, dialogTitle));
     }
 
     private File copyApkToExternalStorageForSharing() throws IOException{
-        String apkPath = mContext.getApplicationInfo().publicSourceDir;
+        String apkPath = mActivity.getApplicationInfo().publicSourceDir;
         File srcApk = new File(apkPath);
         File destApk = new File(sharedApkPath());
         if (destApk.exists() && destApk.isFile()) {

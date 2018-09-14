@@ -34,11 +34,26 @@ public class BloomReaderApplication extends Application {
     // Created by main activity, used also by shelf activities. The active one controls its filter.
     public static BookCollection theOneBookCollection;
 
+    public static boolean stillNeedToSetupAnalytics = false;
+
     @Override
     public void onCreate() {
         super.onCreate();
         sApplicationContext = getApplicationContext();
+        if (MainActivity.haveStoragePermission(this))
+            setupAnalytics(this);
+        else
+            stillNeedToSetupAnalytics = true;
+    }
 
+    public static void setupAnalyticsIfNeeded(Context context) {
+        if (stillNeedToSetupAnalytics) {
+            stillNeedToSetupAnalytics = false;
+            setupAnalytics(context);
+        }
+    }
+
+    private static void setupAnalytics(Context context) {
         String writeKey = "FSepBapJtfOi3FfhsEWQjc2Dw0O3ixuY"; // Source BloomReaderTest
 
         if (InTestModeForAnalytics()) {
@@ -60,7 +75,7 @@ public class BloomReaderApplication extends Application {
                 .build();
 
         try {
-            String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            String version = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
             String[] numbers = version.split("\\.");
             analytics.getAnalyticsContext().putValue("majorMinor", numbers[0] + "." + numbers[1]);
         } catch (PackageManager.NameNotFoundException e) {
@@ -135,10 +150,11 @@ public class BloomReaderApplication extends Application {
         if(testMode)
             return true;
         try{
+            File bookDirectory = BookCollection.getLocalBooksDirectory();
             // We'd really like to just ignore case, but no easy way to do it.
-            return new File(BookCollection.getLocalBooksDirectory(), "UseTestAnalytics").exists()
-                    || new File(BookCollection.getLocalBooksDirectory(), "useTestAnalytics").exists()
-                    || new File(BookCollection.getLocalBooksDirectory(), "usetestanalytics").exists();
+            return new File(bookDirectory, "UseTestAnalytics").exists()
+                    || new File(bookDirectory, "useTestAnalytics").exists()
+                    || new File(bookDirectory, "usetestanalytics").exists();
         }
         catch (ExtStorageUnavailableException e){
             Log.e("BloomReader/FileIO", e.getStackTrace().toString());

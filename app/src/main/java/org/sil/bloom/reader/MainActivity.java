@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -58,6 +59,7 @@ public class MainActivity extends BaseActivity
     // but we don't want to reopen the book if we already did
     private boolean alreadyOpenedFileFromIntent = false;
     private static final String ALREADY_OPENED_FILE_FROM_INTENT_KEY = "alreadyOpenedFileFromIntent";
+    private boolean onResumeIsWaitingForStoragePermission = false;
 
     private RecyclerView mBookRecyclerView;
     private BookListAdapter mBookListAdapter;
@@ -65,14 +67,39 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            //NB: if the build.gradle targetSdkVersion goes above 22, then the permission system changes and
-            //the manifest's uses-permission stops working (there is a new system).
-            Toast.makeText(this.getApplicationContext(), "Should Have External Write Permission", Toast.LENGTH_LONG);
-            return;
+        if (haveStoragePermission(this)) {
+            createMainActivity(savedInstanceState);
         }
+        else {
+            setContentView(R.layout.blank);
+            requestStoragePermission(null);
+        }
+    }
+
+    public static boolean haveStoragePermission(Context context) {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+               ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)  == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public void requestStoragePermission(View button) {
+        String[] permissionsNeeded = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        ActivityCompat.requestPermissions(this, permissionsNeeded, 0);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            createMainActivity(null);
+        }
+        else {
+            setContentView(R.layout.need_storage_permission);
+        }
+    }
+
+    private void createMainActivity(Bundle savedInstanceState) {
+        setContentView(R.layout.activity_main);
+        BloomReaderApplication.setupAnalyticsIfNeeded(this);
 
         try {
             _bookCollection= setupBookCollection();
@@ -123,6 +150,9 @@ public class MainActivity extends BaseActivity
 
         // Cleans up old-style thumbnails - could be removed someday after it's run on most devices with old-style thumbnails
         BookCollection.cleanUpOldThumbs(this);
+
+        if (onResumeIsWaitingForStoragePermission)
+            resumeMainActivity();
     }
 
     // This is a hook to allow ShelfActivity to disable the navigation drawer and replace it
@@ -192,6 +222,14 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onResume() {
         super.onResume();
+        if (haveStoragePermission(this) && !onResumeIsWaitingForStoragePermission)
+            resumeMainActivity();
+        else
+            onResumeIsWaitingForStoragePermission = true;
+    }
+
+    private void resumeMainActivity() {
+        onResumeIsWaitingForStoragePermission = false;
         updateFilter();
         try {
             // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated

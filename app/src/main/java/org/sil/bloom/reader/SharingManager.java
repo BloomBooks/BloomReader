@@ -119,7 +119,7 @@ public class SharingManager {
     }
 
     private void shareFile(File file, String fileType, String dialogTitle){
-        Uri uri = FileProvider.getUriForFile(mActivity, "org.sil.bloom.reader.fileprovider", file);
+        Uri uri = FileProvider.getUriForFile(mActivity, BuildConfig.APPLICATION_ID + ".fileprovider", file);
         Intent shareIntent = ShareCompat.IntentBuilder.from(mActivity)
                 .setStream(uri)
                 .getIntent()

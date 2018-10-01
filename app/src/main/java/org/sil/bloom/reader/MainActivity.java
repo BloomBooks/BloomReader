@@ -391,7 +391,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void deleteBook(final BookOrShelf book) {
-        new AlertDialog.Builder(this).setMessage(getString(R.string.deleteExplanationBook, book.name))
+        new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(getString(R.string.deleteExplanationBook, book.name))
                 .setTitle(getString(R.string.deleteConfirmation))
                 .setPositiveButton(getString(R.string.deleteConfirmButton), new DialogInterface.OnClickListener() {
                     @Override

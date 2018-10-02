@@ -252,8 +252,9 @@ public class BookCollection {
             // We assume that they will be happy with us removing from where ever the file was,
             // so long as it is on the same device (e.g. not coming from an sd card they plan to pass
             // around the room).
-            if(!IOUtilities.seemToBeDifferentVolumes(bookUri.getPath(),destination)) {
-                (new File(bookUri.getPath())).delete();
+            File bookFile = new File(bookUri.getPath());
+            if (IOUtilities.isInNonRemovableStorage(context, bookFile)) {
+                bookFile.delete();
             }
 
             // it's probably not in our list that we display yet, so make an entry there

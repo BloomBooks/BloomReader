@@ -13,23 +13,24 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.BookOrShelf;
+import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -206,17 +207,29 @@ public class IOUtilities {
         }
     }
 
-    // "Seem" because this doesn't actually have a way of knowing the physical location of things.
-    // The modest goal here is to handle the common case that I'm aware of:
-    // to differentiate between /storage/emulated/0 (internal) and /storage/53D-DS32 (external SD card).
-    public static boolean seemToBeDifferentVolumes(String one, String two) {
-        String[] oneParts = one.split("\\"+File.separator);
-        String[] twoParts = two.split("\\"+File.separator);
-        // for info on paths, https://www.reddit.com/r/Android/comments/496sn3/lets_clear_up_the_confusion_regarding_storage_in/?ref=share&ref_source=link
-        // To would could perhaps only test the third part [2], for "emulated" vs. "53D-DS32". But testing all three doesn't hurt:
-        if (oneParts.length < 3 || twoParts.length < 4)
-            return false; // this is a surprising situation, play it safe
-        return !oneParts[0].equals(twoParts[0]) || !oneParts[1].equals(twoParts[1]) || !oneParts[2].equals(twoParts[2]);
+    // In case of doubt we return false
+    public static boolean isInNonRemovableStorage(Context context, File file) {
+        try {
+            if (Build.VERSION.SDK_INT >= 21)
+                return !Environment.isExternalStorageRemovable(file);
+
+            if (Environment.isExternalStorageRemovable())
+                return false; // Primary ext storage is removable. No confidence we can determine our file isn't on that
+
+            // Since we're here, the primary external storage is nonremovable. Is our file in that directory?
+            String extStoragePath = context.getExternalFilesDir("").getAbsolutePath();
+            // Expect the path to be something like /path/to/nonremovable/ext/storage/Android/data/org.sil.bloom.reader/files/
+            // Chopping off /Android/... gives us a path to nonremovable external storage
+            int index = extStoragePath.indexOf(File.separator + "Android" + File.separator);
+            if (index < 0)
+                return false;  // Didn't get the path we expected
+            extStoragePath = extStoragePath.substring(0, index);
+            return file.getAbsolutePath().startsWith(extStoragePath);
+        } catch (IllegalArgumentException e) {
+            // This happens when trying to evaluate Environment.isExternalStorageRemovable() on
+            // files from a content:// URI
+            return false;
+        }
     }
 
     public static String FileToString(File file) {

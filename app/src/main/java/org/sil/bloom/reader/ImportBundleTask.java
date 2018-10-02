@@ -62,18 +62,13 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
             toast.show();
         }
         else {
-            try {
-                // We assume that they will be happy with us removing from where ever the bundle was,
-                // so long as it is on the same device (e.g. not coming from an sd card they plan to pass
-                // around the room).
-                if (!IOUtilities.seemToBeDifferentVolumes(bloomBundleUri.getPath(), getLocalBooksDirectory().getPath())) {
-                    (new File(bloomBundleUri.getPath())).delete();
-                }
+            // We assume that they will be happy with us removing from where ever the bundle was,
+            // so long as it is on the same device (e.g. not coming from an sd card they plan to pass
+            // around the room).
+            File bundleFile = new File(bloomBundleUri.getPath());
+            if (IOUtilities.isInNonRemovableStorage(mainActivity, bundleFile)) {
+                bundleFile.delete();
             }
-            catch (ExtStorageUnavailableException e) {
-                e.printStackTrace();
-            }
-
         }
     }
 

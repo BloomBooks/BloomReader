@@ -56,6 +56,9 @@
 
     <string name="share_app">Share Bloom Reader app</string>
     <string name="share_books">Share Books</string>
+    <string name="find_books_on_device">Find Bloom books on this device</string>
+    <string name="searching">Searching...</string>
+    <string name="no_books_added">No new Bloom books or bundles found on the device.</string>
     <string name="release_notes">Release Notes</string>
     <string name="about_bloom_reader">About Bloom Reader</string>
     <string name="about_bloom">About Bloom</string>

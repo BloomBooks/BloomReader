@@ -31,6 +31,17 @@ public abstract class BaseActivity extends AppCompatActivity {
             mHandler.removeCallbacks(mObserver);
     }
 
+    // If we import a bundle while the FileObserver is running, the user has already been notified
+    // about these files, and we don't want another notification the next time onResume() is called.
+    protected void resetFileObserver() {
+        try {
+            mostRecentlyModifiedBloomFileTime = getLatestModifedTimeAndFile(BookCollection.getLocalBooksDirectory()).time;
+        }
+        catch (ExtStorageUnavailableException e) {
+            e.printStackTrace();
+        }
+    }
+
     // We want to monitor for new and changed books. We ought to be able to get notifications
     // efficiently and reliably using FileObserver, but as documented in
     // https://issuetracker.google.com/issues/37065227 this does not work in Android 6 and possibly

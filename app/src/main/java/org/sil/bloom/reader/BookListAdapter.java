@@ -88,7 +88,6 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     @Override
     public void onClick(View view) {
-        clearHighlight();
         if (selectedItem != null) {
             clearSelection();
             bookClickListener.onClearBookSelection();
@@ -96,6 +95,8 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         else {
             bookClickListener.onBookClick((BookOrShelf) view.getTag());
         }
+
+        clearHighlight();
     }
 
     @Override
@@ -159,9 +160,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
         inHighlightedState = false;
 
-        // With the current usages of this method, notifyDataSetChanged() is unecessary
-        // and causes an undesirable delay in processing onClick().
-        // notifyDataSetChanged();
+        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

@@ -39,6 +39,7 @@ import static org.sil.bloom.reader.models.BookCollection.getLocalBooksDirectory;
 public class IOUtilities {
 
     public static final String BLOOM_BUNDLE_FILE_EXTENSION = ".bloombundle";
+    public static final String BLOOMD_FILE_EXTENSION = ".bloomd";
 
     private static final int BUFFER_SIZE = 8192;
 

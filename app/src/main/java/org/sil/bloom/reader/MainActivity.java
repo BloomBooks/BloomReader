@@ -34,8 +34,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.sil.bloom.reader.WiFi.GetFromWiFiActivity;
-import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.BookCollection;
+import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
@@ -54,6 +54,7 @@ public class MainActivity extends BaseActivity
     protected BookCollection _bookCollection;
     public android.view.ActionMode contextualActionBarMode;
     private static boolean sSkipNextNewFileSound;
+
     // OnCreate may run a second time if the activity gets recycled and the user navigates back to it
     // but we don't want to reopen the book if we already did
     private boolean alreadyOpenedFileFromIntent = false;
@@ -61,6 +62,8 @@ public class MainActivity extends BaseActivity
 
     private RecyclerView mBookRecyclerView;
     private BookListAdapter mBookListAdapter;
+    // When we searchForBloomBooks() this keeps track if we found anything new
+    private boolean addedBookFromSearch = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -160,15 +163,23 @@ public class MainActivity extends BaseActivity
         alreadyOpenedFileFromIntent = true;
     }
 
+    private void importBook(Uri bookUri) {
+        importBook(bookUri, true);
+    }
+
     // If we were given a path to a book file,
     // we want copy it to where Bloom books live if it isn't already there,
     // make sure it is in our collection,
     // and then open the reader to view it.
-    private void importBook(Uri bookUri){
+    private void importBook(Uri bookUri, boolean autoOpen){
         String newPath = _bookCollection.ensureBookIsInCollection(this, bookUri);
         if (newPath != null) {
-            openBook(this, newPath);
+            if (autoOpen)
+                openBook(this, newPath);
+            else
+                updateForNewBook(newPath);
         } else {
+            Log.e("BookSearch", bookUri.getPath());
             Toast failToast = Toast.makeText(this, R.string.failed_book_import, Toast.LENGTH_LONG);
             failToast.show();
         }
@@ -285,7 +296,9 @@ public class MainActivity extends BaseActivity
             return;
 
         int bookPosition = mBookListAdapter.highlightItem(book);
-        smoothScrollToPosition(bookPosition);
+
+        if (bookPosition > -1)
+            smoothScrollToPosition(bookPosition);
     }
 
     private void highlightItems(List<String> paths) {
@@ -536,6 +549,9 @@ public class MainActivity extends BaseActivity
             case R.id.nav_release_notes:
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
                 break;
+            case R.id.nav_search_for_bundles:
+                searchForBloomBooks();
+                break;
             case R.id.about_reader:
                 DisplaySimpleResource(getString(R.string.about_bloom_reader), R.raw.about_reader);
                 break;
@@ -590,6 +606,37 @@ public class MainActivity extends BaseActivity
                 onNewOrUpdatedBook(newBooks[newBooks.length - 1]);
             }
         }
+    }
+
+    private void searchForBloomBooks() {
+        addedBookFromSearch = false;
+        BookFinderTask.BookSearchListener bookSearchListener = new BookFinderTask.BookSearchListener() {
+            @Override
+            public void onNewBloomd(File bloomdFile) {
+                if (_bookCollection.getBookByPath(bloomdFile.getPath()) == null) {
+                    Log.w("BookSearch", "Found " + bloomdFile.getPath());
+                    importBook(Uri.fromFile(bloomdFile), false);
+                    addedBookFromSearch = true;
+                }
+            }
+
+            @Override
+            public void onNewBloomBundle(File bundleFile) {
+                Log.w("BookSearch", "Found " + bundleFile.getPath());
+                importBloomBundle(Uri.fromFile(bundleFile));
+                addedBookFromSearch = true;
+            }
+
+            @Override
+            public void onSearchComplete() {
+                findViewById(R.id.searching_text).setVisibility(View.GONE);
+                if (!addedBookFromSearch)
+                    Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
+                resetFileObserver();  // Prevents repeat notifications later
+            }
+        };
+        new BookFinderTask(this, bookSearchListener).execute();
+        findViewById(R.id.searching_text).setVisibility(View.VISIBLE);
     }
 
     @Override

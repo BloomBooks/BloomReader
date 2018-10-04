@@ -223,7 +223,7 @@ public class BookCollection {
     // is this coming from somewhere other than where we store books?
     // then move or copy it in
     public String ensureBookIsInCollection(Context context, Uri bookUri) {
-        if (bookUri.getPath().indexOf(mLocalBooksDirectory.getAbsolutePath()) >= 0)
+        if (bookUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath()))
             return bookUri.getPath();
         BloomFileReader fileReader = new BloomFileReader(context, bookUri);
         String name = fileReader.bookNameIfValid();
@@ -240,6 +240,7 @@ public class BookCollection {
             if(!IOUtilities.seemToBeDifferentVolumes(bookUri.getPath(),destination)) {
                 (new File(bookUri.getPath())).delete();
             }
+
             // it's probably not in our list that we display yet, so make an entry there
             addBookIfNeeded(destination);
             return destination;

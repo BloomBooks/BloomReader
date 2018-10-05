@@ -30,7 +30,8 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
         // Hackishly find sdcard and scan that too
         File[] publicBloomReaderDirs = activity.getExternalFilesDirs(null);
         for (File dir : publicBloomReaderDirs) {
-            if (dir.getPath().contains("Android")) {
+            // Google Play Console proves dir can be null somehow
+            if (dir != null && dir.getPath().contains("Android")) {
                 while (!dir.getName().equals("Android"))
                     dir = dir.getParentFile();
                 dir = dir.getParentFile(); // The parent directory of Android/

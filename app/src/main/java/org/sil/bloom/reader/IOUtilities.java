@@ -207,31 +207,6 @@ public class IOUtilities {
         }
     }
 
-    // In case of doubt we return false
-    public static boolean isInNonRemovableStorage(Context context, File file) {
-        try {
-            if (Build.VERSION.SDK_INT >= 21)
-                return !Environment.isExternalStorageRemovable(file);
-
-            if (Environment.isExternalStorageRemovable())
-                return false; // Primary ext storage is removable. No confidence we can determine our file isn't on that
-
-            // Since we're here, the primary external storage is nonremovable. Is our file in that directory?
-            String extStoragePath = context.getExternalFilesDir("").getAbsolutePath();
-            // Expect the path to be something like /path/to/nonremovable/ext/storage/Android/data/org.sil.bloom.reader/files/
-            // Chopping off /Android/... gives us a path to nonremovable external storage
-            int index = extStoragePath.indexOf(File.separator + "Android" + File.separator);
-            if (index < 0)
-                return false;  // Didn't get the path we expected
-            extStoragePath = extStoragePath.substring(0, index);
-            return file.getAbsolutePath().startsWith(extStoragePath);
-        } catch (IllegalArgumentException e) {
-            // This happens when trying to evaluate Environment.isExternalStorageRemovable() on
-            // files from a content:// URI
-            return false;
-        }
-    }
-
     public static String FileToString(File file) {
         try {
             return InputStreamToString(new FileInputStream(file));

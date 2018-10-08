@@ -48,6 +48,7 @@
     <string name="failed_to_share_apk">Failed to share app file.</string>
     <string name="failed_to_share_books">Failed to share books</string>
     <string name="failed_to_open_book">Unable to open book</string>
+    <string name="missing_book">%1$s is missing. It may have been on an sd card that was removed, or it may have been deleted.</string>
     <string name="device_storage_is_full">Unable to open book. The device storage is full. Free up some space and try again.</string>
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
     <string name="adding_book">Adding %1$s...</string>

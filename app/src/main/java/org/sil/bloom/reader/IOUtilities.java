@@ -3,6 +3,8 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -335,5 +337,50 @@ public class IOUtilities {
             destPath.mkdir();
         }
         return destPath.getPath();
+    }
+
+    public static File nonRemovablePublicStorageRoot(Context context) {
+        return publicStorageRoot(context, false);
+    }
+
+    public static File removablePublicStorageRoot(Context context) {
+        return publicStorageRoot(context, true);
+    }
+
+    private static File publicStorageRoot(Context context, boolean removable) {
+        if (Environment.isExternalStorageRemovable() == removable)
+            return Environment.getExternalStorageDirectory();
+
+        File[] appFilesDirs = context.getExternalFilesDirs(null);
+        for (File appFilesDir : appFilesDirs) {
+            if (appFilesDir != null) {
+                File root  = storageRootFromAppFilesDir(appFilesDir);
+                if (root != null && isRemovable(root) == removable)
+                    return root;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isRemovable(File dir) {
+        if (Build.VERSION.SDK_INT >= 21)
+            return Environment.isExternalStorageRemovable(dir);
+
+        boolean defaultStorageRemovable = Environment.isExternalStorageRemovable();
+        if (dir.getPath().startsWith(Environment.getExternalStorageDirectory().getPath()))
+            return defaultStorageRemovable;
+        else
+            return !defaultStorageRemovable;
+    }
+
+    private static File storageRootFromAppFilesDir(File appFilesDir) {
+        // appStorageDir is a directory within the public storage with a path like
+        // /path/to/public/storage/Android/data/org.sil.bloom.reader/files
+
+        String path = appFilesDir.getPath();
+        int androidDirIndex = path.indexOf(File.separator + "Android" + File.separator);
+        if (androidDirIndex > 0)
+            return new File(path.substring(0, androidDirIndex));
+        return null;
     }
 }

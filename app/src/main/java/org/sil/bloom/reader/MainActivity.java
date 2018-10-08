@@ -478,10 +478,9 @@ public class MainActivity extends BaseActivity
 
     private void openBook(Context context, String path) {
         if (!new File(path).exists()) {
-            // Deleted (probably by some other process). We consider this a corner case
-            // unworthy of creating message strings that must be localized, so just
-            // clean it up. (Since it already doesn't exist, deleteFromDevice just
-            // removes it from the collection.)
+            // Possibly deleted - possibly on an sd card that got removed
+            Toast.makeText(this, getString(R.string.missing_book, BookOrShelf.getNameFromPath(path)), Toast.LENGTH_LONG).show();
+            // Remove the book from the collection
             _bookCollection.deleteFromDevice(_bookCollection.getBookByPath(path));
             mBookListAdapter.notifyDataSetChanged();
             return;

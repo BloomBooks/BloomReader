@@ -144,7 +144,8 @@ public class BookCollection {
     }
 
     public void init(Context context) throws ExtStorageUnavailableException {
-        mLocalBooksDirectory = getLocalBooksDirectory();
+        File[] booksDirs = getLocalAndRemovableBooksDirectories(context);
+        mLocalBooksDirectory = booksDirs[0];
         SharedPreferences values = context.getSharedPreferences(BloomReaderApplication.SHARED_PREFERENCES_TAG, 0);
         int buildCode = BuildConfig.VERSION_CODE;
         if(buildCode > values.getInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, 0)){
@@ -153,7 +154,7 @@ public class BookCollection {
             valuesEditor.putInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, buildCode);
             valuesEditor.commit();
         }
-        LoadFromDirectory(mLocalBooksDirectory);
+        loadFromDirectories(booksDirs);
     }
 
     public static File getLocalBooksDirectory() throws ExtStorageUnavailableException {
@@ -164,9 +165,23 @@ public class BookCollection {
         return bloomDir;
     }
 
-    private void LoadFromDirectory(File directory) {
+    public static File[] getLocalAndRemovableBooksDirectories(Context context) throws ExtStorageUnavailableException {
+        File localBooksDir = getLocalBooksDirectory();
+        File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
+        File remoteBooksDir = new File(remoteStorageDir, "Bloom");
+        if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
+            return new File[] {localBooksDir, remoteBooksDir};
+        return new File[] {localBooksDir};
+    }
+
+    private void loadFromDirectories(File[] booksDirs) {
         mShelfIds.clear();
         _booksAndShelves.clear();
+        for (File booksDir : booksDirs)
+            loadFromDirectory(booksDir);
+    }
+
+    private void loadFromDirectory(File directory) {
         File[] files = directory.listFiles();
         if(files != null) {
             for (int i = 0; i < files.length; i++) {

@@ -8,6 +8,7 @@ import android.os.Environment;
 import android.util.Log;
 
 import org.sil.bloom.reader.models.BookCollection;
+import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
@@ -24,7 +25,7 @@ import java.io.File;
 public class FileCleanupTask extends AsyncTask<Void, Void, Void> {
     private Context context;
     private Uri searchFileUri;
-    private File bloomDirectory; // We don't want to search here
+    private File bloomDirectory; // We don't want to remove bloomd's from here
 
     public FileCleanupTask(Context context, Uri searchFileUri) {
         this.context = context;
@@ -33,36 +34,36 @@ public class FileCleanupTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     public Void doInBackground(Void... v) {
-        // If the URI is file:// we have direct access to the file,
-        // otherwise we have to search for it
-
-        if (searchFileUri.getScheme() == "file") {
-            File searchFile = new File(searchFileUri.getPath());
-            if (onNonRemovableStorage(searchFile))
-                searchFile.delete();
-            return null;
-        }
-
         try {
-            bloomDirectory = BookCollection.getLocalBooksDirectory();
+            // If the URI is file:// we have direct access to the file,
+            // otherwise we have to search for it
+            if (searchFileUri.getScheme().equals("file")) {
+                File searchFile = new File(searchFileUri.getPath());
+                if (isOnNonRemovableStorage(searchFile) && !isABookInOurLibrary(searchFile))
+                    searchFile.delete();
+                return null;
+            }
 
-            File nonRemovableStorageDir = getNonRemovableStorageDir();
+            File nonRemovableStorageDir = IOUtilities.nonRemovablePublicStorageRoot(context);
             if (nonRemovableStorageDir == null)
                 return null;
 
+            // Returns null if the file is not found
             File fileToDelete = searchForFile(nonRemovableStorageDir);
 
             if (fileToDelete != null)
                 fileToDelete.delete();
         }
-        catch (ExtStorageUnavailableException e) {
+        catch (Exception e) {
+            // Is there any way to communicate this back to us
+            // so we can fix issues that cause our code to crash?
             Log.e("BloomReader", e.getLocalizedMessage());
         }
 
         return null;
     }
 
-    private boolean onNonRemovableStorage(File file) {
+    private boolean isOnNonRemovableStorage(File file) {
         if (Build.VERSION.SDK_INT >= 21)
             return !Environment.isExternalStorageRemovable(file);
 
@@ -71,37 +72,30 @@ public class FileCleanupTask extends AsyncTask<Void, Void, Void> {
                 file.getPath().startsWith(Environment.getExternalStorageDirectory().getPath()));
     }
 
-    private File getNonRemovableStorageDir() {
-        // Common case - primary "external" storage is non-removable
-        if (!Environment.isExternalStorageRemovable())
-            return Environment.getExternalStorageDirectory();
+    private boolean isABookInOurLibrary(File file) throws ExtStorageUnavailableException {
+        // The library only includes bloomd files
+        if (file.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
+            return false;
 
-        return findNonRemovableStorageDir();
+        return file.getPath().startsWith(getBloomDirectory().getPath());
     }
 
-    private File findNonRemovableStorageDir() {
-        if (Build.VERSION.SDK_INT >= 21) {
-            File[] appStorageDirs = context.getExternalFilesDirs("");
-            for (File appStorageDir : appStorageDirs) {
-                if (!Environment.isExternalStorageRemovable(appStorageDir))
-                    return getNonRemovableStorageRootDir(appStorageDir);
-            }
-        }
-        return null;
+    private boolean shouldSearchThisDirectory(File dir) throws ExtStorageUnavailableException {
+        // We don't want to find the bloomd's in our library
+        // Bundles are fair game everywhere
+        if (searchFileUri.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
+            return true;
+
+        return !dir.equals(getBloomDirectory());
     }
 
-    private File getNonRemovableStorageRootDir(File appStorageDir) {
-        // appStorageDir is a directory within the public storage with a path like
-        // /path/to/public/storage/Android/data/org.sil.bloom.reader/files
-
-        String path = appStorageDir.getPath();
-        int androidDirIndex = path.indexOf(File.separator + "Android" + File.separator);
-        if (androidDirIndex > 0)
-            return new File(path.substring(0, androidDirIndex));
-        return null;
+    private File getBloomDirectory() throws ExtStorageUnavailableException {
+        if (bloomDirectory == null)
+            bloomDirectory = BookCollection.getLocalBooksDirectory();
+        return bloomDirectory;
     }
 
-    private File searchForFile(File dir) {
+    private File searchForFile(File dir) throws ExtStorageUnavailableException {
         if (dir == null)
             return null;
 
@@ -112,7 +106,7 @@ public class FileCleanupTask extends AsyncTask<Void, Void, Void> {
         for (File f : list) {
             if (f.isFile() && matchesSearchFile(f))
                 return f;
-            if (f.isDirectory() && !f.equals(bloomDirectory)) {
+            if (f.isDirectory() && shouldSearchThisDirectory(f)) {
                 File fileToDelete = searchForFile(f);
                 if (fileToDelete != null)
                     return fileToDelete;

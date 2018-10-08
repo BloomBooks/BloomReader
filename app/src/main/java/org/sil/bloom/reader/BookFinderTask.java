@@ -23,23 +23,9 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     public Void doInBackground(Void... v) {
-        // Scan public on-device storage
-        String externalStoragePath = Environment.getExternalStorageDirectory().getPath();
-        scan(new File(externalStoragePath));
+        scan(IOUtilities.removablePublicStorageRoot(activity));
+        scan(IOUtilities.nonRemovablePublicStorageRoot(activity));
 
-        // Hackishly find sdcard and scan that too
-        File[] publicBloomReaderDirs = activity.getExternalFilesDirs(null);
-        for (File dir : publicBloomReaderDirs) {
-            // Google Play Console proves dir can be null somehow
-            if (dir != null && dir.getPath().contains("Android")) {
-                while (!dir.getName().equals("Android"))
-                    dir = dir.getParentFile();
-                dir = dir.getParentFile(); // The parent directory of Android/
-                if (!dir.getPath().equals(externalStoragePath)) {
-                    scan(dir);
-                }
-            }
-        }
         return null;
     }
 

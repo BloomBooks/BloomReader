@@ -24,17 +24,22 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
     private IOException ioException;
     private Toast toast;
     private List<String> newBookPaths;
+    private List<Uri> bundlesToCleanUp;
 
     ImportBundleTask(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
+        // Using a single toast object allows us to update the message immediately
         this.toast = Toast.makeText(mainActivity, "", Toast.LENGTH_SHORT);
-        this.newBookPaths = new ArrayList<String>();
+        this.newBookPaths = new ArrayList<>();
+        this.bundlesToCleanUp = new ArrayList<>();
     }
 
     protected Void doInBackground(Uri... bundleUris) {
         try {
-            bloomBundleUri = bundleUris[0];
-            extractBloomBundle(bloomBundleUri);
+            for(Uri bloomBundleUri : bundleUris) {
+                extractBloomBundle(bloomBundleUri);
+                bundlesToCleanUp.add(bloomBundleUri);
+            }
         }
         catch (IOException e) {
             ioException = e;
@@ -61,9 +66,8 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
             toast.setText(toastMessage);
             toast.show();
         }
-        else {
-            new FileCleanupTask(mainActivity, bloomBundleUri).execute();
-        }
+
+        new FileCleanupTask(mainActivity).execute(bundlesToCleanUp.toArray(new Uri[0]));
     }
 
     private void extractBloomBundle(Uri bloomBundleUri) throws IOException {

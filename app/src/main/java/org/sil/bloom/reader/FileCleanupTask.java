@@ -8,7 +8,6 @@ import android.os.Environment;
 import android.util.Log;
 
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
@@ -22,45 +21,46 @@ import java.io.File;
     can be passed to another device to import the same file.
  */
 
-public class FileCleanupTask extends AsyncTask<Void, Void, Void> {
+public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
     private Context context;
-    private Uri searchFileUri;
     private File bloomDirectory; // We don't want to remove bloomd's from here
 
-    public FileCleanupTask(Context context, Uri searchFileUri) {
+    public FileCleanupTask(Context context) {
         this.context = context;
-        this.searchFileUri = searchFileUri;
     }
 
     @Override
-    public Void doInBackground(Void... v) {
+    public Void doInBackground(Uri... urisToCleanUp) {
+        for(Uri uriToCleanUp : urisToCleanUp)
+            cleanUpUri(uriToCleanUp);
+        return null;
+    }
+
+    private void cleanUpUri(Uri uriToCleanUp) {
         try {
             // If the URI is file:// we have direct access to the file,
             // otherwise we have to search for it
-            if (searchFileUri.getScheme().equals("file")) {
-                File searchFile = new File(searchFileUri.getPath());
+            if (uriToCleanUp.getScheme().equals("file")) {
+                File searchFile = new File(uriToCleanUp.getPath());
                 if (isOnNonRemovableStorage(searchFile) && !isABookInOurLibrary(searchFile))
                     searchFile.delete();
-                return null;
+                return;
             }
 
             File nonRemovableStorageDir = IOUtilities.nonRemovablePublicStorageRoot(context);
             if (nonRemovableStorageDir == null)
-                return null;
+                return;
 
             // Returns null if the file is not found
-            File fileToDelete = searchForFile(nonRemovableStorageDir);
+            File fileToDelete = searchForFile(nonRemovableStorageDir, uriToCleanUp);
 
             if (fileToDelete != null)
                 fileToDelete.delete();
         }
-        catch (Exception e) {
-            // Is there any way to communicate this back to us
-            // so we can fix issues that cause our code to crash?
+        catch (ExtStorageUnavailableException|SecurityException e) {
+            // SecurityException can be thrown by File.delete()
             Log.e("BloomReader", e.getLocalizedMessage());
         }
-
-        return null;
     }
 
     private boolean isOnNonRemovableStorage(File file) {
@@ -73,17 +73,17 @@ public class FileCleanupTask extends AsyncTask<Void, Void, Void> {
     }
 
     private boolean isABookInOurLibrary(File file) throws ExtStorageUnavailableException {
-        // The library only includes bloomd files
+        // The library does not include bloombundles
         if (file.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
             return false;
 
         return file.getPath().startsWith(getBloomDirectory().getPath());
     }
 
-    private boolean shouldSearchThisDirectory(File dir) throws ExtStorageUnavailableException {
+    private boolean shouldSearchThisDirectory(File dir, Uri uriToCleanUp) throws ExtStorageUnavailableException {
         // We don't want to find the bloomd's in our library
         // Bundles are fair game everywhere
-        if (searchFileUri.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
+        if (uriToCleanUp.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
             return true;
 
         return !dir.equals(getBloomDirectory());
@@ -95,7 +95,7 @@ public class FileCleanupTask extends AsyncTask<Void, Void, Void> {
         return bloomDirectory;
     }
 
-    private File searchForFile(File dir) throws ExtStorageUnavailableException {
+    private File searchForFile(File dir, Uri uriToCleanUp) throws ExtStorageUnavailableException {
         if (dir == null)
             return null;
 
@@ -104,10 +104,10 @@ public class FileCleanupTask extends AsyncTask<Void, Void, Void> {
             return null;
 
         for (File f : list) {
-            if (f.isFile() && matchesSearchFile(f))
+            if (f.isFile() && matchesSearchFile(f, uriToCleanUp))
                 return f;
-            if (f.isDirectory() && shouldSearchThisDirectory(f)) {
-                File fileToDelete = searchForFile(f);
+            if (f.isDirectory() && shouldSearchThisDirectory(f, uriToCleanUp)) {
+                File fileToDelete = searchForFile(f, uriToCleanUp);
                 if (fileToDelete != null)
                     return fileToDelete;
             }
@@ -115,13 +115,13 @@ public class FileCleanupTask extends AsyncTask<Void, Void, Void> {
         return null;
     }
 
-    private boolean matchesSearchFile(File file) {
-        return file.getName().equals(searchFileName());
+    private boolean matchesSearchFile(File file, Uri searchFileUri) {
+        return file.getName().equals(fileNameFromUri(searchFileUri));
     }
 
-    private String searchFileName() {
-        // path is probably something like /document/primary:MyBook.bloomd
-        String path = searchFileUri.getPath();
+    private String fileNameFromUri(Uri uri) {
+        // expected path is something like /document/primary:MyBook.bloomd
+        String path = uri.getPath();
         int separatorIndex = Math.max(
                                 path.lastIndexOf(File.separator),
                                 path.lastIndexOf(':')

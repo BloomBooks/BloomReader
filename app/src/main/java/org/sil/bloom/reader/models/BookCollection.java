@@ -250,8 +250,6 @@ public class BookCollection {
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + name;
         boolean copied = IOUtilities.copyFile(context, bookUri, destination);
         if(copied){
-            new FileCleanupTask(context, bookUri).execute();
-
             // it's probably not in our list that we display yet, so make an entry there
             addBookIfNeeded(destination);
             return destination;

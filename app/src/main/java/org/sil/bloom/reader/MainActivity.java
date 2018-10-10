@@ -64,8 +64,8 @@ public class MainActivity extends BaseActivity
 
     private RecyclerView mBookRecyclerView;
     private BookListAdapter mBookListAdapter;
-    // When we searchForBloomBooks() this keeps track if we found anything new
-    private boolean addedBookFromSearch = false;
+    // Keeps track of the state of an ongoing File Search
+    private FileSearchState fileSearchState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -184,7 +184,7 @@ public class MainActivity extends BaseActivity
         if (nameOrPath == null) // reported as crash on Play console
             return;
         if (nameOrPath.endsWith(BOOK_FILE_EXTENSION)) {
-            importBook(uri);
+            importBook(uri, true);
         } else if (nameOrPath.endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {
             importBloomBundle(uri);
         } else {
@@ -193,25 +193,25 @@ public class MainActivity extends BaseActivity
         alreadyOpenedFileFromIntent = true;
     }
 
-    private void importBook(Uri bookUri) {
-        importBook(bookUri, true);
-    }
-
-    // If we were given a path to a book file,
-    // we want copy it to where Bloom books live if it isn't already there,
-    // make sure it is in our collection,
-    // and then open the reader to view it.
-    private void importBook(Uri bookUri, boolean autoOpen){
+    // Copy a book to our Bloom folder and add it to the library.
+    // If we're importingOneFile (ie not doing a FileSearch of the device),
+    // we'll go ahead and open the book and do file cleanup.
+    // Return value indicates success.
+    private boolean importBook(Uri bookUri, boolean importingOneFile){
         String newPath = _bookCollection.ensureBookIsInCollection(this, bookUri);
         if (newPath != null) {
-            if (autoOpen)
+            if (importingOneFile) {
                 openBook(this, newPath);
+                new FileCleanupTask(this).execute(bookUri);
+            }
             else
                 updateForNewBook(newPath);
+            return true;
         } else {
-            Log.e("BookSearch", bookUri.getPath());
+            Log.e("BookSearchFailedImport", bookUri.getPath());
             Toast failToast = Toast.makeText(this, R.string.failed_book_import, Toast.LENGTH_LONG);
             failToast.show();
+            return false;
         }
     }
 
@@ -224,10 +224,11 @@ public class MainActivity extends BaseActivity
         try {
             // Reinitialize completely to get the new state of things.
             _bookCollection.init(this.getApplicationContext());
+            highlightItems(newBookPaths);
+            resetFileObserver(); // Prevent duplicate notifications
         } catch (ExtStorageUnavailableException e) {
             Log.wtf("BloomReader", "Could not use external storage when reloading project!", e); // should NEVER happen
         }
-        highlightItems(newBookPaths);
     }
 
     @Override
@@ -627,30 +628,36 @@ public class MainActivity extends BaseActivity
     }
 
     private void searchForBloomBooks() {
-        addedBookFromSearch = false;
+        fileSearchState = new FileSearchState();
         BookFinderTask.BookSearchListener bookSearchListener = new BookFinderTask.BookSearchListener() {
             @Override
             public void onNewBloomd(File bloomdFile) {
                 if (_bookCollection.getBookByPath(bloomdFile.getPath()) == null) {
-                    Log.w("BookSearch", "Found " + bloomdFile.getPath());
-                    importBook(Uri.fromFile(bloomdFile), false);
-                    addedBookFromSearch = true;
+                    Log.d("BookSearch", "Found " + bloomdFile.getPath());
+                    Uri bookUri = Uri.fromFile(bloomdFile);
+                    if (importBook(bookUri, false));
+                        fileSearchState.bloomdsAdded.add(bookUri);
                 }
             }
 
             @Override
             public void onNewBloomBundle(File bundleFile) {
-                Log.w("BookSearch", "Found " + bundleFile.getPath());
-                importBloomBundle(Uri.fromFile(bundleFile));
-                addedBookFromSearch = true;
+                Log.d("BookSearch", "Found " + bundleFile.getPath());
+                fileSearchState.bundlesToAdd.add(Uri.fromFile(bundleFile));
             }
 
             @Override
             public void onSearchComplete() {
                 findViewById(R.id.searching_text).setVisibility(View.GONE);
-                if (!addedBookFromSearch)
+                if (fileSearchState.nothingAdded())
                     Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
-                resetFileObserver();  // Prevents repeat notifications later
+                else {
+                    resetFileObserver();  // Prevents repeat notifications later
+                    // Multiple AsyncTask's will execute sequentially
+                    // https://developer.android.com/reference/android/os/AsyncTask#order-of-execution
+                    new ImportBundleTask(MainActivity.this).execute(fileSearchState.bundlesToAddAsArray());
+                    new FileCleanupTask(MainActivity.this).execute(fileSearchState.bloomdsAddedAsArray());
+                }
             }
         };
         new BookFinderTask(this, bookSearchListener).execute();

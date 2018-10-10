@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.BloomReaderApplication;
 import org.sil.bloom.reader.BuildConfig;
+import org.sil.bloom.reader.FileCleanupTask;
 import org.sil.bloom.reader.IOUtilities;
 import org.sil.bloom.reader.ThumbnailCleanup;
 
@@ -249,13 +250,6 @@ public class BookCollection {
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + name;
         boolean copied = IOUtilities.copyFile(context, bookUri, destination);
         if(copied){
-            // We assume that they will be happy with us removing from where ever the file was,
-            // so long as it is on the same device (e.g. not coming from an sd card they plan to pass
-            // around the room).
-            if(!IOUtilities.seemToBeDifferentVolumes(bookUri.getPath(),destination)) {
-                (new File(bookUri.getPath())).delete();
-            }
-
             // it's probably not in our list that we display yet, so make an entry there
             addBookIfNeeded(destination);
             return destination;

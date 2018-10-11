@@ -1,6 +1,7 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -177,7 +178,10 @@ public class MainActivity extends BaseActivity
         String nameOrPath = uri.getPath();
         // Content URI's do not use the actual filename in the "path"
         if (uri.getScheme().equals("content")) {
-            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+            ContentResolver contentResolver = getContentResolver();
+            if (contentResolver == null) // Play console showed us this could be null somehow
+                return;
+            Cursor cursor = contentResolver.query(uri, null, null, null, null);
             if (cursor != null && cursor.moveToFirst())
                 nameOrPath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
         }

@@ -43,136 +43,74 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- See http://stackoverflow.com/questions/1733195/android-intent-filter-for-a-particular-file-extension/2062112#2062112 -->
-
-
             <!--
-                 Capture content by MIME type, which is how Gmail broadcasts
-                 attachment open requests.  pathPattern and file extensions
-                 are ignored, so the MIME type *MUST* be explicit, otherwise
-                 we will match absolutely every file opened.
+                We have three intent filters to detect when another app is trying to send us a bloom
+                file. Principally this is aimed at being able to open Bloom files from File Manager
+                apps. The parameters included in the intent depend on the File Manager sending it,
+                so we need a variety of filters to support as many sending apps as possible.
+                 - The first filter checks the file extension on intents where a MIME type
+                is not set.
+                 - The second filter checks the file extensions where a MIME type is set.
+                Both are necessary because the sending app may or may not choose to
+                include the MIME type. The MIME type is set to */* because the MIME
+                type in the intent may be incorrect since our filetype is a unique one.
+                Since we're still filtering by file extension, this is ok.
+                 - The third filter will catch an intent if the MIME type is correct
+                but the file extension is not what we expected. This should be an
+                unusual case.
             -->
+            <!-- Matches intents by file extension when no MIME type is set -->
             <intent-filter
                 android:icon="@drawable/book"
-                android:label="@string/app_name"
-                android:priority="50">
+                android:label="@string/app_name">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
 
-                <!-- needed for properly formatted email messages -->
-                <data
-                    android:mimeType="application/vnd.bloom"
-                    android:scheme="content" />
-                <!-- needed for mangled email messages -->
-                <data
-                    android:mimeType="application/bloom"
-                    android:scheme="content" />
-                <!-- needed for properly formatted email messages -->
-                <data
-                    android:mimeType="application/vnd.bloomd"
-                    android:scheme="content" />
-                <!-- needed for mangled email messages -->
-                <data
-                    android:mimeType="application/bloomd"
-                    android:scheme="content" />
-                <!-- needed for properly formatted email messages -->
-                <data
-                    android:mimeType="application/vnd.bloombundle"
-                    android:scheme="content" />
-                <!-- needed for mangled email messages -->
-                <data
-                    android:mimeType="application/bloombundle"
-                    android:scheme="content" />
-                <!-- needed for mangled email messages -->
-                <data
-                    android:mimeType="application/octet-stream"
-                    android:scheme="content" />
-            </intent-filter>
-
-            <!--
-                 Capture file open requests (pathPattern is honoured) where no
-                 MIME type is provided in the Intent.  An Intent with a null
-                 MIME type will never be matched by a filter with a set MIME
-                 type, so we need a second intent-filter if we wish to also
-                 match files with this extension and a non-null MIME type
-                 (even if it is non-null but zero length).
-            -->
-            <intent-filter
-                android:icon="@drawable/book"
-                android:label="@string/app_name"
-                android:priority="50">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-
+                <data android:scheme="content" />
                 <data android:scheme="file" />
                 <data android:host="*" />
-
-                <!--
-                     Work around Android's ugly primitive PatternMatcher
-                     implementation that can't cope with finding a . early in
-                     the path unless it's explicitly matched.
-                -->
-                <data android:pathPattern=".*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\..*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*bloomd" />
+                <data android:pathPattern=".*bloombundle" />
             </intent-filter>
 
-            <!--
-                 Capture file open requests (pathPattern is honoured) where a
-                 (possibly blank) MIME type is provided in the Intent.  This
-                 filter may only be necessary for supporting ES File Explorer,
-                 which has the probably buggy behaviour of using an Intent
-                 with a MIME type that is set but zero-length.  It's
-                 impossible to match such a type except by using a global
-                 wildcard.
-            -->
+            <!-- Match intents by file extension when a MIME type is set -->
             <intent-filter
                 android:icon="@drawable/book"
-                android:label="@string/app_name"
-                android:priority="50">
+                android:label="@string/app_name">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
 
-                <data android:scheme="file" />
-                <data android:host="*" />
                 <data android:mimeType="*/*" />
 
-                <!--
-                     Work around Android's ugly primitive PatternMatcher
-                     implementation that can't cope with finding a . early in
-                     the path unless it's explicitly matched.
-                -->
-                <data android:pathPattern=".*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
-                <data android:pathPattern=".*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\..*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:host="*" />
+                <data android:pathPattern=".*bloomd" />
+                <data android:pathPattern=".*bloombundle" />
+            </intent-filter>
+
+            <!-- Match intents by MIME type in case the file extension gets lost -->
+            <intent-filter
+                android:icon="@drawable/book"
+                android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <!-- Sometimes the MIME type we get is not exactly what we set - hence the variety of options -->
+                <data android:mimeType="application/vnd.bloom" />
+                <data android:mimeType="application/bloom" />
+                <data android:mimeType="application/vnd.bloomd" />
+                <data android:mimeType="application/bloomd" />
+                <data android:mimeType="application/vnd.bloombundle" />
+                <data android:mimeType="application/bloombundle" />
             </intent-filter>
         </activity>
         <activity

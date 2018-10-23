@@ -188,7 +188,7 @@ public class MainActivity extends BaseActivity
         if (nameOrPath == null) // reported as crash on Play console
             return;
         if (nameOrPath.endsWith(BOOK_FILE_EXTENSION)) {
-            importBook(uri, true);
+            importBook(uri, IOUtilities.getFilename(nameOrPath), true);
         } else if (nameOrPath.endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {
             importBloomBundle(uri);
         } else {
@@ -201,8 +201,8 @@ public class MainActivity extends BaseActivity
     // If we're importingOneFile (ie not doing a FileSearch of the device),
     // we'll go ahead and open the book and do file cleanup.
     // Return value indicates success.
-    private boolean importBook(Uri bookUri, boolean importingOneFile){
-        String newPath = _bookCollection.ensureBookIsInCollection(this, bookUri);
+    private boolean importBook(Uri bookUri, String filename, boolean importingOneFile){
+        String newPath = _bookCollection.ensureBookIsInCollection(this, bookUri, filename);
         if (newPath != null) {
             if (importingOneFile) {
                 openBook(this, newPath);
@@ -486,11 +486,11 @@ public class MainActivity extends BaseActivity
             // Possibly deleted - possibly on an sd card that got removed
             Toast.makeText(this, getString(R.string.missing_book, BookOrShelf.getNameFromPath(path)), Toast.LENGTH_LONG).show();
             // Remove the book from the collection
-            _bookCollection.deleteFromDevice(_bookCollection.getBookByPath(path));
+            _bookCollection.deleteFromDevice(_bookCollection.getBookOrShelfByPath(path));
             mBookListAdapter.notifyDataSetChanged();
             return;
         }
-        BookOrShelf bookOrShelf = _bookCollection.getBookByPath(path);
+        BookOrShelf bookOrShelf = _bookCollection.getBookOrShelfByPath(path);
         if (bookOrShelf.isShelf()) {
             Intent intent = new Intent(context, ShelfActivity.class);
             intent.putExtra("filter", bookOrShelf.shelfId);
@@ -635,11 +635,11 @@ public class MainActivity extends BaseActivity
         fileSearchState = new FileSearchState();
         BookFinderTask.BookSearchListener bookSearchListener = new BookFinderTask.BookSearchListener() {
             @Override
-            public void onNewBloomd(File bloomdFile) {
-                if (_bookCollection.getBookByPath(bloomdFile.getPath()) == null) {
-                    Log.d("BookSearch", "Found " + bloomdFile.getPath());
-                    Uri bookUri = Uri.fromFile(bloomdFile);
-                    if (importBook(bookUri, false));
+            public void onNewBookOrShelf(File bookOrShelfFile) {
+                if (_bookCollection.getBookOrShelfByPath(bookOrShelfFile.getPath()) == null) {
+                    Log.d("BookSearch", "Found " + bookOrShelfFile.getPath());
+                    Uri bookUri = Uri.fromFile(bookOrShelfFile);
+                    if (importBook(bookUri, bookOrShelfFile.getName(),false));
                         fileSearchState.bloomdsAdded.add(bookUri);
                 }
             }

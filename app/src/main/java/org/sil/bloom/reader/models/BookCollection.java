@@ -63,7 +63,7 @@ public class BookCollection {
     }
 
     public BookOrShelf addBookIfNeeded(String path) {
-        BookOrShelf existingBook = getBookByPath(path);
+        BookOrShelf existingBook = getBookOrShelfByPath(path);
         if (existingBook != null)
             return existingBook;
         return addBook(path, true);
@@ -123,10 +123,10 @@ public class BookCollection {
         return bookOrShelf;
     }
 
-    public BookOrShelf getBookByPath(String path) {
-        for (BookOrShelf book: _booksAndShelves) {
-            if (book.path.equals(path))
-                return book;
+    public BookOrShelf getBookOrShelfByPath(String path) {
+        for (BookOrShelf bookOrShelf: _booksAndShelves) {
+            if (bookOrShelf.path.equals(path))
+                return bookOrShelf;
         }
         return null;
     }
@@ -238,16 +238,12 @@ public class BookCollection {
 
     // is this coming from somewhere other than where we store books?
     // then move or copy it in
-    public String ensureBookIsInCollection(Context context, Uri bookUri) {
+    public String ensureBookIsInCollection(Context context, Uri bookUri, String filename) {
         if (bookUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath()))
             return bookUri.getPath();
-        BloomFileReader fileReader = new BloomFileReader(context, bookUri);
-        String name = fileReader.bookNameIfValid();
-        if(name == null)
-            return null;
 
         Log.d("BloomReader", "Moving book into Bloom directory");
-        String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + name;
+        String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + filename;
         boolean copied = IOUtilities.copyFile(context, bookUri, destination);
         if(copied){
             // it's probably not in our list that we display yet, so make an entry there

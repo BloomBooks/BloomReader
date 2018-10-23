@@ -169,7 +169,7 @@ public class BookCollection {
     public static File[] getLocalAndRemovableBooksDirectories(Context context) throws ExtStorageUnavailableException {
         File localBooksDir = getLocalBooksDirectory();
         File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
-        File remoteBooksDir = new File(remoteStorageDir, "Bloom");
+        File remoteBooksDir = new File(remoteStorageDir, "BloomExternal");
         if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
             return new File[] {localBooksDir, remoteBooksDir};
         return new File[] {localBooksDir};

@@ -95,23 +95,6 @@ public class BloomFileReader {
         return thumbUri;
     }
 
-    public String bookNameIfValid() {
-        boolean valid = openAndValidateFile();
-        if (!valid) {
-            closeFile();
-            return null;
-        }
-        try {
-            String name = bloomFileName();
-            closeFile();
-            return name;
-        }
-        catch (IOException e) {
-            closeFile();
-            return null;
-        }
-    }
-
     public boolean getBooleanMetaProperty(String property, boolean defaultIfNotFound){
         JSONObject properties = getMetaProperties();
         if(properties == null)
@@ -164,19 +147,6 @@ public class BloomFileReader {
                 throw new IOException("No HTML file found inside .bloomd zip file.");
         }
         return htmlFile;
-    }
-
-    private String bloomFileName() throws IOException{
-        String path = bloomFilePath;
-        if(path == null)
-            path = bookUri.getPath();
-        if(path.endsWith(BookOrShelf.BOOK_FILE_EXTENSION)){
-            // The colon is necessary because the path for the SD card root is "1234-5678:myBook.bloomd"
-            // where 1234-5678 is the SD card number
-            int start = Math.max(path.lastIndexOf(File.separator), path.lastIndexOf(':')) + 1;
-            return path.substring(start);
-        }
-        return findHtmlFile().getName().replace(HTM_EXTENSION, BookOrShelf.BOOK_FILE_EXTENSION);
     }
 
     private void closeFile() {

@@ -10,6 +10,7 @@ import java.io.File;
 
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BLOOMD_FILE_EXTENSION;
+import static org.sil.bloom.reader.models.BookOrShelf.BOOKSHELF_FILE_EXTENSION;
 
 public class BookFinderTask extends AsyncTask<Void, Void, Void> {
 
@@ -48,8 +49,9 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
                 if (f.isFile()) {
                     if (f.getName().endsWith(BLOOM_BUNDLE_FILE_EXTENSION))
                         foundNewBundle(f);
-                    else if (f.getName().endsWith(BLOOMD_FILE_EXTENSION))
-                        foundNewBook(f);
+                    else if (f.getName().endsWith(BLOOMD_FILE_EXTENSION) ||
+                             f.getName().endsWith(BOOKSHELF_FILE_EXTENSION))
+                        foundNewBookOrShelf(f);
                 }
                 else if (f.isDirectory()) {
                     scan(f);
@@ -58,11 +60,11 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
         }
     }
 
-    private void foundNewBook(final File bloomd) {
+    private void foundNewBookOrShelf(final File bookOrShelfFile) {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                bookSearchListener.onNewBloomd(bloomd);
+                bookSearchListener.onNewBookOrShelf(bookOrShelfFile);
             }
         });
     }
@@ -77,7 +79,7 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
     }
 
     public interface BookSearchListener {
-        void onNewBloomd(File bloomdFile);
+        void onNewBookOrShelf(File bloomdFile);
         void onNewBloomBundle(File bundleFile);
         void onSearchComplete();
     }

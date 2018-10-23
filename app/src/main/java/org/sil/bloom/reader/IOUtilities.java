@@ -371,4 +371,13 @@ public class IOUtilities {
             return new File(path.substring(0, androidDirIndex));
         return null;
     }
+
+    public static String getFilename(String path) {
+        // Check for colon because files on SD card root have a path like
+        // 1234-ABCD:book.bloomd
+        int start = Math.max(path.lastIndexOf(File.separator),
+                             path.lastIndexOf(':'))
+                    + 1;
+        return path.substring(start);
+    }
 }

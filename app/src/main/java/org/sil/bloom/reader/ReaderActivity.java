@@ -509,7 +509,7 @@ public class ReaderActivity extends BaseActivity {
         try {
             String filenameWithExtension = new File(path).getName();
             // this mBookName is used by subsequent analytics reports
-            mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - BookOrShelf.BOOK_FILE_EXTENSION.length());
+            mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - IOUtilities.BOOK_FILE_EXTENSION.length());
             Properties p = new Properties();
             p.putValue("title", mBookName);
             p.putValue("totalNumberedPages", mNumberedPageCount);

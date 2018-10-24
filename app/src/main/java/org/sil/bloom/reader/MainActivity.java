@@ -18,7 +18,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
@@ -41,12 +40,11 @@ import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
-import static org.sil.bloom.reader.models.BookOrShelf.BOOK_FILE_EXTENSION;
+import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 
 
 public class MainActivity extends BaseActivity
@@ -108,7 +106,7 @@ public class MainActivity extends BaseActivity
         try {
             _bookCollection= setupBookCollection();
 
-            Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+            Toolbar toolbar = findViewById(R.id.toolbar);
             setSupportActionBar(toolbar);
 
             getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -121,10 +119,10 @@ public class MainActivity extends BaseActivity
             toggle.syncState();
             configureActionBar(toggle);
 
-            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+            NavigationView navigationView = findViewById(R.id.nav_view);
             navigationView.setNavigationItemSelectedListener(this);
 
-            mBookRecyclerView = (RecyclerView) findViewById(R.id.book_list2);
+            mBookRecyclerView = findViewById(R.id.book_list2);
             SetupCollectionListView(mBookRecyclerView);
 
             // If we were started by some external process, we need to process any file
@@ -136,13 +134,11 @@ public class MainActivity extends BaseActivity
             // Insert the build version and date into the appropriate control.
             // We have to find it indirectly through the navView's header or it won't be found
             // this early in the view construction.
-            NavigationView navView = (NavigationView)findViewById(R.id.nav_view);
-            TextView versionDate = (TextView)navView.getHeaderView(0).findViewById(R.id.versionDate);
+            TextView versionDate = (TextView)navigationView.getHeaderView(0).findViewById(R.id.versionDate);
             try {
                 String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
                 Date buildDate = new Date(BuildConfig.TIMESTAMP);
-                DateFormat df = new DateFormat();
-                String date = df.format("dd MMM yyyy", buildDate).toString();
+                String date = DateFormat.format("dd MMM yyyy", buildDate).toString();
                 versionDate.setText(versionName + ", " + date);
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
@@ -182,8 +178,11 @@ public class MainActivity extends BaseActivity
             if (contentResolver == null) // Play console showed us this could be null somehow
                 return;
             Cursor cursor = contentResolver.query(uri, null, null, null, null);
-            if (cursor != null && cursor.moveToFirst())
-                nameOrPath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+            if (cursor != null) {
+                if (cursor.moveToFirst())
+                    nameOrPath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                cursor.close();
+            }
         }
         if (nameOrPath == null) // reported as crash on Play console
             return;
@@ -426,7 +425,6 @@ public class MainActivity extends BaseActivity
     }
 
     private void SetupCollectionListView(final RecyclerView listView) {
-        final AppCompatActivity activity = this;
         listView.setLayoutManager(new LinearLayoutManager(this));
         mBookListAdapter = new BookListAdapter(_bookCollection, this);
         listView.setAdapter(mBookListAdapter);
@@ -507,7 +505,7 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -536,7 +534,6 @@ public class MainActivity extends BaseActivity
             case R.id.action_settings:
                 return true;
             case R.id.delete:
-                Toast.makeText(this.getApplicationContext(), "Would delete", Toast.LENGTH_LONG);
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -586,7 +583,7 @@ public class MainActivity extends BaseActivity
                 break;
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -639,7 +636,7 @@ public class MainActivity extends BaseActivity
                 if (_bookCollection.getBookOrShelfByPath(bookOrShelfFile.getPath()) == null) {
                     Log.d("BookSearch", "Found " + bookOrShelfFile.getPath());
                     Uri bookUri = Uri.fromFile(bookOrShelfFile);
-                    if (importBook(bookUri, bookOrShelfFile.getName(),false));
+                    if (importBook(bookUri, bookOrShelfFile.getName(),false))
                         fileSearchState.bloomdsAdded.add(bookUri);
                 }
             }

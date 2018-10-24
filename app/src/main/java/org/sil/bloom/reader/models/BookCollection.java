@@ -2,36 +2,31 @@ package org.sil.bloom.reader.models;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.BloomReaderApplication;
+import org.sil.bloom.reader.BloomShelfFileReader;
 import org.sil.bloom.reader.BuildConfig;
-import org.sil.bloom.reader.FileCleanupTask;
 import org.sil.bloom.reader.IOUtilities;
 import org.sil.bloom.reader.ThumbnailCleanup;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 public class BookCollection {
     public static final String THUMBS_DIR = ".thumbs";
     public static final String NO_THUMBS_DIR = "no-thumbs";
-    public static final String PNG_EXTENSION = ".png";
 
     public static final String BOOKSHELF_PREFIX = "bookshelf:";
     // All the books and shelves loaded from the folder on 'disk'.
@@ -78,38 +73,10 @@ public class BookCollection {
     // re-sorted.
     private BookOrShelf addBook(String path, boolean addingJustOne) {
         BookOrShelf bookOrShelf;
-        if (path.endsWith(BookOrShelf.BOOKSHELF_FILE_EXTENSION)) {
-            String backgroundColor = "ffffff"; // default white
-            String shelfName = BookOrShelf.getNameFromPath(path);
-            String shelfId = null;
-            String json = IOUtilities.FileToString(new File(path));
-            try {
-                JSONObject data = new JSONObject(json);
-                // roughly in priority order, so if anything goes wrong with the json parsing,
-                // we get the most important information.
-                shelfId = data.getString("id");
-                mShelfIds.add(shelfId);
-                backgroundColor = data.getString("color");
-                JSONArray labels = data.getJSONArray("label");
-                String uiLang = Locale.getDefault().getLanguage();
-                for (int i = 0; i < labels.length(); i++) {
-                    JSONObject label = labels.getJSONObject(i);
-                    if (label.has(uiLang)) {
-                        shelfName = label.getString(uiLang);
-                        break;
-                    }
-                    // An English label if any is a better default than the file name, but
-                    // we will keep looking.
-                    if (label.has("en")) {
-                        shelfName = label.getString("en");
-                    }
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            bookOrShelf = new BookOrShelf(path, shelfName);
-            bookOrShelf.backgroundColor = backgroundColor;
-            bookOrShelf.shelfId = shelfId;
+        if (path.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
+            bookOrShelf = BloomShelfFileReader.parseShelfFile(path);
+            if (bookOrShelf.shelfId != null)
+                mShelfIds.add(bookOrShelf.shelfId);
         } else {
             // book.
             bookOrShelf = new BookOrShelf(path);
@@ -187,8 +154,8 @@ public class BookCollection {
         if(files != null) {
             for (int i = 0; i < files.length; i++) {
                 final String name = files[i].getName();
-                if (!name.endsWith(BookOrShelf.BOOK_FILE_EXTENSION)
-                        && !name.endsWith(BookOrShelf.BOOKSHELF_FILE_EXTENSION))
+                if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
+                        && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
                     continue; // not a book (nor a shelf)!
                 addBook(files[i].getAbsolutePath(), false);
             }

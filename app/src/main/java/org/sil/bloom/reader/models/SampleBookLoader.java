@@ -20,7 +20,7 @@ class SampleBookLoader {
             showError(context, "Could not create " + directory.getAbsolutePath());
         }
 
-        String fileName = "The Moon and the Cap" + BookOrShelf.BOOK_FILE_EXTENSION;
+        String fileName = "The Moon and the Cap" + IOUtilities.BOOK_FILE_EXTENSION;
         IOUtilities.copyAsset(context.getAssets(), "sample books/" + fileName, directory.getAbsolutePath() + File.separator + fileName);
     }
 }

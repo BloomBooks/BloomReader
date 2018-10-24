@@ -499,7 +499,7 @@ public class MainActivity extends BaseActivity
             context.startActivity(intent);
         } else {
             Intent intent = new Intent(context, ReaderActivity.class);
-            intent.setData(Uri.parse(path));
+            intent.putExtra("bookPath", path);
             intent.putExtra("brandingProjectName", bookOrShelf.brandingProjectName);
             context.startActivity(intent);
         }

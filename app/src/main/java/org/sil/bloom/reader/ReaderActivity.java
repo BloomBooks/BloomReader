@@ -172,7 +172,7 @@ public class ReaderActivity extends BaseActivity {
 
         @Override
         protected String doInBackground(Void... v) {
-            final String path = getIntent().getData().getPath();
+            final String path = getIntent().getStringExtra("bookPath");
             BloomFileReader fileReader = new BloomFileReader(getApplicationContext(), path);
             String bookDirectory;
             try {

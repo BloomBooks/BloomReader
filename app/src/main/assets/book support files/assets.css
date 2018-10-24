@@ -16,6 +16,6 @@
 }
 
 /* also a convenient place to define this, normally part of bloom player: */
-span.ui-audioCurrent {
+span.ui-audioCurrent,.ui-audioCurrent p {
     background-color: yellow
 }

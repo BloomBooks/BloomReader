@@ -114,7 +114,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         String lastModFile = null;
         long latestTime = 0;
         for (File file : files) {
-            if (!file.isDirectory() && file.getName().endsWith(BookOrShelf.BOOK_FILE_EXTENSION)) {
+            if (!file.isDirectory() && file.getName().endsWith(IOUtilities.BOOK_FILE_EXTENSION)) {
                 long modified = file.lastModified();
                 if (modified > latestTime) {
                     latestTime = modified;

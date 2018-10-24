@@ -40,9 +40,9 @@ import static org.sil.bloom.reader.models.BookCollection.getLocalBooksDirectory;
 
 
 public class IOUtilities {
-
+    public static final String BOOK_FILE_EXTENSION = ".bloomd";
+    public static final String BOOKSHELF_FILE_EXTENSION = ".bloomshelf";
     public static final String BLOOM_BUNDLE_FILE_EXTENSION = ".bloombundle";
-    public static final String BLOOMD_FILE_EXTENSION = ".bloomd";
 
     private static final int BUFFER_SIZE = 8192;
 
@@ -293,8 +293,8 @@ public class IOUtilities {
         FilenameFilter filter = new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
-                return filename.endsWith(BookOrShelf.BOOK_FILE_EXTENSION)
-                        || filename.endsWith(BookOrShelf.BOOKSHELF_FILE_EXTENSION);
+                return filename.endsWith(BOOK_FILE_EXTENSION)
+                        || filename.endsWith(BOOKSHELF_FILE_EXTENSION);
             }
         };
         tar(getLocalBooksDirectory().getAbsolutePath(), filter, destinationPath);

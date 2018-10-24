@@ -116,7 +116,7 @@ public class NewBookListenerService extends Service {
                 return;
             }
             File localBookDirectory = BookCollection.getLocalBooksDirectory();
-            File bookFile = new File(localBookDirectory, title + BookOrShelf.BOOK_FILE_EXTENSION);
+            File bookFile = new File(localBookDirectory, title + IOUtilities.BOOK_FILE_EXTENSION);
             boolean bookExists = bookFile.exists();
             // If the book doesn't exist it can't be up to date.
             if (bookExists && IsBookUpToDate(bookFile, title, newBookVersion)) {

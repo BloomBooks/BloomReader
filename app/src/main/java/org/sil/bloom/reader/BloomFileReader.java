@@ -78,7 +78,7 @@ public class BloomFileReader {
         Uri thumbUri = null;
         if(bookDirectory == null)
             openFile(CURRENT_BOOK_FOLDER);
-        String bookName = (new File(bloomFilePath)).getName().replace(BookOrShelf.BOOK_FILE_EXTENSION, "");
+        String bookName = (new File(bloomFilePath)).getName().replace(IOUtilities.BOOK_FILE_EXTENSION, "");
         File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_1);
         if (!thumb.exists())
             thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_2);
@@ -139,7 +139,7 @@ public class BloomFileReader {
     }
 
     private File findHtmlFile() throws IOException{
-        String name = bookDirectory.getName().replace(BookOrShelf.BOOK_FILE_EXTENSION, "");
+        String name = bookDirectory.getName().replace(IOUtilities.BOOK_FILE_EXTENSION, "");
         File htmlFile = new File(bookDirectory + File.separator + HTM_EXTENSION);
         if(!htmlFile.exists()){
             htmlFile = IOUtilities.findFirstWithExtension(bookDirectory, HTM_EXTENSION);

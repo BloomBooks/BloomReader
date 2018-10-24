@@ -1,21 +1,14 @@
 package org.sil.bloom.reader.models;
 
-import android.support.annotation.NonNull;
-
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 
-public class BookOrShelf {
-    public static final String BOOK_FILE_EXTENSION = ".bloomd";
-    public static final String BOOKSHELF_FILE_EXTENSION = ".bloomshelf";
+import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
+import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 
+public class BookOrShelf {
     public final String path;
     public final String name;
     public boolean highlighted = false;

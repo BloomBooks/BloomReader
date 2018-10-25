@@ -5,12 +5,10 @@ def versionMajor = 1
 def versionMinor = 2
 def versionRelease = getVersionRelease()
 
-Integer getVersionRelease() {
+int getVersionRelease() {
     def fullVersionNumberFromBuildSystem = project.ext.properties['build.number'] ?: "0" // default for non-tc
-    println fullVersionNumberFromBuildSystem
     List tokens = fullVersionNumberFromBuildSystem.tokenize('.')
-    println tokens.last()
-    return tokens.last()
+    return Integer.parseInt(tokens.last())
 }
 
 // Load our credentials

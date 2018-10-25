@@ -1,15 +1,20 @@
 package org.sil.bloom.reader;
 
-import android.app.DialogFragment;
+import android.support.v4.app.DialogFragment;
+import android.content.DialogInterface;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
 
-// Dialog for confirmation of sharing (all) books with another device.
-public class ShareBooksDialogFragment extends DialogFragment {
-    public static final String SHARE_BOOKS_DIALOG_FRAGMENT_TAG = "share_books_dialog";
+import java.io.File;
+
+/*
+    Superclass that holds the shared logic for ShareAllBooksDialogFragment and
+    ShareShelfDialogFragment.
+    Both these dialogs kick off a BundleTask that should be cancelled if the dialog
+    is cancelled. When the task is done, the dialog needs to be dismissed.
+ */
+
+public abstract class ShareBooksDialogFragment extends DialogFragment implements BundleTask.BundleTaskDoneListener {
+    protected BundleTask bundleTask;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -19,26 +24,13 @@ public class ShareBooksDialogFragment extends DialogFragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.dialog_share_books, container, false);
+    public void onCancel(DialogInterface dialog) {
+        super.onCancel(dialog);
+        if (bundleTask != null)
+            bundleTask.cancel(false);
+    }
 
-        Button btnShareBooks = (Button) view.findViewById(R.id.btnShareBooks);
-        btnShareBooks.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                new SharingManager(getActivity()).shareAllBooksAndShelves();
-                dismiss();
-            }
-        });
-
-        Button btnCancel = (Button) view.findViewById(R.id.btnCancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
-
-        getDialog().setCanceledOnTouchOutside(true);
-
-        return view;
+    public void onBundleTaskDone(File bundleFile) {
+        dismiss();
     }
 }

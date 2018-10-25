@@ -1,5 +1,6 @@
 1.2
 Play "motion books" as videos in landscape orientation.
+Play sign language videos.
 "Find Bloom books on this device" feature.
 Read books directly from your SD card with a BloomExternal directory at the SD card root.
 Various minor enhancements and fixes.

@@ -41,7 +41,6 @@ import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
@@ -373,7 +372,9 @@ public class MainActivity extends BaseActivity
 
     private void shareShelf(BookOrShelf shelf){
         List<BookOrShelf> booksAndShelves = _bookCollection.getAllBooksWithinShelf(shelf);
-        new SharingManager(this).shareShelf(shelf, booksAndShelves);
+        ShareShelfDialogFragment dialogFragment = new ShareShelfDialogFragment();
+        dialogFragment.setBooksAndShelves(booksAndShelves);
+        dialogFragment.show(getSupportFragmentManager(), ShareShelfDialogFragment.FRAGMENT_TAG);
     }
 
     private void deleteBookOrShelf(){
@@ -566,8 +567,8 @@ public class MainActivity extends BaseActivity
                 shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
                 break;
             case R.id.nav_share_books:
-                ShareBooksDialogFragment shareBooksDialogFragment = new ShareBooksDialogFragment();
-                shareBooksDialogFragment.show(getFragmentManager(), ShareBooksDialogFragment.SHARE_BOOKS_DIALOG_FRAGMENT_TAG);
+                ShareAllBooksDialogFragment shareBooksDialogFragment = new ShareAllBooksDialogFragment();
+                shareBooksDialogFragment.show(getSupportFragmentManager(), ShareAllBooksDialogFragment.SHARE_BOOKS_DIALOG_FRAGMENT_TAG);
                 break;
             case R.id.nav_release_notes:
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);

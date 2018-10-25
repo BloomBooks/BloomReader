@@ -76,32 +76,34 @@ public class SharingManager {
         }
     }
 
-    public void shareShelf(BookOrShelf shelf, List<BookOrShelf> booksAndShelves){
+    public BundleTask shareShelf(List<BookOrShelf> booksAndShelves, final BundleTask.BundleTaskDoneListener taskDoneListener){
         File[] files = new File[booksAndShelves.size()];
         for (int i=0; i<booksAndShelves.size(); ++i)
             files[i] = new File(booksAndShelves.get(i).path);
-        try {
-            String path = sharedBloomBundlePath();
-            IOUtilities.tar(files, path);
-            shareFile(new File(path), "application/zip", mActivity.getString(R.string.share_books_via));
-        }
-        catch (IOException e){
-            Log.e("BlReader/SharingManager", e.toString());
-            Toast failToast = Toast.makeText(mActivity, mActivity.getString(R.string.failed_to_share_books), Toast.LENGTH_LONG);
-            failToast.show();
-        }
+        return bundleAndShare(files, taskDoneListener);
     }
 
-    public void shareAllBooksAndShelves() {
-        try {
-            IOUtilities.makeBloomBundle(sharedBloomBundlePath());
-            shareFile(new File(sharedBloomBundlePath()), "application/zip", mActivity.getString(R.string.share_books_via));
-        }
-        catch (Exception e) {
-            Log.e("BlReader/SharingManager", e.toString());
-            Toast failToast = Toast.makeText(mActivity, mActivity.getString(R.string.failed_to_share_books), Toast.LENGTH_LONG);
-            failToast.show();
-        }
+    public BundleTask shareAllBooksAndShelves(final BundleTask.BundleTaskDoneListener taskDoneListener) {
+        return bundleAndShare(null, taskDoneListener);
+    }
+
+    private BundleTask bundleAndShare(File[] files, final BundleTask.BundleTaskDoneListener taskDoneListener) {
+        BundleTask bundleTask = new BundleTask(sharedBloomBundlePath(), new BundleTask.BundleTaskDoneListener() {
+            @Override
+            public void onBundleTaskDone(File bundleFile) {
+                taskDoneListener.onBundleTaskDone(bundleFile); // Callback to dialog with spinner so it can close
+                shareBloomBundle(bundleFile);
+            }
+        });
+        bundleTask.execute(files);
+        return bundleTask;
+    }
+
+    private void shareBloomBundle(File bundleFile) {
+        if (bundleFile == null)
+            Toast.makeText(mActivity, mActivity.getString(R.string.failed_to_share_books), Toast.LENGTH_LONG).show();
+        else
+            shareFile(bundleFile, "application/zip", mActivity.getString(R.string.share_books_via));
     }
 
     // We have to stage the apk to share in public storage, and bloom bundles have to be

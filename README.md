@@ -117,6 +117,25 @@ TeamCity builds are configured to publish the alpha, beta, and production flavor
 
 The `ba-win10-64-s1-601` (in the Keyman pool) is currently the only agent configured with the `.properties` file described above.
 
+# Localization
+
+We use Crowdin for localization. Bloom Reader's `strings.xml` is included in the general [SIL-Bloom](https://crowdin.com/project/sil-bloom) project in Crowdin and is aliased as `Bloom Reader`.
+
+The easiest way to upload new strings and download translations is through the [JetBrains plugin for Android Studio](https://plugins.jetbrains.com/plugin/9463-crowdin). You will need to add the `crowdin.properties` file at the root of this repo. The file should have the following format:
+```
+project-identifier=sil-bloom
+project-key={secret key}
+auto-upload=false
+```
+
+`project-key` can be found in the Crowdin project if you have the appropriate permissions.
+
+`auto-upload=false` toggles off the (totally bizzare, in my opinion) default behavior of uploading all changes immediately.
+
+I decided not to add the file, even without the key, to the repo because it would be a lot easier for someone to accidentally commit the key at that point. As it is, we can .gitignore the file entirely.
+
+Note that with the current project settings in Crowdin, you will download all translated strings, even unapproved ones.
+
 # Development
 
 ## Sample book

@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
@@ -219,7 +220,7 @@ public class ReaderActivity extends BaseActivity {
                             + html.substring(endBody, html.length());
                 }
 
-                boolean hasEnterpriseBranding = mBrandingProjectName != null && !mBrandingProjectName.toLowerCase().equals("default");
+                boolean hasEnterpriseBranding = mBrandingProjectName != null && !mBrandingProjectName.toLowerCase(Locale.ENGLISH).equals("default");
                 Quiz quiz = new Quiz();
                 if (hasEnterpriseBranding) {
                     String primaryLanguage = getPrimaryLanguage(html);

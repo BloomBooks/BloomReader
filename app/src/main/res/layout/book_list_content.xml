@@ -4,9 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?android:attr/activatedBackgroundIndicator"
+    android:clickable="false"
     android:descendantFocusability="blocksDescendants"
-    android:orientation="horizontal"
-    android:clickable="true">
+    android:orientation="horizontal">
 
 
     <!-- the 2dp is useful for bookshelves, to make the background color a big bigger than
@@ -18,10 +18,10 @@
         android:id="@+id/imageView"
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:scaleType="fitCenter"
-        android:layout_marginTop="10dp"
         android:layout_marginLeft="16dp"
+        android:layout_marginTop="10dp"
         android:padding="2dp"
+        android:scaleType="fitCenter"
         app:srcCompat="@drawable/book" />
 
     <TextView
@@ -30,5 +30,5 @@
         android:layout_height="match_parent"
         android:layout_margin="@dimen/text_margin"
         android:gravity="center_vertical"
-        android:textAppearance="?attr/textAppearanceListItem"  />
+        android:textAppearance="?attr/textAppearanceListItem" />
 </LinearLayout>

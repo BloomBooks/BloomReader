@@ -1,7 +1,5 @@
 package org.sil.bloom.reader.models;
 
-import android.test.InstrumentationTestCase;
-
 import org.junit.Test;
 
 import java.util.HashSet;

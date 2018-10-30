@@ -3,7 +3,9 @@ Bloom is used around the world to make libraries of books in local languages, qu
 In this version, you can:
 * Use WiFi or USB to publish a book from the Bloom program on a laptop to this app.
 * Share books with other devices.
-* Play audio books.
+* Play audio books and books with sign language videos.
 * Play books with background music and with images which pan and zoom.
+* Search your device for Bloom books, bundles, and bookshelves.
+* Read books directly from your SD card (BloomExternal directory at SD card root).
 
 Future releases will include the ability to get books from bloomlibrary.org.

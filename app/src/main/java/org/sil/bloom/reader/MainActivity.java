@@ -392,7 +392,7 @@ public class MainActivity extends BaseActivity
             message = getString(R.string.deleteExplanationEmptyShelf, shelf.name);
         else
             message = getString(R.string.deleteExplanationShelf, booksAndShelves.size(), shelf.name);
-        new AlertDialog.Builder(this).setMessage(message)
+        new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(message)
                 .setTitle(R.string.deleteConfirmation)
                 .setPositiveButton(R.string.deleteConfirmButton, new DialogInterface.OnClickListener() {
                     @Override

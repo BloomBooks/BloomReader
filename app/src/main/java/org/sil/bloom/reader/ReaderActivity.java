@@ -6,13 +6,10 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.constraint.ConstraintLayout;
-import android.support.constraint.ConstraintSet;
 import android.support.annotation.Nullable;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -20,19 +17,11 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
-import android.widget.CheckBox;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +42,7 @@ public class ReaderActivity extends BaseActivity {
     private static final String sAssetsBloomPlayerScript = "<script type=\"text/javascript\" src=\"file:///android_asset/book support files/bloomPagePlayer.js\"></script>";
     private static final Pattern sLayoutPattern = Pattern.compile("\\S+([P|p]ortrait|[L|l]andscape)\\b");
     private static final Pattern sHeadElementEndPattern = Pattern.compile("</head");
-    private static final Pattern sMainLangauge = Pattern.compile("<div data-book=\"contentLanguage1\"[^>]*>\\s*(\\S*)");
+    private static final Pattern sMainLanguage = Pattern.compile("<div data-book=\"contentLanguage1\"[^>]*>\\s*(\\S*)");
     // Matches a div with class bloom-page, that is, the start of the main content of one page.
     // (We're looking for the start of a div tag, then before finding the end wedge, we find
     // class<maybe space>=<maybe space><some sort of quote> and then bloom-page before we find
@@ -347,13 +336,13 @@ public class ReaderActivity extends BaseActivity {
             mCurrentView = mAdapter.getActiveView(position);
             mTimeLastPageSwitch = System.currentTimeMillis();
 
-            stopAndStartVideos(oldView, mCurrentView);
-
             if (oldView != null)
                 oldView.clearCache(false); // Fix for BL-5555
 
             if (mIsMultiMediaBook) {
-                mSwitchedPagesWhilePaused = WebAppInterface.isNarrationPaused();
+                mSwitchedPagesWhilePaused = WebAppInterface.isMediaPaused();
+
+                stopAndStartVideos(oldView, mCurrentView);
                 WebAppInterface.stopNarration(); // don't want to hear rest of anything on another page
                 String backgroundAudioPath = "";
                 if (mPlayMusic) {
@@ -369,8 +358,8 @@ public class ReaderActivity extends BaseActivity {
                 // back to this one (again, reused) and old animation is still running
                 if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
                     WebAppInterface appInterface = mCurrentView.getWebAppInterface();
-                    appInterface.setPaused(WebAppInterface.isNarrationPaused());
-                    if (!WebAppInterface.isNarrationPaused() && mIsMultiMediaBook) {
+                    appInterface.setPaused(WebAppInterface.isMediaPaused());
+                    if (!WebAppInterface.isMediaPaused() && mIsMultiMediaBook) {
                         appInterface.enableAnimation(mPlayAnimation);
                         // startNarration also starts the animation (both handled by the BloomPlayer
                         // code) iff we passed true to enableAnimation().
@@ -444,7 +433,7 @@ public class ReaderActivity extends BaseActivity {
               public void run() {
                   // In case some race condition has this getting called while we are paused,
                   // don't let it happen.
-                  if (WebAppInterface.isNarrationPaused()) {
+                  if (WebAppInterface.isMediaPaused()) {
                       return;
                   }
                   int current = mPager.getCurrentItem();
@@ -460,9 +449,9 @@ public class ReaderActivity extends BaseActivity {
         return mPager.getCurrentItem();
     }
 
-    public void narrationPausedChanged() {
+    public void mediaPausedChanged() {
         final ImageView view = (ImageView)findViewById(R.id.playPause);
-        if (WebAppInterface.isNarrationPaused()) {
+        if (WebAppInterface.isMediaPaused()) {
             clearNextPageTimer(); // any pending automatic page flip should be prevented.
             view.setImageResource(R.drawable.pause_on_circle); // black circle around android.R.drawable.ic_media_pause);
         } else {
@@ -558,13 +547,14 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private void stopAndStartVideos(WebView oldView, WebView currentView){
-        // Selects the first (and presumably only) video on the page if any exists
-        String videoSelector = "document.getElementsByTagName('video')[0]";
-
-        if(oldView != null)
-            oldView.evaluateJavascript("if(" + videoSelector + ") {" + videoSelector + ".pause();}", null);
-        if(currentView != null)
-            currentView.evaluateJavascript("if(" + videoSelector + ") {" + videoSelector + ".play();}", null);
+        if(oldView != null) {
+            WebAppInterface waInterface = ((ScaledWebView)oldView).getWebAppInterface();
+            waInterface.pauseVideo(oldView);
+        }
+        if(currentView != null) {
+            WebAppInterface waInterface = ((ScaledWebView) currentView).getWebAppInterface();
+            waInterface.playVideo(currentView);
+        }
     }
 
     private void AddPage(ArrayList<String> pages, String pageContent) {
@@ -576,7 +566,7 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private String getPrimaryLanguage(String html) {
-        Matcher matcher = sMainLangauge.matcher(html);
+        Matcher matcher = sMainLanguage.matcher(html);
         if (!matcher.find())
             return "en";
         return matcher.group(1);
@@ -792,7 +782,7 @@ public class ReaderActivity extends BaseActivity {
         public void prepareForAnimation(int position) {
             final ScaledWebView pageView = mActiveViews.get(position);
             if (pageView == null) {
-                Log.d("prepareForAnimation", "can't find page for " + position);
+                Log.d("Reader", "prepareForAnimation() can't find page for " + position);
                 return;
             }
 
@@ -803,7 +793,7 @@ public class ReaderActivity extends BaseActivity {
         public void startNarrationForPage(int position) {
             ScaledWebView pageView = mActiveViews.get(position);
             if (pageView == null) {
-                Log.d("startNarration", "can't find page for " + position);
+                Log.d("Reader", "startNarration() can't find page for " + position);
                 return;
             }
             if (pageView.getWebAppInterface() != null)
@@ -961,9 +951,10 @@ public class ReaderActivity extends BaseActivity {
                 } else if (event.getEventTime() - event.getDownTime() < viewConfiguration.getJumpTapTimeout()) {
                     if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
                         WebAppInterface appInterface = mCurrentView.getWebAppInterface();
-                        appInterface.setPaused(!WebAppInterface.isNarrationPaused());
-                        narrationPausedChanged();
-
+                        if (appInterface.mPageHasMultimedia) {
+                            appInterface.setPaused(!WebAppInterface.isMediaPaused());
+                            mediaPausedChanged();
+                        }
                     }
                 }
             }

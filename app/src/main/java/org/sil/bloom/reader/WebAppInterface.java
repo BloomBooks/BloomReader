@@ -3,13 +3,12 @@ package org.sil.bloom.reader;
 import android.media.MediaPlayer;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebView;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
-
-import static android.media.AudioManager.STREAM_MUSIC;
 
 /**
  * This class exists to provide methods that Javascript in a WebView can make callbacks on.
@@ -42,7 +41,7 @@ public class WebAppInterface {
     private String mHtmlDirPath;
     // The web view for which this is the javascript interface.
     private WebView mWebView;
-    // Whether narration audio is paused or playing.
+    // Whether any media (audio or video) is paused or playing.
     private static boolean mPaused;
     // The one (shared) media player used for narration.
     private static MediaPlayer mp = new MediaPlayer();
@@ -56,13 +55,16 @@ public class WebAppInterface {
     private boolean mDocLoaded = false;
     // Set true when we want to start narration, but haven't yet received domContentLoaded().
     // When we do receive the notification, narration will start at once.
-    boolean shouldStartNarrationWhenDocLoaded = false;
+    private boolean shouldStartNarrationWhenDocLoaded = false;
     // Similarly if we need a postponed call to handleBeforeDocumentLoaded.
-    boolean shouldPrepareDocumentWhenLoaded = false;
+    private boolean shouldPrepareDocumentWhenLoaded = false;
     // The index of the page we belong to. As well as being useful in debugging, it can be compared
     // with the index of the currently visible page, so we ignore playback completed messages
     // if this page isn't current (and so it's not our audio that just completed).
-    int mPosition;
+    private int mPosition;
+    // The multimedia state of the page at mPosition
+    // When we respond to domContentLoaded, we ask the page to set this variable.
+    public boolean mPageHasMultimedia = false;
 
     WebAppInterface(ReaderActivity c, String htmlDirPath, WebView webView, int position) {
         mContext = c;
@@ -77,10 +79,16 @@ public class WebAppInterface {
         shouldStartNarrationWhenDocLoaded = false;
     }
 
-    // Mainly this is to prevent the Paused state from persisting from one book to another
+    // Mainly this is to prevent the Paused state from persisting from one book to another.
+    // Since the MediaPlayer docs say:
+    // 1) you should call release() to free the resources, and
+    // 2) if not released, too many MediaPlayer instances may result in an exception,
+    // we release each MediaPlayer before creating a new one.
     public static void resetAll(){
         mPaused = false;
+        mp.release();
         mp = new MediaPlayer();
+        mpBackground.release();
         mpBackground = new MediaPlayer();
     }
 
@@ -90,12 +98,34 @@ public class WebAppInterface {
         Toast.makeText(mContext, toast, Toast.LENGTH_SHORT).show();
     }
 
+    public void pauseVideo(final WebView webView) {
+        mContext.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("JSEvent", "pauseVideo, page " + String.valueOf(mPosition));
+                webView.evaluateJavascript("Root.pauseVideo()", null);
+            }
+        });
+    }
+
+    public void playVideo(final WebView webView) {
+        mContext.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("JSEvent", "playVideo, page " + String.valueOf(mPosition));
+                webView.evaluateJavascript("Root.playVideo()", null);
+            }
+        });
+    }
+
     public void setPaused(boolean pause) {
         mPaused = pause;
         if (pause) {
             Log.d("JSEvent", "mp.pause && mpBackground.pause");
             mp.pause();
             mpBackground.pause();
+
+            pauseVideo(mWebView);
 
             mContext.runOnUiThread(new Runnable() {
                 @Override
@@ -109,6 +139,9 @@ public class WebAppInterface {
             mp.start(); // Review: need to suppress if playback completed?
             if (backgroundAudioPath != null && backgroundAudioPath.length() > 0)
                 mpBackground.start();
+
+            playVideo(mWebView);
+
             mContext.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -119,7 +152,7 @@ public class WebAppInterface {
         }
     }
 
-    public static boolean isNarrationPaused() {
+    public static boolean isMediaPaused() {
         return mPaused;
     }
 
@@ -251,6 +284,7 @@ public class WebAppInterface {
             mDocLoaded = true;
             shouldStart = shouldStartNarrationWhenDocLoaded;
             shouldPrepare = shouldPrepareDocumentWhenLoaded;
+            initializePageHasMultimediaAsync();
         }
         if (shouldPrepare) {
             prepareDocument();
@@ -314,6 +348,29 @@ public class WebAppInterface {
             public void run() {
                 Log.d("JSEvent", "handlePageBeforeVisible, page " + String.valueOf(mPosition));
                 mWebView.evaluateJavascript("Root.handlePageBeforeVisible()", null);
+            }
+        });
+    }
+
+    public void initializePageHasMultimediaAsync() {
+        mContext.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("JSEvent", "requestPageMultimediaState, page " + String.valueOf(mPosition));
+                mWebView.evaluateJavascript("Root.requestPageMultimediaState()", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String s) {
+                        Log.d("JSEvent","requestPageMultimediaState, page " + String.valueOf(mPosition)
+                                + " callback=" + s);
+                        // onReceiveValue returns some form of JSON according to
+                        // https://stackoverflow.com/questions/19788294/how-does-evaluatejavascript-work
+                        // Here we only expect a single value, but that still means we get an extra
+                        // set of quotes.
+                        // Enhance: JH says we're actually going to need the state of various types
+                        // of multimedia eventually, so we'll probably need the JSON parser in the long run.
+                        mPageHasMultimedia = s.equals("\"true\"");
+                    }
+                });
             }
         });
     }

@@ -315,7 +315,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void refreshList(BookOrShelf book) {
-        if (book == null)
+        if (book == null || mBookListAdapter == null)
             return;
 
         int bookPosition = mBookListAdapter.highlightItem(book);
@@ -508,7 +508,7 @@ public class MainActivity extends BaseActivity
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
+        if (drawer != null && drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();

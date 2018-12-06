@@ -130,7 +130,40 @@ public class ReaderActivity extends BaseActivity {
     @Override
     protected void onResume(){
         super.onResume();
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN + View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        hideSystemUI();
+    }
+
+    // Enable "sticky immersive" mode.
+    private void hideSystemUI() {
+        View decorView = getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+            // We don't want the System to grab swipes from the edge
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            // Set the content to appear under the system bars so that the
+            // content doesn't resize when the system bars hide and show.
+            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            // Hide the nav bar and status bar
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_FULLSCREEN);
+    }
+
+    // Shows the system bars by removing all the flags
+    // except the ones that make the content appear under the system bars.
+    // This would be the time to make other controls available too.
+    private void showSystemUI() {
+        View decorView = getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        );
+    }
+
+    private boolean isSystemUIShowing() {
+        View decorView = getWindow().getDecorView();
+        return (decorView.getSystemUiVisibility() & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0;
     }
 
     private void ReportPagesRead()
@@ -339,6 +372,7 @@ public class ReaderActivity extends BaseActivity {
             if (oldView != null)
                 oldView.clearCache(false); // Fix for BL-5555
 
+            hideSystemUI();
             if (mIsMultiMediaBook) {
                 mSwitchedPagesWhilePaused = WebAppInterface.isMediaPaused();
 
@@ -359,7 +393,7 @@ public class ReaderActivity extends BaseActivity {
                 if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
                     WebAppInterface appInterface = mCurrentView.getWebAppInterface();
                     appInterface.setPaused(WebAppInterface.isMediaPaused());
-                    if (!WebAppInterface.isMediaPaused() && mIsMultiMediaBook) {
+                    if (!WebAppInterface.isMediaPaused()) {
                         appInterface.enableAnimation(mPlayAnimation);
                         // startNarration also starts the animation (both handled by the BloomPlayer
                         // code) iff we passed true to enableAnimation().
@@ -372,8 +406,8 @@ public class ReaderActivity extends BaseActivity {
                         mNonAudioPagesShown++;
                     }
                 }
-            }
-            else {
+            } else {
+                // Switching to a new page in a non-multimedia book
                 mNonAudioPagesShown++;
             }
             if (position == mLastNumberedPageIndex)
@@ -635,11 +669,6 @@ public class ReaderActivity extends BaseActivity {
         Double scale = Math.min(longScale, shortScale);
         scale = scale * 100d;
         return scale.intValue();
-    }
-
-    // Copy in files like bloomPlayer.js
-    private void updateSupportFiles(String bookFolderPath) {
-        IOUtilities.copyAssetFolder(this.getApplicationContext().getAssets(), "book support files", bookFolderPath);
     }
 
     enum pageAnswerState {
@@ -950,10 +979,21 @@ public class ReaderActivity extends BaseActivity {
                     // See https://issues.bloomlibrary.org/youtrack/issue/BL-5068.
                 } else if (event.getEventTime() - event.getDownTime() < viewConfiguration.getJumpTapTimeout()) {
                     if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
+                        //
+                        // OK, here we have finally decided the user tapped the screen.
+                        // In the case of a non-multimedia page, all we want to do is toggle the
+                        // system ui bars. In the case of a multimedia page, we want to toggle both
+                        // the system ui bars and play/pause.
+                        //
                         WebAppInterface appInterface = mCurrentView.getWebAppInterface();
                         if (appInterface.mPageHasMultimedia) {
                             appInterface.setPaused(!WebAppInterface.isMediaPaused());
                             mediaPausedChanged();
+                        }
+                        if (isSystemUIShowing()) {
+                            hideSystemUI();
+                        } else {
+                            showSystemUI();
                         }
                     }
                 }

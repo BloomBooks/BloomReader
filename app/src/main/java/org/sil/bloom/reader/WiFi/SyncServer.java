@@ -2,28 +2,24 @@ package org.sil.bloom.reader.WiFi;
 
 import android.content.Context;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
 import cz.msebera.android.httpclient.HttpException;
 import cz.msebera.android.httpclient.HttpRequest;
 import cz.msebera.android.httpclient.impl.DefaultBHttpServerConnection;
 import cz.msebera.android.httpclient.impl.DefaultConnectionReuseStrategy;
 import cz.msebera.android.httpclient.impl.DefaultHttpResponseFactory;
-import cz.msebera.android.httpclient.impl.DefaultHttpServerConnection;
-import cz.msebera.android.httpclient.params.BasicHttpParams;
 import cz.msebera.android.httpclient.protocol.BasicHttpContext;
-import cz.msebera.android.httpclient.protocol.BasicHttpProcessor;
 import cz.msebera.android.httpclient.protocol.HttpRequestHandler;
 import cz.msebera.android.httpclient.protocol.HttpRequestHandlerMapper;
-import cz.msebera.android.httpclient.protocol.HttpRequestHandlerRegistry;
 import cz.msebera.android.httpclient.protocol.HttpService;
 import cz.msebera.android.httpclient.protocol.ImmutableHttpProcessor;
 import cz.msebera.android.httpclient.protocol.ResponseConnControl;
 import cz.msebera.android.httpclient.protocol.ResponseContent;
 import cz.msebera.android.httpclient.protocol.ResponseDate;
 import cz.msebera.android.httpclient.protocol.ResponseServer;
-
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 
 /**
  * SyncServer manages the 'web server' for the service that supports receiving data

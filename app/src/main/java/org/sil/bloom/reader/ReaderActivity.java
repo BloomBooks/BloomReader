@@ -350,8 +350,9 @@ public class ReaderActivity extends BaseActivity {
         return sAutoAdvance.matcher(html).find() ||
         // This is a fairly crude search, we really want the doc to have spans with class
         // audio-sentence; but I think it's a sufficiently unlikely string to find elsewhere
-        // that this is good enough.
-        html.indexOf("audio-sentence") >= 0;
+        // that this is good enough. And actually the crudeness of the search allows it to find
+        // audio recorded "by box" as well as by sentence. But now we need to detect video too.
+        html.indexOf("audio-sentence") >= 0 || html.indexOf("source src=\"video") >= 0;
     }
 
     private class BloomPageChangeListener extends ViewPager.SimpleOnPageChangeListener {

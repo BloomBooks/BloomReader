@@ -1,28 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?android:attr/activatedBackgroundIndicator"
     android:clickable="false"
     android:descendantFocusability="blocksDescendants"
     android:orientation="horizontal">
 
-
-    <!-- the 2dp is useful for bookshelves, to make the background color a big bigger than
-    the actual image. the marginTop (which with the padding should add up to the layout margin
-    of the text) aligns it with the text (but doesn't get the background color).
-    The 38dp is just big enough for the bigger of the two icons we use here...the bookshelf one.
-    Using a fixed width helps keep the text column aligned. There's probably a better way.-->
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="10dp"
-        android:padding="2dp"
-        android:scaleType="fitCenter"
-        app:srcCompat="@drawable/book" />
+	<!-- Children in a FrameLayout are drawn on top of one another.
+	We use it to overlay a speaker icon on the thumbnail, if there
+	is audio in the book -->
+	<FrameLayout
+		android:id="@+id/frameLayout"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:gravity="start">
+		<!-- thumbnail -->
+		<!-- the 2dp is useful for bookshelves, to make the background color a big bigger than
+		the actual image. the marginTop (which with the padding should add up to the layout margin
+		of the text) aligns it with the text (but doesn't get the background color).
+		The 38dp is just big enough for the bigger of the two icons we use here...the bookshelf one.
+		Using a fixed width helps keep the text column aligned. There's probably a better way.-->
+		<ImageView
+			android:id="@+id/imageView"
+			android:layout_width="64dp"
+			android:layout_height="64dp"
+			android:layout_marginStart="16dp"
+			android:layout_marginTop="10dp"
+			android:padding="2dp"
+			android:scaleType="fitCenter"
+			app:srcCompat="@drawable/book" />
+		<!-- speaker icon -->
+		<ImageView
+			android:id="@+id/icon"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="58dp"
+			android:layout_marginTop="12dp"
+			app:srcCompat="@drawable/ic_speaker" />
+	</FrameLayout>
 
     <TextView
         android:id="@+id/title"

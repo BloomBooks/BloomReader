@@ -27,6 +27,7 @@ public class BloomFileReader {
     private static final String THUMBNAIL_NAME_1 = "thumbnail.png";
     private static final String THUMBNAIL_NAME_2 = "thumbnail.jpg";
     private static final String META_JSON_FILE = "meta.json";
+    private static final String BOOK_AUDIO_MATCH = "audio-sentence";
 
     public BloomFileReader(Context context, String bloomFilePath){
         this.context = context;
@@ -72,6 +73,23 @@ public class BloomFileReader {
         if (!file.exists())
             return null;
         return IOUtilities.FileToString(file);
+    }
+
+    public Boolean hasAudio() {
+        String html;
+        try {
+            final File bookHtmlFile = this.getHtmlFile();
+            html = IOUtilities.FileToString(bookHtmlFile);
+        } catch (IOException ex) {
+            return false; // we're just trying to put audio icons on thumbnails
+        }
+        closeFile();
+        // This is actually a bit flaky, since matching this class string only means that the user
+        // opened the Talking Book Tool with this book open at some point.
+        // This may be good enough for now.
+        // Enhance: Figure out how to see if there is an appropriate .mp3 file or eventually put
+        // a boolean hasAudio property in the meta.json file.
+        return html != null && html.contains(BOOK_AUDIO_MATCH);
     }
 
     public Uri getThumbnail(File thumbsDirectory) throws IOException{

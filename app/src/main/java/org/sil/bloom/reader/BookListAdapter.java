@@ -51,6 +51,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         holder.linearLayout.setTag(bookOrShelf);
         holder.bookNameView.setText(bookOrShelf.name);
         setImageView(bookOrShelf, holder);
+        setSpeakerIcon(bookOrShelf, holder);
         setBackgroundColor(bookOrShelf, holder);
     }
 
@@ -69,6 +70,14 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
                 holder.imageView.setImageURI(image_uri);
             else
                 holder.imageView.setImageResource(R.drawable.book);
+        }
+    }
+
+    private void setSpeakerIcon(BookOrShelf bookOrShelf, ViewHolder holder){
+        if (bookOrShelf.isShelf() || !bookOrShelf.hasAudio()) {
+            holder.speakerIcon.setImageAlpha(0); // transparent
+        } else {
+            holder.speakerIcon.setImageAlpha(200);
         }
     }
 
@@ -167,12 +176,14 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         public LinearLayout linearLayout;
         public TextView bookNameView;
         public ImageView imageView;
+        public ImageView speakerIcon;
 
         public ViewHolder(LinearLayout linearLayout) {
             super(linearLayout);
             this.linearLayout = linearLayout;
             bookNameView = (TextView) linearLayout.findViewById(R.id.title);
             imageView = (ImageView) linearLayout.findViewById(R.id.imageView);
+            speakerIcon = (ImageView) linearLayout.findViewById(R.id.icon);
         }
 
         public Context getContext(){

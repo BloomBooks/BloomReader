@@ -1,10 +1,13 @@
 package org.sil.bloom.reader.models;
 
+import org.sil.bloom.reader.BloomFileReader;
+
 import java.io.File;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.sil.bloom.reader.BloomReaderApplication.getBloomApplicationContext;
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 
@@ -37,6 +40,12 @@ public class BookOrShelf {
 
     public boolean isShelf() {
         return path.endsWith(BOOKSHELF_FILE_EXTENSION);
+    }
+
+    public boolean hasAudio() {
+        if (this.isShelf()) { return false; } // safety net
+        BloomFileReader reader = new BloomFileReader(getBloomApplicationContext(), this.path);
+        return reader.hasAudio();
     }
 
     public void addBookshelf(String shelf) {

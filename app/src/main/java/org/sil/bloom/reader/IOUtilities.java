@@ -5,7 +5,6 @@ import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.util.Log;
 import android.widget.Toast;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -13,9 +12,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
-import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.BookOrShelf;
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -23,18 +19,14 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import static org.sil.bloom.reader.models.BookCollection.getLocalBooksDirectory;
 
@@ -56,6 +48,10 @@ public class IOUtilities {
     public static void emptyDirectory(File dir) {
         for (File child : dir.listFiles())
             deleteFileOrDirectory(child);
+    }
+
+    public static boolean isDirectoryEmpty(File dir) {
+        return dir.listFiles().length == 0;
     }
 
     public static void deleteFileOrDirectory(File fileOrDirectory) {
@@ -235,41 +231,6 @@ public class IOUtilities {
             return paths[0];
         return null;
     }
-
-    // not used. Considered zipping for .bloombundle, but the .bloomd files are already zipped,
-    // so further compression is unlikely to be significant, and attempting it is likely to slow
-    // things down. Hence the use of tar.
-//    public static void zip(String directory, FilenameFilter filter, String destinationPath) throws IOException {
-//        File[] fileList = new File(directory).listFiles(filter);
-//        zip(fileList, destinationPath);
-//    }
-//
-//    public static void zip(File[] files, String destinationPath) throws IOException {
-//        ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationPath)));
-//        try {
-//            byte data[] = new byte[BUFFER_SIZE];
-//
-//            for (int i = 0; i < files.length; i++) {
-//                FileInputStream fi = new FileInputStream(files[i]);
-//                BufferedInputStream origin = new BufferedInputStream(fi, BUFFER_SIZE);
-//                try {
-//                    String filePath = files[i].getAbsolutePath();
-//                    ZipEntry entry = new ZipEntry(filePath.substring(filePath.lastIndexOf("/") + 1));
-//                    out.putNextEntry(entry);
-//                    int count;
-//                    while ((count = origin.read(data, 0, BUFFER_SIZE)) != -1) {
-//                        out.write(data, 0, count);
-//                    }
-//                }
-//                finally {
-//                    origin.close();
-//                }
-//            }
-//        }
-//        finally {
-//            out.close();
-//        }
-//    }
 
     public static void tar(String directory, FilenameFilter filter, String destinationPath) throws IOException {
         File[] fileList = new File(directory).listFiles(filter);

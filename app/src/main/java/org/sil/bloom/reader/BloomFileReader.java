@@ -8,7 +8,6 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +26,8 @@ public class BloomFileReader {
     private static final String THUMBNAIL_NAME_1 = "thumbnail.png";
     private static final String THUMBNAIL_NAME_2 = "thumbnail.jpg";
     private static final String META_JSON_FILE = "meta.json";
+    private static final String BOOK_AUDIO_MATCH = "audio-sentence";
+    private static final String AUDIO_FOLDER = "/audio/";
 
     public BloomFileReader(Context context, String bloomFilePath){
         this.context = context;
@@ -72,6 +73,27 @@ public class BloomFileReader {
         if (!file.exists())
             return null;
         return IOUtilities.FileToString(file);
+    }
+
+    public Boolean hasAudio() {
+        String html;
+        File bookDirectory;
+        boolean audioFilesExist = false;
+        try {
+            final File bookHtmlFile = this.getHtmlFile();
+            html = IOUtilities.FileToString(bookHtmlFile);
+            bookDirectory = bookHtmlFile.getParentFile();
+            final String audioDirectoryPath = bookDirectory + AUDIO_FOLDER;
+            File audioDir = new File(audioDirectoryPath);
+            if (audioDir.exists()) {
+                audioFilesExist = !IOUtilities.isDirectoryEmpty(audioDir);
+            }
+        } catch (IOException ex) {
+            return false; // we're just trying to put audio icons on thumbnails
+        } finally {
+            closeFile();
+        }
+        return html != null && html.contains(BOOK_AUDIO_MATCH) && audioFilesExist;
     }
 
     public Uri getThumbnail(File thumbsDirectory) throws IOException{

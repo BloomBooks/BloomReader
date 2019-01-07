@@ -77,7 +77,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         if (bookOrShelf.isShelf() || !bookOrShelf.hasAudio()) {
             holder.speakerIcon.setImageAlpha(0); // transparent
         } else {
-            holder.speakerIcon.setImageAlpha(200);
+            holder.speakerIcon.setImageAlpha(255); // opaque
         }
     }
 

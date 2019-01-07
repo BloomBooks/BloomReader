@@ -12,4 +12,6 @@
     <dimen name="nav_header_vertical_spacing">16dp</dimen>
     <dimen name="nav_header_height">200dp</dimen>
     <dimen name="question_margin">30dp</dimen>
+    <dimen name="feature_icon_size">10dp</dimen>
+    <dimen name="feature_icon_padding">6dp</dimen>
 </resources>

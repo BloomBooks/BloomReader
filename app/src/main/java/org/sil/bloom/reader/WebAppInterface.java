@@ -125,14 +125,16 @@ public class WebAppInterface {
 
     public static void stopNarration() {
         Log.d("JSEvent", "mp.stop");
-        mp.stop();
+        if (mp.isPlaying())
+            mp.stop();
     }
 
     // When our app no longer in foreground
     public static void stopAllAudio() {
         stopNarration();
         Log.d("JSEvent", "mpBackground.stop");
-        mpBackground.stop();
+        if (mpBackground.isPlaying())
+            mpBackground.stop();
     }
 
     public static void SetBackgroundAudio(String path, float volume) {
@@ -140,7 +142,9 @@ public class WebAppInterface {
             return;
         backgroundAudioPath = path;
         Log.d("JSEvent", "mpBackground stop && resest");
-        mpBackground.stop();
+
+        if (mpBackground.isPlaying())
+            mpBackground.stop();
         mpBackground.reset();
         if (backgroundAudioPath == null || backgroundAudioPath.length() == 0)
             return;
@@ -174,7 +178,8 @@ public class WebAppInterface {
 
         try {
             Log.d("JSEvent", "mp.stop && mp.reset && mp.setDataSource && mp.prepare, page " + String.valueOf(mPosition));
-            mp.stop();
+            if (mp.isPlaying())
+                mp.stop();
             mp.reset();
             String dataSource = mHtmlDirPath + "/" + aud;
             if (!new File(dataSource).exists()) {

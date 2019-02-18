@@ -442,8 +442,10 @@ public class MainActivity extends BaseActivity
         contextualActionBarMode = startActionMode(new ActionMode.Callback() {
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                    mode.getMenuInflater().inflate(R.menu.book_item_menu, menu);
-                    return true;
+                BookOrShelf selected = mBookListAdapter.getSelectedItem();
+                int menuResource = selected.isDeleteable() ? R.menu.book_item_menu_with_delete : R.menu.book_item_menu;
+                mode.getMenuInflater().inflate(menuResource, menu);
+                return true;
             }
 
             @Override

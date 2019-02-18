@@ -80,4 +80,16 @@ public class BookOrShelf {
             return bookOrShelf1.path.compareToIgnoreCase(bookOrShelf2.path);
         }
     }
+
+    public boolean isDeleteable() {
+        // We can only delete files in the standard Bloom directory
+        // That is, not from a folder on the SD card
+        try {
+            return path.startsWith(BookCollection.getLocalBooksDirectory().getAbsolutePath());
+        }
+        catch (ExtStorageUnavailableException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

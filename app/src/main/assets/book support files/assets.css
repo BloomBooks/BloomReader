@@ -19,3 +19,11 @@
 span.ui-audioCurrent,.ui-audioCurrent p {
     background-color: yellow
 }
+
+/* We now remove tabindex when we prepare books for Bloom Reader, but we did not originally.
+   When tabindex is present, tapping on the div causes it to be bordered in orange.
+   See BL-6849.
+ */
+*[tabindex]:focus {
+    outline: none;
+}

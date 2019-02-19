@@ -81,9 +81,19 @@ public class BookOrShelf {
         }
     }
 
+    public boolean isShareable() {
+        // We can only share files from whitelisted directories
+        // And we can't whitelist the whole sd card
+        return isInOnDeviceBloomFolder();
+    }
+
     public boolean isDeleteable() {
         // We can only delete files in the standard Bloom directory
         // That is, not from a folder on the SD card
+        return isInOnDeviceBloomFolder();
+    }
+
+    private boolean isInOnDeviceBloomFolder() {
         try {
             return path.startsWith(BookCollection.getLocalBooksDirectory().getAbsolutePath());
         }

@@ -1,6 +1,7 @@
 package org.sil.bloom.reader;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -17,6 +18,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
+
 /**
  * Created by rick on 10/2/17.
  * Much of it borrowed from the SharingManager for Scripture/ReadingAppBuilder
@@ -30,10 +33,20 @@ public class SharingManager {
         mActivity = activity;
     }
 
-    public void shareBook(BookOrShelf book){
-        File bookFile = new File(book.path);
+    public void shareBook(Context context, BookOrShelf book){
+        File bookFile = book.inShareableDirectory() ? new File(book.path) : stageBook(context, book);
+        if (bookFile == null) return;
         String dialogTitle = String.format(mActivity.getString(R.string.shareBook), book.name);
         shareFile(bookFile, "application/zip", dialogTitle);
+    }
+
+    private File stageBook(Context context, BookOrShelf book) {
+        String bookFileName = new File(book.path).getName();
+        String outPath = context.getCacheDir().getPath() + File.separator + bookFileName;
+        if (IOUtilities.copyFile(book.path, outPath)) {
+            return new File(outPath);
+        }
+        return null;
     }
 
     public void shareApkFile() {
@@ -109,7 +122,7 @@ public class SharingManager {
     // We have to stage the apk to share in public storage, and bloom bundles have to be
     // created somewhere.
     // This gets called now and then to delete the files there if they are more than a day old.
-    public static void fileCleanup(){
+    public static void fileCleanup(Context context){
         long yesterday = System.currentTimeMillis() - (1000 * 60 * 60 * 24);
 
         for (String filePath : new String[] {sharedApkPath(), sharedBloomBundlePath()}) {
@@ -117,6 +130,16 @@ public class SharingManager {
 
             if (file.exists() && file.lastModified() < yesterday)
                 file.delete();
+        }
+
+        // Clean up book files staged in cache dir
+        String[] cacheItems = context.getCacheDir().list();
+        for (int i=0; i<cacheItems.length; ++i) {
+            if (cacheItems[i].endsWith(BOOK_FILE_EXTENSION)){
+                File file = new File(context.getCacheDir() + File.separator + cacheItems[i]);
+                if (file.lastModified() < yesterday)
+                    file.delete();
+            }
         }
     }
 

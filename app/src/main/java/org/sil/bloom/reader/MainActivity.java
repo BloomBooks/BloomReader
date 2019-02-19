@@ -261,7 +261,7 @@ public class MainActivity extends BaseActivity
             }
 
             //Periodic cleanup
-            SharingManager.fileCleanup();
+            SharingManager.fileCleanup(this);
         }
         catch (ExtStorageUnavailableException e){
             externalStorageUnavailable(e);
@@ -367,7 +367,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void shareBook(BookOrShelf book){
-        new SharingManager(this).shareBook(book);
+        new SharingManager(this).shareBook(this, book);
     }
 
     private void shareShelf(BookOrShelf shelf){

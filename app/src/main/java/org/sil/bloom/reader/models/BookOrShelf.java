@@ -81,9 +81,20 @@ public class BookOrShelf {
         }
     }
 
+    public boolean inShareableDirectory() {
+        // We can only share files from whitelisted directories
+        // And Android doesn't let us whitelist arbitrary directories on the sd card
+        // Not applicable to shelves
+        return isInOnDeviceBloomFolder();
+    }
+
     public boolean isDeleteable() {
         // We can only delete files in the standard Bloom directory
         // That is, not from a folder on the SD card
+        return isInOnDeviceBloomFolder();
+    }
+
+    private boolean isInOnDeviceBloomFolder() {
         try {
             return path.startsWith(BookCollection.getLocalBooksDirectory().getAbsolutePath());
         }

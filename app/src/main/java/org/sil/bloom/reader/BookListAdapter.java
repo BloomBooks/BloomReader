@@ -110,24 +110,30 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     @Override
     public boolean onLongClick(View view) {
-        if (selectedItem == null) {
-            selectedItem = (BookOrShelf) view.getTag();
-            notifyItemChanged(bookCollection.indexOf(selectedItem));
-            return bookClickListener.onBookLongClick();
-        }
-        else {
-            clearSelection();
-            selectedItem = (BookOrShelf) view.getTag();
-            notifyItemChanged(bookCollection.indexOf(selectedItem));
+        BookOrShelf clickedItem = (BookOrShelf) view.getTag();
+        if (selectedItem == clickedItem)
             return true;
-        }
+
+        if (selectedItem != null)
+            clearSelection();
+
+        selectedItem = clickedItem;
+        notifyItemChanged(bookCollection.indexOf(selectedItem));
+        return bookClickListener.onBookLongClick(selectedItem);
     }
 
     public BookOrShelf getSelectedItem(){
         return selectedItem;
     }
 
-    public void clearSelection(){
+    // This also gets called in the course of changing the selection
+    // We don't want to clear if the selection has already moved on
+    public void unselect(BookOrShelf bookOrShelf) {
+        if (bookOrShelf == selectedItem)
+            clearSelection();
+    }
+
+    private void clearSelection(){
         BookOrShelf oldSelection = selectedItem;
         selectedItem = null;
         if (oldSelection != null)
@@ -193,7 +199,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     public interface BookClickListener {
         void onBookClick(BookOrShelf bookOrShelf);
-        boolean onBookLongClick();
+        boolean onBookLongClick(BookOrShelf bookOrShelf);
         void onClearBookSelection();
     }
 }

@@ -261,7 +261,7 @@ public class MainActivity extends BaseActivity
             }
 
             //Periodic cleanup
-            SharingManager.fileCleanup();
+            SharingManager.fileCleanup(this);
         }
         catch (ExtStorageUnavailableException e){
             externalStorageUnavailable(e);
@@ -367,7 +367,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void shareBook(BookOrShelf book){
-        new SharingManager(this).shareBook(book);
+        new SharingManager(this).shareBook(this, book);
     }
 
     private void shareShelf(BookOrShelf shelf){
@@ -438,12 +438,13 @@ public class MainActivity extends BaseActivity
     }
 
     @Override
-    public boolean onBookLongClick(){
+    public boolean onBookLongClick(final BookOrShelf selectedBookOrShelf){
         contextualActionBarMode = startActionMode(new ActionMode.Callback() {
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                    mode.getMenuInflater().inflate(R.menu.book_item_menu, menu);
-                    return true;
+                mode.getMenuInflater().inflate(R.menu.book_item_menu, menu);
+                menu.findItem(R.id.delete).setVisible(selectedBookOrShelf.isDeleteable());
+                return true;
             }
 
             @Override
@@ -468,7 +469,7 @@ public class MainActivity extends BaseActivity
 
             @Override
             public void onDestroyActionMode(android.view.ActionMode mode) {
-                mBookListAdapter.clearSelection();
+                mBookListAdapter.unselect(selectedBookOrShelf);
                 contextualActionBarMode = null;
             }
         });

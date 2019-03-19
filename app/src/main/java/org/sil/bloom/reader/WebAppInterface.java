@@ -108,17 +108,29 @@ public class WebAppInterface {
         });
     }
 
-    public void playVideo(final WebView webView) {
+    public void playVideo(final WebView webView, final int milliDelay) {
         mContext.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Log.d("JSEvent", "playVideo, page " + String.valueOf(mPosition));
-                webView.evaluateJavascript("Root.playVideo()", null);
+
+                if (milliDelay > 0) {
+                    String delay = Integer.toString(milliDelay);
+
+                    // play, pause, wait, play
+                    // If this looks like a hack, that's because it is!
+                    // We want to delay the playback in situations like page load so a sign language "reader" doesn't miss some signs at the beginning.
+                    // However, if we simply delay, we don't see the first frame but rather a placeholder image which looks horrible.
+                    // We should be able to set preload="metadata" to solve this, but Android doesn't seem to do anything with it.
+                    webView.evaluateJavascript("Root.playVideo();Root.pauseVideo();setTimeout(function(){Root.playVideo();}, " + delay + ");", null);
+                } else {
+                    webView.evaluateJavascript("Root.playVideo();", null);
+                }
             }
         });
     }
 
-    public void setPaused(boolean pause) {
+    public void setPaused(boolean pause, boolean delayVideoPlayback) {
         mPaused = pause;
         if (pause) {
             Log.d("JSEvent", "mp.pause && mpBackground.pause");
@@ -140,7 +152,7 @@ public class WebAppInterface {
             if (backgroundAudioPath != null && backgroundAudioPath.length() > 0)
                 mpBackground.start();
 
-            playVideo(mWebView);
+            playVideo(mWebView, delayVideoPlayback ? 1000 : 0);
 
             mContext.runOnUiThread(new Runnable() {
                 @Override

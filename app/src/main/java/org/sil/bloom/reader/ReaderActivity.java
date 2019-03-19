@@ -381,7 +381,7 @@ public class ReaderActivity extends BaseActivity {
             if (mIsMultiMediaBook) {
                 mSwitchedPagesWhilePaused = WebAppInterface.isMediaPaused();
 
-                stopAndStartVideos(oldView, mCurrentView);
+                stopVideos(oldView);
                 WebAppInterface.stopNarration(); // don't want to hear rest of anything on another page
                 String backgroundAudioPath = "";
                 if (mPlayMusic) {
@@ -397,7 +397,7 @@ public class ReaderActivity extends BaseActivity {
                 // back to this one (again, reused) and old animation is still running
                 if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
                     WebAppInterface appInterface = mCurrentView.getWebAppInterface();
-                    appInterface.setPaused(WebAppInterface.isMediaPaused());
+                    appInterface.setPaused(WebAppInterface.isMediaPaused(), true);
                     if (!WebAppInterface.isMediaPaused()) {
                         appInterface.enableAnimation(mPlayAnimation);
                         // startNarration also starts the animation (both handled by the BloomPlayer
@@ -585,14 +585,10 @@ public class ReaderActivity extends BaseActivity {
         mPlayAnimation = getBooleanFeature("playanimations", true, inLandscape);
     }
 
-    private void stopAndStartVideos(WebView oldView, WebView currentView){
-        if(oldView != null) {
-            WebAppInterface waInterface = ((ScaledWebView)oldView).getWebAppInterface();
-            waInterface.pauseVideo(oldView);
-        }
-        if(currentView != null) {
-            WebAppInterface waInterface = ((ScaledWebView) currentView).getWebAppInterface();
-            waInterface.playVideo(currentView);
+    private void stopVideos(WebView webView){
+        if(webView != null) {
+            WebAppInterface waInterface = ((ScaledWebView)webView).getWebAppInterface();
+            waInterface.pauseVideo(webView);
         }
     }
 
@@ -992,7 +988,7 @@ public class ReaderActivity extends BaseActivity {
                         //
                         WebAppInterface appInterface = mCurrentView.getWebAppInterface();
                         if (appInterface.mPageHasMultimedia) {
-                            appInterface.setPaused(!WebAppInterface.isMediaPaused());
+                            appInterface.setPaused(!WebAppInterface.isMediaPaused(), false);
                             mediaPausedChanged();
                         }
                         if (isSystemUIShowing()) {

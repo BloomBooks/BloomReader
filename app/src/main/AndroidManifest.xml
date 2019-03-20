@@ -71,11 +71,13 @@
                 <data android:scheme="content" />
                 <data android:scheme="file" />
                 <data android:host="*" />
-                <data android:pathPattern=".*bloomd" />
-                <data android:pathPattern=".*bloombundle" />
+                <data android:pathPattern=".*\\.bloomd" />
+                <data android:pathPattern=".*\\.bloombundle" />
             </intent-filter>
 
-            <!-- Match intents by file extension when a MIME type is set -->
+            <!-- Match intents by file extension when a MIME type is set.
+                BL-6941: fixes tapping files from a file browser app (including Dropbox).
+            -->
             <intent-filter
                 android:icon="@drawable/book"
                 android:label="@string/app_name">
@@ -84,16 +86,16 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
 
-                <data android:mimeType="*/*" />
+                <data android:mimeType="application/*" /> <!-- covers bloomd/bloombundle/zip/octet-stream, etc. -->
 
                 <data android:scheme="content" />
                 <data android:scheme="file" />
                 <data android:host="*" />
-                <data android:pathPattern=".*bloomd" />
-                <data android:pathPattern=".*bloombundle" />
+                <data android:pathPattern=".*\\.bloomd" />
+                <data android:pathPattern=".*\\.bloombundle" />
             </intent-filter>
 
-            <!-- Match intents by MIME type in case the file extension gets lost -->
+            <!-- Match intents by MIME type in case the file extension gets lost. -->
             <intent-filter
                 android:icon="@drawable/book"
                 android:label="@string/app_name">

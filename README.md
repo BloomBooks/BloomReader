@@ -52,19 +52,63 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
 * [x] In-app sharing/synchronization via bluetooth and wifi-direct.
 
 # Building
+## Getting the Bloom Reader code and dependencies
+
+Install [Git for Windows](https://gitforwindows.org), which provides a bash shell command window
+and a simple GUI interface.  This will allow you to obtain the source code and dependencies.
+Some developers prefer to use [gitkraken](https://www.gitkraken.com/), a fancier GUI interface
+to git, but that's not required if you find the standard tools usable.  You will need the bash
+shell command window provided by [Git for Windows](https://gitforwindows.org) in any case.
 
     git clone https://github.com/BloomBooks/BloomReader
     cd BloomReader
     getDependencies.sh
     gradlew (or, more likely, open the project in Android Studio)
 
+If you plan to fix bugs or make improvements to Bloom Reader, and feed those back to the Bloom
+Reader project, then it's probably best to go to the github site given above in your browser and
+fork the project to your own github account.  (Setting up your own github account is left as an
+exercise for the reader.)  The first line of the instructions above would then change to
+
+    git clone https://github.com/YourGithubName/BloomReader
+
+(where YourGithubName is obviously your github username, not those literal characters).  There
+are standard procedures for keeping your fork synchronized with the master repository owned by
+BloomBooks.  Work is done on a new local branch and change requests made by pushing the local
+branch up to github and then creating a *pull request* against the master branch of the
+BloomBooks repository.  Details of all this are beyond the scope of these instructions, but
+should be familiar to any developer who has used github on a team project.
+
 To use the audio player (and pan and zoom) features requires a JavaScript file,
 app\src\main\assets\book support files\bloomPagePlayer.js, which is one of the outputs of
-the BloomPlayer project. On TeamCity, this is configured as a dependency.
+the BloomPlayer project. (BloomPlayer is also under BloomBooks on github.) On TeamCity, this is
+configured as a dependency.
 
 When building locally, if you need to make changes to BloomPlayer, you will currently need to build BloomPlayer first and copy the file over.
 
 If you don't need to make changes in BloomPlayer, running `getDependencies.sh` will get the latest version from TeamCity.
+
+## Setting up the build environment
+
+1. Install [Android Studio](https://developer.android.com/studio), the IDE used by the Bloom
+   Reader team for developing the app.
+2. Clone the Bloom Reader code onto your local machine using **git** as described above.
+3. Start Android Studio and open the Bloom Reader project.
+4. Invoke the *Sync Project with Gradle Files* command in the *File* menu or the corresponding
+   button from the command button bar.  (This has the effect of limiting the default build
+   inside Android Studio to the debug configuration of the alpha flavor of the app, which is
+   usually what you want.)
+5. Build Bloom Reader with the *Make Project* command in the *Build* menu or the corresponding
+   button from the command button bar.  This should complete successfully, running the
+   *assembleAlphaDebug* build.
+6. Run the newly built app with the *Run 'app'* command in the *Run* menu or the corresponding
+   button from the command button bar.  This should prompt you to set up an Android device
+   emulator.  Choose a device and then choose a version of Android to download to use on that
+   device.  Following all the program prompts, in a few minutes (depending on your internet
+   download speed), you should see Bloom Reader running in the device emulator.
+
+   Running the Android device emulator on Linux may require a few more setup steps dealing with
+   /dev/kvm: Internet search engines will help with that complication.
 
 # Signing and Deployment
 

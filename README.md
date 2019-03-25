@@ -52,6 +52,8 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
 * [x] In-app sharing/synchronization via bluetooth and wifi-direct.
 
 # Building
+## Getting the Bloom Reader code and dependencies
+
 
     git clone https://github.com/BloomBooks/BloomReader
     cd BloomReader
@@ -60,11 +62,34 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
 
 To use the audio player (and pan and zoom) features requires a JavaScript file,
 app\src\main\assets\book support files\bloomPagePlayer.js, which is one of the outputs of
-the BloomPlayer project. On TeamCity, this is configured as a dependency.
+the [BloomPlayer](https://github.com/BloomBooks/BloomPlayer) project. On TeamCity, this is
+configured as a dependency.
 
 When building locally, if you need to make changes to BloomPlayer, you will currently need to build BloomPlayer first and copy the file over.
 
 If you don't need to make changes in BloomPlayer, running `getDependencies.sh` will get the latest version from TeamCity.
+
+## Setting up the build environment
+
+1. Install [Android Studio](https://developer.android.com/studio), the IDE used by the Bloom
+   Reader team for developing the app.
+2. Clone the Bloom Reader code onto your local machine using **git** as described above.
+3. Start Android Studio and open the Bloom Reader project.
+4. Invoke the *Sync Project with Gradle Files* command in the *File* menu or the corresponding
+   button from the command button bar.  (This has the effect of limiting the default build
+   inside Android Studio to the debug configuration of the alpha flavor of the app, which is
+   usually what you want.)
+5. Build Bloom Reader with the *Make Project* command in the *Build* menu or the corresponding
+   button from the command button bar.  This should complete successfully, running the
+   *assembleAlphaDebug* build.
+6. Run the newly built app with the *Run 'app'* command in the *Run* menu or the corresponding
+   button from the command button bar.  This should prompt you to set up an Android device
+   emulator.  Choose a device and then choose a version of Android to download to use on that
+   device.  Following all the program prompts, in a few minutes (depending on your internet
+   download speed), you should see Bloom Reader running in the device emulator.
+
+   Running the Android device emulator on Linux may require a few more setup steps dealing with
+   /dev/kvm: Internet search engines will help with that complication.
 
 # Signing and Deployment
 

@@ -43,6 +43,8 @@ public class WebAppInterface {
     private WebView mWebView;
     // Whether any media (audio or video) is paused or playing.
     private static boolean mPaused;
+    // Whether the page has changed since the latest sound file was played.
+    private static boolean mPageChanged = false;
     // The one (shared) media player used for narration.
     private static MediaPlayer mp = new MediaPlayer();
     // And the one used for background audio
@@ -148,7 +150,9 @@ public class WebAppInterface {
             });
         } else {
             Log.d("JSEvent", "mp.start && mpBackground.start, page " + String.valueOf(mPosition));
-            mp.start(); // Review: need to suppress if playback completed?
+            // Prevent playing sound from a previously viewed page (BL-6925).
+            if (!mPageChanged)
+                mp.start(); // Review: need to suppress if playback completed?
             if (backgroundAudioPath != null && backgroundAudioPath.length() > 0)
                 mpBackground.start();
 
@@ -170,6 +174,7 @@ public class WebAppInterface {
 
     public static void stopNarration() {
         Log.d("JSEvent", "mp.stop");
+        mPageChanged = true;      // we no longer have valid sound data to play.
         if (mp.isPlaying())
             mp.stop();
     }
@@ -223,6 +228,7 @@ public class WebAppInterface {
 
         try {
             Log.d("JSEvent", "mp.stop && mp.reset && mp.setDataSource && mp.prepare, page " + String.valueOf(mPosition));
+            mPageChanged = false;     // we now have valid sound data to play.
             if (mp.isPlaying())
                 mp.stop();
             mp.reset();

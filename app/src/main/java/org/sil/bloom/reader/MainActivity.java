@@ -379,6 +379,11 @@ public class MainActivity extends BaseActivity
 
     private void deleteBookOrShelf(){
         BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItem();
+
+        // Somehow, the pre-launch tests on the Play console were able to get this to be null
+        if (bookOrShelf == null)
+            return;
+
         if (bookOrShelf.isShelf())
             deleteShelf(bookOrShelf);
         else

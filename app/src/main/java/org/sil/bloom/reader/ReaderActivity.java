@@ -988,7 +988,7 @@ public class ReaderActivity extends BaseActivity {
                         //
                         WebAppInterface appInterface = mCurrentView.getWebAppInterface();
                         if (appInterface.mPageHasMultimedia) {
-                            appInterface.setPaused(!WebAppInterface.isMediaPaused(), false);
+                            appInterface.toggleAudioOrVideoPaused();
                             mediaPausedChanged();
                         }
                         if (isSystemUIShowing()) {

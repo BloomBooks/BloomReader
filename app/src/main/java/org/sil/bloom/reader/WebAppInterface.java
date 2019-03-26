@@ -43,6 +43,8 @@ public class WebAppInterface {
     private WebView mWebView;
     // Whether any media (audio or video) is paused or playing.
     private static boolean mPaused;
+    private static boolean mAudioPaused;
+    private static boolean mVideoPaused;
     // The one (shared) media player used for narration.
     private static MediaPlayer mp = new MediaPlayer();
     // And the one used for background audio
@@ -86,6 +88,8 @@ public class WebAppInterface {
     // we release each MediaPlayer before creating a new one.
     public static void resetAll(){
         mPaused = false;
+        mAudioPaused = false;
+        mVideoPaused = false;
         mp.release();
         mp = new MediaPlayer();
         mpBackground.release();
@@ -151,13 +155,7 @@ public class WebAppInterface {
 
             pauseVideo(mWebView);
 
-            mContext.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d("JSEvent", "pauseAnimation, page " + String.valueOf(mPosition));
-                    mWebView.evaluateJavascript("Root.pauseAnimation()", null);
-                }
-            });
+            pauseAnimation();
         } else {
             Log.d("JSEvent", "mp.start && mpBackground.start, page " + String.valueOf(mPosition));
             mp.start(); // Review: need to suppress if playback completed?
@@ -166,14 +164,85 @@ public class WebAppInterface {
 
             playVideo(mWebView, delayVideoPlayback ? 1000 : 0);
 
-            mContext.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d("JSEvent", "resumeAnimation, page " + String.valueOf(mPosition));
-                    mWebView.evaluateJavascript("Root.resumeAnimation()", null);
-                }
-            });
+            playAnimation();
         }
+    }
+
+    private void pauseAnimation() {
+        mContext.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("JSEvent", "pauseAnimation, page " + String.valueOf(mPosition));
+                mWebView.evaluateJavascript("Root.pauseAnimation()", null);
+            }
+        });
+    }
+
+    private void playAnimation() {
+        mContext.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("JSEvent", "resumeAnimation, page " + String.valueOf(mPosition));
+                mWebView.evaluateJavascript("Root.resumeAnimation()", null);
+            }
+        });
+    }
+
+    // If the user touches the screen after the sound or video finishes playing, don't make him touch it
+    // twice to restart the sound or video.  See https://issues.bloomlibrary.org/youtrack/issue/BL-7003.
+    // On the other hand, if one has finished, don't start it when pausing or resuming the other one.
+    // Note that animation is assumed to run synchronously with audio.
+    // REVIEW: should background audio be toggled on and off as well?  The problem is that since it
+    // never stops, do you allow the user to restart the other audio or video?  The logic gets more
+    // complicated, and the desired user interaction is not obvious.  Merely extending the current
+    // logic to another variable would prevent video and narration from ever being restarted once
+    // they finish since they would never get marked as paused when background alone is paused.
+    public void toggleAudioOrVideoPaused() {
+        mContext.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("JSEvent", "toggleAudioOrVideoPaused(): mPaused="+mPaused+", mAudioPaused="+mAudioPaused+", mVideoPaused="+mVideoPaused);
+                mWebView.evaluateJavascript("Root.isVideoPlaying()", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String s) {
+                        boolean audioPlaying = mp.isPlaying();
+                        Log.d("JSEvent","toggleAudioOrVideoPaused(): callback=" + s + ", audioPlaying="+audioPlaying);
+                        // onReceiveValue returns some form of JSON according to
+                        // https://stackoverflow.com/questions/19788294/how-does-evaluatejavascript-work
+                        // Here we only expect a single value, but that still means we get an extra
+                        // set of quotes.
+                        boolean videoPlaying = s.equals("\"true\"") || s.equals("true");
+                        if (videoPlaying || audioPlaying) {
+                            if (videoPlaying) {
+                                pauseVideo(mWebView);
+                            }
+                            if (audioPlaying) {
+                                mp.pause();
+                                pauseAnimation();
+                            }
+                            mVideoPaused = videoPlaying;
+                            mAudioPaused = audioPlaying;
+                        } else if (mVideoPaused || mAudioPaused) {
+                            if (mVideoPaused) {
+                                playVideo(mWebView, 0);
+                            }
+                            if (mAudioPaused) {
+                                mp.start();
+                                playAnimation();
+                            }
+                            mVideoPaused = false;
+                            mAudioPaused = false;
+                        } else {
+                            // nothing is playing and nothing is paused: start all!
+                            playVideo(mWebView, 0);
+                            mp.start();
+                        }
+                        mPaused = mAudioPaused || mVideoPaused;
+                    }
+                });
+            }
+        });
+
     }
 
     public static boolean isMediaPaused() {

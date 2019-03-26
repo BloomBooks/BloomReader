@@ -172,6 +172,7 @@ public class WebAppInterface {
         Log.d("JSEvent", "mp.stop");
         if (mp.isPlaying())
             mp.stop();
+        mp.reset();     // we no longer have valid data to play (BL-6925)
     }
 
     // When our app no longer in foreground

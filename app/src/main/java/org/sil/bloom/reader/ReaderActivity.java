@@ -588,7 +588,7 @@ public class ReaderActivity extends BaseActivity {
     private void stopVideos(WebView webView){
         if(webView != null) {
             WebAppInterface waInterface = ((ScaledWebView)webView).getWebAppInterface();
-            waInterface.pauseVideo(webView);
+            waInterface.stopVideo(webView);
         }
     }
 

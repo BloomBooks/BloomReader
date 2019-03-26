@@ -98,12 +98,24 @@ public class WebAppInterface {
         Toast.makeText(mContext, toast, Toast.LENGTH_SHORT).show();
     }
 
+    // Pause the video at its current location.
     public void pauseVideo(final WebView webView) {
         mContext.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Log.d("JSEvent", "pauseVideo, page " + String.valueOf(mPosition));
                 webView.evaluateJavascript("Root.pauseVideo()", null);
+            }
+        });
+    }
+
+    // Don't just pause playing the video, also reset it to the beginning.
+    public void stopVideo(final WebView webView) {
+        mContext.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("JSEvent", "stopVideo, page " + String.valueOf(mPosition));
+                webView.evaluateJavascript("Root.stopVideo()", null);
             }
         });
     }

@@ -149,8 +149,6 @@ public class WebAppInterface {
             mp.pause();
             mpBackground.pause();
 
-            pauseVideo(mWebView);
-
             mContext.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -164,8 +162,6 @@ public class WebAppInterface {
             if (backgroundAudioPath != null && backgroundAudioPath.length() > 0)
                 mpBackground.start();
 
-            playVideo(mWebView, delayVideoPlayback ? 1000 : 0);
-
             mContext.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -174,6 +170,33 @@ public class WebAppInterface {
                 }
             });
         }
+        // If the user touches the screen after the video finishes playing, don't make him touch it
+        // twice to restart the video.  See https://issues.bloomlibrary.org/youtrack/issue/BL-7003.
+        pauseOrStartVideoAsync(delayVideoPlayback);
+    }
+
+    private void pauseOrStartVideoAsync(final boolean delayVideoPlayback) {
+        mContext.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("JSEvent", "pauseOrStartVideoAsync()");
+                mWebView.evaluateJavascript("Root.isVideoPlaying()", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String s) {
+                        Log.d("JSEvent","pauseOrStartVideoAsync(): callback=" + s);
+                        // onReceiveValue returns some form of JSON according to
+                        // https://stackoverflow.com/questions/19788294/how-does-evaluatejavascript-work
+                        // Here we only expect a single value, but that still means we get an extra
+                        // set of quotes.
+                        if (s.equals("\"true\"") || s.equals("true")) {
+                            pauseVideo(mWebView);
+                        } else {
+                            playVideo(mWebView, delayVideoPlayback ? 1000: 0);
+                        }
+                    }
+                });
+            }
+        });
     }
 
     public static boolean isMediaPaused() {

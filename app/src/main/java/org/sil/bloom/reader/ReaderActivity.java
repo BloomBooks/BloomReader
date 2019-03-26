@@ -368,6 +368,7 @@ public class ReaderActivity extends BaseActivity {
 
         @Override
         public void onPageSelected(int position) {
+            Log.d("Reader", "onPageSelected("+position+")");
             super.onPageSelected(position);
             clearNextPageTimer(); // in case user manually moved to a new page while waiting
             WebView oldView = mCurrentView;
@@ -397,7 +398,7 @@ public class ReaderActivity extends BaseActivity {
                 // back to this one (again, reused) and old animation is still running
                 if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
                     WebAppInterface appInterface = mCurrentView.getWebAppInterface();
-                    appInterface.setPaused(WebAppInterface.isMediaPaused(), true);
+                    appInterface.initializeCurrentPage();
                     if (!WebAppInterface.isMediaPaused()) {
                         appInterface.enableAnimation(mPlayAnimation);
                         // startNarration also starts the animation (both handled by the BloomPlayer
@@ -988,7 +989,7 @@ public class ReaderActivity extends BaseActivity {
                         //
                         WebAppInterface appInterface = mCurrentView.getWebAppInterface();
                         if (appInterface.mPageHasMultimedia) {
-                            appInterface.setPaused(!WebAppInterface.isMediaPaused(), false);
+                            appInterface.toggleAudioOrVideoPaused();
                             mediaPausedChanged();
                         }
                         if (isSystemUIShowing()) {

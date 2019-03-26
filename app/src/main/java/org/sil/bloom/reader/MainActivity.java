@@ -168,7 +168,9 @@ public class MainActivity extends BaseActivity
     }
 
     private void processIntentData() {
-        Uri uri = getIntent().getData();
+        // It's not necessary to split these two lines apart, but it sure makes debugging intents easier!
+        Intent intent = getIntent();
+        Uri uri = intent.getData();
         if (uri == null || alreadyOpenedFileFromIntent)
             return;
         String nameOrPath = uri.getPath();
@@ -192,6 +194,7 @@ public class MainActivity extends BaseActivity
             importBloomBundle(uri);
         } else {
             Log.e("Intents", "Couldn't figure out how to open URI: " + uri.toString());
+            return; // keep BR from saying we opened it, when we didn't!
         }
         alreadyOpenedFileFromIntent = true;
     }

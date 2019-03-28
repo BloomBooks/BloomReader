@@ -5,6 +5,7 @@ import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.Toast;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -164,20 +165,30 @@ public class IOUtilities {
     }
 
     public static boolean copyFile(InputStream fromStream, String toPath) {
+        int totalRead = 0;
         try {
             new File(toPath).createNewFile(); //this does nothing if if already exists
             OutputStream out = new FileOutputStream(toPath);
-            byte[] buffer = new byte[1024];
+            // Reading the file 1024 bytes at a time runs into trouble on some older
+            // tablets.  So let's read it in bigger chunks.  For the problem book of
+            // BL-6970, 4K chunks seemed to be enough, but let's be paranoid and use
+            // an even bigger (but not outlandish) chunk size.  (If I could be sure
+            // that target devices had at least 2GB, I'd opt for a 1MB buffer, but
+            // since many older phones are only 512MB, a smaller buffer is better.)
+            byte[] buffer = new byte[65536];  // 64K
             int read;
             while ((read = fromStream.read(buffer)) != -1) {
                 out.write(buffer, 0, read);
+                totalRead += read;
             }
             fromStream.close();
             out.flush();
             out.close();
             return true;
         } catch (Exception e) {
+            Log.e("IOUtilities", "Copied "+totalRead+" bytes to "+toPath+" before failing ("+e.getMessage()+")");
             e.printStackTrace();
+            new File(toPath).delete();  // A partial file causes problems (BL-6970), so delete what we copied.
             return false;
         }
     }

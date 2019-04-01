@@ -157,10 +157,22 @@ public class BookCollection {
                 if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
                         && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
                     continue; // not a book (nor a shelf)!
-                addBook(files[i].getAbsolutePath(), false);
+                final String path = files[i].getAbsolutePath();
+                if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
+                        !IOUtilities.isValidZipFile(new File(path), getHtmlFilename(name))) {
+                    // REVIEW: Should we just delete the invalid .bloomd file instead of renaming it?
+                    Log.e("BloomCollection", "Renaming invalid book file "+name+" to "+name+"-BAD");
+                    new File(path).renameTo(new File(path+"-BAD"));
+                    continue;
+                }
+                addBook(path, false);
             }
             updateFilteredList();
         }
+    }
+
+    private String getHtmlFilename(String bloomdName) {
+        return bloomdName.replace(IOUtilities.BOOK_FILE_EXTENSION, ".htm");
     }
 
     private void updateFilteredList() {

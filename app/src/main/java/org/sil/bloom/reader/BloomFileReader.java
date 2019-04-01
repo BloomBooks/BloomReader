@@ -177,18 +177,6 @@ public class BloomFileReader {
         IOUtilities.emptyDirectory(toEmpty);
     }
 
-    //Verifies the file can be unzipped and that there is an htm file inside.
-    private boolean openAndValidateFile(){
-        try{
-            openFile(VALIDATE_BOOK_FILE_FOLDER);
-            return (findHtmlFile() != null);
-        }
-        catch (IOException e){
-            return false;
-        }
-
-    }
-
     private void unzipBook(String fromPath, String toPath) throws IOException {
         setupBookDirectory(toPath);
         IOUtilities.unzip(new File(fromPath), bookDirectory);

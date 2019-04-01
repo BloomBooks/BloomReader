@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
+import java.util.Enumeration;
 
 import static org.sil.bloom.reader.models.BookCollection.getLocalBooksDirectory;
 
@@ -78,8 +79,14 @@ public class IOUtilities {
                     continue;
                 FileOutputStream fout = new FileOutputStream(file);
                 try {
-                    while ((count = zis.read(buffer)) != -1)
+                    while ((count = zis.read(buffer)) != -1) {
+                        if (count == 0) {
+                            // The zip header says we have more data for this entry, but we don't.
+                            // The file must be truncated/corrupted.  See BL-6970.
+                            throw new IOException("Invalid zip file");
+                        }
                         fout.write(buffer, 0, count);
+                    }
                 } finally {
                     fout.close();
                 }
@@ -105,6 +112,44 @@ public class IOUtilities {
         ZipInputStream zis = new ZipInputStream(
                 new BufferedInputStream(new FileInputStream(fd)));
         unzip(zis, targetDirectory);
+    }
+
+    // Check whether the given input file is a valid zip file.
+    public static boolean isValidZipFile(File input) {
+        return isValidZipFile(input, null);
+    }
+
+    // Check whether the given input file is a valid zip file that contains the desired file within.
+    public static boolean isValidZipFile(File input, String desiredFile) {
+        try {
+            boolean hasDesiredFile = false;
+            final ZipFile zipFile = new ZipFile(input);
+            try {
+                final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+                while (entries.hasMoreElements()) {
+                    ZipEntry entry = entries.nextElement();
+                    if (entry.isDirectory())
+                        continue;
+                    if (desiredFile != null && entry.getName().equals(desiredFile)) {
+                        hasDesiredFile = true;
+                    }
+                    InputStream stream = zipFile.getInputStream(entry);
+                    try {
+                        byte[] buffer = new byte[(int) entry.getSize()];
+                        int size = stream.read(buffer);
+                        if (size != entry.getSize())
+                            Log.d("IOUtilities", "Unzip size read "+size+" != size expected "+buffer.length+" for "+entry.getName()+ " in "+input.getName());
+                    } finally {
+                        stream.close();
+                    }
+                }
+            } finally {
+                zipFile.close();
+            }
+            return hasDesiredFile || desiredFile == null;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static byte[] ExtractZipEntry(File input, String entryName) {
@@ -167,15 +212,11 @@ public class IOUtilities {
     public static boolean copyFile(InputStream fromStream, String toPath) {
         int totalRead = 0;
         try {
-            new File(toPath).createNewFile(); //this does nothing if if already exists
+            File newFile = new File(toPath);
+            newFile.createNewFile(); //this does nothing if if already exists
             OutputStream out = new FileOutputStream(toPath);
-            // Reading the file 1024 bytes at a time runs into trouble on some older
-            // tablets.  So let's read it in bigger chunks.  For the problem book of
-            // BL-6970, 4K chunks seemed to be enough, but let's be paranoid and use
-            // an even bigger (but not outlandish) chunk size.  (If I could be sure
-            // that target devices had at least 2GB, I'd opt for a 1MB buffer, but
-            // since many older phones are only 512MB, a smaller buffer is better.)
-            byte[] buffer = new byte[65536];  // 64K
+            // Speed up the copying process here since we slow it down later.
+            byte[] buffer = new byte[65536];    // 64K
             int read;
             while ((read = fromStream.read(buffer)) != -1) {
                 out.write(buffer, 0, read);
@@ -184,6 +225,13 @@ public class IOUtilities {
             fromStream.close();
             out.flush();
             out.close();
+            // Even if the copy succeeds, if the result is not a valid zip file for a .bloomd file,
+            // delete it and fail.
+            // REVIEW: do we ever call this method for anything but .bloomd files?
+            if (toPath.endsWith(IOUtilities.BOOK_FILE_EXTENSION) && !isValidZipFile(newFile)) {
+                newFile.delete();
+                return false;
+            }
             return true;
         } catch (Exception e) {
             Log.e("IOUtilities", "Copied "+totalRead+" bytes to "+toPath+" before failing ("+e.getMessage()+")");
@@ -205,8 +253,10 @@ public class IOUtilities {
 
     public static boolean copyFile(Context context, Uri bookUri, String toPath){
         try {
-            FileDescriptor fd = context.getContentResolver().openFileDescriptor(bookUri, "r").getFileDescriptor();
-            InputStream in = new FileInputStream(fd);
+            // Note that dealing with file descriptors is buggy and discouraged.
+            // See https://issues.bloomlibrary.org/youtrack/issue/BL-6970 and
+            // https://stackoverflow.com/questions/20080171/contentresolver-openfiledescriptor-does-not-call-contentprovider-openfile.
+            InputStream in = context.getContentResolver().openInputStream(bookUri);
             return copyFile(in, toPath);
         } catch (IOException e){
             e.printStackTrace();

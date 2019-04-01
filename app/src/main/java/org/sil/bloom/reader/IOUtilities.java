@@ -1,10 +1,12 @@
 package org.sil.bloom.reader;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.support.annotation.IntDef;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -24,11 +26,15 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
+import java.util.Enumeration;
 
+import static org.sil.bloom.reader.BloomReaderApplication.getBloomApplicationContext;
 import static org.sil.bloom.reader.models.BookCollection.getLocalBooksDirectory;
 
 
@@ -36,6 +42,7 @@ public class IOUtilities {
     public static final String BOOK_FILE_EXTENSION = ".bloomd";
     public static final String BOOKSHELF_FILE_EXTENSION = ".bloomshelf";
     public static final String BLOOM_BUNDLE_FILE_EXTENSION = ".bloombundle";
+    public static final String CHECKED_FILES_TAG = "org.sil.bloom.reader.checkedfiles";
 
     private static final int BUFFER_SIZE = 8192;
 
@@ -78,8 +85,14 @@ public class IOUtilities {
                     continue;
                 FileOutputStream fout = new FileOutputStream(file);
                 try {
-                    while ((count = zis.read(buffer)) != -1)
+                    while ((count = zis.read(buffer)) != -1) {
+                        if (count == 0) {
+                            // The zip header says we have more data for this entry, but we don't.
+                            // The file must be truncated/corrupted.  See BL-6970.
+                            throw new IOException("Invalid zip file");
+                        }
                         fout.write(buffer, 0, count);
+                    }
                 } finally {
                     fout.close();
                 }
@@ -105,6 +118,114 @@ public class IOUtilities {
         ZipInputStream zis = new ZipInputStream(
                 new BufferedInputStream(new FileInputStream(fd)));
         unzip(zis, targetDirectory);
+    }
+
+    // Possible types of zip files to check.  (This list could be expanded if desired.)
+    public static final int CHECK_ZIP = 0;
+    public static final int CHECK_BLOOMD = 1;
+    @IntDef({CHECK_ZIP, CHECK_BLOOMD})  // more efficient than enum types at run time.
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface FileChecks {
+    }
+
+    private static SharedPreferences sCheckedFiles = null;
+
+    // Check whether the given input file is a valid zip file.
+    public static boolean isValidZipFile(File input) {
+        return isValidZipFile(input, CHECK_ZIP);
+    }
+
+    // Check whether the given input file is a valid zip file that appears to have the proper data
+    // for the given type.  We record the result of this check in a "SharedPreferences" file with
+    // the modification time paired with the absolute pathname of the file.  If these match on the
+    // next call, we'll return true without actually going through the slow process of unzipping
+    // the whole file.  Note that this fast bypass ignores the checkType parameter.
+    public static boolean isValidZipFile(File input, @FileChecks int checkType) {
+        String key = input.getAbsolutePath();
+        if (sCheckedFiles == null) {
+            Context context = getBloomApplicationContext();
+            if (context != null) {
+                sCheckedFiles = context.getSharedPreferences(CHECKED_FILES_TAG, 0);
+            }
+        }
+        if (sCheckedFiles != null) {
+            long timestamp = sCheckedFiles.getLong(key, 0L);
+            if (timestamp == input.lastModified() && timestamp != 0L)
+                return true;
+        }
+        try {
+            // REVIEW very minimal check for .bloomd files: are there any filenames guaranteed to exist
+            // in any .bloomd file regardless of age?
+            int countHtml = 0;
+            int countCss = 0;
+            final ZipFile zipFile = new ZipFile(input);
+            try {
+                final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+                while (entries.hasMoreElements()) {
+                    ZipEntry entry = entries.nextElement();
+                    if (entry.isDirectory())
+                        continue;
+                    String entryName = entry.getName().toLowerCase();
+                    if (entryName.endsWith(".htm") || entryName.endsWith(".html"))
+                        ++countHtml;
+                    else if (entryName.endsWith(".css"))
+                        ++countCss;
+                    InputStream stream = zipFile.getInputStream(entry);
+                    try {
+                        int realSize = (int)entry.getSize();
+                        byte[] buffer = new byte[realSize];
+                        int size = stream.read(buffer);
+                        if (size != realSize && !(size == -1 && realSize == 0)) {
+                            // The Java ZipEntry code does not always return the full data content even when the buffer is large
+                            // enough for it.  Whether this is a bug or a feature, or just the way it is, depends on your point
+                            // of view I suppose.  So we have a loop here since the initial read wasn't enough.
+                            int moreReadSize = stream.read(buffer);
+                            do {
+                                if (moreReadSize > 0) {
+                                    size += moreReadSize;
+                                    moreReadSize = stream.read(buffer);
+                                }
+                            } while (moreReadSize > 0);
+                            if (size != realSize) {
+                                // It would probably throw before getting here, but just in case, write
+                                // out some debugging information and return false.
+                                int compressedSize = (int)entry.getCompressedSize();
+                                int method = entry.getMethod();
+                                String type = "UNKNOWN (" + method + ")";
+                                switch (entry.getMethod()) {
+                                    case ZipEntry.STORED:
+                                        type = "STORED";
+                                        break;
+                                    case ZipEntry.DEFLATED:
+                                        type = "DEFLATED";
+                                        break;
+                                }
+                                Log.e("IOUtilities", "Unzip size read " + size + " != size expected " + realSize +
+                                        " for " + entry.getName() + " in " + input.getName() + ", compressed size = " + compressedSize + ", storage method = " + type);
+                                return false;
+                            }
+                        }
+                    } finally {
+                        stream.close();
+                    }
+                }
+            } finally {
+                zipFile.close();
+            }
+            boolean retval;
+            if (checkType == IOUtilities.CHECK_BLOOMD)
+                retval = countHtml == 1 && countCss > 0;
+            else
+                retval = true;
+            if (retval && sCheckedFiles != null) {
+                SharedPreferences.Editor editor = sCheckedFiles.edit();
+                editor.putLong(key, input.lastModified());
+                editor.apply();
+            }
+            return retval;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static byte[] ExtractZipEntry(File input, String entryName) {
@@ -169,13 +290,7 @@ public class IOUtilities {
         try {
             new File(toPath).createNewFile(); //this does nothing if if already exists
             OutputStream out = new FileOutputStream(toPath);
-            // Reading the file 1024 bytes at a time runs into trouble on some older
-            // tablets.  So let's read it in bigger chunks.  For the problem book of
-            // BL-6970, 4K chunks seemed to be enough, but let's be paranoid and use
-            // an even bigger (but not outlandish) chunk size.  (If I could be sure
-            // that target devices had at least 2GB, I'd opt for a 1MB buffer, but
-            // since many older phones are only 512MB, a smaller buffer is better.)
-            byte[] buffer = new byte[65536];  // 64K
+            byte[] buffer = new byte[BUFFER_SIZE];
             int read;
             while ((read = fromStream.read(buffer)) != -1) {
                 out.write(buffer, 0, read);
@@ -203,15 +318,23 @@ public class IOUtilities {
         }
     }
 
-    public static boolean copyFile(Context context, Uri bookUri, String toPath){
+    public static boolean copyBloomdFile(Context context, Uri bookUri, String toPath) {
         try {
-            FileDescriptor fd = context.getContentResolver().openFileDescriptor(bookUri, "r").getFileDescriptor();
-            InputStream in = new FileInputStream(fd);
-            return copyFile(in, toPath);
-        } catch (IOException e){
+            InputStream in = context.getContentResolver().openInputStream(bookUri);
+            if (copyFile(in, toPath)) {
+                // Even if the copy succeeds, if the result is not a valid .bloomd file, delete it
+                // and fail.
+                File newFile = new File(toPath);
+                if (!isValidZipFile(newFile, CHECK_BLOOMD)) {
+                    newFile.delete();
+                    return false;
+                }
+                return true;
+            }
+        } catch (IOException e) {
             e.printStackTrace();
-            return false;
         }
+        return false;
     }
 
     public static String FileToString(File file) {

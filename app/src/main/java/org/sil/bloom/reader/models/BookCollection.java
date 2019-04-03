@@ -157,7 +157,15 @@ public class BookCollection {
                 if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
                         && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
                     continue; // not a book (nor a shelf)!
-                addBook(files[i].getAbsolutePath(), false);
+                final String path = files[i].getAbsolutePath();
+                if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
+                        !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD)) {
+                    // REVIEW: Should we just delete the invalid .bloomd file instead of renaming it?
+                    Log.e("BloomCollection", "Renaming invalid book file "+name+" to "+name+"-BAD");
+                    new File(path).renameTo(new File(path+"-BAD"));
+                    continue;
+                }
+                addBook(path, false);
             }
             updateFilteredList();
         }
@@ -209,9 +217,9 @@ public class BookCollection {
         if (bookUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath()))
             return bookUri.getPath();
 
-        Log.d("BloomReader", "Moving book into Bloom directory");
+        Log.d("BloomReader", "Copying book into Bloom directory");
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + filename;
-        boolean copied = IOUtilities.copyFile(context, bookUri, destination);
+        boolean copied = IOUtilities.copyBloomdFile(context, bookUri, destination);
         if(copied){
             // it's probably not in our list that we display yet, so make an entry there
             addBookIfNeeded(destination);

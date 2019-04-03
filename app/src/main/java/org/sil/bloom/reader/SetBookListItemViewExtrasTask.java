@@ -65,7 +65,7 @@ public class SetBookListItemViewExtrasTask extends AsyncTask<Void, Void, SetBook
     @Override
     protected TaskResult doInBackground(Void... v) {
         Uri imageUri = BookCollection.getThumbnail(viewHolder.getContext(), bookOrShelf);
-        boolean hasAudio = bookOrShelf.hasAudio();
+        boolean hasAudio = bookOrShelf.hasAudio(viewHolder.getContext());
         return new TaskResult(imageUri, hasAudio);
     }
 

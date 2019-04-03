@@ -1,5 +1,10 @@
 package org.sil.bloom.reader.models;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.sil.bloom.reader.BloomFileReader;
 
 import java.io.File;
@@ -7,11 +12,12 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.sil.bloom.reader.BloomReaderApplication.getBloomApplicationContext;
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 
 public class BookOrShelf {
+    public static final String SHARED_PREFERENCES_TAG = "org.sil.bloom.reader.BookMetaJson";
+    public static final String HAS_AUDIO = "hasAudio";
     public final String path;
     public final String name;
     public boolean highlighted = false;
@@ -21,6 +27,7 @@ public class BookOrShelf {
 
     // currently only applies to books
     public String brandingProjectName;
+    private JSONObject bookMeta; // Lazy loaded - Use getBookMeta() to access
 
     private Set<String> bookshelves = new HashSet<String>();
 
@@ -42,10 +49,41 @@ public class BookOrShelf {
         return path.endsWith(BOOKSHELF_FILE_EXTENSION);
     }
 
-    public boolean hasAudio() {
-        if (this.isShelf()) { return false; } // safety net
-        BloomFileReader reader = new BloomFileReader(getBloomApplicationContext(), this.path);
-        return reader.hasAudio();
+    private JSONObject getBookMeta(Context context) {
+        if (bookMeta != null) return bookMeta;
+        if (isShelf()) return new JSONObject(); // Only applies to books
+
+        try {
+            SharedPreferences values = context.getSharedPreferences(SHARED_PREFERENCES_TAG, 0);
+            String bookMetaJson = values.getString(metaCacheKey(), null);
+            if (bookMetaJson != null) {
+                bookMeta = new JSONObject(bookMetaJson);
+                return bookMeta;
+            }
+
+            // BookMeta not found in cache - need to get it from file
+            bookMeta = new JSONObject();
+            boolean hasAudio = new BloomFileReader(context, path).hasAudio();
+            bookMeta.put(HAS_AUDIO, hasAudio);
+            SharedPreferences.Editor valuesEditor = values.edit();
+            valuesEditor.putString(metaCacheKey(), bookMeta.toString());
+            valuesEditor.apply();
+            return bookMeta;
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+            return new JSONObject();
+        }
+    }
+
+    private String metaCacheKey() {
+        // A combination of the filepath and modified timestamp on the file
+        File bookFile = new File(path);
+        return path + " - " + String.valueOf(bookFile.lastModified());
+    }
+
+    public boolean hasAudio(Context context) {
+        return getBookMeta(context).optBoolean(HAS_AUDIO);
     }
 
     public void addBookshelf(String shelf) {

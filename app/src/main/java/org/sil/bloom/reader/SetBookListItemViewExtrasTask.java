@@ -33,6 +33,8 @@ public class SetBookListItemViewExtrasTask extends AsyncTask<Void, Void, SetBook
         clearSpeakerIcon();
         if (!bookOrShelf.isShelf()){
             // Async method only applies to books
+            // This causes doInBackground() to be executed in a background thread
+            // which then calls onPostExecute() with the result on the UI thread
             this.execute();
         }
     }

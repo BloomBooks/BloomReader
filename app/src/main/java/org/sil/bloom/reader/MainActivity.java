@@ -173,6 +173,7 @@ public class MainActivity extends BaseActivity
         Uri uri = intent.getData();
         if (uri == null || alreadyOpenedFileFromIntent)
             return;
+        Log.i("Intents", "processing "+intent.toString());
         String nameOrPath = uri.getPath();
         // Content URI's do not use the actual filename in the "path"
         if (uri.getScheme().equals("content")) {

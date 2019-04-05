@@ -2,7 +2,6 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.net.Uri;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -47,44 +46,18 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position){
-        BookOrShelf bookOrShelf = bookCollection.get(position);
-        holder.linearLayout.setTag(bookOrShelf);
-        holder.bookNameView.setText(bookOrShelf.name);
-        setImageView(bookOrShelf, holder);
-        setSpeakerIcon(bookOrShelf, holder);
-        setBackgroundColor(bookOrShelf, holder);
+        holder.bookOrShelf = bookCollection.get(position);
+        holder.linearLayout.setTag(holder.bookOrShelf);
+        holder.bookNameView.setText(holder.bookOrShelf.name);
+        new SetBookListItemViewExtrasTask(holder).setExtras(); // Sets the thumbnail and speaker icon
+        setBackgroundColor(holder);
     }
 
-    private void setImageView(BookOrShelf bookOrShelf, ViewHolder holder){
-        if (bookOrShelf.isShelf()) {
-            holder.imageView.setImageResource(R.drawable.bookshelf);
-            try {
-                holder.imageView.setBackgroundColor(Color.parseColor("#" + bookOrShelf.backgroundColor));
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
-        } else {
-            holder.imageView.setBackgroundColor(Color.argb(0, 0, 0, 0));
-            Uri image_uri = bookCollection.getThumbnail(holder.getContext(), bookOrShelf);
-            if(image_uri != null)
-                holder.imageView.setImageURI(image_uri);
-            else
-                holder.imageView.setImageResource(R.drawable.book);
-        }
-    }
 
-    private void setSpeakerIcon(BookOrShelf bookOrShelf, ViewHolder holder){
-        if (bookOrShelf.isShelf() || !bookOrShelf.hasAudio()) {
-            holder.speakerIcon.setImageAlpha(0); // transparent
-        } else {
-            holder.speakerIcon.setImageAlpha(255); // opaque
-        }
-    }
-
-    private void setBackgroundColor(BookOrShelf bookOrShelf, ViewHolder holder){
-        if (bookOrShelf == selectedItem)
+    private void setBackgroundColor(ViewHolder holder){
+        if (holder.bookOrShelf == selectedItem)
             holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.colorAccent));
-        else if (bookOrShelf.highlighted)
+        else if (holder.bookOrShelf.highlighted)
             holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.new_book_highlight));
         else
             holder.linearLayout.setBackgroundColor(Color.WHITE);
@@ -183,6 +156,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         public TextView bookNameView;
         public ImageView imageView;
         public ImageView speakerIcon;
+        public BookOrShelf bookOrShelf;
 
         public ViewHolder(LinearLayout linearLayout) {
             super(linearLayout);

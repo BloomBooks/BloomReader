@@ -276,7 +276,7 @@ public class BookCollection {
         }
     }
 
-    public Uri getThumbnail(Context context, BookOrShelf book){
+    public static Uri getThumbnail(Context context, BookOrShelf book){
         try {
             File thumbsDirectory = getThumbsDirectory();
             String thumbPath = thumbsDirectory.getPath() + File.separator + book.name;

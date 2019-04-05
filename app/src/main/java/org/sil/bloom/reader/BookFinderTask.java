@@ -3,14 +3,13 @@ package org.sil.bloom.reader;
 
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.os.Environment;
-import android.util.Log;
 
 import java.io.File;
 
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
+import static org.sil.bloom.reader.IOUtilities.MANGLED_BOOK_FILE_EXTENSION;
 
 public class BookFinderTask extends AsyncTask<Void, Void, Void> {
 
@@ -50,7 +49,8 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
                     if (f.getName().endsWith(BLOOM_BUNDLE_FILE_EXTENSION))
                         foundNewBundle(f);
                     else if (f.getName().endsWith(BOOK_FILE_EXTENSION) ||
-                             f.getName().endsWith(BOOKSHELF_FILE_EXTENSION))
+                            f.getName().matches(".*"+MANGLED_BOOK_FILE_EXTENSION) ||
+                            f.getName().endsWith(BOOKSHELF_FILE_EXTENSION))
                         foundNewBookOrShelf(f);
                 }
                 else if (f.isDirectory()) {

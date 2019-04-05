@@ -219,6 +219,9 @@ public class BookCollection {
 
         Log.d("BloomReader", "Copying book into Bloom directory");
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + filename;
+        if (filename.matches(".*"+IOUtilities.MANGLED_BOOK_FILE_EXTENSION)) {
+            destination = destination.replaceFirst(IOUtilities.MANGLED_BOOK_FILE_EXTENSION, IOUtilities.BOOK_FILE_EXTENSION);
+        }
         boolean copied = IOUtilities.copyBloomdFile(context, bookUri, destination);
         if(copied){
             // it's probably not in our list that we display yet, so make an entry there

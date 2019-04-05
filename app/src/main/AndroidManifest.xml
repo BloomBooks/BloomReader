@@ -83,19 +83,32 @@
                     cope with matching the first character (period or 'b' or whatever!) early in
                     the path unless it's explicitly matched.
                     See https://stackoverflow.com/questions/3400072/pathpattern-to-match-file-extension-does-not-work-if-a-period-exists-elsewhere-i/8599921
+                    Also work around a file transfer bug that appends ".enc" to the end of the filename.
                 -->
                 <data android:pathPattern=".*\\.bloomd" />
+                <data android:pathPattern=".*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\.bloombundle" />
+                <data android:pathPattern=".*\\.bloombundle.enc" />
                 <data android:pathPattern=".*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\.bloombundle.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloombundle.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle.enc" />
             </intent-filter>
             <!--
                 Match intents by file extension when a MIME type is set.
@@ -118,19 +131,32 @@
                     cope with matching the first character (period or 'b' or whatever!) early in
                     the path unless it's explicitly matched.
                     See https://stackoverflow.com/questions/3400072/pathpattern-to-match-file-extension-does-not-work-if-a-period-exists-elsewhere-i/8599921
+                    Also work around a file transfer bug that appends ".enc" to the end of the filename.
                 -->
                 <data android:pathPattern=".*\\.bloomd" />
+                <data android:pathPattern=".*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\.bloombundle" />
+                <data android:pathPattern=".*\\.bloombundle.enc" />
                 <data android:pathPattern=".*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\.bloombundle.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloombundle.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle.enc" />
             </intent-filter>
 
             <!--

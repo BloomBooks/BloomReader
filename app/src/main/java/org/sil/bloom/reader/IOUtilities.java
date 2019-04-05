@@ -44,6 +44,9 @@ public class IOUtilities {
     public static final String BLOOM_BUNDLE_FILE_EXTENSION = ".bloombundle";
     public static final String CHECKED_FILES_TAG = "org.sil.bloom.reader.checkedfiles";
 
+    // Some file transfer mechanisms leave this appended to .bloomd (or .bloombundle)
+    public static final String ENCODED_FILE_EXTENSION = ".enc";
+
     private static final int BUFFER_SIZE = 8192;
 
     public static void showError(Context context, CharSequence message) {

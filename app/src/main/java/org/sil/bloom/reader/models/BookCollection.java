@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -13,6 +14,7 @@ import org.sil.bloom.reader.BloomReaderApplication;
 import org.sil.bloom.reader.BloomShelfFileReader;
 import org.sil.bloom.reader.BuildConfig;
 import org.sil.bloom.reader.IOUtilities;
+import org.sil.bloom.reader.R;
 import org.sil.bloom.reader.ThumbnailCleanup;
 
 import java.io.File;
@@ -162,6 +164,9 @@ public class BookCollection {
                         !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD)) {
                     // REVIEW: Should we just delete the invalid .bloomd file instead of renaming it?
                     Log.e("BloomCollection", "Renaming invalid book file "+name+" to "+name+"-BAD");
+                    Context context = BloomReaderApplication.getBloomApplicationContext();
+                    String message = context.getString(R.string.renaming_invalid_book, name+"-BAD");
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show();
                     new File(path).renameTo(new File(path+"-BAD"));
                     continue;
                 }

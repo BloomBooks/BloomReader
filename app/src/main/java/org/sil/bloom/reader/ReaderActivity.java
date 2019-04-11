@@ -987,12 +987,14 @@ public class ReaderActivity extends BaseActivity {
                         // system ui bars. In the case of a multimedia page, we want to toggle both
                         // the system ui bars and play/pause.
                         //
+                        boolean hideSystemMenu = isSystemUIShowing();  // default toggle action for non-multimedia page
                         WebAppInterface appInterface = mCurrentView.getWebAppInterface();
                         if (appInterface.mPageHasMultimedia) {
                             appInterface.toggleAudioOrVideoPaused();
                             mediaPausedChanged();
+                            hideSystemMenu = !WebAppInterface.isMediaPaused();   // show if paused for multimedia page
                         }
-                        if (isSystemUIShowing()) {
+                        if (hideSystemMenu) {
                             hideSystemUI();
                         } else {
                             showSystemUI();

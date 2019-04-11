@@ -75,4 +75,5 @@
 
     <string name="need_storage_permission">Bloom Reader needs access to file storage in order to work.</string>
     <string name="grant_storage_permission">Grant Storage Permission</string>
+    <string name="renaming_invalid_book">Renaming invalid book to %1$s</string>
 </resources>

@@ -114,9 +114,8 @@ public class IOUtilities {
     }
 
     public static void unzip(Context context, Uri uri, File targetDirectory) throws IOException {
-        FileDescriptor fd = context.getContentResolver().openFileDescriptor(uri, "r").getFileDescriptor();
-        ZipInputStream zis = new ZipInputStream(
-                new BufferedInputStream(new FileInputStream(fd)));
+        InputStream fs = context.getContentResolver().openInputStream(uri);
+        ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fs));
         unzip(zis, targetDirectory);
     }
 

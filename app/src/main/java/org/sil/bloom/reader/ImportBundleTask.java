@@ -9,10 +9,8 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
-import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,45 +69,25 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
     }
 
     private void extractBloomBundle(Uri bloomBundleUri) throws IOException {
-        ArchiveEntry entry = null;
-        String lastSuccessfulEntryName = null;
+        TarArchiveInputStream tarInput = null;
+        try {
+            InputStream fs = mainActivity.getContentResolver().openInputStream(bloomBundleUri);
+            tarInput = new TarArchiveInputStream(fs);
 
-        FileDescriptor fd = mainActivity.getContentResolver().openFileDescriptor(bloomBundleUri, "r").getFileDescriptor();
-        if(!fd.valid())
-            throw new IOException("Invalid FileDescriptor from bloombundle");
-        TarArchiveInputStream tarInput = new TarArchiveInputStream(new FileInputStream(fd));
-
-        // Loop is terminated either by a return or by a thrown error
-        while (true) {
-            try {
-                final String booksDirectoryPath = getLocalBooksDirectory().getAbsolutePath();
-                while ((entry = tarInput.getNextEntry()) != null) {
-                    publishProgress(entry.getName());
-                    newBookPaths.add(IOUtilities.extractTarEntry(tarInput, booksDirectoryPath));
-                    lastSuccessfulEntryName = entry.getName();
-                }
-                tarInput.close();
-                return;
-            } catch (IOException e) {
-                // Maybe 10-20% of the time (with a medium sized bundle),
-                // a valid FileDescriptor becomes invalid during the unpacking process
-                // Having not found a way to prevent this, we catch it and try again
-                // If the IOException is something else, it will go through
-                if (!fd.valid()) {
-                    Log.e("BundleIO", "Bad file descriptor while importing bundle. Trying again...");
-                    tarInput.close();
-                    fd = mainActivity.getContentResolver().openFileDescriptor(bloomBundleUri, "r").getFileDescriptor();
-                    tarInput = new TarArchiveInputStream(new FileInputStream(fd));
-                    // Fast-forward to the entry that failed
-                    if (lastSuccessfulEntryName != null) {
-                        while (!tarInput.getNextEntry().getName().equals(lastSuccessfulEntryName))
-                            ;
-                    }
-                } else {
-                    tarInput.close();
-                    throw e;
-                }
+            final String booksDirectoryPath = getLocalBooksDirectory().getAbsolutePath();
+            ArchiveEntry entry = null;
+            while ((entry = tarInput.getNextEntry()) != null) {
+                publishProgress(entry.getName());
+                newBookPaths.add(IOUtilities.extractTarEntry(tarInput, booksDirectoryPath));
             }
+            tarInput.close();
+            return;
+        } catch (IOException e) {
+            // It could be that a .bloombundle.enc file really is still uuencoded I suppose.
+            // Or the file could have been corrupted.
+            if (tarInput != null)
+                tarInput.close();
+            throw e;
         }
     }
 }

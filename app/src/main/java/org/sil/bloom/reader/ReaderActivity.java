@@ -134,7 +134,7 @@ public class ReaderActivity extends BaseActivity {
     }
 
     // Enable "sticky immersive" mode.
-    private void hideSystemUI() {
+    public void hideSystemUI() {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(
             // We don't want the System to grab swipes from the edge
@@ -152,7 +152,7 @@ public class ReaderActivity extends BaseActivity {
     // Shows the system bars by removing all the flags
     // except the ones that make the content appear under the system bars.
     // This would be the time to make other controls available too.
-    private void showSystemUI() {
+    public void showSystemUI() {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -987,17 +987,16 @@ public class ReaderActivity extends BaseActivity {
                         // system ui bars. In the case of a multimedia page, we want to toggle both
                         // the system ui bars and play/pause.
                         //
-                        boolean hideSystemMenu = isSystemUIShowing();  // default toggle action for non-multimedia page
                         WebAppInterface appInterface = mCurrentView.getWebAppInterface();
                         if (appInterface.mPageHasMultimedia) {
                             appInterface.toggleAudioOrVideoPaused();
                             mediaPausedChanged();
-                            hideSystemMenu = !WebAppInterface.isMediaPaused();   // show if paused for multimedia page
-                        }
-                        if (hideSystemMenu) {
-                            hideSystemUI();
                         } else {
-                            showSystemUI();
+                            if (isSystemUIShowing()) {
+                                hideSystemUI();
+                            } else {
+                                showSystemUI();
+                            }
                         }
                     }
                 }

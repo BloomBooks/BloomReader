@@ -321,6 +321,7 @@ public class WebAppInterface {
                             if (mMusicPlaying) {
                                 pauseBackgroundAudio();
                             }
+                            mContext.showSystemUI();
                         } else if (mVideoPaused || mNarrationPaused || mAnimationPaused) {
                             // If anything is marked paused, let it continue and mark it as playing.
                             // Don't test for music to enter this block because if music and one of the other
@@ -340,6 +341,7 @@ public class WebAppInterface {
                             if (mMusicPaused) {
                                 resumeBackgroundAudio();
                             }
+                            mContext.hideSystemUI();
                         } else {
                             // Video, Narration, and/or Animation have all finished: restart them (if
                             // they exist). The next two methods are harmless if the corresponding media
@@ -349,6 +351,7 @@ public class WebAppInterface {
                             if (mMusicPaused) {
                                 resumeBackgroundAudio();
                             }
+                            mContext.hideSystemUI();
                         }
                         mPauseFromPreviousPage = false;
                     }

@@ -35,7 +35,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     // about these files, and we don't want another notification the next time onResume() is called.
     protected void resetFileObserver() {
         try {
-            mostRecentlyModifiedBloomFileTime = getLatestModifedTimeAndFile(BookCollection.getLocalBooksDirectory()).time;
+            mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile(BookCollection.getLocalBooksDirectory()).time;
         }
         catch (ExtStorageUnavailableException e) {
             e.printStackTrace();
@@ -70,7 +70,7 @@ public abstract class BaseActivity extends AppCompatActivity {
             // If we already have mHandler, we don't need a new one, and do NOT want to
             // update the modify time we already have, since we do want notifications
             // about any changes since last pause.
-            mostRecentlyModifiedBloomFileTime = getLatestModifedTimeAndFile(new File(pathToWatch)).time;
+            mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile(new File(pathToWatch)).time;
             mHandler = new Handler();
         }
         mObserver = new Runnable() {
@@ -101,18 +101,28 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     // Look for new changes to files and send notification if there have been any.
     protected void notifyIfNewFileChanges(final String pathToWatch) {
-        PathModifyTime newModifyData = getLatestModifedTimeAndFile(new File(pathToWatch));
+        PathModifyTime newModifyData = getLatestModifiedTimeAndFile(new File(pathToWatch));
         if (newModifyData.time > mostRecentlyModifiedBloomFileTime) {
             mostRecentlyModifiedBloomFileTime = newModifyData.time;
             onNewOrUpdatedBook(newModifyData.path);
         }
     }
 
-    private static PathModifyTime getLatestModifedTimeAndFile(File dir) {
+    private static PathModifyTime getLatestModifiedTimeAndFile(File dir) {
         //long startTime = System.currentTimeMillis();
-        File[] files = dir.listFiles();
+        PathModifyTime result = new PathModifyTime();
         String lastModFile = null;
         long latestTime = 0;
+        File[] files = dir.listFiles();
+
+        // Fixing NullPointerException reported in Play console
+        if (files == null)
+        {
+            result.path = lastModFile;
+            result.time = latestTime;
+            return result;
+        }
+
         for (File file : files) {
             if (!file.isDirectory() && file.getName().endsWith(IOUtilities.BOOK_FILE_EXTENSION)) {
                 long modified = file.lastModified();
@@ -123,7 +133,6 @@ public abstract class BaseActivity extends AppCompatActivity {
             }
         }
         //long elapsedTime = System.currentTimeMillis() - startTime;
-        PathModifyTime result = new PathModifyTime();
         result.path = lastModFile;
         result.time = latestTime;
         return result;

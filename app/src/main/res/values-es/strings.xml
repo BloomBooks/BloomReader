@@ -36,7 +36,7 @@
     <string name="no_wifi_connected">El dispositivo no parece estar conectado a una red WiFi.</string>
     <string name="failed_book_import">Falló la importación del libro.</string>
     <string name="external_storage_unavailable">No se pudo acceder al almacenamiento de archivos. ¿Hace falta la tarjeta SD?</string>
-    <string name="share_app_link"><u>Compartir el enlace para conseguir el LectorBloom (Bloom Reader) en Google Play</u></string>
+    <string name="share_app_link"><u>Compartir el enlace para conseguir el Bloom Reader en Google Play</u></string>
     <string name="share_app_with_friend">¡Comparta la aplicación Bloom Reader con un amigo!</string>
     <string name="share_books_with_friend">Comparta todos sus libros con un amigo que ya tiene el Bloom Reader instalado.</string>
     <string name="share_app_via">Compartir la aplicación por</string>

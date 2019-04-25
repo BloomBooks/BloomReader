@@ -3,7 +3,7 @@ Play "motion books" as videos in landscape orientation.
 Play sign language videos.
 "Find Bloom books on this device" feature.
 Read books directly from your SD card with a BloomExternal directory at the SD card root.
-Chinese and Spanish user interfaces.
+Chinese, Spanish, Hindi, and Bengali user interfaces.
 Various minor enhancements and fixes.
 
 1.1

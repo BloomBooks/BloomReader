@@ -55,11 +55,11 @@
                  - The second filter checks the file extensions where a MIME type is
                 set. Both are necessary because the sending app may or may not choose to
                 include the MIME type. The MIME type is set to */* because the MIME
-                type in the intent may be incorrect since our filetype is a unique one.
+                type in the intent may be incorrect since our file type is a unique one.
                 Since we're still filtering by file extension, this is ok.
                  - The third filter will catch an intent if the MIME type is correct
                 but the file extension is not what we expected. This should be an unusual case.
-                 - The fourth filter catches all 'content' scheme intents with defined MIME-type and
+                 - The fourth filter (currently commented out) catches all 'content' scheme intents with defined MIME-type and
                 then the MainActivity code will check the original filename against the correct
                 extensions. The original filename is not available to the intent on the surface and
                 takes a bit of digging around to find.
@@ -161,9 +161,6 @@
 
             <!--
                 Match intents by MIME type in case the file extension gets lost.
-                This doesn't seem to get used (gjm: I can comment it out and it doesn't change any
-                behavior for me), but some app I haven't tested might use it, so we'll leave it in
-                for now.
             -->
             <intent-filter
                 android:icon="@drawable/book"
@@ -176,12 +173,23 @@
                 <data android:scheme="file" />
                 <data android:scheme="content" />
                 <!-- Sometimes the MIME type we get is not exactly what we set - hence the variety of options -->
+                <!-- As of May 2019, we don't actually know of any case where these 6 bloom-specific mime types get used,
+                     but I'm too paranoid to remove them. Comments added with these originally referred to
+                     their need in opening from email. -->
                 <data android:mimeType="application/vnd.bloom" />
                 <data android:mimeType="application/bloom" />
                 <data android:mimeType="application/vnd.bloomd" />
                 <data android:mimeType="application/bloomd" />
                 <data android:mimeType="application/vnd.bloombundle" />
                 <data android:mimeType="application/bloombundle" />
+
+                <!-- This is unfortunate, but some apps (e.g. Gmail) just don't seem to include the file name in the path,
+                     so pathPattern matching is completely useless. Adding this means Bloom Reader will offer to open
+                     all files with application/octet-stream (which is what Gmail sends for our files as of May 2019),
+                     but we decided that is better than not offering to open any. -->
+                <data android:mimeType="application/octet-stream" />
+                <!-- I'm also adding application/zip in case there is an unknown app which uses that mime type. -->
+                <data android:mimeType="application/zip" />
             </intent-filter>
             <!--
                 BR currently needs to match 'content' requests irrespective of file extension

@@ -188,8 +188,11 @@
                      all files with application/octet-stream (which is what Gmail sends for our files as of May 2019),
                      but we decided that is better than not offering to open any. -->
                 <data android:mimeType="application/octet-stream" />
-                <!-- I'm also adding application/zip in case there is an unknown app which uses that mime type. -->
+                <!-- I'm also adding application/zip in the anticipation that it will help with WhatsApp.
+                     (And it seems it may have... May 2019.) -->
                 <data android:mimeType="application/zip" />
+                <!-- This makes Drive able to open .bloomd files on my Android 6 phone... May 2019 -->
+                <data android:mimeType="application/x-zip" />
             </intent-filter>
             <!--
                 BR currently needs to match 'content' requests irrespective of file extension

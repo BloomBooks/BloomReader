@@ -69,6 +69,9 @@ public class ReaderActivity extends BaseActivity {
 
     private static final Pattern sAutoAdvance = Pattern.compile("data-bfautoadvance\\s*?=\\s*?\"[^\"]*?\\bbloomReader\\b.*?\"");
 
+    // Finds the data-readerversion attribute, if any, in the initial page div declaration.
+    private static final Pattern sReaderVersion = Pattern.compile("^[^>]*data-reader-version=\"([^\"]*)\"");
+
     private ViewPager mPager;
     private BookPagerAdapter mAdapter;
     private String mBookName ="?";
@@ -594,6 +597,21 @@ public class ReaderActivity extends BaseActivity {
     }
 
     private void AddPage(ArrayList<String> pages, String pageContent) {
+        Matcher matcher = sReaderVersion.matcher(pageContent);
+        if (matcher.find()) {
+            String versionString = matcher.group(1);
+            try {
+                int version = Integer.parseInt(versionString);
+                if (version > 1) {
+                    // At this point any page labeled as requiring a readerversion greater than 1
+                    // won't be shown in BR 1.
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                // If the author doesn't give us a valid number, he doesn't get page suppression.
+                Log.e("Parse Version", e.getMessage());
+            }
+        }
         pages.add(pageContent);
         if (sNumberedPagePattern.matcher(pageContent).find()) {
             mLastNumberedPageIndex = pages.size() - 1;

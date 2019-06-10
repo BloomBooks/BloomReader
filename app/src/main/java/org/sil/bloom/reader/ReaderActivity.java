@@ -136,44 +136,15 @@ public class ReaderActivity extends BaseActivity {
         hideSystemUI();
     }
 
-    // Enable "sticky immersive" mode.
-    public void hideSystemUI() {
+    private void hideSystemUI() {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(
             // We don't want the System to grab swipes from the edge
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            // Set the content to appear under the system bars so that the
-            // content doesn't resize when the system bars hide and show.
-            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            //| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-
-            // For now, we decided to keep the navigation bar so the user doesn't
-            // get confused as to how to get out of the book (see BL-6998).
-            // Note that if this is uncommented, View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            // should also be uncommented above and below.
-            //| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-
-            // Hide the status bar (top Android bar)
+            // Hide the status bar
             | View.SYSTEM_UI_FLAG_FULLSCREEN
+            // We decided not to hide the navigation bar (see BL-6998)
         );
-    }
-
-    // Shows the system bars by removing all the flags
-    // except the ones that make the content appear under the system bars.
-    // This would be the time to make other controls available too.
-    public void showSystemUI() {
-        View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            //| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        );
-    }
-
-    private boolean isSystemUIShowing() {
-        View decorView = getWindow().getDecorView();
-        return (decorView.getSystemUiVisibility() & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0;
     }
 
     private void ReportPagesRead()
@@ -388,7 +359,6 @@ public class ReaderActivity extends BaseActivity {
             if (oldView != null)
                 oldView.clearCache(false); // Fix for BL-5555
 
-            hideSystemUI();
             if (mIsMultiMediaBook) {
                 mSwitchedPagesWhilePaused = WebAppInterface.isMediaPaused();
 
@@ -1016,12 +986,6 @@ public class ReaderActivity extends BaseActivity {
                         if (appInterface.mPageHasMultimedia) {
                             appInterface.toggleAudioOrVideoPaused();
                             mediaPausedChanged();
-                        } else {
-                            if (isSystemUIShowing()) {
-                                hideSystemUI();
-                            } else {
-                                showSystemUI();
-                            }
                         }
                     }
                 }

@@ -470,13 +470,13 @@ public class ReaderActivity extends BaseActivity {
     }
 
     public void mediaPausedChanged() {
-        final ImageView view = (ImageView)findViewById(R.id.playPause);
+        final ImageView view = findViewById(R.id.playPause);
         if (WebAppInterface.isMediaPaused()) {
             clearNextPageTimer(); // any pending automatic page flip should be prevented.
             view.setImageResource(R.drawable.pause_on_circle); // black circle around android.R.drawable.ic_media_pause);
         } else {
             view.setImageResource(R.drawable.play_on_circle);
-            if(mSwitchedPagesWhilePaused) {
+            if (mSwitchedPagesWhilePaused) {
                 final int position = mPager.getCurrentItem();
                 mAdapter.startNarrationForPage(position); // also starts animation if any
             }
@@ -985,7 +985,6 @@ public class ReaderActivity extends BaseActivity {
                         WebAppInterface appInterface = mCurrentView.getWebAppInterface();
                         if (appInterface.mPageHasMultimedia) {
                             appInterface.toggleAudioOrVideoPaused();
-                            mediaPausedChanged();
                         }
                     }
                 }

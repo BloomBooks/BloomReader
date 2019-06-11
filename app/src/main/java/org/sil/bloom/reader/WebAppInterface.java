@@ -351,6 +351,7 @@ public class WebAppInterface {
                             }
                         }
                         mPauseFromPreviousPage = false;
+                        mContext.mediaPausedChanged();
                     }
                 });
             }

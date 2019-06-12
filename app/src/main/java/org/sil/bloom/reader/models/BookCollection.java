@@ -203,14 +203,18 @@ public class BookCollection {
         }
     }
 
-    public  List<BookOrShelf> getBooks() {
+    public List<BookOrShelf> getBooks() {
         return mFilteredBooksAndShelves;
     }
 
     public void deleteFromDevice(BookOrShelf book) {
-        File file = new File(book.path);
-        if(file.exists()){
-            file.delete();
+        if (book == null)
+            return;
+        if (book.path != null) {
+            File file = new File(book.path);
+            if (file.exists()) {
+                file.delete();
+            }
         }
         _booksAndShelves.remove(book);
         mFilteredBooksAndShelves.remove(book);

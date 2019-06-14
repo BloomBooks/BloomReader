@@ -103,6 +103,10 @@ public class ReaderActivity extends BaseActivity {
     private boolean mRTLBook;
     private String mBrandingProjectName;
     private String mFailedToLoadBookMessage;
+    // some subset of blind,talkingBook,motion,signLanguage
+    // Ideally derived from the meta.json features property, but we can't rely on that in
+    // already-published books, so we ignore it and figure it out for ourselves.
+    private String mFeatures;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,6 +163,7 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("lastNumberedPageRead", mLastNumberedPageRead);
             p.putValue("questionCount", mAdapter.mQuiz.numberOfQuestions());
             p.putValue("contentLang", mContentLang1);
+            p.putValue("features", mFeatures);
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }
@@ -183,7 +188,25 @@ public class ReaderActivity extends BaseActivity {
                 final File bookHtmlFile = fileReader.getHtmlFile();
                 bookDirectory = bookHtmlFile.getParent();
                 String html = IOUtilities.FileToString(bookHtmlFile);
-                mIsMultiMediaBook = isMultiMediaBook(html);
+                String htmlNoSpaces = html.replace(" ", "");
+                // These are a fairly crude tests, we really want the doc to have e.g. spans with class
+                // audio-sentence; but I think it's a sufficiently unlikely string to find elsewhere
+                // that this is good enough. And actually the crudeness of the search allows it to find
+                // audio recorded "by box" as well as by sentence. But now we need to detect video and
+                // Ken Burns style animation too.
+                // I (gjm) tried just asking the javascript (BloomPlayer) if the book is multimedia,
+                // but I had trouble getting the context right on this end for a call that would work.
+                boolean isTalkingBook = html.contains("audio-sentence");
+                boolean isSignLanguage = htmlNoSpaces.contains("src=\"video");
+                // once this was figured from htmlNoSpaces.contains("data-initialrect=");
+                // but the new approach below reflects whether the author chose for the book to show
+                // motion when publishing it to bloomd.
+                // may change once we find body tag
+                boolean hasMotion = false;
+                mIsMultiMediaBook = sAutoAdvance.matcher(html).find() ||
+                        isTalkingBook ||
+                        isSignLanguage;
+                boolean hasImageDescriptions = false;
                 WebAppInterface.resetAll();
                 // Break the html into everything before the first page, a sequence of pages,
                 // and the bit after the last. Note: assumes there is nothing but the </body> after
@@ -203,10 +226,26 @@ public class ReaderActivity extends BaseActivity {
                         mContentLang1 = match.group(1);
                     }
                     startFrame = addAssetsStylesheetLink(startFrame);
+                    // The body tag captured here is parsed in setFeatureEffects after we know our orientation.
+                    Matcher bodyMatcher = sBodyPattern.matcher(startFrame);
+                    if (bodyMatcher.find()){
+                        mBodyTag = bodyMatcher.group(0);
+                    } else {
+                        mBodyTag = "<body>"; // a trivial default, saves messing with nulls.
+                    }
+                    // now we have mBodyTag we can get this feature, which Bloom considers to be
+                    // the definitive one for determining whether it's a motion book.
+                    hasMotion = getBooleanFeature("fullscreenpicture", false, true);
+                    mIsMultiMediaBook |= hasMotion;
                     int startPage = firstPageIndex;
                     while (matcher.find()) {
                         final String pageContent = html.substring(startPage, matcher.start());
                         AddPage(pages, pageContent);
+                        // as in the Bloom code, we don't consider a book to be blind-accessible if the only image
+                        // descriptions are in xmatter.
+                        if (!hasImageDescriptions && pageContent.contains("bloom-imageDescription") && !pageContent.contains("data-xmatter-page")) {
+                            hasImageDescriptions = true;
+                        }
                         startPage = matcher.start();
                     }
                     mFirstQuestionPage = pages.size();
@@ -217,6 +256,7 @@ public class ReaderActivity extends BaseActivity {
                         }
                     }
                     int endBody = html.indexOf("</body>", startPage);
+                    // The last page is always xmatter, so we don't need to consider it for purposes of searching for imageDescription
                     AddPage(pages, html.substring(startPage, endBody));
                     // We can leave out the bloom player JS altogether if not needed.
                     endFrame = (mIsMultiMediaBook ? sAssetsBloomPlayerScript : "")
@@ -268,16 +308,14 @@ public class ReaderActivity extends BaseActivity {
                 }
 
                 mRTLBook = fileReader.getBooleanMetaProperty("isRtl", false);
-                // The body tag captured here is parsed in setFeatureEffects after we know our orientation.
-                Matcher bodyMatcher = sBodyPattern.matcher(startFrame);
-                if (bodyMatcher.find()){
-                    mBodyTag = bodyMatcher.group(0);
-                } else {
-                    mBodyTag = "<body>"; // a trivial default, saves messing with nulls.
-                }
 
                 mAdapter = new BookPagerAdapter(pages, quiz, ReaderActivity.this, bookHtmlFile, startFrame, endFrame);
 
+                mFeatures = (hasImageDescriptions ? "blind," : "")
+                        + (isSignLanguage ? "signLanguage," : "")
+                        + (isTalkingBook ? "talkingBook," : "")
+                        + (hasMotion ? "motion," :"");
+                mFeatures = mFeatures.substring(0, Math.max(mFeatures.length() - 1, 0));
                 reportLoadBook(path);
             } catch (IOException ex) {
                 Log.e("Reader", "Error loading " + path + "  " + ex);
@@ -323,21 +361,6 @@ public class ReaderActivity extends BaseActivity {
                 }
             });
         }
-    }
-
-    private boolean isMultiMediaBook(String html) {
-        String htmlNoSpaces = html.replace(" ", "");
-        return sAutoAdvance.matcher(html).find() ||
-        // This is a fairly crude search, we really want the doc to have spans with class
-        // audio-sentence; but I think it's a sufficiently unlikely string to find elsewhere
-        // that this is good enough. And actually the crudeness of the search allows it to find
-        // audio recorded "by box" as well as by sentence. But now we need to detect video and
-        // Ken Burns style animation too.
-        // I (gjm) tried just asking the javascript (BloomPlayer) if the book is multimedia,
-        // but I had trouble getting the context right on this end for a call that would work.
-        html.contains("audio-sentence") ||
-        htmlNoSpaces.contains("src=\"video") ||
-        htmlNoSpaces.contains("data-initialrect=");
     }
 
     private class BloomPageChangeListener extends ViewPager.SimpleOnPageChangeListener {
@@ -525,6 +548,7 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("totalNumberedPages", mNumberedPageCount);
             p.putValue("contentLang", mContentLang1);
             p.putValue("questionCount", mAdapter.mQuiz.numberOfQuestions());
+            p.putValue("features", mFeatures);
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }

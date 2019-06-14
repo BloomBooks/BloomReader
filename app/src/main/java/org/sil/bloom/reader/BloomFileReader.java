@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
@@ -129,6 +130,31 @@ public class BloomFileReader {
         if(properties == null)
             return defaultIfNotFound;
         return properties.optString(property, defaultIfNotFound);
+    }
+
+    public int getIntMetaProperty(String property, int defaultIfNotFound){
+        JSONObject properties = getMetaProperties();
+        if(properties == null)
+            return defaultIfNotFound;
+        return properties.optInt(property, defaultIfNotFound);
+    }
+
+    public String[] getStringArrayMetaProperty(String property, String[] defaultIfNotFound)
+    {
+        JSONObject properties = getMetaProperties();
+        if(properties == null)
+            return defaultIfNotFound;
+        try {
+            JSONArray jsonArray = properties.getJSONArray(property);
+            String[] result = new String[jsonArray.length()];
+            for (int i = 0; i < result.length; i++) {
+                result[i] = jsonArray.getString(i);
+            }
+            return result;
+        }
+        catch(JSONException e) {
+            return defaultIfNotFound;
+        }
     }
 
     private JSONObject getMetaProperties(){

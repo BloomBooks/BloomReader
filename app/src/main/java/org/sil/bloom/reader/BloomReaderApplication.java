@@ -5,10 +5,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.segment.analytics.Analytics;
+import com.segment.analytics.Properties;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -87,6 +89,36 @@ public class BloomReaderApplication extends Application {
 
         // Check for deviceId json file and use its contents to identify this device
         identifyDevice();
+    }
+
+    static boolean firstRunAfterInstallOrUpdate = false;
+    public static boolean isFirstRunAfterInstallOrUpdate() {
+        return firstRunAfterInstallOrUpdate;
+    }
+
+    public static void setupVersionUpdateInfo(Context context) {
+        SharedPreferences values = context.getSharedPreferences(BloomReaderApplication.SHARED_PREFERENCES_TAG, 0);
+        int buildCode = BuildConfig.VERSION_CODE;
+        int savedVersion = values.getInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, 0);
+        if(buildCode > savedVersion){
+            firstRunAfterInstallOrUpdate = true;
+            SharedPreferences.Editor valuesEditor = values.edit();
+            valuesEditor.putInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, buildCode);
+            valuesEditor.commit();
+        }
+        if (savedVersion == 0) {
+            // very first run
+            String installer = context.getPackageManager().getInstallerPackageName(context.getPackageName());
+            if (TextUtils.isEmpty(installer))
+                return;
+            // Send an analytics event. Trying to follow the structure of a standard one as far
+            // as possible: https://segment.com/docs/spec/mobile/#lifecycle-events.
+            Properties p = new Properties();
+            p.put("provider", "getInstallerPackageName");
+            p.putValue("installer", installer); // The fields of 'campaign' don't seem to apply
+
+            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Install Attributed", p);
+        }
     }
 
     private static void identifyDevice(){

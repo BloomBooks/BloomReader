@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.PointF;
@@ -23,6 +24,7 @@ import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
@@ -33,6 +35,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.segment.analytics.Analytics;
+import com.segment.analytics.Properties;
 
 import org.sil.bloom.reader.WiFi.GetFromWiFiActivity;
 import org.sil.bloom.reader.models.BookCollection;
@@ -103,6 +108,7 @@ public class MainActivity extends BaseActivity
     private void createMainActivity(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
         BloomReaderApplication.setupAnalyticsIfNeeded(this);
+        BloomReaderApplication.setupVersionUpdateInfo(this); // may use analytics, so must run after it is set up.
 
         try {
             _bookCollection= setupBookCollection();

@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.PointF;
@@ -23,6 +24,7 @@ import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
@@ -33,6 +35,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.segment.analytics.Analytics;
+import com.segment.analytics.Properties;
 
 import org.sil.bloom.reader.WiFi.GetFromWiFiActivity;
 import org.sil.bloom.reader.models.BookCollection;
@@ -103,6 +108,7 @@ public class MainActivity extends BaseActivity
     private void createMainActivity(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
         BloomReaderApplication.setupAnalyticsIfNeeded(this);
+        checkFirstRun(); // may use analytics, so must run after it is set up.
 
         try {
             _bookCollection= setupBookCollection();
@@ -154,6 +160,52 @@ public class MainActivity extends BaseActivity
 
         if (onResumeIsWaitingForStoragePermission)
             resumeMainActivity();
+    }
+
+    // Check whether this is the first run of BR. If so, try to report the source of the
+    // installation. As far as we know, this only yields non-null information for play store
+    // and possibly Amazon.
+    private void checkFirstRun() {
+
+        final String PREFS_NAME = "MyPrefsFile";
+        final String PREF_VERSION_CODE_KEY = "version_code";
+        final int DOESNT_EXIST = -1;
+
+        // Get current version code
+        int currentVersionCode = BuildConfig.VERSION_CODE;
+
+        // Get saved version code
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        int savedVersionCode = prefs.getInt(PREF_VERSION_CODE_KEY, DOESNT_EXIST);
+
+        // Check for first run or upgrade
+        if (currentVersionCode == savedVersionCode) {
+
+            // This is just a normal run
+            return;
+
+        } else if (savedVersionCode == DOESNT_EXIST) {
+
+            // This is a new install (or the user cleared the shared preferences)
+            // Try to figure out how we were installed
+            Context context = this.getApplicationContext();
+            String installer = context.getPackageManager().getInstallerPackageName(context.getPackageName());
+            if (TextUtils.isEmpty(installer))
+                return;
+            // Send an analytics event. Trying to follow the structure of a standard one as far
+            // as possible: https://segment.com/docs/spec/mobile/#lifecycle-events.
+            Properties p = new Properties();
+            p.put("provider", "getInstallerPackageName");
+            p.putValue("installer", installer); // The fields of 'campaign' don't seem to apply
+
+            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Install Attributed", p);
+//        } else if (currentVersionCode > savedVersionCode) {
+//
+//            // This is an upgrade...anything we want to do?
+        }
+
+        // Update the shared preferences with the current version code
+        prefs.edit().putInt(PREF_VERSION_CODE_KEY, currentVersionCode).apply();
     }
 
     // This is a hook to allow ShelfActivity to disable the navigation drawer and replace it

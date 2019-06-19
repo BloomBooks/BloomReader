@@ -116,13 +116,8 @@ public class BookCollection {
     public void init(Context context) throws ExtStorageUnavailableException {
         File[] booksDirs = getLocalAndRemovableBooksDirectories(context);
         mLocalBooksDirectory = booksDirs[0];
-        SharedPreferences values = context.getSharedPreferences(BloomReaderApplication.SHARED_PREFERENCES_TAG, 0);
-        int buildCode = BuildConfig.VERSION_CODE;
-        if(buildCode > values.getInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, 0)){
+        if (BloomReaderApplication.isFirstRunAfterInstallOrUpdate()){
             SampleBookLoader.CopySampleBooksFromAssetsIntoBooksFolder(context, mLocalBooksDirectory);
-            SharedPreferences.Editor valuesEditor = values.edit();
-            valuesEditor.putInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, buildCode);
-            valuesEditor.commit();
         }
         loadFromDirectories(booksDirs);
     }

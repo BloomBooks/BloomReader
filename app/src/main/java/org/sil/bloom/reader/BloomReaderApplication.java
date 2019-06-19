@@ -109,8 +109,10 @@ public class BloomReaderApplication extends Application {
         if (savedVersion == 0) {
             // very first run
             String installer = context.getPackageManager().getInstallerPackageName(context.getPackageName());
-            if (TextUtils.isEmpty(installer))
+            if (TextUtils.isEmpty(installer)) {
+                Log.w("BloomReader", "getInstallerPackageName() returned nothing");
                 return;
+            }
             // Send an analytics event. Trying to follow the structure of a standard one as far
             // as possible: https://segment.com/docs/spec/mobile/#lifecycle-events.
             Properties p = new Properties();

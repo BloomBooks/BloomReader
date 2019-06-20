@@ -76,7 +76,18 @@ public class ReaderActivity extends BaseActivity {
     private BookPagerAdapter mAdapter;
     private String mBookName ="?";
     private int mAudioPagesPlayed = 0;
-    private int mNonAudioPagesShown = 0;
+    private boolean mReportedThisPageAsAudio = false;
+    private int mTotalPagesShown = 0;
+    private int mVideoPagesPlayed = 0;
+    private boolean mReportedThisPageAsVideo = false;
+    // These durations are the actual time narration and/or video were playing.
+    // (Note that if a video being played unexpectedly has audio, we won't count
+    // that as audio time.)
+    // Pause time does not count. Replaying the audio or video does, but will not
+    // trigger a recount of the page. (However, pages are re-counted if viewed
+    // again after switching pages.)
+    private double mTotalAudioPageDuration = 0;
+    private double mTotalVideoPageDuration = 0;
     private int mLastNumberedPageIndex = -1;
     private int mNumberedPageCount = 0;
     private boolean mLastNumberedPageRead = false;
@@ -127,11 +138,22 @@ public class ReaderActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
-        if (isFinishing()) {
+        WebAppInterface.stopAllAudio(this);
+        // Usually we will show at least one page. But then we might pause and resume and pause again
+        // without any page turns. Reporting zeros seems pointless.
+        // The small non-zero values in the duration tests are just intended to guard against any
+        // imprecision in double arithmetic. They could probably be smaller still.
+        if (mTotalPagesShown != 0 || mTotalAudioPageDuration > 0.001 || mTotalVideoPageDuration > 0.001) {
             ReportPagesRead();
         }
+        // We're no longer reporting only when isFinishing is true, so we might resume this
+        // activity. Don't report again pages we've already reported.
+        mAudioPagesPlayed = 0;
+        mTotalPagesShown = 0;
+        mVideoPagesPlayed = 0;
+        mTotalAudioPageDuration = 0.0;
+        mTotalVideoPageDuration = 0.0;
         super.onPause();
-        WebAppInterface.stopAllAudio();
     }
 
     @Override
@@ -158,7 +180,19 @@ public class ReaderActivity extends BaseActivity {
             Properties p = new Properties();
             p.putValue("title", mBookName);
             p.putValue("audioPages", mAudioPagesPlayed);
-            p.putValue("nonAudioPages", mNonAudioPagesShown);
+            // This is rather awkward. I'd rather report total pages shown, then any subsets.
+            // Or, we could report the interesting subsets and all the rest.
+            // But the classes overlap...a video page might also play audio.
+            // So they can't all be relied on to add up to total pages.
+            // And unfortunately, before we added video pages, we had established a history
+            // of reporting audio and non-audio pages.
+            // Decided to keep that. So whatever other interesting page classes we may add,
+            // audio + non-audio will give the grand total. Any other page classes shown may or
+            // may not overlap either or both of those.
+            p.putValue("nonAudioPages", mTotalPagesShown - mAudioPagesPlayed);
+            p.putValue("videoPagesPlayed", mVideoPagesPlayed);
+            p.putValue("totalAudioPageDuration", mTotalAudioPageDuration);
+            p.putValue("totalVideoPageDuration", mTotalVideoPageDuration);
             p.putValue("totalNumberedPages", mNumberedPageCount);
             p.putValue("lastNumberedPageRead", mLastNumberedPageRead);
             p.putValue("questionCount", mAdapter.mQuiz.numberOfQuestions());
@@ -406,7 +440,11 @@ public class ReaderActivity extends BaseActivity {
                 mSwitchedPagesWhilePaused = WebAppInterface.isMediaPaused();
 
                 stopVideos(oldView);
-                WebAppInterface.stopNarration(); // don't want to hear rest of anything on another page
+                WebAppInterface.stopNarration(ReaderActivity.this); // don't want to hear rest of anything on another page
+                // Don't want to catch the report of an uncompleted activity on the last page as audio or video on this.
+                // (So don't reset these until AFTER we stopped the old page ones.)
+                mReportedThisPageAsVideo = false;
+                mReportedThisPageAsAudio = false;
                 String backgroundAudioPath = "";
                 if (mPlayMusic) {
                     if (mBackgroundAudioFiles[position].length() > 0) {
@@ -421,28 +459,42 @@ public class ReaderActivity extends BaseActivity {
                 // back to this one (again, reused) and old animation is still running
                 if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
                     WebAppInterface appInterface = mCurrentView.getWebAppInterface();
-                    appInterface.initializeCurrentPage();
+                    appInterface.initializeCurrentPage(mSwitchedPagesWhilePaused);
                     if (!WebAppInterface.isMediaPaused()) {
                         appInterface.enableAnimation(mPlayAnimation);
                         // startNarration also starts the animation (both handled by the BloomPlayer
                         // code) iff we passed true to enableAnimation().
                         mAdapter.startNarrationForPage(position);
-                        // Note: this isn't super-reliable. We tried to narrate this page, but it may not
-                        // have any audio. All we know is that it's part of a book which has
-                        // audio (or animation) somewhere, and we tried to play any audio it has.
-                        mAudioPagesPlayed++;
-                    } else {
-                        mNonAudioPagesShown++;
                     }
                 }
-            } else {
-                // Switching to a new page in a non-multimedia book
-                mNonAudioPagesShown++;
             }
+            mTotalPagesShown++;
             if (position == mLastNumberedPageIndex)
                 mLastNumberedPageRead = true;
         }
-    };
+    }
+
+    public void videoPlayedDuration(double duration) {
+        // We get some spurious very small durations, including sometimes a zero on a page that
+        // doesn't have any video.
+        if (duration < 0.001)
+            return;
+        mTotalVideoPageDuration += duration;
+        if (!mReportedThisPageAsVideo) {
+            mReportedThisPageAsVideo = true;
+            mVideoPagesPlayed++;
+        }
+    }
+
+    public void audioPlayedDuration(double duration) {
+        if (duration < 0.001)
+            return;
+        mTotalAudioPageDuration += duration;
+        if (!mReportedThisPageAsAudio) {
+            mReportedThisPageAsAudio = true;
+            mAudioPagesPlayed++;
+        }
+    }
 
     // Minimum time a page must be visible before we automatically switch to the next
     // (if playing audio...usually this only affects pages with no audio)
@@ -966,14 +1018,14 @@ public class ReaderActivity extends BaseActivity {
             if(page == mPager.getCurrentItem()){
                 mTimeLastPageSwitch = System.currentTimeMillis();
                 clearNextPageTimer();
-                WebAppInterface.stopAllAudio();
+                WebAppInterface.stopAllAudio(ReaderActivity.this);
                 if (appInterface != null)
                     appInterface.startNarrationWhenDocLoaded();
             }
         }
 
         @Override
-        protected void onSizeChanged(int w, int h, int ow, int oh){
+        protected void onSizeChanged(int w, int h, int ow, int oh) {
             // if width is zero, this method will be called again
             if (w != 0) {
                 if (scale == 0) {

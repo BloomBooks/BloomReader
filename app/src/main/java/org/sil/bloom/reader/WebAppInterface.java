@@ -181,8 +181,8 @@ public class WebAppInterface {
     }
 
     // Preserve the "pause" state in the new page.
-    public void initializeCurrentPage() {
-        mPauseFromPreviousPage = isMediaPaused();
+    public void initializeCurrentPage(boolean pausedFromPreviousPage) {
+        mPauseFromPreviousPage = pausedFromPreviousPage; // not isMediaPaused()! Too late for that, caller has changed it.
         Log.d("JSEvent", "initializeCurrentPage(), page "+String.valueOf(mPosition)+": pause="+mPauseFromPreviousPage);
         // Note that false positives in the Paused/Playing state variables (set by the various pauseXX
         // and resumeXX methods) will be corrected in toggleAudioOrVideoPaused before the true values
@@ -240,7 +240,10 @@ public class WebAppInterface {
 
     private void pauseNarration() {
         Log.d("JSEvent", "pauseNarration, page " + String.valueOf(mPosition));
-        mp.pause();
+        if (mp.isPlaying()) {
+            mContext.audioPlayedDuration((mp.getCurrentPosition() - mPlayerStartPosition) / 1000.0);
+            mp.pause();
+        }
         mNarrationPaused = true;    // possible false positive if no narration
         mNarrationPlaying = false;
     }
@@ -251,6 +254,7 @@ public class WebAppInterface {
             startNarration();
             mPauseFromPreviousPage = false;
         } else {
+            mPlayerStartPosition = mp.getCurrentPosition();
             mp.start();
         }
         mNarrationPlaying = true;   // possible false positive if no narration
@@ -322,7 +326,7 @@ public class WebAppInterface {
                                 pauseBackgroundAudio();
                             }
                         } else if (mVideoPaused || mNarrationPaused || mAnimationPaused) {
-                            // If anything is marked paused, let it continue and mark it as playing.
+                                                        // If anything is marked paused, let it continue and mark it as playing.
                             // Don't test for music to enter this block because if music and one of the other
                             // media exists, that would prevent the user from restarting any of those other
                             // media once they had finished.  Music (background audio to be precise) never
@@ -429,19 +433,21 @@ public class WebAppInterface {
         return mNarrationPaused || mVideoPaused || mMusicPaused || mAnimationPaused;
     }
 
-    public static void stopNarration() {
+    public static void stopNarration(ReaderActivity context) {
         Log.d("JSEvent", "stopNarration");
-        if (mp.isPlaying())
+        if (mp.isPlaying()) {
+            context.audioPlayedDuration((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
             mp.stop();
+        }
         mp.reset();     // we no longer have valid data to play (BL-6925)
         mNarrationPaused = false;
         mNarrationPlaying = false;
     }
 
     // When our app no longer in foreground
-    public static void stopAllAudio() {
+    public static void stopAllAudio(ReaderActivity context) {
         Log.d("JSEvent", "stopAllAudio");
-        stopNarration();
+        stopNarration(context);
         if (mpBackground.isPlaying())
             mpBackground.stop();
     }
@@ -491,6 +497,21 @@ public class WebAppInterface {
         return fileExists;
     }
 
+    // Player reports to us that video has been played for a specified duration.
+    @JavascriptInterface
+    public void videoPlayedDuration(String durationString)
+    {
+        try {
+            double duration = Double.parseDouble(durationString);
+            mContext.videoPlayedDuration(duration);
+        } catch (NumberFormatException e)
+        {
+            Log.e("JSError","videoPlayedDuration called with invalid string " + durationString + " -- " + e.getMessage());
+        }
+    }
+
+    private static int mPlayerStartPosition = 0;
+
     // Play an audio file from the webpage. The argument comes from the JavaScript function
     // and is a path relative to the location of the HTML file.
     @JavascriptInterface
@@ -498,8 +519,10 @@ public class WebAppInterface {
 
         try {
             Log.d("JSEvent", "mp.stop && mp.reset && mp.setDataSource && mp.prepare && mp.start, page " + String.valueOf(mPosition));
-            if (mp.isPlaying())
+            if (mp.isPlaying()) {
+                mContext.audioPlayedDuration((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
                 mp.stop();
+            }
             mp.reset();
             String dataSource = mHtmlDirPath + "/" + aud;
             if (!new File(dataSource).exists()) {
@@ -523,6 +546,7 @@ public class WebAppInterface {
                     mContext.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            mContext.audioPlayedDuration((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
                             if (mContext.indexOfCurrentPage() != mPosition) {
                                 // Only the currently active page should be notified of
                                 // completion events.
@@ -541,6 +565,7 @@ public class WebAppInterface {
             // start when the pause ends.
             if (!isMediaPaused()) {
                 Log.d("JSEvent", "mp.start, page " + String.valueOf(mPosition));
+                mPlayerStartPosition = mp.getCurrentPosition();
                 mp.start();
             }
         } catch (IllegalArgumentException e) {

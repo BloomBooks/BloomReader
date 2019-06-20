@@ -127,9 +127,15 @@ public class ReaderActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
-        if (isFinishing()) {
+        // Usually we will show at least one page. But then we might pause and resume and pause again
+        // without any page turns. Reporting zeros seems pointless.
+        if (mAudioPagesPlayed!= 0 || mNonAudioPagesShown != 0) {
             ReportPagesRead();
         }
+        // We're no longer reporting only when isFinishing is true, so we might resume this
+        // activity. Don't report again pages we've already reported.
+        mAudioPagesPlayed = 0;
+        mNonAudioPagesShown = 0;
         super.onPause();
         WebAppInterface.stopAllAudio();
     }
@@ -426,11 +432,10 @@ public class ReaderActivity extends BaseActivity {
                         appInterface.enableAnimation(mPlayAnimation);
                         // startNarration also starts the animation (both handled by the BloomPlayer
                         // code) iff we passed true to enableAnimation().
-                        mAdapter.startNarrationForPage(position);
-                        // Note: this isn't super-reliable. We tried to narrate this page, but it may not
-                        // have any audio. All we know is that it's part of a book which has
-                        // audio (or animation) somewhere, and we tried to play any audio it has.
-                        mAudioPagesPlayed++;
+                        if (mAdapter.startNarrationForPage(position))
+                            mAudioPagesPlayed++;
+                        else
+                            mNonAudioPagesShown++;
                     } else {
                         mNonAudioPagesShown++;
                     }
@@ -860,14 +865,15 @@ public class ReaderActivity extends BaseActivity {
                 pageView.getWebAppInterface().prepareDocumentWhenDocLoaded();
         }
 
-        public void startNarrationForPage(int position) {
+        public boolean startNarrationForPage(int position) {
             ScaledWebView pageView = mActiveViews.get(position);
             if (pageView == null) {
                 Log.d("Reader", "startNarration() can't find page for " + position);
-                return;
+                return false;
             }
             if (pageView.getWebAppInterface() != null)
                 pageView.getWebAppInterface().startNarrationWhenDocLoaded();
+            return pageView.hasAudio();
         }
 
         private WebView MakeBrowserForPage(int position) {
@@ -993,6 +999,12 @@ public class ReaderActivity extends BaseActivity {
                 }
             }
             super.onSizeChanged(w, h, ow, oh);
+        }
+
+        // Something of an approximation. If it has something marked as audio-sentence and also specifies a duration,
+        // there's probably really audio there.
+        public boolean hasAudio() {
+            return this.data.indexOf("audio-sentence") >= 0 && this.data.indexOf("data-duration") >= 0;
         }
 
         private float mXLocationForActionDown;

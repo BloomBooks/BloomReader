@@ -624,6 +624,9 @@ public class ReaderActivity extends BaseActivity {
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }
+
+            // Even though this event is misnamed "BookOrShelf", don't start reporting shelf opens to analytics.
+            // Historically, we have only reported book opens, and that is all we care about.
             Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("BookOrShelf opened", p);
         } catch (Exception error) {
             Log.e("Reader", "Error reporting load of " + path + ".  "+ error);

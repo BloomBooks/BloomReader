@@ -191,8 +191,8 @@ public class ReaderActivity extends BaseActivity {
             // may not overlap either or both of those.
             p.putValue("nonAudioPages", mTotalPagesShown - mAudioPagesPlayed);
             p.putValue("videoPagesPlayed", mVideoPagesPlayed);
-            p.putValue("totalAudioPageDuration", mTotalAudioPageDuration);
-            p.putValue("totalVideoPageDuration", mTotalVideoPageDuration);
+            p.putValue("audioDuration", mTotalAudioPageDuration);
+            p.putValue("videoDuration", mTotalVideoPageDuration);
             p.putValue("totalNumberedPages", mNumberedPageCount);
             p.putValue("lastNumberedPageRead", mLastNumberedPageRead);
             p.putValue("questionCount", mAdapter.mQuiz.numberOfQuestions());

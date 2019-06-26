@@ -89,12 +89,14 @@ public class WebAppInterface {
     // The multimedia state of the page at mPosition
     // When we respond to domContentLoaded, we ask the page to set this variable.
     public boolean mPageHasMultimedia = false;
+    public boolean mPageIsXmatter;
 
-    WebAppInterface(ReaderActivity c, String htmlDirPath, WebView webView, int position) {
+    WebAppInterface(ReaderActivity c, String htmlDirPath, WebView webView, int position, boolean isXmatterPage) {
         mContext = c;
         mHtmlDirPath = htmlDirPath;
         mWebView = webView;
         mPosition = position;
+        mPageIsXmatter = isXmatterPage;
     }
 
     public void reset(){
@@ -241,7 +243,7 @@ public class WebAppInterface {
     private void pauseNarration() {
         Log.d("JSEvent", "pauseNarration, page " + String.valueOf(mPosition));
         if (mp.isPlaying()) {
-            mContext.audioPlayedDuration((mp.getCurrentPosition() - mPlayerStartPosition) / 1000.0);
+            mContext.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition) / 1000.0, mPageIsXmatter);
             mp.pause();
         }
         mNarrationPaused = true;    // possible false positive if no narration
@@ -326,7 +328,7 @@ public class WebAppInterface {
                                 pauseBackgroundAudio();
                             }
                         } else if (mVideoPaused || mNarrationPaused || mAnimationPaused) {
-                                                        // If anything is marked paused, let it continue and mark it as playing.
+                            // If anything is marked paused, let it continue and mark it as playing.
                             // Don't test for music to enter this block because if music and one of the other
                             // media exists, that would prevent the user from restarting any of those other
                             // media once they had finished.  Music (background audio to be precise) never
@@ -436,7 +438,8 @@ public class WebAppInterface {
     public static void stopNarration(ReaderActivity context) {
         Log.d("JSEvent", "stopNarration");
         if (mp.isPlaying()) {
-            context.audioPlayedDuration((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
+            context.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0,
+                    context.mPageBeingPlayed.mPageIsXmatter);
             mp.stop();
         }
         mp.reset();     // we no longer have valid data to play (BL-6925)
@@ -503,10 +506,10 @@ public class WebAppInterface {
     {
         try {
             double duration = Double.parseDouble(durationString);
-            mContext.videoPlayedDuration(duration);
+            mContext.storeVideoAnalytics(duration, mPageIsXmatter);
         } catch (NumberFormatException e)
         {
-            Log.e("JSError","videoPlayedDuration called with invalid string " + durationString + " -- " + e.getMessage());
+            Log.e("JSError","storeVideoAnalytics called with invalid string " + durationString + " -- " + e.getMessage());
         }
     }
 
@@ -520,7 +523,7 @@ public class WebAppInterface {
         try {
             Log.d("JSEvent", "mp.stop && mp.reset && mp.setDataSource && mp.prepare && mp.start, page " + String.valueOf(mPosition));
             if (mp.isPlaying()) {
-                mContext.audioPlayedDuration((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
+                mContext.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0, mPageIsXmatter);
                 mp.stop();
             }
             mp.reset();
@@ -546,7 +549,8 @@ public class WebAppInterface {
                     mContext.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mContext.audioPlayedDuration((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
+                            mContext.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0,
+                                    mPageIsXmatter);
                             if (mContext.indexOfCurrentPage() != mPosition) {
                                 // Only the currently active page should be notified of
                                 // completion events.

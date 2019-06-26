@@ -111,7 +111,7 @@ public class BloomReaderApplication extends Application {
             String installer = context.getPackageManager().getInstallerPackageName(context.getPackageName());
             if (TextUtils.isEmpty(installer)) {
                 Log.w("BloomReader", "getInstallerPackageName() returned nothing");
-                return;
+                installer = "unknown";
             }
             // Send an analytics event. Trying to follow the structure of a standard one as far
             // as possible: https://segment.com/docs/spec/mobile/#lifecycle-events.

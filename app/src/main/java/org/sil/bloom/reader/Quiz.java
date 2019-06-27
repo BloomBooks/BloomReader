@@ -39,6 +39,7 @@ public class Quiz {
             Quiz quiz = new Quiz();
             String questionSource = fileReader.getFileContent("questions.json");
             JSONArray groups = new JSONArray(questionSource);
+            int numberOfPreviousGroupsQuestions = 0;
             for (int i = 0; i < groups.length(); i++) {
                 JSONObject group = groups.getJSONObject(i);
                 if (!group.getString("lang").equals(primaryLanguage))
@@ -48,8 +49,9 @@ public class Quiz {
                 }
                 JSONArray groupQuestions = group.getJSONArray("questions");
                 for (int j = 0; j < groupQuestions.length(); j++) {
-                    quiz.questions.add(new QuizQuestion(groupQuestions.getJSONObject(j), j, quiz.font));
+                    quiz.questions.add(new QuizQuestion(groupQuestions.getJSONObject(j), numberOfPreviousGroupsQuestions + j, quiz.font));
                 }
+                numberOfPreviousGroupsQuestions += groupQuestions.length();
             }
             return quiz;
         } catch(Exception e) {

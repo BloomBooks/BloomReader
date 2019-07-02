@@ -68,8 +68,9 @@ public class ReaderActivity extends BaseActivity {
     private static final Pattern sBodyPattern = Pattern.compile("<body [^>]*?>");
 
     private static final Pattern sAutoAdvance = Pattern.compile("data-bfautoadvance\\s*?=\\s*?\"[^\"]*?\\bbloomReader\\b.*?\"");
+    private static final Pattern sXmatterPage = Pattern.compile("[^>]*?data-xmatter-page\\s*=");
 
-    // Finds the data-readerversion attribute, if any, in the initial page div declaration.
+    // Finds the data-reader-version attribute, if any, in the initial page div declaration.
     private static final Pattern sReaderVersion = Pattern.compile("^[^>]*data-reader-version=\"([^\"]*)\"");
 
     private ViewPager mPager;
@@ -100,6 +101,7 @@ public class ReaderActivity extends BaseActivity {
     int mFirstQuestionPage;
     int mCountQuestionPages;
     ScaledWebView mCurrentView;
+    WebAppInterface mPageBeingPlayed = null;
     String[] mBackgroundAudioFiles;
     float[] mBackgroundAudioVolumes;
 
@@ -445,6 +447,7 @@ public class ReaderActivity extends BaseActivity {
                 // (So don't reset these until AFTER we stopped the old page ones.)
                 mReportedThisPageAsVideo = false;
                 mReportedThisPageAsAudio = false;
+                mPageBeingPlayed = null;
                 String backgroundAudioPath = "";
                 if (mPlayMusic) {
                     if (mBackgroundAudioFiles[position].length() > 0) {
@@ -458,39 +461,41 @@ public class ReaderActivity extends BaseActivity {
                 // (b) maybe we moved to another page while not paused, paused there, moved
                 // back to this one (again, reused) and old animation is still running
                 if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
-                    WebAppInterface appInterface = mCurrentView.getWebAppInterface();
-                    appInterface.initializeCurrentPage(mSwitchedPagesWhilePaused);
+                    mPageBeingPlayed = mCurrentView.getWebAppInterface();
+                    mPageBeingPlayed.initializeCurrentPage(mSwitchedPagesWhilePaused);
                     if (!WebAppInterface.isMediaPaused()) {
-                        appInterface.enableAnimation(mPlayAnimation);
+                        mPageBeingPlayed.enableAnimation(mPlayAnimation);
                         // startNarration also starts the animation (both handled by the BloomPlayer
                         // code) iff we passed true to enableAnimation().
                         mAdapter.startNarrationForPage(position);
                     }
                 }
             }
-            mTotalPagesShown++;
+            if (mPageBeingPlayed != null && !mPageBeingPlayed.mPageIsXmatter) {
+                mTotalPagesShown++;
+            }
             if (position == mLastNumberedPageIndex)
                 mLastNumberedPageRead = true;
         }
     }
 
-    public void videoPlayedDuration(double duration) {
+    public void storeVideoAnalytics(double duration, boolean pageIsXmatter) {
         // We get some spurious very small durations, including sometimes a zero on a page that
         // doesn't have any video.
         if (duration < 0.001)
             return;
         mTotalVideoPageDuration += duration;
-        if (!mReportedThisPageAsVideo) {
+        if (!mReportedThisPageAsVideo && !pageIsXmatter) {
             mReportedThisPageAsVideo = true;
             mVideoPagesPlayed++;
         }
     }
 
-    public void audioPlayedDuration(double duration) {
+    public void storeAudioAnalytics(double duration, boolean pageIsXmatter) {
         if (duration < 0.001)
             return;
         mTotalAudioPageDuration += duration;
-        if (!mReportedThisPageAsAudio) {
+        if (!mReportedThisPageAsAudio && !pageIsXmatter) {
             mReportedThisPageAsAudio = true;
             mAudioPagesPlayed++;
         }
@@ -941,7 +946,8 @@ public class ReaderActivity extends BaseActivity {
                 browser = new ScaledWebView(mParent, position);
                 mActiveViews.put(position, browser);
                 if (mIsMultiMediaBook) {
-                    WebAppInterface appInterface = new WebAppInterface(this.mParent, mBookHtmlPath.getParent(), browser, position);
+                    WebAppInterface appInterface = new WebAppInterface(this.mParent, mBookHtmlPath.getParent(), browser,
+                        position, isPageXmatter(page));
                     browser.setWebAppInterface(appInterface);
                 }
                 // Styles to force 0 border and to vertically center books
@@ -956,6 +962,11 @@ public class ReaderActivity extends BaseActivity {
             return browser;
         }
 
+        private boolean isPageXmatter(String page) {
+            Matcher xmMatcher = sXmatterPage.matcher(page);
+            return xmMatcher.find();
+        }
+
         @Override
         public boolean isViewFromObject(View view, Object object) {
             Log.d("Reader", "isViewFromObject = " + (view == object));
@@ -966,12 +977,12 @@ public class ReaderActivity extends BaseActivity {
     private class ScaledWebView extends WebView {
         private String data;
         private String baseUrl;
-        private int page;
+        private int pageIndex;
         private int scale = 0;
 
-        public ScaledWebView(Context context, int page) {
+        public ScaledWebView(Context context, int pageIndex) {
             super(context);
-            this.page = page;
+            this.pageIndex = pageIndex;
             if(mRTLBook)
                 setRotationY(180);
             getSettings().setJavaScriptEnabled(true);
@@ -1018,7 +1029,7 @@ public class ReaderActivity extends BaseActivity {
                 appInterface.prepareDocumentWhenDocLoaded();
             }
 
-            if(page == mPager.getCurrentItem()){
+            if(pageIndex == mPager.getCurrentItem()){
                 mTimeLastPageSwitch = System.currentTimeMillis();
                 clearNextPageTimer();
                 WebAppInterface.stopAllAudio(ReaderActivity.this);

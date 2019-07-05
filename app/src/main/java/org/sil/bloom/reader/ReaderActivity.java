@@ -16,6 +16,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -985,8 +986,10 @@ public class ReaderActivity extends BaseActivity {
             this.pageIndex = pageIndex;
             if(mRTLBook)
                 setRotationY(180);
-            getSettings().setJavaScriptEnabled(true);
-            getSettings().setMediaPlaybackRequiresUserGesture(false);
+            WebSettings settings = getSettings();
+            settings.setJavaScriptEnabled(true);
+            settings.setMediaPlaybackRequiresUserGesture(false);
+            settings.setTextZoom(100);
         }
 
         public void loadDataWithBaseURL(String baseUrl, String data, boolean inLandscape){

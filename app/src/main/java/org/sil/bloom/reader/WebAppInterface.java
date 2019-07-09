@@ -243,7 +243,7 @@ public class WebAppInterface {
     private void pauseNarration() {
         Log.d("JSEvent", "pauseNarration, page " + String.valueOf(mPosition));
         if (mp.isPlaying()) {
-            mContext.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition) / 1000.0, mPageIsXmatter);
+            mContext.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition) / 1000.0);
             mp.pause();
         }
         mNarrationPaused = true;    // possible false positive if no narration
@@ -438,8 +438,7 @@ public class WebAppInterface {
     public static void stopNarration(ReaderActivity context) {
         Log.d("JSEvent", "stopNarration");
         if (mp.isPlaying()) {
-            context.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0,
-                    context.mPageBeingPlayed.mPageIsXmatter);
+            context.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
             mp.stop();
         }
         mp.reset();     // we no longer have valid data to play (BL-6925)
@@ -523,7 +522,7 @@ public class WebAppInterface {
         try {
             Log.d("JSEvent", "mp.stop && mp.reset && mp.setDataSource && mp.prepare && mp.start, page " + String.valueOf(mPosition));
             if (mp.isPlaying()) {
-                mContext.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0, mPageIsXmatter);
+                mContext.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
                 mp.stop();
             }
             mp.reset();
@@ -549,8 +548,7 @@ public class WebAppInterface {
                     mContext.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mContext.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0,
-                                    mPageIsXmatter);
+                            mContext.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
                             if (mContext.indexOfCurrentPage() != mPosition) {
                                 // Only the currently active page should be notified of
                                 // completion events.
@@ -570,6 +568,9 @@ public class WebAppInterface {
             if (!isMediaPaused()) {
                 Log.d("JSEvent", "mp.start, page " + String.valueOf(mPosition));
                 mPlayerStartPosition = mp.getCurrentPosition();
+                if (!mPageIsXmatter) {
+                    mContext.noteAudioOnPage();
+                }
                 mp.start();
             }
         } catch (IllegalArgumentException e) {

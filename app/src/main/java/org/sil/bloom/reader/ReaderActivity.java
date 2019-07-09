@@ -492,12 +492,14 @@ public class ReaderActivity extends BaseActivity {
         }
     }
 
-    public void storeAudioAnalytics(double duration, boolean pageIsXmatter) {
+    public void storeAudioAnalytics(double duration) {
         if (duration < 0.001)
             return;
         mTotalAudioPageDuration += duration;
-        if (!mReportedThisPageAsAudio && !pageIsXmatter) {
-            mReportedThisPageAsAudio = true;
+    }
+
+    public void noteAudioOnPage() {
+        if (!mReportedThisPageAsAudio) {
             mAudioPagesPlayed++;
         }
     }

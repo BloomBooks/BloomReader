@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -105,6 +106,7 @@ public class ReaderActivity extends BaseActivity {
     WebAppInterface mPageBeingPlayed = null;
     String[] mBackgroundAudioFiles;
     float[] mBackgroundAudioVolumes;
+    private String mSessionId = UUID.randomUUID().toString();
 
     // Keeps track of whether we switched pages while audio paused. If so, we don't resume
     // the audio of the previously visible page, but start this page from the beginning.
@@ -146,16 +148,16 @@ public class ReaderActivity extends BaseActivity {
         // without any page turns. Reporting zeros seems pointless.
         // The small non-zero values in the duration tests are just intended to guard against any
         // imprecision in double arithmetic. They could probably be smaller still.
-        if (mTotalPagesShown != 0 || mTotalAudioPageDuration > 0.001 || mTotalVideoPageDuration > 0.001) {
+        if (isFinishing()) {
             ReportPagesRead();
+            // I think this is redundant since we're finishing and will never resume.
+            // But just in case, don't report the same counts and durations again.
+            mAudioPagesPlayed = 0;
+            mTotalPagesShown = 0;
+            mVideoPagesPlayed = 0;
+            mTotalAudioPageDuration = 0.0;
+            mTotalVideoPageDuration = 0.0;
         }
-        // We're no longer reporting only when isFinishing is true, so we might resume this
-        // activity. Don't report again pages we've already reported.
-        mAudioPagesPlayed = 0;
-        mTotalPagesShown = 0;
-        mVideoPagesPlayed = 0;
-        mTotalAudioPageDuration = 0.0;
-        mTotalVideoPageDuration = 0.0;
         super.onPause();
     }
 
@@ -201,6 +203,7 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("questionCount", mAdapter.mQuiz.numberOfQuestions());
             p.putValue("contentLang", mContentLang1);
             p.putValue("features", mFeatures);
+            p.putValue("sessionId", mSessionId);
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }
@@ -629,6 +632,7 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("contentLang", mContentLang1);
             p.putValue("questionCount", mAdapter.mQuiz.numberOfQuestions());
             p.putValue("features", mFeatures);
+            p.putValue("sessionId", mSessionId);
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
             }

@@ -52,7 +52,8 @@
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
     <string name="adding_book">যুক্ত করা হচ্ছে %1$s...</string>
     <string name="bundle_import_out_of_space">এই বান্ডিলের সমস্ত বই–এর জন্য এই ডিভাইসে যথেষ্ট শূন্য স্থান নেই।</string>
-    <string name="bundle_import_error">ব্লুম বান্ডিল পড়তে সমস্যা দেখা দিয়েছে।</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
     <string name="share_app">ব্লুম পুস্তক অ্যাপটি শেয়ার করুন</string>
     <string name="share_books">বই শেয়ার করুন</string>
     <string name="find_books_on_device">এই ডিভাইসে ব্লুম বই খুঁজুন</string>

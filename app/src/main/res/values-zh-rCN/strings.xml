@@ -53,7 +53,8 @@
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
     <string name="adding_book">正在添加%1$s...</string>
     <string name="bundle_import_out_of_space">设备上没有足够地方存放该资料包中的所有书。</string>
-    <string name="bundle_import_error">读取Bloom资料包时出现问题。</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
     <string name="share_app">分享Bloom阅读器应用</string>
     <string name="share_books">分享图书</string>
     <string name="find_books_on_device">在本设备上寻找Bloom图书</string>

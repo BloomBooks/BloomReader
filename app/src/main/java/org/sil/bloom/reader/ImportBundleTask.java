@@ -20,6 +20,7 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
     private MainActivity mainActivity;
     private Uri bloomBundleUri;
     private IOException ioException;
+    private Integer corruptBundleMessage;
     private Toast toast;
     private List<String> newBookPaths;
     private List<Uri> bundlesToCleanUp;
@@ -30,6 +31,7 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
         this.toast = Toast.makeText(mainActivity, "", Toast.LENGTH_SHORT);
         this.newBookPaths = new ArrayList<>();
         this.bundlesToCleanUp = new ArrayList<>();
+        this.corruptBundleMessage = 0;
     }
 
     protected Void doInBackground(Uri... bundleUris) {
@@ -65,6 +67,12 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
             toast.show();
         }
 
+        if (corruptBundleMessage != 0) {
+            Log.e("BundleIO", mainActivity.getText(corruptBundleMessage).toString());
+            toast.setText(corruptBundleMessage);
+            toast.show();
+        }
+
         new FileCleanupTask(mainActivity).execute(bundlesToCleanUp.toArray(new Uri[0]));
     }
 
@@ -81,6 +89,9 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
                 newBookPaths.add(IOUtilities.extractTarEntry(tarInput, booksDirectoryPath));
             }
             tarInput.close();
+            if (newBookPaths.isEmpty()) {
+                corruptBundleMessage = R.string.bundle_import_corrupt;
+            }
             return;
         } catch (IOException e) {
             // It could be that a .bloombundle.enc file really is still uuencoded I suppose.

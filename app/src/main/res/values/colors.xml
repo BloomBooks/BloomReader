@@ -4,6 +4,7 @@
     <color name="colorPrimaryDark">#4E4E4E</color>
     <color name="colorAccent">#DDDDDD</color>
     <color name="colorBloomRed">#D65649</color>
+    <color name="colorBackground">#FFFFFF</color>
 
     <color name="black_overlay">#66000000</color>
 

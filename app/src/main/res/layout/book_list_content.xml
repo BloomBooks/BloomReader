@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="?android:attr/activatedBackgroundIndicator"
-    android:clickable="false"
-    android:descendantFocusability="blocksDescendants"
-    android:orientation="horizontal">
+	android:layout_height="wrap_content"
+	android:layout_marginTop="16dp"
+	android:clickable="false"
+	android:descendantFocusability="blocksDescendants">
 
 	<!-- thumbnail -->
 	<!-- The 2dp is useful for bookshelves, to make the background color a bit bigger than
@@ -18,14 +17,14 @@
 		android:layout_width="64dp"
 		android:layout_height="64dp"
 		android:layout_marginStart="16dp"
-		android:layout_marginTop="10dp"
 		android:padding="2dp"
 		android:scaleType="fitCenter"
 		app:srcCompat="@drawable/book" />
 
 	<LinearLayout
 		android:layout_width="match_parent"
-		android:layout_height="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="-2dp"
 		android:orientation="vertical">
 		<!-- title -->
 		<TextView
@@ -33,7 +32,6 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_marginStart="@dimen/text_margin"
-			android:layout_marginTop="@dimen/text_margin"
 			android:autoText="false"
 			android:gravity="top"
 			android:textAppearance="?attr/textAppearanceListItem" />
@@ -47,7 +45,7 @@
 			<!-- speaker icon -->
 			<ImageView
 				android:id="@+id/icon"
-				android:layout_width="@dimen/feature_icon_size"
+				android:layout_width="wrap_content"
 				android:layout_height="@dimen/feature_icon_size"
 				android:layout_marginStart="@dimen/text_margin"
 				app:srcCompat="@drawable/ic_speaker" />

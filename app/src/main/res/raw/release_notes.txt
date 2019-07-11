@@ -20,5 +20,4 @@ Share books with other devices.
 Play audio books.
 French user interface.
 
-Future releases will include the following:
-* get books from bloomlibrary.org
+Future releases will include the ability to get books from bloomlibrary.org.

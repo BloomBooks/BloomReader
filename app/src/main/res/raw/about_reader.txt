@@ -1,5 +1,5 @@
 Bloom Reader
-Copyright SIL International 2017
+Copyright SIL International 2019
 
 Support: https://community.software.sil.org/c/bloom
 

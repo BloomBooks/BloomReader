@@ -504,6 +504,7 @@ public class ReaderActivity extends BaseActivity {
     public void noteAudioOnPage() {
         if (!mReportedThisPageAsAudio) {
             mAudioPagesPlayed++;
+            mReportedThisPageAsAudio = true;
         }
     }
 

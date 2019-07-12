@@ -545,10 +545,17 @@ public class WebAppInterface {
             mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
+                    // capture the state immediately...the player may be doing something else by the
+                    // time we get to run on the UI thread.
+                    final int current = mp.getCurrentPosition();
+                    final double duration = (current - mPlayerStartPosition)/1000.0;
+                    if (duration > 20) {
+                        Log.e("Duration", "Unexpectedly long duration " + duration);
+                    }
                     mContext.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mContext.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
+                            mContext.storeAudioAnalytics(duration);
                             if (mContext.indexOfCurrentPage() != mPosition) {
                                 // Only the currently active page should be notified of
                                 // completion events.

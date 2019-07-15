@@ -89,7 +89,7 @@ public class WebAppInterface {
     // The multimedia state of the page at mPosition
     // When we respond to domContentLoaded, we ask the page to set this variable.
     public boolean mPageHasMultimedia = false;
-    public boolean mPageIsXmatter;
+    private boolean mPageIsXmatter;
 
     WebAppInterface(ReaderActivity c, String htmlDirPath, WebView webView, int position, boolean isXmatterPage) {
         mContext = c;

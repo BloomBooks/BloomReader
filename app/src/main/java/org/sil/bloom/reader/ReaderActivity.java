@@ -103,7 +103,6 @@ public class ReaderActivity extends BaseActivity {
     int mFirstQuestionPage;
     int mCountQuestionPages;
     ScaledWebView mCurrentView;
-    WebAppInterface mPageBeingPlayed = null;
     String[] mBackgroundAudioFiles;
     float[] mBackgroundAudioVolumes;
     private String mSessionId = UUID.randomUUID().toString();
@@ -451,7 +450,6 @@ public class ReaderActivity extends BaseActivity {
                 // (So don't reset these until AFTER we stopped the old page ones.)
                 mReportedThisPageAsVideo = false;
                 mReportedThisPageAsAudio = false;
-                mPageBeingPlayed = null;
                 String backgroundAudioPath = "";
                 if (mPlayMusic) {
                     if (mBackgroundAudioFiles[position].length() > 0) {
@@ -465,17 +463,17 @@ public class ReaderActivity extends BaseActivity {
                 // (b) maybe we moved to another page while not paused, paused there, moved
                 // back to this one (again, reused) and old animation is still running
                 if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
-                    mPageBeingPlayed = mCurrentView.getWebAppInterface();
-                    mPageBeingPlayed.initializeCurrentPage(mSwitchedPagesWhilePaused);
+                    WebAppInterface appInterface = mCurrentView.getWebAppInterface();
+                    appInterface.initializeCurrentPage(mSwitchedPagesWhilePaused);
                     if (!WebAppInterface.isMediaPaused()) {
-                        mPageBeingPlayed.enableAnimation(mPlayAnimation);
+                        appInterface.enableAnimation(mPlayAnimation);
                         // startNarration also starts the animation (both handled by the BloomPlayer
                         // code) iff we passed true to enableAnimation().
                         mAdapter.startNarrationForPage(position);
                     }
                 }
             }
-            if (mPageBeingPlayed != null && !mPageBeingPlayed.mPageIsXmatter) {
+            if (!mCurrentView.isXmatter()) {
                 mTotalPagesShown++;
             }
             if (position == mLastNumberedPageIndex)
@@ -806,8 +804,6 @@ public class ReaderActivity extends BaseActivity {
         ReaderActivity mParent;
         File mBookHtmlPath;
 
-        int mLastPageIndex;
-        int mThisPageIndex;
         // This map allows us to convert from the page index we get from the ViewPager to
         // the actual child WebView on that page. There ought to be a way to get the actual
         // current child control from the ViewPager, but I haven't found it yet.
@@ -951,11 +947,12 @@ public class ReaderActivity extends BaseActivity {
                 else {
                     inLandscape = isDeviceInLandscape();
                 }
-                browser = new ScaledWebView(mParent, position);
+                boolean isXmatter = isPageXmatter(page);
+                browser = new ScaledWebView(mParent, position, isXmatter);
                 mActiveViews.put(position, browser);
                 if (mIsMultiMediaBook) {
                     WebAppInterface appInterface = new WebAppInterface(this.mParent, mBookHtmlPath.getParent(), browser,
-                        position, isPageXmatter(page));
+                        position, isXmatter);
                     browser.setWebAppInterface(appInterface);
                 }
                 // Styles to force 0 border and to vertically center books
@@ -987,10 +984,12 @@ public class ReaderActivity extends BaseActivity {
         private String baseUrl;
         private int pageIndex;
         private int scale = 0;
+        private boolean isXmatter;
 
-        public ScaledWebView(Context context, int pageIndex) {
+        public ScaledWebView(Context context, int pageIndex, boolean isXmatter) {
             super(context);
             this.pageIndex = pageIndex;
+            this.isXmatter = isXmatter;
             if(mRTLBook)
                 setRotationY(180);
             WebSettings settings = getSettings();
@@ -1110,6 +1109,10 @@ public class ReaderActivity extends BaseActivity {
                 }
             }
             return super.onTouchEvent(event);
+        }
+
+        public boolean isXmatter() {
+            return isXmatter;
         }
     }
 }

@@ -103,7 +103,6 @@ public class ReaderActivity extends BaseActivity {
     int mFirstQuestionPage;
     int mCountQuestionPages;
     ScaledWebView mCurrentView;
-    WebAppInterface mPageBeingPlayed = null;
     String[] mBackgroundAudioFiles;
     float[] mBackgroundAudioVolumes;
     private String mSessionId = UUID.randomUUID().toString();
@@ -451,7 +450,6 @@ public class ReaderActivity extends BaseActivity {
                 // (So don't reset these until AFTER we stopped the old page ones.)
                 mReportedThisPageAsVideo = false;
                 mReportedThisPageAsAudio = false;
-                mPageBeingPlayed = null;
                 String backgroundAudioPath = "";
                 if (mPlayMusic) {
                     if (mBackgroundAudioFiles[position].length() > 0) {
@@ -465,17 +463,17 @@ public class ReaderActivity extends BaseActivity {
                 // (b) maybe we moved to another page while not paused, paused there, moved
                 // back to this one (again, reused) and old animation is still running
                 if (mCurrentView != null && mCurrentView.getWebAppInterface() != null) {
-                    mPageBeingPlayed = mCurrentView.getWebAppInterface();
-                    mPageBeingPlayed.initializeCurrentPage(mSwitchedPagesWhilePaused);
+                    WebAppInterface appInterface = mCurrentView.getWebAppInterface();
+                    appInterface.initializeCurrentPage(mSwitchedPagesWhilePaused);
                     if (!WebAppInterface.isMediaPaused()) {
-                        mPageBeingPlayed.enableAnimation(mPlayAnimation);
+                        appInterface.enableAnimation(mPlayAnimation);
                         // startNarration also starts the animation (both handled by the BloomPlayer
                         // code) iff we passed true to enableAnimation().
                         mAdapter.startNarrationForPage(position);
                     }
                 }
             }
-            if (mPageBeingPlayed != null && !mPageBeingPlayed.mPageIsXmatter) {
+            if (!mAdapter.isPageXmatterByPosition(position)) {
                 mTotalPagesShown++;
             }
             if (position == mLastNumberedPageIndex)
@@ -806,14 +804,14 @@ public class ReaderActivity extends BaseActivity {
         ReaderActivity mParent;
         File mBookHtmlPath;
 
-        int mLastPageIndex;
-        int mThisPageIndex;
         // This map allows us to convert from the page index we get from the ViewPager to
         // the actual child WebView on that page. There ought to be a way to get the actual
         // current child control from the ViewPager, but I haven't found it yet.
         // Note that it only tracks WebViews for items that have been instantiated and not
         // yet destroyed; this is important to allow others to be garbage-collected.
         private HashMap<Integer, ScaledWebView> mActiveViews = new HashMap<Integer, ScaledWebView>();
+        // This map is similar to the above but used to track whether a page is xmatter.
+        private HashMap<Integer, Boolean> mIsPageXmatterByPosition = new HashMap<Integer, Boolean>();
 
         BookPagerAdapter(List<String> htmlPageDivs,
                          Quiz quiz,
@@ -916,6 +914,10 @@ public class ReaderActivity extends BaseActivity {
             return mActiveViews.get(position);
         }
 
+        public boolean isPageXmatterByPosition(int position) {
+            return mIsPageXmatterByPosition.get(position);
+        }
+
 
         public void prepareForAnimation(int position) {
             final ScaledWebView pageView = mActiveViews.get(position);
@@ -953,9 +955,11 @@ public class ReaderActivity extends BaseActivity {
                 }
                 browser = new ScaledWebView(mParent, position);
                 mActiveViews.put(position, browser);
+                boolean isXmatter = isPageXmatter(page);
+                mIsPageXmatterByPosition.put(position, isXmatter);
                 if (mIsMultiMediaBook) {
                     WebAppInterface appInterface = new WebAppInterface(this.mParent, mBookHtmlPath.getParent(), browser,
-                        position, isPageXmatter(page));
+                        position, isXmatter);
                     browser.setWebAppInterface(appInterface);
                 }
                 // Styles to force 0 border and to vertically center books

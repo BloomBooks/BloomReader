@@ -473,7 +473,7 @@ public class ReaderActivity extends BaseActivity {
                     }
                 }
             }
-            if (!mCurrentView.isXmatter()) {
+            if (mCurrentView != null && !mCurrentView.isXmatter()) {
                 mTotalPagesShown++;
             }
             if (position == mLastNumberedPageIndex)

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.Toolbar
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v7.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/toolbar"
     android:layout_width="match_parent"
@@ -10,16 +9,17 @@
 
     <ImageView
         android:id="@+id/bloom_icon"
-        android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        app:srcCompat="@drawable/bloom_against_dark"/>
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/bloom_against_dark" />
+
     <TextView
         android:id="@+id/shelfName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
         android:layout_weight="1"
-        android:layout_marginLeft="5dp"
         android:ems="10"
         android:text=""
-        android:textAppearance="?attr/textAppearanceSearchResultTitle"/>
+        android:textAppearance="?attr/textAppearanceSearchResultTitle" />
 </android.support.v7.widget.Toolbar>

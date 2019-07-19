@@ -48,11 +48,12 @@ public class ShelfActivity extends MainActivity {
         View toolbar = findViewById(R.id.toolbar);
         final int background = Color.parseColor("#" + getIntent().getStringExtra("background"));
         toolbar.setBackgroundColor(background);
-        TextView labelText = (TextView) findViewById(R.id.shelfName);
+        TextView labelText = findViewById(R.id.shelfName);
         labelText.setText(getIntent().getStringExtra("label"));
-        ImageView bloomIcon = (ImageView)findViewById(R.id.bloom_icon);
+        ImageView bloomIcon = findViewById(R.id.bloom_icon);
         // replace the main bloom icon with the bookshelf one.
         bloomIcon.setImageResource(R.drawable.bookshelf);
+        bloomIcon.setPadding(0,0, 10,0);
 
         // The color chosen for the bookshelf may not contrast well with the default white
         // color of text and the back arrow and the default black color of the bookshelf icon.

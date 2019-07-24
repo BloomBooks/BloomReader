@@ -179,6 +179,9 @@ public class ReaderActivity extends BaseActivity {
 
     private void ReportPagesRead()
     {
+        if (isSampleBook(mBrandingProjectName)) {
+            return;
+        }
         try {
             // let's differentiate between pages read and audio book pages read: (BL-5082)
             Properties p = new Properties();
@@ -304,7 +307,9 @@ public class ReaderActivity extends BaseActivity {
                             + html.substring(endBody, html.length());
                 }
 
-                boolean hasEnterpriseBranding = mBrandingProjectName != null && !mBrandingProjectName.toLowerCase(Locale.ENGLISH).equals("default");
+                boolean hasEnterpriseBranding = mBrandingProjectName != null &&
+                        !mBrandingProjectName.toLowerCase(Locale.ENGLISH).equals("default") &&
+                        !isSampleBook(mBrandingProjectName);
                 Quiz quiz = new Quiz();
                 if (hasEnterpriseBranding) {
                     String primaryLanguage = getPrimaryLanguage(html);
@@ -621,6 +626,9 @@ public class ReaderActivity extends BaseActivity {
 
     private void reportLoadBook(String path)
     {
+        if (isSampleBook(mBrandingProjectName)) {
+            return;
+        }
         try {
             String filenameWithExtension = new File(path).getName();
             // this mBookName is used by subsequent analytics reports
@@ -778,6 +786,10 @@ public class ReaderActivity extends BaseActivity {
         return scale.intValue();
     }
 
+    private static boolean isSampleBook(String brandingName) {
+        return (brandingName != null && brandingName.equals("Sample-Book"));
+    }
+
     enum pageAnswerState {
         unanswered,
         firstTimeCorrect,
@@ -880,7 +892,7 @@ public class ReaderActivity extends BaseActivity {
                 // if they previously got it right we won't hold it against them
                 // that they now get it wrong.
             }
-            if (!mQuestionAnalyticsSent) {
+            if (!mQuestionAnalyticsSent && !isSampleBook(mBrandingProjectName)) {
                 boolean allAnswered = true;
                 int rightFirstTime = 0;
                 for (int i = 0; i < mAnswerStates.length; i++) {

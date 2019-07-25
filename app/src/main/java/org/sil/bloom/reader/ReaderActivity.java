@@ -67,6 +67,7 @@ public class ReaderActivity extends BaseActivity {
     private static final Pattern sClassAttrPattern = Pattern.compile("class\\s*=\\s*(['\"])(.*?)\\1");
 
     private static final Pattern sContentLangDiv = Pattern.compile("<div [^>]*?data-book=\"contentLanguage1\"[^>]*?>\\s*(\\S+)");
+    private static final Pattern sOrigCopyrightDiv = Pattern.compile("<div [^>]*?data-book=\"originalCopyright\"[^>]*?>([^<]*?)<");
     private static final Pattern sBodyPattern = Pattern.compile("<body [^>]*?>");
 
     private static final Pattern sAutoAdvance = Pattern.compile("data-bfautoadvance\\s*?=\\s*?\"[^\"]*?\\bbloomReader\\b.*?\"");
@@ -99,6 +100,7 @@ public class ReaderActivity extends BaseActivity {
     private int mOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
     private boolean mPlayAnimation = true; // play animations (pan and zoom) if present.
     private String mContentLang1 = "unknown";
+    private String mOrigCopyright = "";
     private String mBodyTag;
     int mFirstQuestionPage;
     int mCountQuestionPages;
@@ -258,6 +260,10 @@ public class ReaderActivity extends BaseActivity {
                     Matcher match = sContentLangDiv.matcher(startFrame);
                     if (match.find()) {
                         mContentLang1 = match.group(1);
+                    }
+                    Matcher origCopyrightMatcher = sOrigCopyrightDiv.matcher(startFrame);
+                    if (origCopyrightMatcher.find()) {
+                        mOrigCopyright = origCopyrightMatcher.group(1).trim();
                     }
                     startFrame = addAssetsStylesheetLink(startFrame);
                     // The body tag captured here is parsed in setFeatureEffects after we know our orientation.
@@ -634,6 +640,9 @@ public class ReaderActivity extends BaseActivity {
             p.putValue("sessionId", mSessionId);
             if (mBrandingProjectName != null) {
                 p.putValue("brandingProjectName", mBrandingProjectName);
+            }
+            if (!mOrigCopyright.equals("")) {
+                p.putValue("originalCopyrightHolder", mOrigCopyright);
             }
 
             // Even though this event is misnamed "BookOrShelf", don't start reporting shelf opens to analytics.

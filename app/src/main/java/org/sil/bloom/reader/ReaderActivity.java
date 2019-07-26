@@ -264,6 +264,9 @@ public class ReaderActivity extends BaseActivity {
                     Matcher origCopyrightMatcher = sOrigCopyrightDiv.matcher(startFrame);
                     if (origCopyrightMatcher.find()) {
                         mOrigCopyright = origCopyrightMatcher.group(1).trim();
+                        if (mOrigCopyright.length() > 18) {
+                            mOrigCopyright = mOrigCopyright.substring(18); // strip off initial "Copyright © yyyy, "
+                        }
                     }
                     startFrame = addAssetsStylesheetLink(startFrame);
                     // The body tag captured here is parsed in setFeatureEffects after we know our orientation.

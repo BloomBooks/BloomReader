@@ -58,7 +58,9 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
     git clone https://github.com/BloomBooks/BloomReader
     cd BloomReader
     getDependencies.sh
-	gradlew yarn
+	cd app
+	yarn
+	cd ..
 	gradlew copyBloomPlayerAssets
     gradlew (or, more likely, open the project in Android Studio)
 

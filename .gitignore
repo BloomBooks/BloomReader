@@ -48,3 +48,9 @@ captures/
 /crowdin.properties*
 *.bak
 *.orig
+
+#yarn downloads
+app/node_modules/**
+
+#copied from yarn downloads
+app/src/main/assets/bloom-player/*

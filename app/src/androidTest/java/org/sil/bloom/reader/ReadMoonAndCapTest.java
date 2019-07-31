@@ -55,7 +55,7 @@ public class ReadMoonAndCapTest {
     }
 
     private void turnThePage() {
-        onView(withId(R.id.book_pager))
+        onView(withId(R.id.bloom_player))
                 .perform(ViewActions.swipeLeft());
     }
 

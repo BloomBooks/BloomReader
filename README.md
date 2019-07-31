@@ -58,16 +58,25 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
     git clone https://github.com/BloomBooks/BloomReader
     cd BloomReader
     getDependencies.sh
+	gradlew yarn
+	gradlew copyBloomPlayerAssets
     gradlew (or, more likely, open the project in Android Studio)
 
-To use the audio player (and pan and zoom) features requires a JavaScript file,
-app\src\main\assets\book support files\bloomPagePlayer.js, which is one of the outputs of
-the [BloomPlayer](https://github.com/BloomBooks/BloomPlayer) project. On TeamCity, this is
-configured as a dependency.
+BloomReader requires a number of files from the[bloom-player](https://github.com/BloomBooks/bloom-player.git) project. By default,
+and in the TeamCity build, these are obtained using yarn from the npm output of bloom-player.
 
 When building locally, if you need to make changes to BloomPlayer, you will currently need to build BloomPlayer first and copy the file over.
+It's necessary to do this after running gradlew yarn. BloomPlayer has an updateFiles.bat helper script which, if the two projects share a parent
+directory, will copy them to the right place.
 
-If you don't need to make changes in BloomPlayer, running `getDependencies.sh` will get the latest version from TeamCity.
+If you don't need to make changes in BloomPlayer, get these files using the following commands:
+	cd app
+	yarn
+	cd ..
+	gradlew copyBloomPlayerAssets
+
+If you want the latest version of BloomPlayer, rather than the one active when BloomReader was last
+updated, replace "yarn" with "yarn upgrade"
 
 ## Setting up the build environment
 

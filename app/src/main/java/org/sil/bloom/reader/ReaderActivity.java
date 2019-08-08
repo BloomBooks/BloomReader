@@ -123,7 +123,7 @@ public class ReaderActivity extends BaseActivity {
             String messageType = data.getString("messageType");
             switch (messageType) {
             case "requestCapabilities":
-                postMessageToPlayer("{\"messageType\":\"capabilities\", \"canGoBack\":true}");
+                postMessageToPlayer("{\"messageType\":\"capabilities\", \"canGoBack\":true, \"allowHideAppBar\":true}");
                 break;
             case "backButtonClicked":
                 finish();

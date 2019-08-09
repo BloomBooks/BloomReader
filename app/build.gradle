@@ -1,5 +1,8 @@
-apply plugin: 'com.android.application'
-apply plugin: 'com.github.triplet.play'
+plugins {
+    id 'com.android.application'
+    id 'com.github.triplet.play' version '2.2.0'
+}
+
 // This is the master definition of what version of Bloom Reader we are building
 def versionMajor = 1
 def versionMinor = 3
@@ -12,10 +15,10 @@ int getVersionRelease() {
 }
 
 // Load our credentials
-def fileName = "${System.properties['user.home']}${File.separator}keystore${File.separator}keystore_bloom_reader.properties"
+def keystorePropertiesFileName = "${System.properties['user.home']}${File.separator}keystore${File.separator}keystore_bloom_reader.properties"
 def keystoreProperties
-if (rootProject.file(fileName).exists()) {
-    def keystorePropertiesFile = rootProject.file(fileName)
+def keystorePropertiesFile = rootProject.file(keystorePropertiesFileName)
+if (keystorePropertiesFile.exists()) {
     keystoreProperties = new Properties()
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
@@ -24,13 +27,6 @@ android {
     compileSdkVersion 28
     buildToolsVersion '28.0.3'
 
-    playAccountConfigs {
-        defaultAccountConfig {
-            if (keystoreProperties) {
-                jsonFile = file(keystoreProperties['serviceAccountJsonFile'])
-            }
-        }
-    }
 
     defaultConfig {
         applicationId "org.sil.bloom.reader"
@@ -41,7 +37,6 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary true
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
-        playAccountConfig = playAccountConfigs.defaultAccountConfig
     }
 
     signingConfigs {
@@ -89,6 +84,12 @@ android {
     }
 
     play {
+        if (keystoreProperties) {
+            serviceAccountCredentials = file(keystoreProperties['serviceAccountJsonFile'])
+        } else {
+            serviceAccountCredentials = file("dummy.json")
+        }
+
         // This is definitely a hack, but I could find no other way to set the track based on what flavor we actually want to publish.
         // The problem is, if you try to do something like set a variable in the flavor and then set the track here using that variable,
         // the last time you set track is always the winner. And it always processes every flavor.
@@ -100,7 +101,6 @@ android {
         else
             track = "alpha"
 
-        uploadImages = true
     }
 
     lintOptions {

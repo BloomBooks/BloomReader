@@ -37,12 +37,12 @@
 -dontwarn org.apache.commons.compress.archivers.sevenz.*
 -dontwarn org.apache.commons.compress.archivers.zip.*
 -dontwarn org.apache.commons.compress.compressors.brotli.BrotliCompressorInputStream
--dontwarn org.apache.commons.compress.compressors.lzma.LZMACompressorInputStream
+-dontwarn org.apache.commons.compress.compressors.lzma.*
 -dontwarn org.apache.commons.compress.compressors.pack200.TempFileCachingStreamBridge
 -dontwarn org.apache.commons.compress.compressors.xz.*
+-dontwarn org.apache.commons.compress.compressors.zstandard.*
 -dontwarn org.apache.commons.compress.parallel.*
 -dontwarn org.apache.commons.compress.utils.*
--dontwarn org.apache.commons.compress.compressors.lzma.LZMACompressorOutputStream
 
 # We're not hiding anything...we're open source!
 -dontobfuscate

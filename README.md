@@ -68,8 +68,7 @@ BloomReader requires a number of files from the[bloom-player](https://github.com
 and in the TeamCity build, these are obtained using yarn from the npm output of bloom-player.
 
 When building locally, if you need to make changes to BloomPlayer, you will currently need to build BloomPlayer first and copy the file over.
-It's necessary to do this after running gradlew yarn. BloomPlayer has an updateFiles.bat helper script which, if the two projects share a parent
-directory, will copy them to the right place.
+It's necessary to do this after running gradlew yarn. Ever after, in the bloom-player project, just do `yarn build4br`. That will copy the needed files to a project named "BloomReader" that is a sibling of bloom-player. If your BloomReader project is elsewhere or named differently, create a junction so that it looks like it is a sibling of bloom-player.
 
 If you don't need to make changes in BloomPlayer, get these files using the following commands:
 	cd app

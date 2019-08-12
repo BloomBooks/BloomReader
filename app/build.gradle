@@ -90,17 +90,29 @@ android {
             serviceAccountCredentials = file("dummy.json")
         }
 
-        // This is definitely a hack, but I could find no other way to set the track based on what flavor we actually want to publish.
-        // The problem is, if you try to do something like set a variable in the flavor and then set the track here using that variable,
-        // the last time you set track is always the winner. And it always processes every flavor.
-        // There is the potential someone could call with, e.g. publishAlphaRelease and publishBetaRelease, but I think I would
-        // rather have an attempt to push a beta track on the alpha product (which would often fail because of version numbers, anyway)
-        // than to have an attempt to push an alpha track on the beta or production products. Could probably be argued either way, though.
-        if (project.gradle.startParameter.taskNames.any{tn -> tn.contains("ProductionRelease") || tn.contains("BetaRelease")})
-            track = "beta"
-        else
-            track = "alpha"
+        // We default to always uploading to internal initially. This makes the new apk
+        // available much sooner for testing. Then we can promote it to whichever channel we
+        // want either manually or using another task (like promoteAlphaReleaseArtifact... see below).
+        track = "internal"
 
+        // This is a hack.
+        // After we publish to the internal track, we may want to automatically promote
+        // that same apk to another track as well.
+        // We should be able to set track on the command line, but that isn't working.
+        // (Maybe because we don't have the latest version of the publisher plugin?)
+        //
+        // So, we look at the task we are running to determine where we want to promote *to*.
+        // This means we need a separate build step in TeamCity to run the promote task.
+        fromTrack = "internal"
+        if (project.gradle.startParameter.taskNames.size() == 1) {
+            def singleTask = project.gradle.startParameter.taskNames[0]
+            if (singleTask ==  "promoteAlphaReleaseArtifact") {
+                track = "alpha"
+            } else if (singleTask ==  "promoteBetaReleaseArtifact") {
+                track = "beta"
+            }
+            // Assume for now that production will always be promoted manually.
+        }
     }
 
     lintOptions {

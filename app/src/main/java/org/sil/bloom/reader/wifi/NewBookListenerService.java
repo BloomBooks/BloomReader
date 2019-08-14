@@ -1,4 +1,4 @@
-package org.sil.bloom.reader.WiFi;
+package org.sil.bloom.reader.wifi;
 
 import android.app.Service;
 import android.content.Context;
@@ -14,7 +14,6 @@ import org.sil.bloom.reader.BaseActivity;
 import org.sil.bloom.reader.IOUtilities;
 import org.sil.bloom.reader.MainActivity;
 import org.sil.bloom.reader.R;
-import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.io.File;

@@ -34,7 +34,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.sil.bloom.reader.WiFi.GetFromWiFiActivity;
+import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
@@ -546,8 +546,6 @@ public class MainActivity extends BaseActivity
 
         //noinspection SimplifiableIfStatement
         switch(id) {
-            case R.id.action_settings:
-                return true;
             case R.id.delete:
                 return true;
         }

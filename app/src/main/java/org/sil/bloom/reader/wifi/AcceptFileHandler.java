@@ -1,4 +1,4 @@
-package org.sil.bloom.reader.WiFi;
+package org.sil.bloom.reader.wifi;
 
 import android.content.Context;
 import android.net.Uri;
@@ -14,7 +14,6 @@ import cz.msebera.android.httpclient.HttpResponse;
 import cz.msebera.android.httpclient.entity.StringEntity;
 import cz.msebera.android.httpclient.protocol.HttpContext;
 import cz.msebera.android.httpclient.protocol.HttpRequestHandler;
-import cz.msebera.android.httpclient.util.EntityUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;

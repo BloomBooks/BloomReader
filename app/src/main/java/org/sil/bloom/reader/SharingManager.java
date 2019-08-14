@@ -56,6 +56,9 @@ public class SharingManager {
             // bluetooth is not listed as an option for this on
             // older versions of android
             String type = "*/*";
+
+            // Note, as of master branch, Aug 2019, this does nothing because
+            // our minSdkVersion is 21 anyway. But we vaguely hope to move it back to 19 one day...
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
                 type = "application/vnd.android.package-archive";
 

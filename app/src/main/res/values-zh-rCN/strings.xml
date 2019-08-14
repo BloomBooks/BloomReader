@@ -16,7 +16,6 @@
     <string name="shareBook">分享%1$s</string>
     <string name="cancel">取消</string>
     <string name="ok">确定</string>
-    <string name="action_settings">设置</string>
     <string name="navigation_drawer_open">打开导航栏</string>
     <string name="navigation_drawer_close">关闭导航栏</string>
     <string name="get_books_local_wifi">通过WiFi从电脑上的Bloom接收图书</string>
@@ -65,9 +64,6 @@
     <string name="about_bloom">关于Bloom</string>
     <string name="about_sil">关于SIL</string>
     <string name="or">或</string>
-    <string name="check_comprehension">检查理解</string>
-    <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
-    <string name="question_n_of_m">%2$d个问题中的%1$d 个</string>
     <string name="receive_books_over_wifi">从电脑接收图书</string>
     <string name="need_storage_permission">Bloom阅读器需要访问文件储存器的权限才能工作。</string>
     <string name="grant_storage_permission">授权存储许可</string>

@@ -16,7 +16,6 @@
     <string name="shareBook">%1$s শেয়ার করুন</string>
     <string name="cancel">বাতিল</string>
     <string name="ok">ঠিক আছে</string>
-    <string name="action_settings">সেটিংস</string>
     <string name="navigation_drawer_open">ন্যাভিগেশন ড্রয়ার খুলুন</string>
     <string name="navigation_drawer_close">ন্যাভিগেশন ড্রয়ার বন্ধ করুন</string>
     <string name="get_books_local_wifi">ওয়াই ফাই দিয়ে ব্লুম থেকে কম্পিউটারে বই নিন</string>
@@ -64,9 +63,6 @@
     <string name="about_bloom">ব্লুম সম্পর্কে</string>
     <string name="about_sil">SIL বিষয়ে</string>
     <string name="or">অথবা</string>
-    <string name="check_comprehension">আপনাদের বোধশক্তির পরীক্ষা করুন</string>
-    <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
-    <string name="question_n_of_m">%2$d–এর প্রশ্ন %1$d </string>
     <string name="receive_books_over_wifi">কম্পিউটার থেকে বই নিন</string>
     <string name="need_storage_permission">কাজ করতে ব্লুম পুস্তকের ফাইল সংগ্রহস্থলে প্রবেশের অধিকার প্রয়োজন।</string>
     <string name="grant_storage_permission">সংগ্রহস্থলের অনুমতি প্রদান করুন</string>

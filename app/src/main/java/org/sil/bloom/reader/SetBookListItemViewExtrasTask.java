@@ -52,7 +52,7 @@ public class SetBookListItemViewExtrasTask extends AsyncTask<Void, Void, SetBook
             }
         } else {
             viewHolder.imageView.setBackgroundColor(Color.argb(0, 0, 0, 0));
-            viewHolder.imageView.setImageResource(R.drawable.book);
+            viewHolder.imageView.setImageResource(R.drawable.ic_bloomicon);
         }
     }
 

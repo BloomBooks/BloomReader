@@ -16,7 +16,6 @@
     <string name="shareBook">Compartir %1$s</string>
     <string name="cancel">Cancelar</string>
     <string name="ok">Aceptar</string>
-    <string name="action_settings">Configuración</string>
     <string name="navigation_drawer_open">Abrir panel lateral de navegación</string>
     <string name="navigation_drawer_close">Cerrar panel lateral de navegación</string>
     <string name="get_books_local_wifi">Recibir libros desde Bloom en una computadora, utilizando Wifi</string>
@@ -65,9 +64,6 @@
     <string name="about_bloom">Acerca de Bloom</string>
     <string name="about_sil">Acerca de SIL</string>
     <string name="or">o</string>
-    <string name="check_comprehension">Compruebe su comprensión</string>
-    <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
-    <string name="question_n_of_m">Pregunta %1$d de %2$d</string>
     <string name="receive_books_over_wifi">Recibir libros desde la computadora</string>
     <string name="need_storage_permission">Bloom Reader necesita acceso al almacenamiento de archivos para funcionar.</string>
     <string name="grant_storage_permission">Otorgar permiso de almacenamiento</string>

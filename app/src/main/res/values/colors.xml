@@ -8,6 +8,5 @@
 
     <color name="black_overlay">#66000000</color>
 
-    <color name="right_answer_green">#008000</color>
     <color name="new_book_highlight">#80D8FF</color>
 </resources>

@@ -55,8 +55,4 @@
         <item name="android:textColor">@android:color/white</item>
         <item name="android:colorBackground">@color/colorBloomRed</item>
     </style>
-
-    <style name="CQCheckbox">
-        <item name="colorControlActivated">@color/right_answer_green</item>
-    </style>
 </resources>

@@ -42,7 +42,7 @@ public class ThumbnailCleanup extends AsyncTask<File, Void, Void> {
 
         SharedPreferences.Editor valuesEditor = values.edit();
         valuesEditor.putBoolean(DID_THUMB_CLEANUP, true);
-        valuesEditor.commit();
+        valuesEditor.apply();
 
         return null;
     }

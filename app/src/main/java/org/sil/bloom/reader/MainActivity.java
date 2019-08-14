@@ -1,6 +1,7 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -141,7 +142,7 @@ public class MainActivity extends BaseActivity
                 String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
                 Date buildDate = new Date(BuildConfig.TIMESTAMP);
                 String date = DateFormat.format("dd MMM yyyy", buildDate).toString();
-                versionDate.setText(versionName + ", " + date);
+                versionDate.setText(getVersionAndDateText(versionName, date));
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
             }
@@ -155,6 +156,11 @@ public class MainActivity extends BaseActivity
 
         if (onResumeIsWaitingForStoragePermission)
             resumeMainActivity();
+    }
+
+    private String getVersionAndDateText(String versionName, String date) {
+        // Not bothering trying to internationalize this for now...
+        return versionName + ", " + date;
     }
 
     // This is a hook to allow ShelfActivity to disable the navigation drawer and replace it

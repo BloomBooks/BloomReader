@@ -26,7 +26,9 @@
         android:layout_marginLeft="40dp"
         android:layout_marginRight="40dp"
         android:layout_height="80dp"
-        app:srcCompat="@drawable/get_book_from_wifi"/>
+        app:srcCompat="@drawable/get_book_from_wifi"
+        android:contentDescription="depiction of a book transferring from a laptop to a mobile device"
+        tools:ignore="HardcodedText" />
 
     <ScrollView
         android:id="@+id/wifi_progress_scroller"
@@ -48,7 +50,7 @@
         android:id="@+id/wifiOk"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="right"
+        android:layout_gravity="end"
         android:background="#fff"
         android:textColor="@color/colorBloomRed"
         android:text="@string/ok"

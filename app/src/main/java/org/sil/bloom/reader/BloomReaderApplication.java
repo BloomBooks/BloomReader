@@ -104,7 +104,7 @@ public class BloomReaderApplication extends Application {
             firstRunAfterInstallOrUpdate = true;
             SharedPreferences.Editor valuesEditor = values.edit();
             valuesEditor.putInt(BloomReaderApplication.LAST_RUN_BUILD_CODE, buildCode);
-            valuesEditor.commit();
+            valuesEditor.apply();
         }
         if (savedVersion == 0) {
             // very first run
@@ -126,7 +126,7 @@ public class BloomReaderApplication extends Application {
     private static void identifyDevice(){
         SharedPreferences values = getBloomApplicationContext().getSharedPreferences(SHARED_PREFERENCES_TAG, 0);
         if(values.getString(ANALYTICS_DEVICE_ID, null) == null){
-            boolean deviceIdFromFile = parseDeviceIdFile(values.edit());
+            boolean deviceIdFromFile = parseDeviceIdFile();
             if(!deviceIdFromFile)
                 return;
         }
@@ -140,7 +140,7 @@ public class BloomReaderApplication extends Application {
         Analytics.with(getBloomApplicationContext()).group(project);
     }
 
-    private static boolean parseDeviceIdFile(SharedPreferences.Editor valuesEditor){
+    private static boolean parseDeviceIdFile(){
         try{
             String filename = BookCollection.getLocalBooksDirectory().getPath() + File.separator + DEVICE_ID_FILE;
             File deviceIdFile = new File(filename);
@@ -150,9 +150,12 @@ public class BloomReaderApplication extends Application {
             JSONObject json = new JSONObject(jsonString);
             String project = json.getString("project");
             String device = json.getString("device");
+
+            SharedPreferences values = getBloomApplicationContext().getSharedPreferences(SHARED_PREFERENCES_TAG, 0);
+            SharedPreferences.Editor valuesEditor = values.edit();
             valuesEditor.putString(ANALYTICS_DEVICE_PROJECT, project);
             valuesEditor.putString(ANALYTICS_DEVICE_ID, device);
-            valuesEditor.commit();
+            valuesEditor.apply();
             reportDeviceIdParseSuccess(project, device);
             return true;
         }

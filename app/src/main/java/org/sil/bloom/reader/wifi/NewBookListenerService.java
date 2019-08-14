@@ -47,7 +47,7 @@ public class NewBookListenerService extends Service {
     // Must match Bloom Desktop UDPListener._portToListen.
     // Must be different from ports in NewBookListenerService.startListenForUDPBroadcast
     // and SyncServer._serverPort.
-    int desktopPort = 5915;
+    static int desktopPort = 5915;
     boolean gettingBook = false;
     boolean httpServiceRunning = false;
     int addsToSkipBeforeRetry;
@@ -323,7 +323,7 @@ public class NewBookListenerService extends Service {
 
     // This class is responsible to send one message packet to the IP address we
     // obtained from the desktop, containing the Android's own IP address.
-    private class SendMessage extends AsyncTask<Void, Void, Void> {
+    private static class SendMessage extends AsyncTask<Void, Void, Void> {
 
         public String ourIpAddress;
         public String desktopIpAddress;

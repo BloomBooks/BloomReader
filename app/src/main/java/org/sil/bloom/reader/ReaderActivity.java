@@ -71,7 +71,7 @@ public class ReaderActivity extends BaseActivity {
             // shipped with this program, combined with a param pointing to the book we just
             // decompressed.
             final String url = "file:///android_asset/bloom-player/bloomplayer.htm?url=file:///"
-                    + bookHtmlFile.getAbsolutePath();
+                    + bookHtmlFile.getAbsolutePath()+"&showBackButton=true&allowToggleAppBar=true&initiallyShowAppBar=false";
 
             mBrowser.loadUrl(url);
         } catch (Exception e) {
@@ -122,9 +122,6 @@ public class ReaderActivity extends BaseActivity {
             JSONObject data = new JSONObject(message);
             String messageType = data.getString("messageType");
             switch (messageType) {
-            case "requestCapabilities":
-                postMessageToPlayer("{\"messageType\":\"capabilities\", \"canGoBack\":true, \"allowHideAppBar\":true}");
-                break;
             case "backButtonClicked":
                 finish();
                 break;

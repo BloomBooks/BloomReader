@@ -1,76 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:paddingBottom="0dp"
-    android:paddingLeft="0dp"
-    android:paddingRight="0dp"
-    android:paddingTop="0dp" >
+    android:id="@+id/insideView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="4dp"
+    android:paddingLeft="4dp"
+    android:paddingRight="4dp"
+    android:paddingTop="4dp" >
 
-    <LinearLayout
-        android:id="@+id/insideView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingBottom="4dp"
-        android:paddingLeft="4dp"
-        android:paddingRight="4dp"
-        android:paddingTop="4dp" >
+    <ImageView
+        android:id="@+id/imgGraphic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:scaleType="fitStart"
+        android:paddingTop="10dp"
+        android:paddingBottom="20dp"
+        android:src="@drawable/share_books"
+        android:adjustViewBounds="true"
+        android:gravity="center"
+        android:contentDescription="depiction of books transferring from one mobile device to another"
+        tools:ignore="HardcodedText" />
 
-        <ImageView
-            android:id="@+id/imgGraphic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:scaleType="fitStart"
-            android:paddingTop="10dp"
-            android:paddingBottom="20dp"
-            android:src="@drawable/share_books"
-            android:adjustViewBounds="true"
-            android:gravity="center"/>
+    <TextView
+        android:id="@+id/txtShareBooksWithFriend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="50dp"
+        android:padding="12dp"
+        android:text="@string/share_books_with_friend"
+        android:textColor="@color/colorPrimary"
+        android:gravity="center"/>
 
-        <TextView
-            android:id="@+id/txtShareBooksWithFriend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="30dp"
-            android:layout_marginRight="30dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="50dp"
-            android:padding="12dp"
-            android:text="@string/share_books_with_friend"
-            android:textColor="@color/colorPrimary"
-            android:gravity="center"/>
+    <Button
+        android:id="@+id/btnShareBooks"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:padding="12dp"
+        android:layout_marginBottom="70dp"
+        android:text="@string/share"
+        android:background="@drawable/main_button"
+        style="@style/MainButton"/>
 
-        <Button
-            android:id="@+id/btnShareBooks"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:padding="12dp"
-            android:layout_marginBottom="70dp"
-            android:text="@string/share"
-            android:background="@drawable/main_button"
-            style="@style/MainButton"/>
+    <ProgressBar
+        android:id="@+id/spinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="70dp"/>
 
-        <ProgressBar
-            android:id="@+id/spinner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="70dp"/>
+    <Button
+        android:id="@+id/btnCancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:textColor="@color/colorBloomRed"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:text="@string/cancel"/>
 
-        <Button
-            android:id="@+id/btnCancel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:textColor="@color/colorBloomRed"
-            style="@style/Widget.AppCompat.Button.Borderless"
-            android:text="@string/cancel"/>
-
-    </LinearLayout>
-
-</FrameLayout>
+</LinearLayout>

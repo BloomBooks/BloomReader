@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -167,7 +168,7 @@ public class IOUtilities {
                     ZipEntry entry = entries.nextElement();
                     if (entry.isDirectory())
                         continue;
-                    String entryName = entry.getName().toLowerCase();
+                    String entryName = entry.getName().toLowerCase(Locale.ROOT);
                     if (entryName.endsWith(".htm") || entryName.endsWith(".html"))
                         ++countHtml;
                     else if (entryName.endsWith(".css"))

@@ -19,7 +19,9 @@
 		android:layout_marginStart="16dp"
 		android:padding="2dp"
 		android:scaleType="fitCenter"
-		app:srcCompat="@drawable/ic_bloomicon" />
+		app:srcCompat="@drawable/ic_bloomicon"
+		android:contentDescription="Bloom icon"
+		tools:ignore="HardcodedText" />
 
 	<LinearLayout
 		android:layout_width="match_parent"
@@ -32,7 +34,6 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_marginStart="@dimen/text_margin"
-			android:autoText="false"
 			android:gravity="top"
 			android:textAppearance="?attr/textAppearanceListItem" />
 		<!-- This LinearLayout allows us to put a number of feature icons
@@ -48,7 +49,9 @@
 				android:layout_width="wrap_content"
 				android:layout_height="@dimen/feature_icon_size"
 				android:layout_marginStart="@dimen/text_margin"
-				app:srcCompat="@drawable/ic_speaker" />
+				app:srcCompat="@drawable/ic_speaker"
+				android:contentDescription="speaker icon to indicate a talking book"
+				tools:ignore="HardcodedText" />
 		</LinearLayout>
 	</LinearLayout>
 

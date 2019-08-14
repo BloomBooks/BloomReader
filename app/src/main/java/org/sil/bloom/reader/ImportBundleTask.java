@@ -1,5 +1,6 @@
 package org.sil.bloom.reader;
 
+import android.annotation.SuppressLint;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -23,6 +24,7 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
     private List<Uri> bundlesToCleanUp;
     private ImportBundleErrorHandler importBundleErrorHandler;
 
+    @SuppressLint("ShowToast")
     ImportBundleTask(MainActivity mainActivity) {
         // See https://stackoverflow.com/questions/44309241/warning-this-asynctask-class-should-be-static-or-leaks-might-occur/46166223#46166223
         this.mainActivityRef = new WeakReference<>(mainActivity);

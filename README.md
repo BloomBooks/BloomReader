@@ -180,8 +180,8 @@ To update the sample book, *The Moon and the Cap*:
 - Open an English collection in the latest version of Bloom. Vernacular and National language should be English.
 - Set xMatter to Device.
 - Create a book using the sample shell.
-- Set the layout to Device16x9Portrait (this step is, theoretically, not necessary because Bloom Reader should display the correct layout, anyway, but it is probably a good idea).
-- Publish -> Android -> Save Bloom Reader File
+- Set the layout to Device16x9Portrait (this step is, theoretically, not necessary because publication changes it anyway).
+- Publish -> Bloom Reader -> Save Bloom Reader File
 - Change the file extension from `.bloomd` to `.zip` and open the `.zip` archive.
 - Pull the `meta.json` file out of the archive and edit it to include the following line:
 

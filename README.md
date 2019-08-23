@@ -129,18 +129,18 @@ Gradle tasks which can be called with the plugin include:
 
 - publish{Alpha/Beta/Production}Release
 	- pushes both the apk and listing metadata to the Play Store
-- publishApk{Alpha/Beta/Production}Release
+- publish{Alpha/Beta/Production}ReleaseApk
 	- pushes only the apk to the Play Store
-- publishListing{Alpha/Beta/Production}Release
+- publish{Alpha/Beta/Production}ReleaseListing
 	- pushes only the listing metadata to the Play Store
 
 TeamCity builds are configured to publish the alpha, beta, and production flavors to three respective apps on the Play Store.
 
-- The alpha build is a continuous publish to the alpha track of the alpha app.
-- The beta build is a manual publish to the beta track of the beta app.
-- The production build is a manual publish to the beta track of the production app.
+- The alpha build is a continuous publish to the internal test and alpha tracks of the "BR Alpha" app.
+- The beta build is a manual publish to the internal test and beta tracks of the "BR Beta" app.
+- The production build is a manual publish to the internal test track of the "Bloom Reader" app. Currently, releases need to be promoted to production manually in the Play Console.
 
-The `ba-win10-64-s1-601` (in the Keyman pool) is currently the only agent configured with the `.properties` file described above.
+The `ba-bloom-win10` (in the Bloom pool) is currently the only agent configured with the `.properties` file described above.
 
 # Localization
 

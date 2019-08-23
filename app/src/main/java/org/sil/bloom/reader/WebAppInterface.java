@@ -437,11 +437,12 @@ public class WebAppInterface {
 
     public static void stopNarration(ReaderActivity context) {
         Log.d("JSEvent", "stopNarration");
-        if (mp.isPlaying()) {
+        if (mp != null && mp.isPlaying()) {
             context.storeAudioAnalytics((mp.getCurrentPosition() - mPlayerStartPosition)/1000.0);
             mp.stop();
         }
-        mp.reset();     // we no longer have valid data to play (BL-6925)
+        if (mp != null) // Not sure how this is possible, but we had a crash reported in the Play console
+            mp.reset();     // we no longer have valid data to play (BL-6925)
         mNarrationPaused = false;
         mNarrationPlaying = false;
     }
@@ -450,8 +451,15 @@ public class WebAppInterface {
     public static void stopAllAudio(ReaderActivity context) {
         Log.d("JSEvent", "stopAllAudio");
         stopNarration(context);
-        if (mpBackground.isPlaying())
-            mpBackground.stop();
+        try {
+            if (mpBackground.isPlaying())
+                mpBackground.stop();
+        } catch (Exception e){
+            // Don't crash the app.
+            // We had an IllegalStateException reported in the Play console.
+            e.printStackTrace();
+            Log.w("BloomReader", e);
+        }
     }
 
     private static boolean hasMusic() {

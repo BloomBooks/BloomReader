@@ -13,18 +13,19 @@ import org.junit.runner.RunWith;
 
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.assertion.ViewAssertions.matches;
 import static android.support.test.espresso.contrib.RecyclerViewActions.actionOnItem;
 import static android.support.test.espresso.matcher.ViewMatchers.hasDescendant;
-import static android.support.test.espresso.matcher.ViewMatchers.isChecked;
-import static android.support.test.espresso.matcher.ViewMatchers.isNotChecked;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static android.support.test.espresso.web.assertion.WebViewAssertions.webMatches;
+import static android.support.test.espresso.web.model.Atoms.castOrDie;
+import static android.support.test.espresso.web.model.Atoms.script;
+import static android.support.test.espresso.web.sugar.Web.onWebView;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.findElement;
 import static android.support.test.espresso.web.webdriver.DriverAtoms.getText;
+import static android.support.test.espresso.web.webdriver.DriverAtoms.webClick;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.sil.bloom.reader.AndroidTestHelper.onWebViewForCurrentPage;
+import static org.hamcrest.core.Is.is;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -49,7 +50,7 @@ public class ReadMoonAndCapTest {
     }
 
     private void checkTitlePage() {
-        onWebViewForCurrentPage()
+        onWebView()
                 .withElement(findElement(Locator.CSS_SELECTOR, "body"))
                 .check(webMatches(getText(), containsString("The Moon and the Cap")));
     }
@@ -60,30 +61,34 @@ public class ReadMoonAndCapTest {
     }
 
     private void checkPageOne() {
-        onWebViewForCurrentPage()
+        onWebView()
                 .withElement(findElement(Locator.CSS_SELECTOR, "body"))
                 .check(webMatches(getText(), containsString("All of us went to the fun fair.")));
     }
 
     private void turnToTheFirstCQ() {
         // It's on page 12, we're starting on page 1
-        for (int p=1; p<12; ++p)
+        for (int p=1; p<12; ++p) {
+            AndroidTestHelper.sleep(500); // Unfortunately necessary
             turnThePage();
+        }
     }
 
     private void clickTheWrongAnswerToCQ1AndVerify() {
-        AndroidTestHelper.sleep(200); // Unfortunately necessary
-        onView(withText("The bully took it"))
-                .perform(click());
-        onView(withText("The bully took it"))
-                .check(matches(isNotChecked()));
+        String incorrectCheckboxSelector = ".checkbox-and-textbox-choice:not(.correct-answer) input";
+        clickAndVerifyCheckbox(incorrectCheckboxSelector, false);
     }
 
     private void clickTheRightAnswerToCQ1AndVerify() {
-        AndroidTestHelper.sleep(200);
-        onView(withText("The wind blew it away"))
-                .perform(click());
-        onView(withText("The wind blew it away"))
-                .check(matches(isChecked()));
+        String correctCheckboxSelector = ".checkbox-and-textbox-choice.correct-answer input";
+        clickAndVerifyCheckbox(correctCheckboxSelector, true);
+    }
+
+    private void clickAndVerifyCheckbox(String cssSelector, boolean expected) {
+        AndroidTestHelper.sleep(200); // Unfortunately necessary
+        onWebView()
+                .withElement(findElement(Locator.CSS_SELECTOR, cssSelector))
+                .perform(webClick())
+                .check(webMatches(script("return document.querySelector('" + cssSelector + "').checked", castOrDie(Boolean.class)), is(expected)));
     }
 }

@@ -1,6 +1,5 @@
 package org.sil.bloom.reader;
 
-import android.os.Build;
 import android.support.annotation.Nullable;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -10,9 +9,7 @@ import android.webkit.WebViewClient;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringBufferInputStream;
 import java.util.HashMap;
-import java.util.Map;
 
 // This class improves security. Our WebView is, at the level of its basic settings, allowed
 // extensive file system access. However, all the requests for anything come through this

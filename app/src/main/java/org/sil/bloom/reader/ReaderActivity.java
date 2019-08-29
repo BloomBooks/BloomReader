@@ -36,6 +36,7 @@ public class ReaderActivity extends BaseActivity {
 
         setContentView(R.layout.activity_reader);
         mBrowser = this.findViewById(R.id.bloom_player);
+        mBrowser.clearCache(false); // BL-7567 fixes "cross-pollination" of images
         mAppInterface = new WebAppInterface(this);
         // See the class comment on WebAppInterface for how this allows Javascript in
         // the

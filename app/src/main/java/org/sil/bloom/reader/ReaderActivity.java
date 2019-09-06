@@ -83,10 +83,27 @@ public class ReaderActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
+        mBrowser.onPause();
+        mBrowser.pauseTimers();
         if (isFinishing()) {
             MakeFinalReport();
         }
         super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        hideSystemUI();
+        mBrowser.onResume();
+        mBrowser.resumeTimers();
+    }
+
+    @Override
+    protected void onDestroy() {
+        mBrowser.destroy();
+        mBrowser = null;
+        super.onDestroy();
     }
 
     // When a session is finishing, if we've received data to send as the final
@@ -95,12 +112,6 @@ public class ReaderActivity extends BaseActivity {
     private void MakeFinalReport() {
         if (mBookProgressReport != null)
             sendAnalytics(mBookProgressReport);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        hideSystemUI();
     }
 
     private void hideSystemUI() {

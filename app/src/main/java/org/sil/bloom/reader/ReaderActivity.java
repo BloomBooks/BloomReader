@@ -1,6 +1,7 @@
 package org.sil.bloom.reader;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -167,7 +168,12 @@ public class ReaderActivity extends BaseActivity {
                 Log.e("sendAnalytics", "Very unexpectedly we can't get a value whose key we just retrieved");
             }
         }
-        Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track(event, p);
+        // This should be equivalent to
+        //Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track(event, p);
+        // However reports sent like that have sometimes gotten lost when sent as the activity
+        // is closing down. We hope that sending them from a distinct thread may help.
+        new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams(event, p));
+
     }
 
     void postMessageToPlayer(final String json) {

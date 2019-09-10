@@ -1,14 +1,12 @@
 package org.sil.bloom.reader;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
 import org.json.JSONException;
@@ -21,6 +19,8 @@ import java.util.Iterator;
 public class ReaderActivity extends BaseActivity {
 
     private static final String TAG = "ReaderActivity";// https://developer.android.com/reference/android/util/Log.html
+
+    private static boolean isNavBarShowing = false; // Hide nav bar unless/until the player tells us to show it
 
     private JSONObject mBookProgressReport; // to send when activity finishes, if not overwritten first
     WebView mBrowser;
@@ -94,7 +94,9 @@ public class ReaderActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        hideSystemUI();
+
+        hideSystemUI(isNavBarShowing);
+
         mBrowser.onResume();
         mBrowser.resumeTimers();
     }
@@ -114,15 +116,25 @@ public class ReaderActivity extends BaseActivity {
             sendAnalytics(mBookProgressReport);
     }
 
-    private void hideSystemUI() {
-        View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-                // We don't want the System to grab swipes from the edge
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        // Hide the status bar
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-        // We decided not to hide the navigation bar (see BL-6998)
-        );
+    private final int flagsForShowingNavBar =
+            // We don't want the System to grab swipes from the edge
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            // Hide the status bar
+            | View.SYSTEM_UI_FLAG_FULLSCREEN;
+
+    private final int flagsForHidingNavBar =
+            flagsForShowingNavBar
+            // Hide the nav bar
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+
+    private void hideSystemUI(final boolean showNavBar) {
+        this.runOnUiThread(new Runnable() {
+            public void run() {
+                View decorView = getWindow().getDecorView();
+                decorView.setSystemUiVisibility(showNavBar ? flagsForShowingNavBar : flagsForHidingNavBar);
+                isNavBarShowing = showNavBar;
+            }
+        });
     }
 
     // Receive a message. Ideally we would like this to be simply a handler for when
@@ -135,17 +147,23 @@ public class ReaderActivity extends BaseActivity {
             JSONObject data = new JSONObject(message);
             String messageType = data.getString("messageType");
             switch (messageType) {
-            case "backButtonClicked":
-                finish();
-                break;
-            case "sendAnalytics":
-                sendAnalytics(data);
-                break;
-            case "updateBookProgressReport":
-                mBookProgressReport = data;
-                break;
-            default:
-                Log.e("receiveMessage", "Unexpected message: " + messageType);
+                case "backButtonClicked":
+                    finish();
+                    break;
+                case "sendAnalytics":
+                    sendAnalytics(data);
+                    break;
+                case "updateBookProgressReport":
+                    mBookProgressReport = data;
+                    break;
+                case "showNavBar":
+                    hideSystemUI(true);
+                    break;
+                case "hideNavBar":
+                    hideSystemUI(false);
+                    break;
+                default:
+                    Log.e("receiveMessage", "Unexpected message: " + messageType);
             }
         } catch (JSONException e) {
             Log.e("receiveMessage", e.getMessage());

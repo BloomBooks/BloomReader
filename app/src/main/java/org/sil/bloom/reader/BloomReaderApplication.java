@@ -5,11 +5,13 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.segment.analytics.Analytics;
+import com.segment.analytics.ConnectionFactory;
 import com.segment.analytics.Properties;
 
 import org.json.JSONException;
@@ -18,6 +20,8 @@ import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 
 // Our special Application class which allows us to share information easily between activities.
 // Note that anything stored here should not be expected to persist indefinitely.
@@ -32,6 +36,7 @@ public class BloomReaderApplication extends Application {
 
     private String bookToHighlight;
     private static Context sApplicationContext;
+    private static final String kBloomLibraryAnalyticsProxyUrl = "https://analytics.bloomlibrary.org";
 
     // Created by main activity, used also by shelf activities. The active one controls its filter.
     public static BookCollection theOneBookCollection;
@@ -70,6 +75,24 @@ public class BloomReaderApplication extends Application {
 
         // Create an analytics client with the given context and Segment write key.
         Analytics analytics = new Analytics.Builder(sApplicationContext, writeKey)
+                .connectionFactory(new ConnectionFactory() {
+                    @Override protected HttpURLConnection openConnection(String url) throws IOException {
+                        // In Cloudflare, we have created a pass-through from analytics.bloomlibrary.org
+                        // to api.segment.io. If you look in the base class's openConnection
+                        // and its callers, you will see there are a couple other segment urls
+                        // which can get passed as well. Testing demonstrates these are
+                        // not needed, at least not currently. If we decide we do need those,
+                        // we could create other pass-through urls for them.
+                        // This override of openConnection is taken directly from Segment's suggestion on how to
+                        // set up a proxy, but they also provide a sample proxy implementation
+                        // which has a "reverse proxy" to choose the correct url on the other end.
+                        // We did not implement that and chose the easier shortcut of a simple url pass-through.
+                        // See https://segment.com/docs/sources/mobile/android/#proxy-http-calls
+                        // and https://github.com/segmentio/segment-proxy.
+                        String path = Uri.parse(url).getPath();
+                        return super.openConnection(kBloomLibraryAnalyticsProxyUrl + path);
+                    }
+                })
                 // Tracks Application Opened, Application Installed, Application Updated
                 .trackApplicationLifecycleEvents()
                 // Tracks each screen opened

@@ -556,10 +556,17 @@ public class WebAppInterface {
                     // capture the state immediately...the player may be doing something else by the
                     // time we get to run on the UI thread.
                     final int current = mp.getCurrentPosition();
-                    final double duration = (current - mPlayerStartPosition)/1000.0;
-                    if (duration > 20) {
-                        Log.e("Duration", "Unexpectedly long duration " + duration);
+                    double durationT = (current - mPlayerStartPosition)/1000.0;
+                    final double maxDuration = mp.getDuration() / 1000.0;
+                    if (maxDuration > 0 && durationT > maxDuration + 0.1) {
+                        Log.e("Duration", "Unexpectedly long duration " + durationT + " max " + maxDuration);
+                        durationT = maxDuration;
                     }
+                    if (durationT > 20) {
+                        Log.e("Duration", "Unexpectedly long duration " + durationT);
+                        durationT = 20;
+                    }
+                    final double duration = durationT; // variable to be used in function below must be final.
                     mContext.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {

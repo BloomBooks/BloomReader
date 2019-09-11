@@ -1,6 +1,7 @@
 package org.sil.bloom.reader;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -156,6 +157,9 @@ public class ReaderActivity extends BaseActivity {
                 case "updateBookProgressReport":
                     mBookProgressReport = data;
                     break;
+                case "reportBookProperties":
+                    setDeviceOrientation(data);
+                    break;
                 case "showNavBar":
                     hideSystemUI(true);
                     break;
@@ -171,12 +175,10 @@ public class ReaderActivity extends BaseActivity {
     }
 
     // Given a JSONObject, obtained by parsing a JSON string sent by BloomPlayer,
-    // send an analytics
-    // report. The data object is expected to contain fields "event" (the first
-    // argument to track),
-    // and "params", an arbitrary object each of whose fields will be used as a
-    // name-value pair
-    // in the Properties of the track event.
+    // send an analytics report. The data object is expected to contain fields
+    // "event" (the first argument to track), and "params", an arbitrary object
+    // each of whose fields will be used as a name-value pair in the Properties
+    // of the track event.
     void sendAnalytics(JSONObject data) {
         String event = null;
         JSONObject params = null;
@@ -202,7 +204,31 @@ public class ReaderActivity extends BaseActivity {
         // However reports sent like that have sometimes gotten lost when sent as the activity
         // is closing down. We hope that sending them from a distinct thread may help.
         new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams(event, p));
+    }
 
+    // Given a JSONObject, obtained by parsing a JSON string of book properties sent
+    // by BloomPlayer, set the device orientation appropriately. The data object is expected to
+    // contain a "params" field, an object containing a "canRotate" boolean and a
+    // "landscape" boolean.
+    void setDeviceOrientation(JSONObject data) {
+        JSONObject params;
+        boolean canRotate;
+        boolean isLandscape;
+        try {
+            params = data.getJSONObject("params");
+            canRotate = params.getBoolean("canRotate");
+            isLandscape = params.getBoolean("landscape");
+        } catch (JSONException e) {
+            Log.e("setDeviceOrientation", "reportBookProperties message missing params");
+            return;
+        }
+        if (canRotate) return; // Let the user rotate the device and book to their hearts content.
+
+        if (isLandscape) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+        }
     }
 
     void postMessageToPlayer(final String json) {

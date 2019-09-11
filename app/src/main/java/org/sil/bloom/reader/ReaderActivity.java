@@ -2,9 +2,14 @@ package org.sil.bloom.reader;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
@@ -46,6 +51,7 @@ public class ReaderActivity extends BaseActivity {
         mBrowser.addJavascriptInterface(mAppInterface, "ParentProxy");
         final WebSettings webSettings = mBrowser.getSettings();
         webSettings.setJavaScriptEnabled(true);
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
         // not quite clear on the difference between these or whether all are needed.
         // The goal is to allow the bloom-player javascript to make http calls to
         // retrieve
@@ -57,6 +63,20 @@ public class ReaderActivity extends BaseActivity {
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         // I don't think we need this yet but some interactive pages may want it.
         webSettings.setDomStorageEnabled(true);
+
+        // We don't want the ugly placeholder WebView shows by default before a video starts playing.
+        // Instead, show this bitmap...a single transparent pixel!
+        final Bitmap defaultPoster = Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_4444);
+        Canvas canvas = new Canvas(defaultPoster);
+        canvas.drawARGB(0,0,0,0);
+
+        mBrowser.setWebChromeClient(new WebChromeClient(){
+            @Nullable
+            @Override
+            public Bitmap getDefaultVideoPoster() {
+                return defaultPoster;
+            }
+        });
 
         try {
             final String path = getIntent().getStringExtra("bookPath");

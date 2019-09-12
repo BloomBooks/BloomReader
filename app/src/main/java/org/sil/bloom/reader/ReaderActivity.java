@@ -64,19 +64,20 @@ public class ReaderActivity extends BaseActivity {
         // I don't think we need this yet but some interactive pages may want it.
         webSettings.setDomStorageEnabled(true);
 
-        // We don't want the ugly placeholder WebView shows by default before a video starts playing.
+        // In case we don't want the default placeholder WebView shows before a video starts playing,
+        // we can reinstate this.
         // Instead, show this bitmap...a single transparent pixel!
-        final Bitmap defaultPoster = Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_4444);
-        Canvas canvas = new Canvas(defaultPoster);
-        canvas.drawARGB(0,0,0,0);
-
-        mBrowser.setWebChromeClient(new WebChromeClient(){
-            @Nullable
-            @Override
-            public Bitmap getDefaultVideoPoster() {
-                return defaultPoster;
-            }
-        });
+//        final Bitmap defaultPoster = Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_4444);
+//        Canvas canvas = new Canvas(defaultPoster);
+//        canvas.drawARGB(0,0,0,0);
+//
+//        mBrowser.setWebChromeClient(new WebChromeClient(){
+//            @Nullable
+//            @Override
+//            public Bitmap getDefaultVideoPoster() {
+//                return defaultPoster;
+//            }
+//        });
 
         try {
             final String path = getIntent().getStringExtra("bookPath");

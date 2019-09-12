@@ -5,11 +5,13 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.segment.analytics.Analytics;
+import com.segment.analytics.ConnectionFactory;
 import com.segment.analytics.Properties;
 
 import org.json.JSONException;
@@ -18,6 +20,8 @@ import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 
 // Our special Application class which allows us to share information easily between activities.
 // Note that anything stored here should not be expected to persist indefinitely.
@@ -32,6 +36,7 @@ public class BloomReaderApplication extends Application {
 
     private String bookToHighlight;
     private static Context sApplicationContext;
+    private static final String kBloomLibraryAnalyticsProxyUrl = "https://analytics.bloomlibrary.org";
 
     // Created by main activity, used also by shelf activities. The active one controls its filter.
     public static BookCollection theOneBookCollection;
@@ -70,6 +75,42 @@ public class BloomReaderApplication extends Application {
 
         // Create an analytics client with the given context and Segment write key.
         Analytics analytics = new Analytics.Builder(sApplicationContext, writeKey)
+                .connectionFactory(new ConnectionFactory() {
+                    // This override of openConnection is taken and modified from Segment's
+                    // suggestion on how to set up a proxy.
+                    // See https://segment.com/docs/sources/mobile/android/#proxy-http-calls
+                    //
+                    // They also recommend and provide a sample proxy implementation
+                    // which has a "reverse proxy" to choose the correct url on the other end.
+                    // See https://github.com/segmentio/segment-proxy
+                    //
+                    // Instead of running a server with this reverse proxy, we just
+                    // use Cloudflare and distinguish the urls here.
+                    @Override protected HttpURLConnection openConnection(String url) throws IOException {
+                        // In Cloudflare, we have created CNAME records to proxy the urls below.
+                        // We found the three segment.{io|com} urls in com.segment.analytics.ConnectionFactory.
+                        // Testing indicates we probably only need api.segment.io (though the cdn one is called),
+                        // but we've added them all to be safe.
+                        String proxyUrl;
+                        Uri uri = Uri.parse(url);
+                        switch (uri.getHost()){
+                            case "cdn-settings.segment.com":
+                                proxyUrl = "https://analytics-cdn-settings.bloomlibrary.org";
+                                break;
+                            case "mobile-service.segment.com":
+                                proxyUrl = "https://analytics-mobile-service.bloomlibrary.org";
+                                break;
+                            case "api.segment.io":
+                            default:
+                                proxyUrl = "https://analytics.bloomlibrary.org";
+                                break;
+                        }
+
+                        // The path is just the part after the domain, e.g. /v1/import in https://api.segment.io/v1/import
+                        String path = uri.getPath();
+                        return super.openConnection(proxyUrl + path);
+                    }
+                })
                 // Tracks Application Opened, Application Installed, Application Updated
                 .trackApplicationLifecycleEvents()
                 // Tracks each screen opened

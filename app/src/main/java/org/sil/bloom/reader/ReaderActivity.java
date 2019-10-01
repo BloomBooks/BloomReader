@@ -105,8 +105,8 @@ public class ReaderActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
-        mBrowser.onPause();
-        mBrowser.pauseTimers();
+        postMessageToPlayer("{\"messageType\":\"control\", \"pause\":true}");
+
         if (isFinishing()) {
             MakeFinalReport();
         }
@@ -119,8 +119,7 @@ public class ReaderActivity extends BaseActivity {
 
         hideSystemUI(isNavBarShowing);
 
-        mBrowser.onResume();
-        mBrowser.resumeTimers();
+        postMessageToPlayer("{\"messageType\":\"control\", \"resume\":true}");
     }
 
     @Override
@@ -186,6 +185,9 @@ public class ReaderActivity extends BaseActivity {
                     break;
                 case "hideNavBar":
                     hideSystemUI(false);
+                    break;
+                case "logError":
+                    Log.e("Error message received", data.getString("message"));
                     break;
                 default:
                     Log.e("receiveMessage", "Unexpected message: " + messageType);

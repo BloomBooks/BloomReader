@@ -54,14 +54,11 @@ At this point, anyone could publish a book using the existing Bloom mechanism, a
 # Building
 ## Getting the Bloom Reader code and dependencies
 
-
     git clone https://github.com/BloomBooks/BloomReader
-    cd BloomReader
-    getDependencies.sh
-	cd app
-	yarn
-	cd ..
-	gradlew copyBloomPlayerAssets
+    cd BloomReader/app
+    yarn
+    cd ..
+    gradlew copyBloomPlayerAssets
     gradlew (or, more likely, open the project in Android Studio)
 
 BloomReader requires a number of files from the[bloom-player](https://github.com/BloomBooks/bloom-player.git) project. By default,

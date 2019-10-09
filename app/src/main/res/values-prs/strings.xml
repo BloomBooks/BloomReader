@@ -48,12 +48,13 @@
     <string name="failed_to_share_books">شریک ساختن کتاب ها ناکام شد</string>
     <string name="failed_to_open_book">باز کردن کتاب امکان پذیر نیست</string>
     <!-- %1$s is a book title -->
-    <string name="missing_book">٪ 1 $ s وجود ندارد. ممکن است در کارت sd باشد که دور شده، یا ممکن است حذف شده باشد.</string>
+    <string name="missing_book">%1$s وجود ندارد. ممکن است در کارت sd باشد که دور شده، یا ممکن است حذف شده باشد.</string>
     <string name="device_storage_is_full">باز کردن کتاب نا ممکن است. حافظه وسیله پر است. کمی حافظه را خالی کنید و دوباره امتحان کنید.</string>
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
     <string name="adding_book">در حال افزایش%1$s...</string>
     <string name="bundle_import_out_of_space">جای کافی در وسیله برای تمام کتاب های موجود در این بسته وجود ندارد.</string>
-    <string name="bundle_import_error">در هنگام خواندن بسته بلوم مشکل وجود داشت.</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
     <string name="share_app">برنامه Bloom Reader را به اشتراک بگذارید</string>
     <string name="share_books">کتاب ها را به اشتراک بگزارید</string>
     <string name="find_books_on_device">کتاب های بلوم را در این وسیله پیدا کنید</string>

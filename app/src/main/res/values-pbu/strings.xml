@@ -25,7 +25,7 @@
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
     <string name="found_new_version">د \"%2$s\" نه \"%1$s\" نوې نسخه وموندله ، غوښتنه یې کوي…</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
-    <string name="found_file">د \"٪2$s\" څخه \"٪1$s\" وموندل شو، غوښتنه یې کوي…</string>
+    <string name="found_file">د \"%2$s\" څخه \"%1$s\" وموندل شو، غوښتنه یې کوي…</string>
     <!-- As in, Done receiving a file-->
     <string name="done">وشو.</string>
     <string name="transferFailed">کومه تیروتنه وشوه. که سرچینه لاهم شتون ولري ، موږ به ژر هڅه وکړو.</string>
@@ -53,7 +53,8 @@
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
     <string name="adding_book">د %1$s اضافه کول...</string>
     <string name="bundle_import_out_of_space">په دې بنډل کې د ټولو کتابونو لپاره په آله کې کافي ځای ندی.</string>
-    <string name="bundle_import_error">د بلوم بنډل لوستلو کې ستونزه وه.</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
     <string name="share_app">د بلوم ریډر اپلیکشن شریک کړئ</string>
     <string name="share_books">کتابونه شریک کړئ</string>
     <string name="find_books_on_device">پدې وسیله د بلوم کتابونه ومومئ</string>

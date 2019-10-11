@@ -5,11 +5,11 @@
     <string name="delete">Supprimer</string>
     <string name="deleteConfirmation">Supprimer de l\'appareil ?</string>
     <!-- %1$s is a book title -->
-  <string name="deleteExplanationBook">%1$s will disappear from your device.</string>
+    <string name="deleteExplanationBook">%1$s sera supprimé de votre appareil.</string>
     <!-- %1$s is the name of the shelf -->
-  <string name="deleteExplanationEmptyShelf">The %1$s bookshelf will disappear from your device.</string>
+    <string name="deleteExplanationEmptyShelf">L\'étagère %1$s sera supprimée de votre appareil.</string>
     <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
-  <string name="deleteExplanationShelf">All %1$d books and shelves in the %2$s bookshelf will disappear from your device.</string>
+    <string name="deleteExplanationShelf">Tous les livres %1$d et toutes les étagères %2$s de la bibliothèque seront supprimés de votre appareil.</string>
     <string name="deleteConfirmButton">Confirmer la suppression</string>
     <string name="share">Partager</string>
     <!-- %1$s is a book title -->
@@ -32,7 +32,7 @@
     <string name="downloading">Téléchargement en cours…</string>
     <!-- %1$s is a description of the sending network -->
     <string name="looking_for_adds">Recherche en cours de la publicité pour des livres sur le réseau WiFi %1s…</string>
-    <string name="device_hotspot">Device Hotspot</string>
+    <string name="device_hotspot">Point d’accès de périphérique</string>
     <string name="no_wifi_connected">Cet appareil n\'est pas connecté à un réseau WiFi.</string>
     <string name="failed_book_import">Échec de l\'importation de ce livre.</string>
     <string name="external_storage_unavailable">Impossible d\'accéder à l\'emplacement où sont conservés les fichiers. Manquerait-il la carte SD ?</string>
@@ -48,18 +48,18 @@
     <string name="failed_to_share_books">Échec du partage des livres</string>
     <string name="failed_to_open_book">Impossible d\'ouvrir le livre</string>
     <!-- %1$s is a book title -->
-    <string name="missing_book">%1$s is missing. It may have been on an sd card that was removed, or it may have been deleted.</string>
+    <string name="missing_book">Il manque %1$s. Ceci a pu se trouver sur une carte sd qui a été retirée ou bien on a pu le supprimer.</string>
     <string name="device_storage_is_full">Impossible d\'ouvrir le livre. Le dispositif de stockage est plein. Essayez à nouveau après avoir libéré de l\'espace.</string>
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
-    <string name="adding_book">Adding %1$s...</string>
-    <string name="bundle_import_out_of_space">Not enough space on the device for all the books in this bundle.</string>
-  <!-- %1$s is the name of a bloombundle that failed to import -->
-  <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
+    <string name="adding_book">Ajout de %1$s...</string>
+    <string name="bundle_import_out_of_space">Manque d\'espace sur cet appareil pour tous les livres inclus dans ce paquet.</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
     <string name="share_app">Partager l\'application Bloom Reader</string>
     <string name="share_books">Partager des livres</string>
-    <string name="find_books_on_device">Find Bloom books on this device</string>
-    <string name="searching">Searching...</string>
-    <string name="no_books_added">No new Bloom books or bundles found on the device.</string>
+    <string name="find_books_on_device">Trouver des livres Bloom sur cet appareil</string>
+    <string name="searching">Recherche en cours...</string>
+    <string name="no_books_added">Aucun livre ou pacquet de livres Bloom retrouvé sur cet appareil.</string>
     <string name="release_notes">Notes de publication</string>
     <string name="about_bloom_reader">À propos de Bloom Reader</string>
     <string name="about_bloom">À propos de Bloom</string>
@@ -69,6 +69,7 @@
     <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
     <string name="question_n_of_m">Question %1$d sur %2$d</string>
     <string name="receive_books_over_wifi">Recevoir des livres depuis un ordinateur</string>
-    <string name="need_storage_permission">Bloom Reader needs access to file storage in order to work.</string>
-    <string name="grant_storage_permission">Grant Storage Permission</string>
+    <string name="need_storage_permission">Pour fonctionner, Bloom Reader doit accéder au stockage des fichiers.</string>
+    <string name="grant_storage_permission">Accorder la permission de stockage</string>
+    <string name="renaming_invalid_book">Changement de nom d\'un livre non valable à %1$s</string>
 </resources>

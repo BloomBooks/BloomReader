@@ -28,7 +28,7 @@
     <string name="found_file">\"%2$s\" থেকে \"%1$s\" পাওয়া গেছে, অনুরোধ...</string>
     <!-- As in, Done receiving a file-->
     <string name="done">করা হয়েছে।</string>
-    <string name="transferFailed">কোন কিছু ত্রুটি হয়েছে। উৎসটি এখনো বিদ্যমান রইলে আমরা শীঘ্রই পুনরায় প্রচেষ্টা করব।</string>
+    <string name="transferFailed">কোন কিছু ভুল হয়েছে। উৎসটি এখনো বিদ্যমান রইলে আমরা শীঘ্রই পুনরায় প্রচেষ্টা করব।</string>
     <string name="downloading">ডাউনলোড হচ্ছে...</string>
     <!-- %1$s is a description of the sending network -->
     <string name="looking_for_adds">%1s WiFi নেটওয়ার্কে বই বিজ্ঞাপনের খোঁজ চলছে...</string>
@@ -47,6 +47,7 @@
     <string name="failed_to_share_apk">অ্যাপ ফাইল শেয়ার করতে ব্যর্থ।</string>
     <string name="failed_to_share_books">বই শেয়ার করতে ব্যর্থ</string>
     <string name="failed_to_open_book">বই খুলতে ব্যর্থ।</string>
+    <!-- %1$s is a book title -->
     <string name="missing_book">%1$s অনুপস্থিত। এটি হয়তো এমন কোন sd কার্ডে ছিল যেটি সরিয়ে নেওয়া হয়েছে বা এটিকে মুছে দেওয়া হতে পারে।</string>
     <string name="device_storage_is_full">বই খুলতে অসমর্থ। এই ডিভাইসের সংগ্রহস্থল ভরতি হয়েছে। কিছু স্থান খালি করুন এবং পুনরায় চেষ্টা করুন।</string>
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
@@ -59,10 +60,10 @@
     <string name="find_books_on_device">এই ডিভাইসে ব্লুম বই খুঁজুন</string>
     <string name="searching">অনুসন্ধান করা হচ্ছে...</string>
     <string name="no_books_added">কোন নতুন ব্লুম বই বা থোকা এই ডিভাইসে খুঁজে পাওয়া যায়নি।</string>
-    <string name="release_notes">মুক্তি স্মরকলিপি</string>
+    <string name="release_notes">রিলিজ নোট/ মুক্ত স্মারকলিপি</string>
     <string name="about_bloom_reader">ব্লুম পাঠক সম্বদ্ধে </string>
     <string name="about_bloom">ব্লুম সম্পর্কে</string>
-    <string name="about_sil">SIL বিষয়ে</string>
+    <string name="about_sil">SIL এর সম্পর্কে </string>
     <string name="or">অথবা</string>
     <string name="check_comprehension">আপনাদের বোধশক্তির পরীক্ষা করুন</string>
     <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
@@ -70,4 +71,5 @@
     <string name="receive_books_over_wifi">কম্পিউটার থেকে বই নিন</string>
     <string name="need_storage_permission">কাজ করতে ব্লুম পুস্তকের ফাইল সংগ্রহস্থলে প্রবেশের অধিকার প্রয়োজন।</string>
     <string name="grant_storage_permission">সংগ্রহস্থলের অনুমতি প্রদান করুন</string>
+    <string name="renaming_invalid_book">অবৈধ বইটিকে এ পুনরায় নামকরণ করা হচ্ছে %1$s</string>
 </resources>

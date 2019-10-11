@@ -67,4 +67,5 @@
     <string name="receive_books_over_wifi">Recibir libros desde la computadora</string>
     <string name="need_storage_permission">Bloom Reader necesita acceso al almacenamiento de archivos para funcionar.</string>
     <string name="grant_storage_permission">Otorgar permiso de almacenamiento</string>
+    <string name="renaming_invalid_book">Renombrando el libro inválido a %1$s</string>
 </resources>

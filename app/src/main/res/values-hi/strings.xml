@@ -46,6 +46,7 @@
     <string name="failed_to_share_apk">ऐप फाइल सांझा करने में विफल।</string>
     <string name="failed_to_share_books">पुस्तकें आयात करने में विफल</string>
     <string name="failed_to_open_book">पुस्तक को खोलने में असमर्थ</string>
+    <!-- %1$s is a book title -->
     <string name="missing_book">%1$s मौजूद नहीं है। शायद वह जो एसडी कार्ड निकाला गया उस में होगा, या शायद वह डिलीट हो गया होगा।</string>
     <string name="device_storage_is_full">पुस्तक खोलने में असमर्थ। डिवाइस संग्रह में जगह नहीं है। कुछ स्थान खाली करें और पुन: प्रयास करें।</string>
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
@@ -66,4 +67,5 @@
     <string name="receive_books_over_wifi">कंप्यूटर से पुस्तकें प्राप्त करें</string>
     <string name="need_storage_permission">ब्लूम पुस्तक को काम करने के फाइल भंडार में प्रवेश जरुरी है।</string>
     <string name="grant_storage_permission">संग्रह में प्रवेश की अनुमति दें</string>
+    <string name="renaming_invalid_book">Renaming invalid book to %1$s</string>
 </resources>

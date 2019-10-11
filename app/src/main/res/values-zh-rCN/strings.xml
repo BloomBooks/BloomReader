@@ -67,4 +67,5 @@
     <string name="receive_books_over_wifi">从电脑接收图书</string>
     <string name="need_storage_permission">Bloom阅读器需要访问文件储存器的权限才能工作。</string>
     <string name="grant_storage_permission">授权存储许可</string>
+    <string name="renaming_invalid_book">Renaming invalid book to %1$s</string>
 </resources>

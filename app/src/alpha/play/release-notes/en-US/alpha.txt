@@ -1,3 +1,4 @@
 Books with audio are marked with a speaker icon.
 Better video support.
+Dari and Northern Pashto user interfaces.
 Various minor enhancements and fixes.

@@ -36,7 +36,7 @@
     <string name="no_wifi_connected">এই ডিভাইসটি কোন WiFi নেটওয়ার্কের সাথে যুক্ত আছে বলে মনে হচ্ছে না।</string>
     <string name="failed_book_import">বই আনতে অসফল।</string>
     <string name="external_storage_unavailable">ফাইল সংগ্রহস্থলে প্রবেশ করতে অসমর্থ। SD কার্ড কি অনুপস্থিত?</string>
-    <string name="share_app_link">গুগেল প্লে&lt;/u&gt; তে ব্লুম পুস্তক পেতে লিন্কটি শেয়ার&lt;u&gt; করুন</string>
+    <string name="share_app_link"><u>গুগেল প্লে তে ব্লুম পুস্তক পেতে লিন্কটি শেয়ার করুন</u></string>
     <string name="share_app_with_friend">বন্ধুর সাথে ব্লুম পুস্তক অ্যাপটি শেয়ার করুন</string>
     <string name="share_books_with_friend">আগে থেকেই ব্লুম পুস্তক স্থাপন করা আছে এমন কোন বন্ধুর সাথে আপনার সমস্ত বই শেয়ার করুন।</string>
     <string name="share_app_via">এর মাধ্যমে অ্যাপ শেয়ার করুন</string>

@@ -36,7 +36,7 @@
     <string name="no_wifi_connected">وسیله داسې نه بریښي چې د وای فای شبکې سره وصل وي.</string>
     <string name="failed_book_import">د کتاب واردول ونشول.</string>
     <string name="external_storage_unavailable">د فایل ذخیري ته لاسرسی نلرو. ایا SD کارت ورک دی?</string>
-    <string name="share_app_link">&lt;u&gt; لینک شریک کړئ ترڅو په ګوګل Play کې د بلوم ریډر ترلاسه کړئ &lt;/ u&gt;</string>
+    <string name="share_app_link"><u> لینک شریک کړئ ترڅو په ګوګل Play کې د بلوم ریډر ترلاسه کړئ </u></string>
     <string name="share_app_with_friend">د بلوم ریډر برنامه د ملګرو سره شریک کړئ!</string>
     <string name="share_books_with_friend">خپل ټول کتابونه د ملګري سره شریک کړئ چا چې دمخه بلوم ریډر نصب کړی دی.</string>
     <string name="share_app_via">اپلیکیشن شریک کول د</string>

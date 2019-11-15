@@ -1,17 +1,19 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
+import android.support.annotation.ColorInt;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -32,6 +34,9 @@ import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -64,9 +69,13 @@ public class MainActivity extends BaseActivity
     private boolean onResumeIsWaitingForStoragePermission = false;
 
     private RecyclerView mBookRecyclerView;
-    private BookListAdapter mBookListAdapter;
+    BookListAdapter mBookListAdapter;       // accessed by InitializeLibraryTask
     // Keeps track of the state of an ongoing File Search
     private FileSearchState fileSearchState;
+
+    // Dynamically created/destroyed progress bar and text view used during initial loading.
+    ProgressBar mLoadingProgressBar;       // accessed by InitializeLibraryTask
+    TextView mLoadingTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -170,9 +179,58 @@ public class MainActivity extends BaseActivity
 
     // ShelfActivity does this differently.
     protected BookCollection setupBookCollection() throws ExtStorageUnavailableException {
+        addProgressViews();
         BloomReaderApplication.theOneBookCollection = new BookCollection();
-        BloomReaderApplication.theOneBookCollection.init(this.getApplicationContext());
+        new InitializeLibraryTask().execute(this);
         return BloomReaderApplication.theOneBookCollection;
+    }
+
+    void addProgressViews()
+    {
+        // Add TextView and ProgressBar to main content LinearLayout.  These will be removed automatically
+        // when the asynchronous loading task finishes.
+        LinearLayout linearLayout = findViewById(R.id.content_main);
+        if (linearLayout != null) {
+            // Create TextView dynamically to use during initial loading to tell user what is happening.
+            mLoadingTextView = new TextView(this);
+            String msg = getResources().getString(R.string.preparing_to_show_books);
+            mLoadingTextView.setText(msg);
+            LinearLayout.LayoutParams textViewParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+            textViewParams.setMargins(30, 30, 30, 1);   // bottom = 1
+            mLoadingTextView.setLayoutParams(textViewParams);
+            mLoadingTextView.setTextColor(Color.BLACK);
+            // Create horizontal ProgressBar dynamically.  This is used during initial loading to reassure user
+            // when there are lots of books to set up, especially from the external folder.
+            // See https://issues.bloomlibrary.org/youtrack/issue/BL-7432.
+            mLoadingProgressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+            LinearLayout.LayoutParams progressBarParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            progressBarParams.setMargins(30, 1, 30, 30);    // top = 1
+            mLoadingProgressBar.setLayoutParams(progressBarParams);
+            mLoadingProgressBar.setIndeterminate(false);
+            mLoadingProgressBar.setProgressTintList(ColorStateList.valueOf(0xffd65649));    // @bloom-red: #d65649 (+ alpha = ff for opaque)
+
+            linearLayout.addView(mLoadingTextView);
+            linearLayout.addView(mLoadingProgressBar);
+        }
+    }
+
+    void removeProgressViews()
+    {
+        // Remove TextView and ProgressBar from main content LinearLayout
+        mLoadingTextView.setVisibility(View.INVISIBLE);
+        mLoadingProgressBar.setVisibility(View.INVISIBLE);
+        LinearLayout linearLayout = findViewById(R.id.content_main);
+        if (linearLayout != null) {
+            if (mLoadingProgressBar != null) {
+                linearLayout.removeView(mLoadingProgressBar);
+                mLoadingProgressBar = null;
+            }
+            if (mLoadingTextView != null) {
+                linearLayout.removeView(mLoadingTextView);
+                mLoadingTextView = null;
+            }
+        }
+
     }
 
     private void processIntentData() {
@@ -239,7 +297,7 @@ public class MainActivity extends BaseActivity
     public void bloomBundleImported(List<String> newBookPaths) {
         try {
             // Reinitialize completely to get the new state of things.
-            _bookCollection.init(this.getApplicationContext());
+            _bookCollection.init(this.getApplicationContext(), null);
             highlightItems(newBookPaths);
             resetFileObserver(); // Prevent duplicate notifications
         } catch (ExtStorageUnavailableException e) {
@@ -287,7 +345,7 @@ public class MainActivity extends BaseActivity
         _bookCollection.setFilter("");
     }
 
-    private void externalStorageUnavailable(ExtStorageUnavailableException e){
+    void externalStorageUnavailable(ExtStorageUnavailableException e){      // conditionally called by InitializeLibraryTask.onPostExecute()
         Toast failToast = Toast.makeText(this, getString(R.string.external_storage_unavailable), Toast.LENGTH_LONG);
         failToast.show();
         finish();

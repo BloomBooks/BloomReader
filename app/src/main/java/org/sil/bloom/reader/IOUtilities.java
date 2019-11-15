@@ -18,7 +18,6 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -138,12 +137,19 @@ public class IOUtilities {
         return isValidZipFile(input, CHECK_ZIP);
     }
 
+
+    public static boolean isValidZipFile(File input, @FileChecks int checkType) {
+        return isValidZipFile(input, checkType, null);
+    }
+
     // Check whether the given input file is a valid zip file that appears to have the proper data
     // for the given type.  We record the result of this check in a "SharedPreferences" file with
     // the modification time paired with the absolute pathname of the file.  If these match on the
     // next call, we'll return true without actually going through the slow process of unzipping
-    // the whole file.  Note that this fast bypass ignores the checkType parameter.
-    public static boolean isValidZipFile(File input, @FileChecks int checkType) {
+    // the whole file.  Note that this fast bypass ignores the checkType and desiredFile parameters.
+    // The desiredFile parameter is designed to avoid having to unzip the file twice during startup,
+    // once to ensure that it is valid and once to get the meta.json file content.
+    public static boolean isValidZipFile(File input, @FileChecks int checkType, TextFileContent desiredFile) {
         String key = input.getAbsolutePath();
         if (sCheckedFiles == null) {
             Context context = getBloomApplicationContext();
@@ -177,11 +183,13 @@ public class IOUtilities {
                     try {
                         int realSize = (int)entry.getSize();
                         byte[] buffer = new byte[realSize];
+                        boolean inOnePass = true;   // valid data only if it's read by a single read operation.
                         int size = stream.read(buffer);
                         if (size != realSize && !(size == -1 && realSize == 0)) {
                             // The Java ZipEntry code does not always return the full data content even when the buffer is large
                             // enough for it.  Whether this is a bug or a feature, or just the way it is, depends on your point
                             // of view I suppose.  So we have a loop here since the initial read wasn't enough.
+                            inOnePass = false;
                             int moreReadSize = stream.read(buffer);
                             do {
                                 if (moreReadSize > 0) {
@@ -207,6 +215,10 @@ public class IOUtilities {
                                         " for " + entry.getName() + " in " + input.getName() + ", compressed size = " + compressedSize + ", storage method = " + type);
                                 return false;
                             }
+                        }
+                        if (inOnePass && desiredFile != null && entryName.equals(desiredFile.getFilename())) {
+                            // save the desired file content so we won't have to unzip again
+                            desiredFile.Content = new String(buffer, desiredFile.getEncoding());
                         }
                     } finally {
                         stream.close();

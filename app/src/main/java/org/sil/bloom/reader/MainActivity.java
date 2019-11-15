@@ -1,13 +1,14 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,6 +33,9 @@ import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -64,9 +68,12 @@ public class MainActivity extends BaseActivity
     private boolean onResumeIsWaitingForStoragePermission = false;
 
     private RecyclerView mBookRecyclerView;
-    private BookListAdapter mBookListAdapter;
+    BookListAdapter mBookListAdapter;       // accessed by InitializeLibraryTask
     // Keeps track of the state of an ongoing File Search
     private FileSearchState fileSearchState;
+
+    // Dynamically created/destroyed progress bar used during initial loading.
+    ProgressBar mLoadingProgressBar;       // accessed by InitializeLibraryTask
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +112,21 @@ public class MainActivity extends BaseActivity
         setContentView(R.layout.activity_main);
         BloomReaderApplication.setupAnalyticsIfNeeded(this);
         BloomReaderApplication.setupVersionUpdateInfo(this); // may use analytics, so must run after it is set up.
+
+        // Create horizontal ProgressBar dynamically.  This is used during initial loading to reassure user
+        // when there are lots of books to set up, especially from the external folder.
+        // See https://issues.bloomlibrary.org/youtrack/issue/BL-7432.
+        mLoadingProgressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        layoutParams.setMargins(30, 30, 30, 30);
+        mLoadingProgressBar.setLayoutParams(layoutParams);
+        mLoadingProgressBar.setIndeterminate(false);
+        mLoadingProgressBar.setProgressTintList(ColorStateList.valueOf(Color.BLUE));
+        // Add ProgressBar to main content LinearLayout
+        LinearLayout linearLayout = findViewById(R.id.content_main);
+        if (linearLayout != null) {
+            linearLayout.addView(mLoadingProgressBar);
+        }
 
         try {
             _bookCollection= setupBookCollection();
@@ -171,7 +193,7 @@ public class MainActivity extends BaseActivity
     // ShelfActivity does this differently.
     protected BookCollection setupBookCollection() throws ExtStorageUnavailableException {
         BloomReaderApplication.theOneBookCollection = new BookCollection();
-        BloomReaderApplication.theOneBookCollection.init(this.getApplicationContext());
+        new InitializeLibraryTask().execute(this);
         return BloomReaderApplication.theOneBookCollection;
     }
 
@@ -239,7 +261,7 @@ public class MainActivity extends BaseActivity
     public void bloomBundleImported(List<String> newBookPaths) {
         try {
             // Reinitialize completely to get the new state of things.
-            _bookCollection.init(this.getApplicationContext());
+            _bookCollection.init(this.getApplicationContext(), null);
             highlightItems(newBookPaths);
             resetFileObserver(); // Prevent duplicate notifications
         } catch (ExtStorageUnavailableException e) {
@@ -287,7 +309,7 @@ public class MainActivity extends BaseActivity
         _bookCollection.setFilter("");
     }
 
-    private void externalStorageUnavailable(ExtStorageUnavailableException e){
+    void externalStorageUnavailable(ExtStorageUnavailableException e){      // conditionally called by InitializeLibraryTask.onPostExecute()
         Toast failToast = Toast.makeText(this, getString(R.string.external_storage_unavailable), Toast.LENGTH_LONG);
         failToast.show();
         finish();

@@ -1,7 +1,6 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -32,13 +31,14 @@ import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
+import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
 
 import java.io.File;
 import java.util.Date;
@@ -64,9 +64,13 @@ public class MainActivity extends BaseActivity
     private boolean onResumeIsWaitingForStoragePermission = false;
 
     private RecyclerView mBookRecyclerView;
-    private BookListAdapter mBookListAdapter;
+    BookListAdapter mBookListAdapter;       // accessed by InitializeLibraryTask
     // Keeps track of the state of an ongoing File Search
     private FileSearchState fileSearchState;
+
+    // Dynamically created/destroyed progress bar and text view used during initial loading.
+    ProgressBar mLoadingProgressBar;       // accessed by InitializeLibraryTask
+    TextView mLoadingTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -171,7 +175,7 @@ public class MainActivity extends BaseActivity
     // ShelfActivity does this differently.
     protected BookCollection setupBookCollection() throws ExtStorageUnavailableException {
         BloomReaderApplication.theOneBookCollection = new BookCollection();
-        BloomReaderApplication.theOneBookCollection.init(this.getApplicationContext());
+        new InitializeLibraryTask(this).execute();
         return BloomReaderApplication.theOneBookCollection;
     }
 
@@ -239,7 +243,7 @@ public class MainActivity extends BaseActivity
     public void bloomBundleImported(List<String> newBookPaths) {
         try {
             // Reinitialize completely to get the new state of things.
-            _bookCollection.init(this.getApplicationContext());
+            _bookCollection.init(this.getApplicationContext(), null);
             highlightItems(newBookPaths);
             resetFileObserver(); // Prevent duplicate notifications
         } catch (ExtStorageUnavailableException e) {
@@ -287,7 +291,7 @@ public class MainActivity extends BaseActivity
         _bookCollection.setFilter("");
     }
 
-    private void externalStorageUnavailable(ExtStorageUnavailableException e){
+    void externalStorageUnavailable(ExtStorageUnavailableException e){      // conditionally called by InitializeLibraryTask.onPostExecute()
         Toast failToast = Toast.makeText(this, getString(R.string.external_storage_unavailable), Toast.LENGTH_LONG);
         failToast.show();
         finish();

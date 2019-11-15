@@ -1,7 +1,6 @@
 package org.sil.bloom.reader.models;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
@@ -12,13 +11,14 @@ import org.json.JSONObject;
 import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.BloomReaderApplication;
 import org.sil.bloom.reader.BloomShelfFileReader;
-import org.sil.bloom.reader.BuildConfig;
 import org.sil.bloom.reader.IOUtilities;
+import org.sil.bloom.reader.MainActivity;
 import org.sil.bloom.reader.R;
 import org.sil.bloom.reader.ThumbnailCleanup;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +43,8 @@ public class BookCollection {
     // The set of shelf ids for the shelves we actually have. Books with none of these pass
     // the empty filter.
     private Set<String> mShelfIds = new HashSet<String>();
+
+    private MainActivity.InitializeLibraryTask mInitializeTask = null;
 
     public void setFilter(String filter) {
         mFilter = filter;
@@ -113,9 +115,10 @@ public class BookCollection {
         return booksAndShelves;
     }
 
-    public void init(Context context) throws ExtStorageUnavailableException {
+    public void init(Context context, MainActivity.InitializeLibraryTask task) throws ExtStorageUnavailableException {
         File[] booksDirs = getLocalAndRemovableBooksDirectories(context);
         mLocalBooksDirectory = booksDirs[0];
+        mInitializeTask = task;
         if (BloomReaderApplication.isFirstRunAfterInstallOrUpdate()){
             SampleBookLoader.CopySampleBooksFromAssetsIntoBooksFolder(context, mLocalBooksDirectory);
         }
@@ -142,6 +145,17 @@ public class BookCollection {
     private void loadFromDirectories(File[] booksDirs) {
         mShelfIds.clear();
         _booksAndShelves.clear();
+        if (mInitializeTask != null) {
+            Integer count = 0;
+            for (File booksDir : booksDirs) {
+                count += booksDir.listFiles(new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
+                    }
+                }).length;
+            }
+            mInitializeTask.setBookCount(count);
+        }
         for (File booksDir : booksDirs)
             loadFromDirectory(booksDir);
     }
@@ -163,9 +177,15 @@ public class BookCollection {
                     String message = context.getString(R.string.renaming_invalid_book, markedName);
                     Toast.makeText(context, message, Toast.LENGTH_LONG).show();
                     new File(path).renameTo(new File(path+"-BAD"));
+                    if (mInitializeTask != null) {
+                        mInitializeTask.incrementBookProgress();
+                    }
                     continue;
                 }
                 addBook(path, false);
+                if (mInitializeTask != null) {
+                    mInitializeTask.incrementBookProgress();
+                }
             }
             updateFilteredList();
         }

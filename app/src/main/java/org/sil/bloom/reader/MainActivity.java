@@ -1,15 +1,17 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.support.design.widget.NavigationView;
@@ -32,6 +34,9 @@ import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -67,6 +72,9 @@ public class MainActivity extends BaseActivity
     private BookListAdapter mBookListAdapter;
     // Keeps track of the state of an ongoing File Search
     private FileSearchState fileSearchState;
+
+    // Dynamically created/destroyed progress bar used during initial loading.
+    private ProgressBar mLoadingProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +113,21 @@ public class MainActivity extends BaseActivity
         setContentView(R.layout.activity_main);
         BloomReaderApplication.setupAnalyticsIfNeeded(this);
         BloomReaderApplication.setupVersionUpdateInfo(this); // may use analytics, so must run after it is set up.
+
+        // Create horizontal ProgressBar dynamically.  This is used during initial loading to reassure user
+        // when there are lots of books to set up, especially from the external folder.
+        // See https://issues.bloomlibrary.org/youtrack/issue/BL-7432.
+        mLoadingProgressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        layoutParams.setMargins(30, 30, 30, 30);
+        mLoadingProgressBar.setLayoutParams(layoutParams);
+        mLoadingProgressBar.setIndeterminate(false);
+        mLoadingProgressBar.setProgressTintList(ColorStateList.valueOf(Color.BLUE));
+        // Add ProgressBar to main content LinearLayout
+        LinearLayout linearLayout = findViewById(R.id.content_main);
+        if (linearLayout != null) {
+            linearLayout.addView(mLoadingProgressBar);
+        }
 
         try {
             _bookCollection= setupBookCollection();
@@ -158,6 +181,61 @@ public class MainActivity extends BaseActivity
             resumeMainActivity();
     }
 
+    // This task is in charge of loading up the book collection asynchronously.  When there are a large
+    // number of books, especially in the external folder, startup can be rather slow before everything
+    // is ready to display.  This allows the overall framework of the main display to come up quickly
+    // with a progress bar at the bottom that shows progress working through the list of books.
+    public class InitializeLibraryTask extends AsyncTask<MainActivity, Void, Void> {
+        ExtStorageUnavailableException mExceptionCaught = null;
+        MainActivity mMain = null;
+
+        // Initialize the  maximum value for the progress bar to better reflect reality.  It still
+        // may not be perfect.  It seems safest to do this on the UI thread.
+        public void setBookCount(final Integer count) {
+            mMain.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mLoadingProgressBar.setMax(count);
+                }
+            });
+        }
+        // Advance the progress bar for one book being processed.
+        public void incrementBookProgress() {
+            publishProgress();
+        }
+
+        protected Void doInBackground(MainActivity... activities) {
+            try {
+                mMain = activities[0];
+                BloomReaderApplication.theOneBookCollection.init(mMain.getApplicationContext(), this);
+            }
+            catch (ExtStorageUnavailableException e) {
+                mExceptionCaught = e;
+            }
+            return null;
+        }
+        protected void onProgressUpdate(Void... progress) {
+            mLoadingProgressBar.incrementProgressBy(1);
+        }
+        protected void onPostExecute(Void result) {
+            mLoadingProgressBar.setVisibility(View.INVISIBLE);
+            // Remove ProgressBar from main content LinearLayout
+            LinearLayout linearLayout = findViewById(R.id.content_main);
+            if (linearLayout != null) {
+                linearLayout.removeView(mLoadingProgressBar);
+                mLoadingProgressBar = null;
+            }
+            // presumably this should handle filtering and sorting at the end of loading.
+            mMain.mBookListAdapter.notifyDataSetChanged();
+            mMain = null;   // release reference
+
+            if (mExceptionCaught != null) {
+                externalStorageUnavailable(mExceptionCaught);
+            }
+        }
+    }
+
+
     private String getVersionAndDateText(String versionName, String date) {
         // Not bothering trying to internationalize this for now...
         return versionName + ", " + date;
@@ -171,7 +249,7 @@ public class MainActivity extends BaseActivity
     // ShelfActivity does this differently.
     protected BookCollection setupBookCollection() throws ExtStorageUnavailableException {
         BloomReaderApplication.theOneBookCollection = new BookCollection();
-        BloomReaderApplication.theOneBookCollection.init(this.getApplicationContext());
+        new InitializeLibraryTask().execute(this);
         return BloomReaderApplication.theOneBookCollection;
     }
 
@@ -239,7 +317,7 @@ public class MainActivity extends BaseActivity
     public void bloomBundleImported(List<String> newBookPaths) {
         try {
             // Reinitialize completely to get the new state of things.
-            _bookCollection.init(this.getApplicationContext());
+            _bookCollection.init(this.getApplicationContext(), null);
             highlightItems(newBookPaths);
             resetFileObserver(); // Prevent duplicate notifications
         } catch (ExtStorageUnavailableException e) {

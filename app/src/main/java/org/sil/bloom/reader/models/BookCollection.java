@@ -1,7 +1,6 @@
 package org.sil.bloom.reader.models;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
@@ -12,13 +11,15 @@ import org.json.JSONObject;
 import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.BloomReaderApplication;
 import org.sil.bloom.reader.BloomShelfFileReader;
-import org.sil.bloom.reader.BuildConfig;
+import org.sil.bloom.reader.TextFileContent;
 import org.sil.bloom.reader.IOUtilities;
+import org.sil.bloom.reader.InitializeLibraryTask;
 import org.sil.bloom.reader.R;
 import org.sil.bloom.reader.ThumbnailCleanup;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +45,8 @@ public class BookCollection {
     // the empty filter.
     private Set<String> mShelfIds = new HashSet<String>();
 
+    private InitializeLibraryTask mInitializeTask = null;
+
     public void setFilter(String filter) {
         mFilter = filter;
         updateFilteredList();
@@ -63,7 +66,7 @@ public class BookCollection {
         BookOrShelf existingBook = getBookOrShelfByPath(path);
         if (existingBook != null)
             return existingBook;
-        return addBook(path, true);
+        return addBook(path, true, null);
     }
 
     // Add a book to the main collection. This is used in two ways: LoadFromDirectory loads
@@ -73,7 +76,7 @@ public class BookCollection {
     // at once, even if it doesn't really belong in the current filter. Thus, passing addingJustOne
     // true causes the book to be unconditionally added to mFilteredBooksAndShelves, and it gets
     // re-sorted.
-    private BookOrShelf addBook(String path, boolean addingJustOne) {
+    private BookOrShelf addBook(String path, boolean addingJustOne, TextFileContent metaFile) {
         BookOrShelf bookOrShelf;
         if (path.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
             bookOrShelf = BloomShelfFileReader.parseShelfFile(path);
@@ -83,7 +86,7 @@ public class BookCollection {
             // book.
             bookOrShelf = new BookOrShelf(path);
         }
-        BookCollection.setShelvesOfBook(bookOrShelf);
+        BookCollection.setShelvesOfBook(bookOrShelf, metaFile);
         _booksAndShelves.add(bookOrShelf);
         if (addingJustOne) {
             mFilteredBooksAndShelves.add(bookOrShelf);
@@ -113,9 +116,10 @@ public class BookCollection {
         return booksAndShelves;
     }
 
-    public void init(Context context) throws ExtStorageUnavailableException {
+    public void init(Context context, InitializeLibraryTask task) throws ExtStorageUnavailableException {
         File[] booksDirs = getLocalAndRemovableBooksDirectories(context);
         mLocalBooksDirectory = booksDirs[0];
+        mInitializeTask = task;
         if (BloomReaderApplication.isFirstRunAfterInstallOrUpdate()){
             SampleBookLoader.CopySampleBooksFromAssetsIntoBooksFolder(context, mLocalBooksDirectory);
         }
@@ -142,6 +146,17 @@ public class BookCollection {
     private void loadFromDirectories(File[] booksDirs) {
         mShelfIds.clear();
         _booksAndShelves.clear();
+        if (mInitializeTask != null) {
+            Integer count = 0;
+            for (File booksDir : booksDirs) {
+                count += booksDir.listFiles(new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
+                    }
+                }).length;
+            }
+            mInitializeTask.setBookCount(count);
+        }
         for (File booksDir : booksDirs)
             loadFromDirectory(booksDir);
     }
@@ -151,21 +166,28 @@ public class BookCollection {
         if(files != null) {
             for (int i = 0; i < files.length; i++) {
                 final String name = files[i].getName();
+                TextFileContent metaFile = new TextFileContent("meta.json");
                 if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
                         && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
                     continue; // not a book (nor a shelf)!
                 final String path = files[i].getAbsolutePath();
                 if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
-                        !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD)) {
+                        !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD, metaFile)) {
                     String markedName = name + "-BAD";
                     Log.w("BloomCollection", "Renaming invalid book file "+path+" to "+markedName);
                     Context context = BloomReaderApplication.getBloomApplicationContext();
                     String message = context.getString(R.string.renaming_invalid_book, markedName);
                     Toast.makeText(context, message, Toast.LENGTH_LONG).show();
                     new File(path).renameTo(new File(path+"-BAD"));
+                    if (mInitializeTask != null) {
+                        mInitializeTask.incrementBookProgress();
+                    }
                     continue;
                 }
-                addBook(path, false);
+                addBook(path, false, metaFile);
+                if (mInitializeTask != null) {
+                    mInitializeTask.incrementBookProgress();
+                }
             }
             updateFilteredList();
         }
@@ -254,15 +276,19 @@ public class BookCollection {
     // Extracts the meta.json entry from the bloomd file, extracts the tags from that,
     // finds any that start with "bookshelf:", and sets the balance of the tag as one of the
     // book's shelves.
-    public static void setShelvesOfBook(BookOrShelf bookOrShelf) {
+    public static void setShelvesOfBook(BookOrShelf bookOrShelf, TextFileContent metaFile) {
         String json;
         try {
             if (bookOrShelf.isShelf()) {
                 json = IOUtilities.FileToString(new File(bookOrShelf.path));
             }
             else {
-                byte[] jsonBytes = IOUtilities.ExtractZipEntry(new File(bookOrShelf.path), "meta.json");
-                json = new String(jsonBytes, "UTF-8");
+                if (metaFile != null && metaFile.Content != null && !metaFile.Content.isEmpty()) {
+                    json = metaFile.Content;
+                } else {
+                    byte[] jsonBytes = IOUtilities.ExtractZipEntry(new File(bookOrShelf.path), "meta.json");
+                    json = new String(jsonBytes, "UTF-8");
+                }
             }
             JSONObject data = new JSONObject(json);
             JSONArray tags = data.getJSONArray("tags");

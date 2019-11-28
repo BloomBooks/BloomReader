@@ -229,8 +229,12 @@ public class MainActivity extends BaseActivity
             return true;
         } else {
             Log.e("BookSearchFailedImport", bookUri.getPath());
-            Toast failToast = Toast.makeText(this, R.string.failed_book_import, Toast.LENGTH_LONG);
-            failToast.show();
+            final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .setTitle(R.string.failed_book_import)
+                    .setMessage(String.format(getString(R.string.failed_book_import2), filename))
+                    .create();
+            d.show();
             return false;
         }
     }

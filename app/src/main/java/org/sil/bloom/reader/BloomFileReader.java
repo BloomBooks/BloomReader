@@ -41,16 +41,14 @@ public class BloomFileReader {
     }
 
     public File getHtmlFile() throws IOException{
-        if(bookDirectory == null)
-            openFile(CURRENT_BOOK_FOLDER);
+        initialize();
         return findHtmlFile();
     }
 
     @Nullable // If no font file matches the give name
     public File getFontFile(String fontFileName) {
         try {
-            if (bookDirectory == null)
-                openFile(CURRENT_BOOK_FOLDER);
+            initialize();
             File fontFile = new File(bookDirectory + File.separator + fontFileName);
             return fontFile.exists() ? fontFile : null;
         } catch (IOException e) {
@@ -62,13 +60,11 @@ public class BloomFileReader {
 
     // returns null if anything goes wrong reading it
     public String getFileContent(String name) {
-        if(bookDirectory == null) {
-            try {
-                openFile(CURRENT_BOOK_FOLDER);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
+        try {
+            initialize();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
         File file = new File(bookDirectory + File.separator + name);
         if (!file.exists())
@@ -99,8 +95,7 @@ public class BloomFileReader {
 
     public Uri getThumbnail(File thumbsDirectory) throws IOException{
         Uri thumbUri = null;
-        if(bookDirectory == null)
-            openFile(CURRENT_BOOK_FOLDER);
+        initialize();
         String bookName = (new File(bloomFilePath)).getName().replace(IOUtilities.BOOK_FILE_EXTENSION, "");
         File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_1);
         if (!thumb.exists())
@@ -173,9 +168,19 @@ public class BloomFileReader {
         return metaProperties;
     }
 
-    private void openFile(String path) throws IOException{
+    // Typically, this reader was constructed with a bloomFilePath pointing to a .bloomd file.
+    // Unzip this file into the folder indicated by the path argument, and set bookDirectory
+    // to that directory. (The method should then never be called again; each caller checks
+    // that bookDirectory is non-null.)
+    // If a BloomFileReader is ever created with a URI instead of a file path (currently there
+    // are no callers of this constructor), it will unzip that instead.
+    // If the supplied path is a directory (I doubt this ever happens), it will assume
+    // that directory IS the book content, and simply set bookDirectory to point to it.
+    private void initialize() throws IOException{
+        if (bookDirectory != null)
+            return; // already initialized.
         if(bloomFilePath == null) {
-            unzipBook(bookUri, path);
+            unzipBook(bookUri, CURRENT_BOOK_FOLDER);
             return;
         }
         File bloomFile = new File(bloomFilePath);
@@ -183,7 +188,7 @@ public class BloomFileReader {
             bookDirectory = bloomFile;
             return;
         }
-        unzipBook(bloomFilePath, path);
+        unzipBook(bloomFilePath, CURRENT_BOOK_FOLDER);
     }
 
     private File findHtmlFile() throws IOException{

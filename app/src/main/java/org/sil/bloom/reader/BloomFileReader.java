@@ -108,7 +108,9 @@ public class BloomFileReader {
 
     public Uri getThumbnail(File thumbsDirectory) throws IOException{
         Uri thumbUri = null;
-        initialize();
+        // This function is called in a background thread for books that are not the current one
+        // being opened. It must not race for the same directory.
+        unzipBook(bloomFilePath, "tempBookPath");
         String bookName = (new File(bloomFilePath)).getName().replace(IOUtilities.BOOK_FILE_EXTENSION, "");
         File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_1);
         if (!thumb.exists())

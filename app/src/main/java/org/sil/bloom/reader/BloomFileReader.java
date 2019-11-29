@@ -42,7 +42,20 @@ public class BloomFileReader {
 
     public File getHtmlFile() throws IOException{
         initialize();
-        return findHtmlFile();
+        String name = bookDirectory + File.separator + "index" + HTM_EXTENSION;
+        File index = new File(name);
+        if (index.exists()) {
+            return index;
+        }
+        // Handle various legacy places the file might be by renaming it.
+        // As well as simplifying things and meeting an expectation about
+        // what the root file of a directory will be, this avoids any complications
+        // with passing special characters to bloom-player in a URL.
+        File currentFile = findHtmlFile();
+        if (currentFile.renameTo(index))
+            return index;
+        else
+            return currentFile; // pathological, but should work in most cases.
     }
 
     @Nullable // If no font file matches the give name
@@ -170,8 +183,11 @@ public class BloomFileReader {
 
     // Typically, this reader was constructed with a bloomFilePath pointing to a .bloomd file.
     // Unzip this file into the folder indicated by the path argument, and set bookDirectory
-    // to that directory. (The method should then never be called again; each caller checks
-    // that bookDirectory is non-null.)
+    // to that directory. (On subsequent calls, the zip should already have been expanded,
+    // and bookDirectory set, so the method will do nothing. It's therefore cheap to call this
+    // when in any doubt about initialization. However, be careful about different instances
+    // of the class, possibly in different threads, trying to expand the same or different
+    // books into the same folder.)
     // If a BloomFileReader is ever created with a URI instead of a file path (currently there
     // are no callers of this constructor), it will unzip that instead.
     // If the supplied path is a directory (I doubt this ever happens), it will assume

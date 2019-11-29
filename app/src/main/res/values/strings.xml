@@ -33,6 +33,7 @@
     <string name="device_hotspot">Device Hotspot</string>
     <string name="no_wifi_connected">The device does not appear to be connected to a WiFi network.</string>
     <string name="failed_book_import">Failed to import book.</string>
+    <string name="failed_book_import2">Bloom Reader was not able to read the book "%1$s".</string>
     <string name="external_storage_unavailable">Unable to access file storage. Is the SD card missing?</string>
 
     <string name="share_app_link"><u>Share the link to get Bloom Reader on Google Play</u></string>

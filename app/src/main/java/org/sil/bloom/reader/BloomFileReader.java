@@ -42,7 +42,20 @@ public class BloomFileReader {
 
     public File getHtmlFile() throws IOException{
         initialize();
-        return findHtmlFile();
+        String name = bookDirectory + File.separator + "index" + HTM_EXTENSION;
+        File index = new File(name);
+        if (index.exists()) {
+            return index;
+        }
+        // Handle various legacy places the file might be by renaming it.
+        // As well as simplifying things and meeting an expectation about
+        // what the root file of a directory will be, this avoids any complications
+        // with passing special characters to bloom-player in a URL.
+        File currentFile = findHtmlFile();
+        if (currentFile.renameTo(index))
+            return index;
+        else
+            return currentFile; // pathological, but should work in most cases.
     }
 
     @Nullable // If no font file matches the give name

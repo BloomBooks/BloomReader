@@ -275,7 +275,7 @@ public class BookCollection {
     // Set the shelves if any that a book or shelf belongs to.
     // Extracts the meta.json entry from the bloomd file, extracts the tags from that,
     // finds any that start with "bookshelf:", and sets the balance of the tag as one of the
-    // book's shelves.
+    // book's shelves.  The meta.json data may or may not have already been extracted.
     public static void setShelvesOfBook(BookOrShelf bookOrShelf, TextFileContent metaFile) {
         String json;
         try {
@@ -307,6 +307,11 @@ public class BookCollection {
             // the book shows up at the root instead of on a shelf.
             e.printStackTrace();
         }
+    }
+
+    // The second argument is really optional.
+    public static void setShelvesOfBook(BookOrShelf bookOrShelf) {
+        setShelvesOfBook(bookOrShelf, null);
     }
 
     public static Uri getThumbnail(Context context, BookOrShelf book){

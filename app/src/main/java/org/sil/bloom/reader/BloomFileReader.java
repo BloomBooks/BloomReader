@@ -90,6 +90,16 @@ public class BloomFileReader {
         File bookDirectory;
         boolean audioFilesExist = false;
         try {
+            // This method is commonly called on a new BloomFileReader in a background process that
+            // may be manipulating a different book than the one we are currently opening.
+            // We must not unzip into the current book folder as that would interfere with the
+            // current book (a race condition).
+            if (this.bookDirectory == null) {
+                // simplified compared to the usual initialize() method. Does not handle the
+                // possibility of having a url instead of a path. As far as I can tell, that option
+                // is currently unused, certainly by the one caller of hasAudio.
+                unzipBook(bloomFilePath, "tempAudioPath");
+            }
             final File bookHtmlFile = this.getHtmlFile();
             html = IOUtilities.FileToString(bookHtmlFile);
             bookDirectory = bookHtmlFile.getParentFile();

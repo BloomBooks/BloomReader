@@ -249,6 +249,11 @@ public class ReaderActivity extends BaseActivity {
                 // but I had trouble getting the context right on this end for a call that would work.
                 boolean isTalkingBook = html.contains("audio-sentence");
                 boolean isSignLanguage = htmlNoSpaces.contains("src=\"video");
+                // Background audio (music) alone should make the book multimedia.  Check for a non-empty attribute.
+                // See https://issues.bloomlibrary.org/youtrack/issue/BL-7447.
+                Pattern musicPattern = Pattern.compile("data-backgroundaudio=\"[^\"]");
+                Matcher musicMatcher = musicPattern.matcher(htmlNoSpaces);
+                boolean hasMusic = musicMatcher.find();
                 boolean hasMotion = false; // adjusted below if we find body element.
                 // set true if we find any in content pages (if bookVersion == 0; otherwise, we don't need it)
                 boolean hasImageDescriptions = false;
@@ -285,6 +290,7 @@ public class ReaderActivity extends BaseActivity {
                     mIsMultiMediaBook = sAutoAdvance.matcher(html).find() ||
                             isTalkingBook ||
                             isSignLanguage ||
+                            hasMusic ||
                             hasMotion;
                     int startPage = firstPageIndex;
                     while (matcher.find()) {

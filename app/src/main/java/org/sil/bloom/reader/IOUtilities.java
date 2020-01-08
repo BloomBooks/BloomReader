@@ -388,6 +388,7 @@ public class IOUtilities {
 
     public static void tar(File[] files, String destinationPath) throws IOException {
         TarArchiveOutputStream tarOutput = new TarArchiveOutputStream(new FileOutputStream(destinationPath));
+        tarOutput.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
         for(File file : files) {
             TarArchiveEntry entry = new TarArchiveEntry(file, file.getName());
             tarOutput.putArchiveEntry(entry);

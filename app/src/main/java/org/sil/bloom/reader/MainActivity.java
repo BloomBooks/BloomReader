@@ -660,8 +660,13 @@ public class MainActivity extends BaseActivity
         BookFinderTask.BookSearchListener bookSearchListener = new BookFinderTask.BookSearchListener() {
             @Override
             public void onNewBookOrShelf(File bookOrShelfFile) {
-                if (_bookCollection.getBookOrShelfByPath(bookOrShelfFile.getPath()) == null) {
-                    Log.d("BookSearch", "Found " + bookOrShelfFile.getPath());
+                String filePath = bookOrShelfFile.getPath();
+                // Don't add books found in BloomExternal to Bloom!
+                // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
+                if (filePath.contains("/BloomExternal/"))
+                    return;
+                if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
+                    Log.d("BookSearch", "Found " + filePath);
                     Uri bookUri = Uri.fromFile(bookOrShelfFile);
                     if (importBook(bookUri, bookOrShelfFile.getName(),false))
                         fileSearchState.bloomdsAdded.add(bookUri);

@@ -1,8 +1,14 @@
+2.0
+New book-rendering engine:
+- Switch languages within a book.
+- Same as publication preview in Bloom and Read view on bloomlibrary.org.
+- Allows for greater customization of comprehension activities.
+Minimum Android version: 5.0.
+
 1.3
 Books with audio are marked with a speaker icon.
 Better video support.
 Dari and Northern Pashto user interfaces.
-Various minor enhancements and fixes.
 
 1.2
 Play "motion books" as videos in landscape orientation.
@@ -10,7 +16,6 @@ Play sign language videos.
 "Find Bloom books on this device" feature.
 Read books directly from your SD card with a BloomExternal directory at the SD card root.
 Chinese, Spanish, Hindi, and Bengali user interfaces.
-Various minor enhancements and fixes.
 
 1.1
 Pan and zoom images along with audio narration and background music.
@@ -20,5 +25,8 @@ Use WiFi or USB to publish a book from the Bloom program on a laptop to this app
 Share books with other devices.
 Play audio books.
 French user interface.
+Minimum Android version: 4.4.
 
-Future releases will include the ability to get books from bloomlibrary.org.
+Each version also includes various unspecified minor enhancements and fixes.
+
+An upcoming release will include the ability to get books directly from bloomlibrary.org.

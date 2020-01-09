@@ -3,6 +3,13 @@
 
 
 bloom-player@*:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-1.0.5.tgz#dac5046258ef22a677367af313d115b3def0334f"
-  integrity sha512-zxGmKzD9Ll6F06TchYUvWffcYe+1QvgsQt3zKo64eACy9eekYT2dvnqQW2yygPjvKgxvDgqzszl0Q4pdnI3Sbw==
+  version "1.1.38"
+  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-1.1.38.tgz#2dcb32c8185986d8311f536cb874ccabfbd49b9b"
+  integrity sha512-/zwzWgJSgPPLVetc0OhzL4rjQPUUlbHDPcL1dZS45iNDJMX8nZ1n3tj5r140gSjOzOwcgr6ot2HjQ+q4ZXoEpA==
+  dependencies:
+    dynamic-import-polyfill "^0.1.1"
+
+dynamic-import-polyfill@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/dynamic-import-polyfill/-/dynamic-import-polyfill-0.1.1.tgz#e1f9eb1876ee242bd56572f8ed4df768e143083f"
+  integrity sha512-m953zv0w5oDagTItWm6Auhmk/pY7EiejaqiVbnzSS3HIjh1FCUeK7WzuaVtWPNs58A+/xpIE+/dVk6pKsrua8g==

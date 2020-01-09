@@ -27,6 +27,6 @@ Play audio books.
 French user interface.
 Minimum Android version: 4.4.
 
-Each version also includes various unspecified minor enhancements and fixes.
+Each version also includes various unspecified enhancements and fixes.
 
 An upcoming release will include the ability to get books directly from bloomlibrary.org.

@@ -1,4 +1,6 @@
-Books with audio are marked with a speaker icon.
-Better video support.
-Dari and Northern Pashto user interfaces.
-Various minor enhancements and fixes.
+New book-rendering engine:
+- Switch languages within a book.
+- Same as publication preview in Bloom and Read view on bloomlibrary.org.
+- Allows for greater customization of comprehension activities.
+Minimum Android version: 5.0.
+Various other enhancements and fixes.

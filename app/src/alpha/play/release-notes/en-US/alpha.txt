@@ -3,3 +3,4 @@ New book-rendering engine:
 - Same as publication preview in Bloom and Read view on bloomlibrary.org.
 - Allows for greater customization of comprehension activities.
 Minimum Android version: 5.0.
+Various other enhancements and fixes.

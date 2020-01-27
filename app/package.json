@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "bloom-player": "1.1.38"
+    "bloom-player": "1.1.42"
   },
   "scripts": {}
 }

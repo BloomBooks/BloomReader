@@ -240,6 +240,9 @@ public class BookCollection {
     // is this coming from somewhere other than where we store books?
     // then move or copy it in
     public String ensureBookIsInCollection(Context context, Uri bookUri, String filename) {
+        if (bookUri == null || bookUri.getPath() == null)
+            return null; // Play console proves this is possible somehow
+
         if (bookUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath()))
             return bookUri.getPath();
 

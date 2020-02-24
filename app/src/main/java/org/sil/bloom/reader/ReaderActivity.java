@@ -52,6 +52,10 @@ public class ReaderActivity extends BaseActivity {
         final WebSettings webSettings = mBrowser.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
+
+        // Prevent user settings from messing up the display of books. See BL-8101.
+        webSettings.setTextZoom(100);
+
         // not quite clear on the difference between these or whether all are needed.
         // The goal is to allow the bloom-player javascript to make http calls to
         // retrieve

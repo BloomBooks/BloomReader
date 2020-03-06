@@ -217,8 +217,13 @@ public class MainActivity extends BaseActivity
     // If we're importingOneFile (ie not doing a FileSearch of the device),
     // we'll go ahead and open the book and do file cleanup.
     // Return value indicates success.
-    private boolean importBook(Uri bookUri, String filename, boolean importingOneFile){
-        String newPath = _bookCollection.ensureBookIsInCollection(this, bookUri, filename);
+    private boolean importBook(Uri bookUri, String filename, boolean importingOneFile) {
+        String newPath = null;
+        try {
+            newPath = _bookCollection.ensureBookIsInCollection(this, bookUri, filename);
+        } catch (ExtStorageUnavailableException e) {
+            externalStorageUnavailable(e);
+        }
         if (newPath != null) {
             if (importingOneFile) {
                 openBook(this, newPath);

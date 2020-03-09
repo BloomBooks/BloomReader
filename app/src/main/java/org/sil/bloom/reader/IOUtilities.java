@@ -6,7 +6,7 @@ import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import androidx.annotation.IntDef;
+import android.support.annotation.IntDef;
 import android.util.Log;
 import android.widget.Toast;
 

@@ -98,24 +98,9 @@ android {
         // want either manually or using another task (like promoteAlphaReleaseArtifact... see below).
         track = "internal"
 
-        // This is a hack.
-        // After we publish to the internal track, we may want to automatically promote
-        // that same apk to another track as well.
-        // We should be able to set track on the command line, but that isn't working.
-        // (Maybe because we don't have the latest version of the publisher plugin?)
-        //
-        // So, we look at the task we are running to determine where we want to promote *to*.
-        // This means we need a separate build step in TeamCity to run the promote task.
+        // Used for the promote*Artifact tasks
         fromTrack = "internal"
-        if (project.gradle.startParameter.taskNames.size() == 1) {
-            def singleTask = project.gradle.startParameter.taskNames[0]
-            if (singleTask ==  "promoteAlphaReleaseArtifact") {
-                track = "alpha"
-            } else if (singleTask ==  "promoteBetaReleaseArtifact") {
-                track = "beta"
-            }
-            // Assume for now that production will always be promoted manually.
-        }
+        promoteTrack = "beta"
     }
 
     lintOptions {

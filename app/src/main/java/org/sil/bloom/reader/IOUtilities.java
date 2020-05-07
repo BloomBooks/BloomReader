@@ -175,7 +175,9 @@ public class IOUtilities {
                     if (entry.isDirectory())
                         continue;
                     String entryName = entry.getName().toLowerCase(Locale.ROOT);
-                    if (entryName.endsWith(".htm") || entryName.endsWith(".html"))
+                    // For validation purposes we're only interested in html files in the root directory.
+                    // Activities, for example, may legitimately have their own.
+                    if ((entryName.endsWith(".htm") || entryName.endsWith(".html")) && entryName.indexOf("/")< 0)
                         ++countHtml;
                     else if (entryName.endsWith(".css"))
                         ++countCss;

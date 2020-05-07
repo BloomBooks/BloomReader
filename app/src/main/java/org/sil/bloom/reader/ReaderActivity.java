@@ -93,6 +93,7 @@ public class ReaderActivity extends BaseActivity {
             final File bookHtmlFile = reader.getHtmlFile();
             String bookFolder = new File(bookHtmlFile.getCanonicalPath()).getParent();
             mBrowser.setWebViewClient(new ReaderWebViewClient("file://" + bookFolder));
+            mBrowser.setWebChromeClient(new ReaderWebChromeClient(this));
 
             // The url determines the content of the WebView, which is the bloomplayer.htm
             // file

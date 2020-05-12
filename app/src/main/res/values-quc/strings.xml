@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Bloom Reader</string>
+    <string name="delete">Uchupik</string>
+    <string name="deleteConfirmation">¿Uchupik pa wiqchakub\'al?</string>
+    <!-- %1$s is a book title -->
+    <string name="deleteExplanationBook">%1$s Ksach uwach pa le wiqchakub\'al.</string>
+    <!-- %1$s is the name of the shelf -->
+    <string name="deleteExplanationEmptyShelf">Le tak’k’olib\'al %1$s ksach uwach pa le wiqchakub\'al.</string>
+    <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
+    <string name="deleteExplanationShelf">Ri %1$d no\'jwuj xuquje’ ri tak’k’olib\'al k\'o pa ri tak’k’olib\'al jastaq %2$s ksach uwach pa le wiqchakub\'al.</string>
+    <string name="deleteConfirmButton">Uchupik chanim</string>
+    <string name="share">Ula\'nik</string>
+    <!-- %1$s is a book title -->
+    <string name="shareBook">Ula\'nik %1$s</string>
+    <string name="cancel">Uq\'atexik</string>
+    <string name="ok">Uk\'ulaxik</string>
+    <string name="action_settings">Suk\'umanem</string>
+    <string name="navigation_drawer_open">Utorik ri tzalan k’olwok rech tzukunem</string>
+    <string name="navigation_drawer_close">Utz’apixik ri tzalan k’olwok rech tzukunem</string>
+    <string name="get_books_local_wifi">Uk’ulaxik no\'jwuj pa Bloom chi upam jun kematz’ib’, ruk’ Wifi</string>
+    <!-- %1$s is a book title -->
+    <string name="already_have_version">Xriqitaj \"%1$s\", k’o chik rech we q\'atchak.</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_new_version">Xriqitaj jun k’ak’ okib’al rech \"%1$s\" desde \"%2$s\", katajin kutz’onoj…</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_file">Xriqitaj \"%1$s\" pa \"%2$s\", katajin kutz’onoj…</string>
+    <!-- As in, Done receiving a file-->
+    <string name="done">Xuk’iso.</string>
+    <string name="transferFailed">Xa k’o man xchakun taj. We ri tz’ib’ k’o na, joq\'otaj kqab’an chik jumul.</string>
+    <string name="downloading">Katajin uqajisaxik…</string>
+    <!-- %1$s is a description of the sending network -->
+    <string name="looking_for_adds">Katajin utzukuxik ub’ixkil rech taq wuj chi upam wokk\'at WiFi %1s…</string>
+    <string name="device_hotspot">Majib’al rech okib’al \"hotspot\" rech ri wiqkemchakub’al</string>
+    <string name="no_wifi_connected">Ri wiqkemchakub’al pacha’ b’i man nak’om taj pa le wokk\'at WiFi.</string>
+    <string name="failed_book_import">Xk’axq’ob’ ujek’ik le no\'jwuj.</string>
+    <string name="external_storage_unavailable">Man xb’an ta kowinem chech ri okemab’al pa k’olom wi ri k’i k’olchak ¿Kraj na ri retab\'alil SD?</string>
+    <string name="share_app_link">Ula\'nik rech le tiqb’al rech utzukuxik ri Bloom Reader en Google Play&lt;/u&gt;</string>
+    <string name="share_app_with_friend">¡Chajacha’ ri kojkemchak Bloom Reader ruk’ jun utz awachib\'il!</string>
+    <string name="share_books_with_friend">Chajacha\' ronojel taq ri awuj ruk\' jun utz awachib\'il ri ujeqeb\'an le Bloom Reader.</string>
+    <string name="share_app_via">Chawula\'j le kojkemchakub\'al rumal</string>
+    <string name="share_link_via">Chwula\'j le tiqb’al rumal rech</string>
+    <string name="share_books_via">Chawula\'j le taq No\'jwuj rumal</string>
+    <!-- %1$s is the app name (defined by app_name) -->
+    <string name="recommend_app">Sik\'in taq wuj Bloom ruk\' ri kojkemchakub\'al %1$s:</string>
+    <string name="failed_to_share_apk">Ma xb\'anta kowinem chech ula\'xik le k\'olchak rech ri kojkemchakub\'al.</string>
+    <string name="failed_to_share_books">Man xb\'an ta kowinem chech ula\'xik le k\'i taq wuj</string>
+    <string name="failed_to_open_book">Man ktor taj ta le no\'jwuj</string>
+    <!-- %1$s is a book title -->
+    <string name="missing_book">Karaj na ri no\'jwuj %1$s. Te\'qne xk\'oji\' pa jun retab\'alil Sd ri silob\'isaxik te\'qne xchup uwach.</string>
+    <string name="device_storage_is_full">Man ktor taj ta le wuj. Ri wiqkemchakub\'al rech k\'olonem nojinaq. Chab\'ana chi jumul are taq\' jamal chik ri k\'olib\'al rech.</string>
+    <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
+    <string name="adding_book">Katajin ktiqik %1$s...</string>
+    <string name="bundle_import_out_of_space">Man k\'ot k\'olib\'al jamalik chi upam ri wiqkemchakub\'al chi kech konojel k\'i taq wuj chi upam we tanaj. </string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
+    <string name="share_app">Ula\'xik le kojkemchakub\'al Bloom Reader</string>
+    <string name="share_books">Ula\'xik k\'i taq No\'jwuj</string>
+    <string name="find_books_on_device">Utzukuxik k\'i taq No\'jwuj rech Bloom chi upam ri wiqkemchakub\'al</string>
+    <string name="searching">Katajin utzukuxik...</string>
+    <string name="no_books_added">Man xriqitaj ta chi upam ri wiqkemchakub\'al k\'ak\' taq wuj xuquje\' tanaj Bloom.</string>
+    <string name="release_notes">Ub\'ixikil pa uwi\' le q\'atchak</string>
+    <string name="about_bloom_reader">Chi rij ri Bloom Reader</string>
+    <string name="about_bloom">Chi rij ri Bloom</string>
+    <string name="about_sil">Chi rij ri SIL</string>
+    <string name="or">te\'qne</string>
+    <string name="check_comprehension">Chawila le aweta\'mab\'al</string>
+    <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
+    <string name="question_n_of_m">K\'otow chi\'aj %1$d of %2$d</string>
+    <string name="receive_books_over_wifi">Uk\'amik k\'i taq wuj chi upam ri kematz\'ib\'</string>
+    <string name="need_storage_permission">Bloom Reader rajawaxik okemab\'al pa k\'olom wi ri k\'olchak rech kchakunik.</string>
+    <string name="grant_storage_permission">Uya\'ik uq\'ij rech k\'olib\'alil</string>
+    <string name="renaming_invalid_book">Uk\'exik ub\'i\' jun no\'jwuj chi man utz taj pa %1$s</string>
+</resources>

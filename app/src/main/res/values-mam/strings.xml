@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Bloom Reader</string>
+    <string name="delete">Najsal</string>
+    <string name="deleteConfirmation">Ok elel to\'j makb\'il xk\'utz\'ib\'?</string>
+    <!-- %1$s is a book title -->
+    <string name="deleteExplanationBook">%1$s ok b\'el naj toj makb\'ila t-xk\'utz\'ib\'.</string>
+    <!-- %1$s is the name of the shelf -->
+    <string name="deleteExplanationEmptyShelf">Aj tenb\'il %1$s ok b\'el naj toj tmakb\'ila t-xk\'utz\'ib\'.</string>
+    <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
+    <string name="deleteExplanationShelf">Qe\' %1$d te u\'jb\'il ex qe\' tenb\'il toj kytenb\'il %2$s ok b\'el naj toj tmakb\'ila t-xk\'utz\'ib\'a.</string>
+    <string name="deleteConfirmButton">Ok elel ja\'lo</string>
+    <string name="share">Aq\'pul</string>
+    <!-- %1$s is a book title -->
+    <string name="shareBook">Aq\'pul%1$s</string>
+    <string name="cancel">Min lajet</string>
+    <string name="ok">K\'amol</string>
+    <string name="action_settings">Tx\'ixpub\'il</string>
+    <string name="navigation_drawer_open">Jaqb\'il swej te b\'etb\'il toj chemaj xin.</string>
+    <string name="navigation_drawer_close">Lametil swej te b\'etb\'il toj chemajxin</string>
+    <string name="get_books_local_wifi">K\'amol u\'jb\'il toj Bloom toj jun xk\'utz\'ib\' toj taq\'nab\'il Wifi</string>
+    <!-- %1$s is a book title -->
+    <string name="already_have_version">Ma kanet %1$s\", at aq\'na\'b\'il lu\' toj.</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_new_version">Ma kanet jun ak\'aj aq\'na\'b\'il te %1$s\" tojtzaj %2$s\", in qanin…</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_file">Ma kanet %1$s\" tojtzaj %2$s\", in qanin…</string>
+    <!-- As in, Done receiving a file-->
+    <string name="done">Ma b\'ant.</string>
+    <string name="transferFailed">At jun min xb\'ant. Qa atix tlok\', jaku kub\' b\'inchet juntl maj.</string>
+    <string name="downloading">Nku\'tz iq\'et…</string>
+    <!-- %1$s is a description of the sending network -->
+    <string name="looking_for_adds">Njyet tqanil kyi\'j u\'jb\'il toj chemajxin te WiFi %1s…</string>
+    <string name="device_hotspot">Tenb\'il jatum b\'a\'n tu\'n qokx toj \"hotspot\" te makb\'il xk\'utz\'ib\'</string>
+    <string name="no_wifi_connected">Mixti\' tok tmakb\'il xk\'utz\'ib\' ti\'j chemajxin te WiFi.</string>
+    <string name="failed_book_import">Ma el naj tb\'eyil u\'jb\'il .</string>
+    <string name="external_storage_unavailable">Mixti\'  xb\'ant qokx toj k\'ub\'il aq\'untl. Taj makb\'il xk\'utz\'ib\' SD?</string>
+    <string name="share_app_link"><u>Pujb\'ankub\'a tb\'eyil tu\'ntzun tkanet Bloom Reader toj Google Play</u></string>
+    <string name="share_app_with_friend">¡Pujb\'ankub\'a aq\'untl Bloom Reader kyuk\'il juntl tuk\'ila!</string>
+    <string name="share_books_with_friend">Pujb\'ankub\'a kyaqil u\'jb\'il tuk\'il  jun tuk\'ila at Bloom Reader tuk\'il.</string>
+    <string name="share_app_via">Pujb\'ankub\'a tu\'mel aq\'untl tu\'n</string>
+    <string name="share_link_via">Pujb\'ankub\'a tb\'eyil toj</string>
+    <string name="share_books_via">Pujb\'ankub\'a u\'jb\'il toj</string>
+    <!-- %1$s is the app name (defined by app_name) -->
+    <string name="recommend_app">U\'jil  u\'jb\'il Bloom tuk\'il aq\'unb\'il xk\'utz\'ib\' %1$s:</string>
+    <string name="failed_to_share_apk">Mixti\' xb\'ant tsipet k\'ub\'il aq\'untl xk\'utz\'ib\'.</string>
+    <string name="failed_to_share_books">Mixti\' xb\'ant kypujb\'et u\'jb\'il</string>
+    <string name="failed_to_open_book">Min xnb\'ant tjaqet u\'jb\'il.</string>
+    <!-- %1$s is a book title -->
+    <string name="missing_book">Atx taj u\'jb\'il %1$s. B\'ala  at taq toj jun Sd ma qa o tx\'ixpet mo o tz\'el iq\'i\'n to\'j.</string>
+    <string name="device_storage_is_full">Min b\'ant jaqet u\'jb\'il. Qaj ma jaw noj tnab\'l makb\'il xk\'utz\'ib\'. B\'inchanx jun majtl aj tel tiq\'ina toj tnab\'l.</string>
+    <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
+    <string name="adding_book">Ntz\'aqsan %1$s...</string>
+    <string name="bundle_import_out_of_space">Mya\' nim temb\'il toj tnab\'l makb\'il xk\'utz\'ib\'  kye kyaqil u\'jb\'il lu\'.</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
+    <string name="share_app">Sipinkub\'a aq\'unb\'il xk\'utz\'ib\' Bloom Reader</string>
+    <string name="share_books">Pujb\'ankub\'a u\'jb\'il</string>
+    <string name="find_books_on_device">Jyol u\'jb\'il te Bloom toj tmakb\'ila xk\'utz\'ib\'</string>
+    <string name="searching">In jayon...</string>
+    <string name="no_books_added">Min ma chi okyal ak\'a\'j u\'jb\'il mo tnej Bloom toj makb\'il xk\'utz\'ib\' lu\'.</string>
+    <string name="release_notes">Tz\'ib\'ajtz tib\'aj tu\'mel</string>
+    <string name="about_bloom_reader">Tqanil tib\'aj Bloom Reader</string>
+    <string name="about_bloom">Tqanil tib\'aj Bloom</string>
+    <string name="about_sil">Tqanil tib\'aj SIL</string>
+    <string name="or">mo</string>
+    <string name="check_comprehension">Ka\'yinxa  tna\'b\'ila</string>
+    <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
+    <string name="question_n_of_m">Xjelb\'il %1$d de %2$d</string>
+    <string name="receive_books_over_wifi">K\'amol u\'jb\'il ntzaj q\'o\'n toj xk\'utz\'ib\'</string>
+    <string name="need_storage_permission">Taj Bloom Reader amb\'il tu\'n tokx toj k\'ub\'il kye qe nak\'ub\'il aq\'unb\'il tu\'ntzan taq\'unan.</string>
+    <string name="grant_storage_permission">Q\'ob\'il tu\'mel te k\'ub\'il</string>
+    <string name="renaming_invalid_book">In ok q\'etl juntl tb\'i u\'jb\'il  mixti\' xk\'amli %1$s</string>
+</resources>

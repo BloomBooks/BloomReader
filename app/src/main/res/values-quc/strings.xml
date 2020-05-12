@@ -15,7 +15,6 @@
     <string name="shareBook">Ula\'nik %1$s</string>
     <string name="cancel">Uq\'atexik</string>
     <string name="ok">Uk\'ulaxik</string>
-    <string name="action_settings">Suk\'umanem</string>
     <string name="navigation_drawer_open">Utorik ri tzalan k’olwok rech tzukunem</string>
     <string name="navigation_drawer_close">Utz’apixik ri tzalan k’olwok rech tzukunem</string>
     <string name="get_books_local_wifi">Uk’ulaxik no\'jwuj pa Bloom chi upam jun kematz’ib’, ruk’ Wifi</string>
@@ -34,6 +33,7 @@
     <string name="device_hotspot">Majib’al rech okib’al \"hotspot\" rech ri wiqkemchakub’al</string>
     <string name="no_wifi_connected">Ri wiqkemchakub’al pacha’ b’i man nak’om taj pa le wokk\'at WiFi.</string>
     <string name="failed_book_import">Xk’axq’ob’ ujek’ik le no\'jwuj.</string>
+    <string name="failed_book_import2">Bloom Reader was not able to read the book \"%1$s\".</string>
     <string name="external_storage_unavailable">Man xb’an ta kowinem chech ri okemab’al pa k’olom wi ri k’i k’olchak ¿Kraj na ri retab\'alil SD?</string>
     <string name="share_app_link">Ula\'nik rech le tiqb’al rech utzukuxik ri Bloom Reader en Google Play&lt;/u&gt;</string>
     <string name="share_app_with_friend">¡Chajacha’ ri kojkemchak Bloom Reader ruk’ jun utz awachib\'il!</string>
@@ -64,11 +64,9 @@
     <string name="about_bloom">Chi rij ri Bloom</string>
     <string name="about_sil">Chi rij ri SIL</string>
     <string name="or">te\'qne</string>
-    <string name="check_comprehension">Chawila le aweta\'mab\'al</string>
-    <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
-    <string name="question_n_of_m">K\'otow chi\'aj %1$d of %2$d</string>
     <string name="receive_books_over_wifi">Uk\'amik k\'i taq wuj chi upam ri kematz\'ib\'</string>
     <string name="need_storage_permission">Bloom Reader rajawaxik okemab\'al pa k\'olom wi ri k\'olchak rech kchakunik.</string>
     <string name="grant_storage_permission">Uya\'ik uq\'ij rech k\'olib\'alil</string>
     <string name="renaming_invalid_book">Uk\'exik ub\'i\' jun no\'jwuj chi man utz taj pa %1$s</string>
+    <string name="preparing_to_show_books">Preparing to show books…</string>
 </resources>

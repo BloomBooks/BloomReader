@@ -15,7 +15,6 @@
     <string name="shareBook">分享%1$s</string>
     <string name="cancel">取消</string>
     <string name="ok">确定</string>
-    <string name="action_settings">设置</string>
     <string name="navigation_drawer_open">打开导航栏</string>
     <string name="navigation_drawer_close">关闭导航栏</string>
     <string name="get_books_local_wifi">通过WiFi从电脑上的Bloom接收图书</string>
@@ -34,6 +33,7 @@
     <string name="device_hotspot">设备热点</string>
     <string name="no_wifi_connected">设备似乎没有连接到 WiFi 网络。</string>
     <string name="failed_book_import">无法导入书籍。</string>
+    <string name="failed_book_import2">Bloom Reader was not able to read the book \"%1$s\".</string>
     <string name="external_storage_unavailable">无法访问文件存储。SD 卡是否丢失？</string>
     <string name="share_app_link"><u>分享从Google Play下载Bloom阅读器的链接</u></string>
     <string name="share_app_with_friend">把Bloom阅读器应用分享给朋友！</string>
@@ -64,11 +64,9 @@
     <string name="about_bloom">关于Bloom</string>
     <string name="about_sil">关于SIL</string>
     <string name="or">或</string>
-    <string name="check_comprehension">检查理解</string>
-    <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
-    <string name="question_n_of_m">%2$d个问题中的%1$d 个</string>
     <string name="receive_books_over_wifi">从电脑接收图书</string>
     <string name="need_storage_permission">Bloom阅读器需要访问文件储存器的权限才能工作。</string>
     <string name="grant_storage_permission">授权存储许可</string>
     <string name="renaming_invalid_book">Renaming invalid book to %1$s</string>
+    <string name="preparing_to_show_books">Preparing to show books…</string>
 </resources>

@@ -15,7 +15,6 @@
     <string name="shareBook">Aq\'pul%1$s</string>
     <string name="cancel">Min lajet</string>
     <string name="ok">K\'amol</string>
-    <string name="action_settings">Tx\'ixpub\'il</string>
     <string name="navigation_drawer_open">Jaqb\'il swej te b\'etb\'il toj chemaj xin.</string>
     <string name="navigation_drawer_close">Lametil swej te b\'etb\'il toj chemajxin</string>
     <string name="get_books_local_wifi">K\'amol u\'jb\'il toj Bloom toj jun xk\'utz\'ib\' toj taq\'nab\'il Wifi</string>
@@ -34,6 +33,7 @@
     <string name="device_hotspot">Tenb\'il jatum b\'a\'n tu\'n qokx toj \"hotspot\" te makb\'il xk\'utz\'ib\'</string>
     <string name="no_wifi_connected">Mixti\' tok tmakb\'il xk\'utz\'ib\' ti\'j chemajxin te WiFi.</string>
     <string name="failed_book_import">Ma el naj tb\'eyil u\'jb\'il .</string>
+    <string name="failed_book_import2">Bloom Reader was not able to read the book \"%1$s\".</string>
     <string name="external_storage_unavailable">Mixti\'  xb\'ant qokx toj k\'ub\'il aq\'untl. Taj makb\'il xk\'utz\'ib\' SD?</string>
     <string name="share_app_link"><u>Pujb\'ankub\'a tb\'eyil tu\'ntzun tkanet Bloom Reader toj Google Play</u></string>
     <string name="share_app_with_friend">¡Pujb\'ankub\'a aq\'untl Bloom Reader kyuk\'il juntl tuk\'ila!</string>
@@ -64,11 +64,9 @@
     <string name="about_bloom">Tqanil tib\'aj Bloom</string>
     <string name="about_sil">Tqanil tib\'aj SIL</string>
     <string name="or">mo</string>
-    <string name="check_comprehension">Ka\'yinxa  tna\'b\'ila</string>
-    <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
-    <string name="question_n_of_m">Xjelb\'il %1$d de %2$d</string>
     <string name="receive_books_over_wifi">K\'amol u\'jb\'il ntzaj q\'o\'n toj xk\'utz\'ib\'</string>
     <string name="need_storage_permission">Taj Bloom Reader amb\'il tu\'n tokx toj k\'ub\'il kye qe nak\'ub\'il aq\'unb\'il tu\'ntzan taq\'unan.</string>
     <string name="grant_storage_permission">Q\'ob\'il tu\'mel te k\'ub\'il</string>
     <string name="renaming_invalid_book">In ok q\'etl juntl tb\'i u\'jb\'il  mixti\' xk\'amli %1$s</string>
+    <string name="preparing_to_show_books">Preparing to show books…</string>
 </resources>

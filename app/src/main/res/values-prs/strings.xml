@@ -15,7 +15,6 @@
     <string name="shareBook">%1$s به اشتراک بگذارید</string>
     <string name="cancel">فسخ</string>
     <string name="ok">درست</string>
-    <string name="action_settings">تنظیمات</string>
     <string name="navigation_drawer_open">بخش جهت یاب را باز کنید</string>
     <string name="navigation_drawer_close">بخش جهت یاب را بند کنید</string>
     <string name="get_books_local_wifi">کتاب ها را از بلوم در یک کمپیوتر ، از طریق Wifi دریابید</string>
@@ -34,6 +33,7 @@
     <string name="device_hotspot">وسیله اتصال ( Hotspot) انترنیتی</string>
     <string name="no_wifi_connected">به نظر نمی رسد که این وسیله به یک شبکه WiFi وصل باشد.</string>
     <string name="failed_book_import">پاین آوردن کتاب انجام نشد.</string>
+    <string name="failed_book_import2">Bloom Reader was not able to read the book \"%1$s\".</string>
     <string name="external_storage_unavailable">دسترسی به حافظه فایل امکان پذیر نیست. آیا کارت SD از گم شده است?</string>
     <string name="share_app_link"><u> برای دریافت Bloom Reader در Google Play آدرس را به اشتراک بگذارید </u></string>
     <string name="share_app_with_friend">این برنامه Bloom Reader را با یک دوست تان به اشتراک بگذارید!</string>
@@ -64,11 +64,9 @@
     <string name="about_bloom">درباره بلوم</string>
     <string name="about_sil">درباره SIL</string>
     <string name="or">یا اینکه</string>
-    <string name="check_comprehension">درک خود را بررسی کنید</string>
-    <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
-    <string name="question_n_of_m">سؤال %1$d از %2$d</string>
     <string name="receive_books_over_wifi">بدست اوردن کتاب از کمپیوتر</string>
     <string name="need_storage_permission">Bloom Reader برای کار دسترسی به حافظه فایل نیاز دارد.</string>
     <string name="grant_storage_permission">به ذخیره نمودن اجاز دهید</string>
     <string name="renaming_invalid_book">تغییر نام کتاب بی باوره به%1$s</string>
+    <string name="preparing_to_show_books">Preparing to show books…</string>
 </resources>

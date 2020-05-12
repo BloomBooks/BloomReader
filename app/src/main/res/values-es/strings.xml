@@ -15,7 +15,6 @@
     <string name="shareBook">Compartir %1$s</string>
     <string name="cancel">Cancelar</string>
     <string name="ok">Aceptar</string>
-    <string name="action_settings">Configuración</string>
     <string name="navigation_drawer_open">Abrir panel lateral de navegación</string>
     <string name="navigation_drawer_close">Cerrar panel lateral de navegación</string>
     <string name="get_books_local_wifi">Recibir libros desde Bloom en una computadora, utilizando Wifi</string>
@@ -34,6 +33,7 @@
     <string name="device_hotspot">Punto de acceso \"hotspot\" del dispositivo</string>
     <string name="no_wifi_connected">El dispositivo no parece estar conectado a una red WiFi.</string>
     <string name="failed_book_import">Falló la importación del libro.</string>
+    <string name="failed_book_import2">Bloom Reader was not able to read the book \"%1$s\".</string>
     <string name="external_storage_unavailable">No se pudo acceder al almacenamiento de archivos. ¿Hace falta la tarjeta SD?</string>
     <string name="share_app_link"><u>Compartir el enlace para conseguir el Bloom Reader en Google Play</u></string>
     <string name="share_app_with_friend">¡Comparta la aplicación Bloom Reader con un amigo!</string>
@@ -64,11 +64,9 @@
     <string name="about_bloom">Acerca de Bloom</string>
     <string name="about_sil">Acerca de SIL</string>
     <string name="or">o</string>
-    <string name="check_comprehension">Compruebe su comprensión</string>
-    <!-- %1$d and %2$d are numbers; for example: Question 1 of 2  -->
-    <string name="question_n_of_m">Pregunta %1$d de %2$d</string>
     <string name="receive_books_over_wifi">Recibir libros desde la computadora</string>
     <string name="need_storage_permission">Bloom Reader necesita acceso al almacenamiento de archivos para funcionar.</string>
     <string name="grant_storage_permission">Otorgar permiso de almacenamiento</string>
     <string name="renaming_invalid_book">Renombrando el libro inválido a %1$s</string>
+    <string name="preparing_to_show_books">Preparing to show books…</string>
 </resources>

@@ -252,7 +252,7 @@ public class MainActivity extends BaseActivity
     public void bloomBundleImported(List<String> newBookPaths) {
         try {
             // Reinitialize completely to get the new state of things.
-            _bookCollection.init(this.getApplicationContext(), null);
+            _bookCollection.init(this, null);
             highlightItems(newBookPaths);
             resetFileObserver(); // Prevent duplicate notifications
         } catch (ExtStorageUnavailableException e) {

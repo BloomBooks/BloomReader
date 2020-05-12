@@ -1,5 +1,6 @@
 package org.sil.bloom.reader.models;
 
+import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
@@ -116,14 +117,15 @@ public class BookCollection {
         return booksAndShelves;
     }
 
-    public void init(Context context, InitializeLibraryTask task) throws ExtStorageUnavailableException {
+    public void init(Activity activity, InitializeLibraryTask task) throws ExtStorageUnavailableException {
+        Context context = activity.getApplicationContext();
         File[] booksDirs = getLocalAndRemovableBooksDirectories(context);
         mLocalBooksDirectory = booksDirs[0];
         mInitializeTask = task;
         if (BloomReaderApplication.isFirstRunAfterInstallOrUpdate()){
             SampleBookLoader.CopySampleBooksFromAssetsIntoBooksFolder(context, mLocalBooksDirectory);
         }
-        loadFromDirectories(booksDirs);
+        loadFromDirectories(booksDirs, activity);
     }
 
     public static File getLocalBooksDirectory() throws ExtStorageUnavailableException {
@@ -143,7 +145,7 @@ public class BookCollection {
         return new File[] {localBooksDir};
     }
 
-    private void loadFromDirectories(File[] booksDirs) {
+    private void loadFromDirectories(File[] booksDirs, Activity activity) {
         mShelfIds.clear();
         _booksAndShelves.clear();
         if (mInitializeTask != null) {
@@ -158,10 +160,10 @@ public class BookCollection {
             mInitializeTask.setBookCount(count);
         }
         for (File booksDir : booksDirs)
-            loadFromDirectory(booksDir);
+            loadFromDirectory(booksDir, activity);
     }
 
-    private void loadFromDirectory(File directory) {
+    private void loadFromDirectory(File directory, Activity activity) {
         File[] files = directory.listFiles();
         if(files != null) {
             for (int i = 0; i < files.length; i++) {
@@ -173,11 +175,15 @@ public class BookCollection {
                 final String path = files[i].getAbsolutePath();
                 if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
                         !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD, metaFile)) {
-                    String markedName = name + "-BAD";
-                    Log.w("BloomCollection", "Renaming invalid book file "+path+" to "+markedName);
-                    Context context = BloomReaderApplication.getBloomApplicationContext();
-                    String message = context.getString(R.string.renaming_invalid_book, markedName);
-                    Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                    activity.runOnUiThread(new Runnable() {
+                        public void run() {
+                            String markedName = name + "-BAD";
+                            Log.w("BloomCollection", "Renaming invalid book file "+path+" to "+markedName);
+                            Context context = BloomReaderApplication.getBloomApplicationContext();
+                            String message = context.getString(R.string.renaming_invalid_book, markedName);
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                        }
+                    });
                     new File(path).renameTo(new File(path+"-BAD"));
                     if (mInitializeTask != null) {
                         mInitializeTask.incrementBookProgress();

@@ -1,6 +1,2 @@
-New book-rendering engine:
-- Switch languages within a book.
-- Same as publication preview in Bloom and Read view on bloomlibrary.org.
-- Allows for greater customization of comprehension activities.
-Minimum Android version: 5.0.
-Various other enhancements and fixes.
+Improved handling of comics and activities.
+Burmese, Mam, and K'iche' user interfaces.

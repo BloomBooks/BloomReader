@@ -1,3 +1,7 @@
+2.1
+Improved handling of comics and activities.
+Burmese, Mam, and K'iche' user interfaces.
+
 2.0
 New book-rendering engine:
 - Switch languages within a book.

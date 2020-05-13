@@ -33,7 +33,7 @@
     <string name="device_hotspot">Punto de acceso \"hotspot\" del dispositivo</string>
     <string name="no_wifi_connected">El dispositivo no parece estar conectado a una red WiFi.</string>
     <string name="failed_book_import">Falló la importación del libro.</string>
-    <string name="failed_book_import2">Bloom Reader was not able to read the book \"%1$s\".</string>
+    <string name="failed_book_import2">Bloom Reader no pudo leer el libro \"%1$s\".</string>
     <string name="external_storage_unavailable">No se pudo acceder al almacenamiento de archivos. ¿Hace falta la tarjeta SD?</string>
     <string name="share_app_link"><u>Compartir el enlace para conseguir el Bloom Reader en Google Play</u></string>
     <string name="share_app_with_friend">¡Comparta la aplicación Bloom Reader con un amigo!</string>
@@ -68,5 +68,5 @@
     <string name="need_storage_permission">Bloom Reader necesita acceso al almacenamiento de archivos para funcionar.</string>
     <string name="grant_storage_permission">Otorgar permiso de almacenamiento</string>
     <string name="renaming_invalid_book">Renombrando el libro inválido a %1$s</string>
-    <string name="preparing_to_show_books">Preparing to show books…</string>
+    <string name="preparing_to_show_books">Preparando para mostrar los libros…</string>
 </resources>

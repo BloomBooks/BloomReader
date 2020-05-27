@@ -192,7 +192,14 @@ public class MainActivity extends BaseActivity
             ContentResolver contentResolver = getContentResolver();
             if (contentResolver == null) // Play console showed us this could be null somehow
                 return;
-            Cursor cursor = contentResolver.query(uri, null, null, null, null);
+            Cursor cursor;
+            try {
+                cursor = contentResolver.query(uri, null, null, null, null);
+            } catch (SecurityException se) {
+                // Not sure how this happens, but we see it on the Play Console.
+                // Perhaps someone has chosen Bloom Reader to try to process an intent we shouldn't be trying to handle?
+                return;
+            }
             if (cursor != null) {
                 if (cursor.moveToFirst())
                     nameOrPath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
@@ -523,6 +530,11 @@ public class MainActivity extends BaseActivity
             return;
         }
         BookOrShelf bookOrShelf = _bookCollection.getBookOrShelfByPath(path);
+        if (bookOrShelf == null) {
+            // Play console shows this can happen somehow.
+            // Maybe we when fix the concurrency issues, this goes away, too.
+            return;
+        }
         if (bookOrShelf.isShelf()) {
             Intent intent = new Intent(context, ShelfActivity.class);
             intent.putExtra("filter", bookOrShelf.shelfId);

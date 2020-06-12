@@ -106,12 +106,6 @@ android {
     lintOptions {
         warning "MissingTranslation"
     }
-
-    compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
-    }
-
 }
 
 repositories {
@@ -126,8 +120,7 @@ dependencies {
     implementation  'com.android.support:design:28.0.0'
     // Supports the WiFi module's 'server' used to receive books from Bloom desktop
     implementation  'cz.msebera.android:httpclient:4.5.8'
-    //noinspection GradleDynamicVersion
-    implementation  'com.segment.analytics.android:analytics:4.+'
+    implementation  'com.segment.analytics.android:analytics:4.7.0'
     implementation  'commons-io:commons-io:2.6'
     // Andrew tried this and had problems. I don't recall the details.
     //implementation  'commons-io:commons-compress:1.15'

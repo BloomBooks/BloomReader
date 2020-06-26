@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BookCollection {
     public static final String THUMBS_DIR = ".thumbs";
@@ -34,8 +35,15 @@ public class BookCollection {
 
     public static final String BOOKSHELF_PREFIX = "bookshelf:";
     // All the books and shelves loaded from the folder on 'disk'.
-    private List<BookOrShelf> _booksAndShelves = new ArrayList<BookOrShelf>();
-    // The books and folders we are currently displaying.
+    // CopyOnWriteArrayList allows thread-safe unsychronized access.
+    private List<BookOrShelf> _booksAndShelves = new CopyOnWriteArrayList<BookOrShelf>();
+    // The books and folders we are currently displaying. As this is accessed from multiple
+    // threads and is not thread-safe, all methods using it directly should be synchronized.
+    // To minimise blocking threads, typically time-consuming modifications are performed
+    // by getting a clone with getCopyOfFilteredBooksAndShelves() or just starting over with
+    // an empty collection, then using replaceFilteredBooksAndShelves() to replace it atomically.
+    // (Not using CopyOnWriteArrayList here as we need to sort it and I doubt this can be done
+    // efficiently to a CopyOnWriteArrayList.)
     private List<BookOrShelf> mFilteredBooksAndShelves = new ArrayList<BookOrShelf>();
     private File mLocalBooksDirectory;
     // The 'filter' is the id stored in a .bloomshelf file, which (for a book to pass) must match
@@ -53,13 +61,13 @@ public class BookCollection {
         updateFilteredList();
     }
 
-    public int indexOf(BookOrShelf book) { return mFilteredBooksAndShelves.indexOf(book); }
+    public synchronized int indexOf(BookOrShelf book) { return mFilteredBooksAndShelves.indexOf(book); }
 
-    public BookOrShelf get(int i) {
+    public synchronized BookOrShelf get(int i) {
         return mFilteredBooksAndShelves.get(i);
     }
 
-    public int size() {
+    public synchronized int size() {
         return mFilteredBooksAndShelves.size();
     }
 
@@ -67,17 +75,10 @@ public class BookCollection {
         BookOrShelf existingBook = getBookOrShelfByPath(path);
         if (existingBook != null)
             return existingBook;
-        return addBook(path, true, null);
+        return addBook(path, null);
     }
 
-    // Add a book to the main collection. This is used in two ways: LoadFromDirectory loads
-    // them all, then updates mFilteredBooksAndShelves to the appropriate set for the current
-    // filter and sorts it.
-    // Various other callers add a single book. So far all of these want it to be visible
-    // at once, even if it doesn't really belong in the current filter. Thus, passing addingJustOne
-    // true causes the book to be unconditionally added to mFilteredBooksAndShelves, and it gets
-    // re-sorted.
-    private BookOrShelf addBook(String path, boolean addingJustOne, TextFileContent metaFile) {
+    private BookOrShelf makeBookOrShelf(String path, TextFileContent metaFile) {
         BookOrShelf bookOrShelf;
         if (path.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
             bookOrShelf = BloomShelfFileReader.parseShelfFile(path);
@@ -88,12 +89,38 @@ public class BookCollection {
             bookOrShelf = new BookOrShelf(path);
         }
         BookCollection.setShelvesOfBook(bookOrShelf, metaFile);
-        _booksAndShelves.add(bookOrShelf);
-        if (addingJustOne) {
-            mFilteredBooksAndShelves.add(bookOrShelf);
-            Collections.sort(mFilteredBooksAndShelves, BookOrShelf.AlphabeticalComparator);
-        }
         return bookOrShelf;
+    }
+
+    // Add a book to the main collection. If adding many, it is better to add them all at once
+    // with addBooks(), which updates mFilteredBooksAndShelves just once.
+    // Callers of this add a single book. So far all of these want it to be visible
+    // at once, even if it doesn't really belong in the current filter. So, the book is
+    // unconditionally added to mFilteredBooksAndShelves, and it gets re-sorted at once.
+    private BookOrShelf addBook(String path, TextFileContent metaFile) {
+        BookOrShelf bookOrShelf = makeBookOrShelf(path, metaFile);
+        _booksAndShelves.add(bookOrShelf);
+        // This process of copying the collection is probably unnecessary here,
+        // but is done wherever it is modified for thread safety. This way,
+        // no other thread ever accesses it while in an invalid state.
+        ArrayList<BookOrShelf> newList = getCopyOfFilteredBooksAndShelves();
+        newList.add(bookOrShelf);
+        Collections.sort(newList, BookOrShelf.AlphabeticalComparator);
+        replaceFilteredBooksAndShelves(newList);
+        return bookOrShelf;
+    }
+
+    private synchronized ArrayList<BookOrShelf> getCopyOfFilteredBooksAndShelves() {
+        return  new ArrayList<BookOrShelf>(mFilteredBooksAndShelves);
+    }
+
+    private synchronized void replaceFilteredBooksAndShelves(ArrayList<BookOrShelf> newList) {
+        mFilteredBooksAndShelves = newList;
+    }
+
+    private void addBooks(ArrayList<BookOrShelf> books) {
+        _booksAndShelves.addAll(books);
+        updateFilteredList();
     }
 
     public BookOrShelf getBookOrShelfByPath(String path) {
@@ -165,6 +192,7 @@ public class BookCollection {
 
     private void loadFromDirectory(File directory, Activity activity) {
         File[] files = directory.listFiles();
+        ArrayList<BookOrShelf> books = new ArrayList<BookOrShelf>();
         if(files != null) {
             for (int i = 0; i < files.length; i++) {
                 final String name = files[i].getName();
@@ -190,23 +218,26 @@ public class BookCollection {
                     }
                     continue;
                 }
-                addBook(path, false, metaFile);
+                books.add(makeBookOrShelf(path, metaFile));
                 if (mInitializeTask != null) {
                     mInitializeTask.incrementBookProgress();
                 }
             }
-            updateFilteredList();
+            addBooks(books);
         }
     }
 
     private void updateFilteredList() {
-        mFilteredBooksAndShelves.clear();
+        ArrayList<BookOrShelf> newList = new ArrayList<BookOrShelf>();
         for (BookOrShelf bookOrShelf: _booksAndShelves) {
             if (isBookInFilter(bookOrShelf, mFilter, mShelfIds)) {
-                mFilteredBooksAndShelves.add(bookOrShelf);
+                newList.add(bookOrShelf);
             }
         }
-        Collections.sort(mFilteredBooksAndShelves, BookOrShelf.AlphabeticalComparator);
+        Collections.sort(newList, BookOrShelf.AlphabeticalComparator);
+        // This atomic update guards against any other thread accessing the collection in an
+        // incomplete state, while also preventing any delays from long locks.
+        replaceFilteredBooksAndShelves(newList);
     }
 
     private void createFilesForDummyBook(Context context, File directory, int position) {
@@ -226,11 +257,7 @@ public class BookCollection {
         }
     }
 
-    public List<BookOrShelf> getBooks() {
-        return mFilteredBooksAndShelves;
-    }
-
-    public void deleteFromDevice(BookOrShelf book) {
+    public synchronized void deleteFromDevice(BookOrShelf book) {
         if (book == null)
             return;
         if (book.path != null) {

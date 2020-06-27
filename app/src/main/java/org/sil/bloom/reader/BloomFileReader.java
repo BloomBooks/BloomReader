@@ -23,7 +23,6 @@ public class BloomFileReader {
 
     private static final String CURRENT_BOOK_FOLDER = "currentbook";
     private static final String VALIDATE_BOOK_FILE_FOLDER = "validating";
-    private static final String HTM_EXTENSION = ".htm";
     private static final String THUMBNAIL_NAME_1 = "thumbnail.png";
     private static final String THUMBNAIL_NAME_2 = "thumbnail.jpg";
     private static final String META_JSON_FILE = "meta.json";
@@ -42,7 +41,7 @@ public class BloomFileReader {
 
     public File getHtmlFile() throws IOException{
         initialize();
-        String name = bookDirectory + File.separator + "index" + HTM_EXTENSION;
+        String name = bookDirectory + File.separator + "index.htm";
         File index = new File(name);
         if (index.exists()) {
             return index;
@@ -219,12 +218,17 @@ public class BloomFileReader {
         unzipBook(bloomFilePath, CURRENT_BOOK_FOLDER);
     }
 
-    private File findHtmlFile() throws IOException{
-        String name = bookDirectory.getName().replace(IOUtilities.BOOK_FILE_EXTENSION, "");
-        File htmlFile = new File(bookDirectory + File.separator + HTM_EXTENSION);
-        if(!htmlFile.exists()){
-            htmlFile = IOUtilities.findFirstWithExtension(bookDirectory, HTM_EXTENSION);
-            if(htmlFile == null)
+    private File findHtmlFile() throws IOException {
+        // so, we're calling this because we could not find "index.htm".
+        // Next, look for an htm file that matches the name of the .bloomd/.bloompub
+        String nameFromZipFile = bookDirectory.getName().replace(IOUtilities.BOOK_FILE_EXTENSION, "");
+        File htmlFile = new File(bookDirectory + File.separator + nameFromZipFile + ".htm");
+        if (!htmlFile.exists()) {
+            // Maybe the .bloomd file was renamed. So now just take the first htm file that
+            // is in there
+            // and hope it is the right one.
+            htmlFile = IOUtilities.findFirstWithExtension(bookDirectory, ".htm");
+            if (htmlFile == null)
                 throw new IOException("No HTML file found inside .bloomd zip file.");
         }
         return htmlFile;

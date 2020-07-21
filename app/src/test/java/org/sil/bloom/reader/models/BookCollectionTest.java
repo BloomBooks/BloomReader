@@ -108,7 +108,7 @@ public class BookCollectionTest {
     @Test
     public void setBookFilters_shelf_addsNone() {
         BookOrShelf shelf = new BookOrShelf("where can we put this.bloomshelf");
-        BookCollection.setShelvesOfBook(shelf);
+        BookCollection.setShelvesAndTitleOfBook(shelf);
         assertThat(shelf.isBookInAnyShelf(new HashSet<String>()), is(false));
     }
 }

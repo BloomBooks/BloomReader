@@ -18,7 +18,7 @@ import static org.junit.Assert.*;
  */
 public class BookCollectionTest {
     // This test requires a real device because infuriatingly JSON object parsing is not supported
-    // in the regular unit test environment, and setShelvesOfBook uses it.
+    // in the regular unit test environment, and setShelvesAndTitleOfBook uses it.
     @Test
     public void setBookFilters_bookOnTwoShelves_addsThem() throws Exception {
         // suggested for a file in test assets using a subclass of InstrumentationTestCase. But that is deprecated.
@@ -44,7 +44,7 @@ public class BookCollectionTest {
         // so now file is a temp zip file containing meta.json containing
         // "tags":["Animals", "bloomshelf:Level 2", "bloomshelf:rise/PNG"]
         BookOrShelf book = new BookOrShelf(file.getPath());
-        BookCollection.setShelvesOfBook(book);
+        BookCollection.setShelvesAndTitleOfBook(book);
         assertThat(book.isBookInShelf("Level 2"), is(true));
         assertThat(book.isBookInShelf("rise/PNG"), is(true));
         assertThat(book.isBookInShelf("Animals"), is(false));

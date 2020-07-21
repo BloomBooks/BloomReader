@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,7 +49,8 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
     public void onBindViewHolder(ViewHolder holder, int position){
         holder.bookOrShelf = bookCollection.get(position);
         holder.linearLayout.setTag(holder.bookOrShelf);
-        holder.bookNameView.setText(holder.bookOrShelf.name);
+        String title = TextUtils.isEmpty(holder.bookOrShelf.title) ? holder.bookOrShelf.name : holder.bookOrShelf.title;
+        holder.bookNameView.setText(title);
         new SetBookListItemViewExtrasTask(holder).setExtras(); // Sets the thumbnail and speaker icon
         setBackgroundColor(holder);
     }

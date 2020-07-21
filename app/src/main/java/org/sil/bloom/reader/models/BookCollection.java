@@ -88,7 +88,7 @@ public class BookCollection {
             // book.
             bookOrShelf = new BookOrShelf(path);
         }
-        BookCollection.setShelvesOfBook(bookOrShelf, metaFile);
+        BookCollection.setShelvesAndTitleOfBook(bookOrShelf, metaFile);
         return bookOrShelf;
     }
 
@@ -316,7 +316,7 @@ public class BookCollection {
     // Extracts the meta.json entry from the bloomd file, extracts the tags from that,
     // finds any that start with "bookshelf:", and sets the balance of the tag as one of the
     // book's shelves.  The meta.json data may or may not have already been extracted.
-    public static void setShelvesOfBook(BookOrShelf bookOrShelf, TextFileContent metaFile) {
+    public static void setShelvesAndTitleOfBook(BookOrShelf bookOrShelf, TextFileContent metaFile) {
         String json;
         try {
             if (bookOrShelf.isShelf()) {
@@ -341,17 +341,21 @@ public class BookCollection {
             if (data.has("brandingProjectName")) {
                 bookOrShelf.brandingProjectName = data.getString("brandingProjectName");
             }
+            if (data.has("title")) {
+                bookOrShelf.title = data.getString("title");
+            }
         } catch (Exception e) {
             // Not sure about just catching everything like this. But the worst that happens if
             // a bloomd does not contain valid meta.json from which we can extract tags is that
-            // the book shows up at the root instead of on a shelf.
+            // the book shows up at the root instead of on a shelf, and that its title comes from
+            // the filename, which is based on the title and usually correct.
             e.printStackTrace();
         }
     }
 
     // The second argument is really optional.
-    public static void setShelvesOfBook(BookOrShelf bookOrShelf) {
-        setShelvesOfBook(bookOrShelf, null);
+    public static void setShelvesAndTitleOfBook(BookOrShelf bookOrShelf) {
+        setShelvesAndTitleOfBook(bookOrShelf, null);
     }
 
     public static Uri getThumbnail(Context context, BookOrShelf book){

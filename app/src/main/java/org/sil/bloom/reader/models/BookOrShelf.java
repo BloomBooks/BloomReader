@@ -27,6 +27,7 @@ public class BookOrShelf {
 
     // currently only applies to books
     public String brandingProjectName;
+    public String title;
     private JSONObject bookMeta; // Lazy loaded - Use getBookMeta() to access
 
     private Set<String> bookshelves = new HashSet<String>();

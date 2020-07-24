@@ -105,7 +105,7 @@ public class BookCollection {
         // no other thread ever accesses it while in an invalid state.
         ArrayList<BookOrShelf> newList = getCopyOfFilteredBooksAndShelves();
         newList.add(bookOrShelf);
-        Collections.sort(newList, BookOrShelf.AlphabeticalComparator);
+        Collections.sort(newList, BookOrShelf.AlphanumComparator);
         replaceFilteredBooksAndShelves(newList);
         return bookOrShelf;
     }
@@ -234,7 +234,7 @@ public class BookCollection {
                 newList.add(bookOrShelf);
             }
         }
-        Collections.sort(newList, BookOrShelf.AlphabeticalComparator);
+        Collections.sort(newList, BookOrShelf.AlphanumComparator);
         // This atomic update guards against any other thread accessing the collection in an
         // incomplete state, while also preventing any delays from long locks.
         replaceFilteredBooksAndShelves(newList);

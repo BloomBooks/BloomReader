@@ -108,38 +108,7 @@ public class BookOrShelf {
         return this.name;
     }
 
-    public static final Comparator<BookOrShelf> AlphabeticalComparator = new AlphabeticalBookComparator();
-
-    public static class AlphabeticalBookComparator implements Comparator<BookOrShelf> {
-        @Override
-        public int compare(BookOrShelf one, BookOrShelf two) {
-            // We don't expect all these null checks to be necessary,
-            // but Play console shows we need at least some of them.
-
-            if (one == null ^ two == null) {
-                return (one == null) ? 1 : -1;
-            }
-            if (one == null && two == null) {
-                return 0;
-            }
-            if (one.name == null ^ two.name == null) {
-                return (one.name == null) ? 1 : -1;
-            }
-            if (one.name != null && two.name != null) {
-                int nameCompare = one.name.compareToIgnoreCase(two.name);
-                if (nameCompare != 0)
-                    return nameCompare;
-            }
-
-            if (one.path == null ^ two.path == null) {
-                return (one.path == null) ? 1 : -1;
-            }
-            if (one.path == null && two.path == null) {
-                return 0;
-            }
-            return one.path.compareToIgnoreCase(two.path);
-        }
-    }
+    public static final Comparator<BookOrShelf> AlphanumComparator = new AlphanumComparator();
 
     public boolean inShareableDirectory() {
         // We can only share files from whitelisted directories

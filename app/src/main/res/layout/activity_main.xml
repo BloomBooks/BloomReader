@@ -17,7 +17,10 @@
     Made everything too narrow so menu items were truncated and header laid
     out poorly. -->
     <!-- Oddly, we had to add itemTextColor and itemIconTint for Android 8.0
-    which was displaying text and icons as magenta. -->
+    which was displaying text and icons as magenta. The ugly hack to make the
+     background color of items transparent when checked is to overcome
+     a default behavior of making the background darker...which we don't want
+     since we're showing a checked icon. -->
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="350dp"
@@ -27,6 +30,8 @@
         app:headerLayout="@layout/nav_header_main"
         app:menu="@menu/activity_main_drawer"
         app:itemTextColor="@color/colorPrimaryDark"
-        app:itemIconTint="@color/colorPrimaryDark" />
+        app:itemIconTint="@color/colorPrimaryDark"
+        app:itemBackground="@drawable/transparent_checked"
+        />
 
 </android.support.v4.widget.DrawerLayout>

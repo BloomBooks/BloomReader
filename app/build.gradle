@@ -4,8 +4,8 @@ plugins {
 }
 
 // This is the master definition of what version of Bloom Reader we are building
-def versionMajor = 2
-def versionMinor = 1
+def versionMajor = 3
+def versionMinor = 0
 def versionRelease = getVersionRelease()
 
 int getVersionRelease() {
@@ -33,7 +33,7 @@ android {
 
     defaultConfig {
         applicationId "org.sil.bloom.reader"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 28
         versionCode versionMajor * 100000 + versionMinor * 1000 + versionRelease.toInteger()
         versionName "${versionMajor}.${versionMinor}.${versionRelease}"

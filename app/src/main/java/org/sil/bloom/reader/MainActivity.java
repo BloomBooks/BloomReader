@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.PointF;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
@@ -62,6 +64,7 @@ public class MainActivity extends BaseActivity
     private boolean alreadyOpenedFileFromIntent = false;
     private static final String ALREADY_OPENED_FILE_FROM_INTENT_KEY = "alreadyOpenedFileFromIntent";
     private boolean onResumeIsWaitingForStoragePermission = false;
+    private boolean showMessageOnLocationPermissionGranted = false;
 
     private RecyclerView mBookRecyclerView;
     BookListAdapter mBookListAdapter;       // accessed by InitializeLibraryTask
@@ -83,6 +86,15 @@ public class MainActivity extends BaseActivity
             setContentView(R.layout.blank);
             requestStoragePermission(null);
         }
+        if (Settings.load(this).shareLocation()) {
+            if (!haveLocationPermission(this)) {
+                // This is rather unexpected. When this setting is turned on, we request this
+                // permission, and if it's not given we turn it off again. So the user must have
+                // given permission and later retracted it. In case that was a mistake, we'll
+                // ask one more time...the setting will be turned off if the user says "no."
+                requestLocationPermission();
+            }
+        }
     }
 
     public static boolean haveStoragePermission(Context context) {
@@ -97,11 +109,34 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            createMainActivity(null);
-        }
-        else {
-            setContentView(R.layout.need_storage_permission);
+        // We may be getting the result of two requests for read/write external storage,
+        // or one request for fine location.
+        if (permissions.length > 0 && permissions[0].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (showMessageOnLocationPermissionGranted) {
+                    showMessageOnLocationPermissionGranted = false;
+                    showLocationMessage();
+                }
+            } else {
+                // not allowed to get location...just turn the setting off.
+                Settings settings = Settings.load(this);
+                settings.setShareLocation(false);
+                settings.save(this);
+                NavigationView navigationView = findViewById(R.id.nav_view);
+                MenuItem shareLocationItem = navigationView.getMenu().findItem(R.id.nav_share_location);
+                shareLocationItem.setChecked(false);
+            }
+        } else {
+            // the only other thing we ask for is a combination of read and write permission
+            // on local storage. If we don't get those, we've had it...show a screen telling the
+            // user so.
+            if (grantResults.length > 1
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                createMainActivity(null);
+            } else {
+                setContentView(R.layout.need_storage_permission);
+            }
         }
     }
 
@@ -128,6 +163,10 @@ public class MainActivity extends BaseActivity
 
             NavigationView navigationView = findViewById(R.id.nav_view);
             navigationView.setNavigationItemSelectedListener(this);
+            Settings settings = Settings.load(this);
+            if (settings.shareLocation()) {
+                navigationView.setCheckedItem(R.id.nav_share_location);
+            }
 
             mBookRecyclerView = findViewById(R.id.book_list2);
             SetupCollectionListView(mBookRecyclerView);
@@ -616,6 +655,9 @@ public class MainActivity extends BaseActivity
             case R.id.nav_search_for_bundles:
                 searchForBloomBooks();
                 break;
+            case R.id.nav_share_location:
+                shareLocation(item);
+                break;
             case R.id.about_reader:
                 DisplaySimpleResource(getString(R.string.about_bloom_reader), R.raw.about_reader);
                 break;
@@ -630,6 +672,58 @@ public class MainActivity extends BaseActivity
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void showLocationMessage() {
+        // Report what we will do about location in analytics.
+        LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        Location location = ReportAnalyticsTask.getLocation(lm);
+        String locationString = "unknown";
+        if (location != null) {
+            locationString = "(" + location.getLatitude() + ", " + location.getLongitude() + ")";
+        }
+        String message = "Bloom Reader will include location information in analytics reports. Current location is " + locationString;
+
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle("Share location");
+        alertDialog.setMessage(message);
+        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        alertDialog.show();
+    }
+
+    private void shareLocation(MenuItem item) {
+        Settings settings = Settings.load(this);
+        settings.setShareLocation(!settings.shareLocation());
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        item.setChecked(settings.shareLocation());
+        settings.save(this);
+        if (settings.shareLocation()) {
+            // Check that the user is actually willing to give us permission to do what was just
+            // requested.
+            if (haveLocationPermission(this)) {
+                showLocationMessage();
+            } else {
+                // We have to be granted the permission before we can show the dialog
+                showMessageOnLocationPermissionGranted = true;
+                requestLocationPermission();
+            }
+        }
+    }
+
+    public static boolean haveLocationPermission(Context context) {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ;
+    }
+
+    public void requestLocationPermission() {
+        // We don't really need GPS precision, but we do need to use GPS rather than depending
+        // on the "network" location, which might be nonexistent or inaccurate in remote locations.
+        String[] permissionsNeeded = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
+        ActivityCompat.requestPermissions(this, permissionsNeeded, 0);
     }
 
     private void DisplaySimpleResource(String title, int fileResourceId) {

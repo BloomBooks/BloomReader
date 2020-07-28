@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <group android:checkableBehavior="none" android:id="@+id/grp1">
         <item
@@ -26,6 +27,12 @@
             android:id="@+id/nav_search_for_bundles"
             android:icon="@drawable/bookshelf"
             android:title="@string/find_books_on_device"
+            />
+        <item
+            android:id="@+id/nav_share_location"
+            android:checkable="true"
+            android:title="Share GPS location for project study"
+            android:icon="@drawable/checkmark_if_checked"
             />
     </group>
     <group android:checkableBehavior="none" android:id="@+id/grp2">

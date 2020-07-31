@@ -8,6 +8,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.PointF;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
@@ -62,6 +65,7 @@ public class MainActivity extends BaseActivity
     private boolean alreadyOpenedFileFromIntent = false;
     private static final String ALREADY_OPENED_FILE_FROM_INTENT_KEY = "alreadyOpenedFileFromIntent";
     private boolean onResumeIsWaitingForStoragePermission = false;
+    private boolean showMessageOnLocationPermissionGranted = false;
 
     private RecyclerView mBookRecyclerView;
     BookListAdapter mBookListAdapter;       // accessed by InitializeLibraryTask
@@ -83,6 +87,132 @@ public class MainActivity extends BaseActivity
             setContentView(R.layout.blank);
             requestStoragePermission(null);
         }
+        requestLocationAccess();
+        requestLocationUpdates();
+    }
+
+    // If we haven't already requested the user to do the necessary stuff so we can send
+    // location analytics, do so now. But only once for each request.
+    private void requestLocationAccess() {
+        Settings settings = Settings.load(this);
+        if (!settings.haveRequestedLocation()) {
+            if (!haveLocationPermission(this)) {
+                // Just once, we will ask for this permission. First explain why, since the
+                // system dialog can't be customized and doesn't give any reason.
+                settings.setHaveRequestedLocation(true);
+                settings.save(this);
+                AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+                alertDialog.setTitle("Share location");
+                alertDialog.setMessage("Bloom Reader would like to share your location with sponsors. This helps our efforts to promote literacy. We will just ask once for this permission. You may also need to enable your location service.");
+                alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        // We want this to happen even if the user dismisses the dialog
+                        // by tapping outside it rather than by tapping OK.
+                        requestLocationPermission();
+                    }
+                });
+                alertDialog.show();
+            }
+        }
+        if (!settings.haveRequestedTurnOnGps()) {
+            // We may want to request turning on the GPS. Often this won't happen, because
+            // on the very first run, the permission will be off, so the first condition
+            // here will fail. Note, however, that if the user grants permission but location
+            // is disabled, the handler for receiving notification of the permission grant
+            // will requestTurnOnGps(). The code here is useful if the user later turns the
+            // location service off, to let him know (just once! we won't nag) that this is
+            // a problem for BR.
+            // Of course we only need do it even once if location is in fact turned off.
+            if (haveLocationPermission(this) && !isLocationEnabled(this)) {
+                // Just once, we will ask them to do this. First explain why.
+                settings.setHaveRequestedTurnOnGps(true);
+                settings.save(this);
+                // We want just a boolean. But only 'final' objects can be accessed, as this one
+                // is, in event handlers. So we make a 'final' array of one boolean, which we
+                // can change in the OK event handler. This flag lets the dismiss dialog event
+                // handler know that the dialog was dismissed by the OK button.
+                final boolean[] doTurnOn = new boolean[1];
+                doTurnOn[0] = false;
+                AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+                alertDialog.setTitle("Turn on Location");
+                alertDialog.setMessage("Bloom Reader would like to share your location with sponsors. This helps our efforts to promote literacy. To make this work, we need you to enable your location service.");
+                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                doTurnOn[0] = true;
+                                dialog.dismiss();
+                                // It doesn't seem to work to requestTurnOnGps() here.
+                                // I think the problem is that the switch from the dialog
+                                // activity back to this caused by dismiss() beats the switch
+                                // to the system settings dialog.
+                            }
+                        });
+                alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        // This gets set true if it was the OK button that dismissed the dialog.
+                        // There must be a better way to know that, but I'm sick of looking.
+                        if (doTurnOn[0]) {
+                            requestTurnOnGps();
+                        }
+                    }
+                });
+                alertDialog.show();
+            }
+        }
+    }
+
+    // Ask the system to send us location updates hourly. We don't actually want them, but
+    // we do want to ensure that getLastKnownLocation() provides reasonably current information.
+    private void requestLocationUpdates() {
+        if (!haveLocationPermission(this)) {
+            return;
+        }
+        LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        long minTimeMs = 60*60*1000; // hourly
+        // an hourly check is not expensive, and we want the age to come out under an hour if we're
+        // getting them, so don't bother with a minimum distance.
+        long minDistanceM = 0;
+        try {
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTimeMs, minDistanceM, new LocationListener() {
+                // We don't actually want the information, we just want lastKnownLocation to be
+                // reasonably current. But the API requires these to be implemented.
+                @Override
+                public void onLocationChanged(Location location) {
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+                    // Enhance: seems to get called when the user turns it on, even in the
+                    // background. Could possibly be used to show the dialog, if the user
+                    // was put into the settings screen as a result of asking to check
+                    // analytics location data. But things are complicated enough already!
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
+                }
+            });
+        } catch (SecurityException se) {
+            Log.e("locationError", "unexpectedly forbidden to request locations");
+        }
     }
 
     public static boolean haveStoragePermission(Context context) {
@@ -97,11 +227,34 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            createMainActivity(null);
-        }
-        else {
-            setContentView(R.layout.need_storage_permission);
+        // We may be getting the result of two requests for read/write external storage,
+        // or one request for fine location.
+        if (permissions.length > 0 && permissions[0].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (showMessageOnLocationPermissionGranted) {
+                    showMessageOnLocationPermissionGranted = false;
+                    showLocationMessage();
+                }
+                if (!isLocationEnabled(this)) {
+                    // They just gave us permission, so hopefully this isn't unexpected.
+                    // The pre-permission dialog does also indicate that this might be needed.
+                    requestTurnOnGps();
+                }
+                // Usually done when the activity is created, but if we didn't have permission
+                // to do it then, we should now.
+                requestLocationUpdates();
+            }
+        } else {
+            // the only other thing we ask for is a combination of read and write permission
+            // on local storage. If we don't get those, we've had it...show a screen telling the
+            // user so.
+            if (grantResults.length > 1
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                createMainActivity(null);
+            } else {
+                setContentView(R.layout.need_storage_permission);
+            }
         }
     }
 
@@ -128,6 +281,10 @@ public class MainActivity extends BaseActivity
 
             NavigationView navigationView = findViewById(R.id.nav_view);
             navigationView.setNavigationItemSelectedListener(this);
+            // This menu option should not be shown in production.
+            if (!BuildConfig.DEBUG && !BuildConfig.FLAVOR.equals("alpha")) {
+                navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
+            }
 
             mBookRecyclerView = findViewById(R.id.book_list2);
             SetupCollectionListView(mBookRecyclerView);
@@ -616,6 +773,9 @@ public class MainActivity extends BaseActivity
             case R.id.nav_search_for_bundles:
                 searchForBloomBooks();
                 break;
+            case R.id.nav_test_location_analytics:
+                showLocationAnalyticsData();
+                break;
             case R.id.about_reader:
                 DisplaySimpleResource(getString(R.string.about_bloom_reader), R.raw.about_reader);
                 break;
@@ -630,6 +790,90 @@ public class MainActivity extends BaseActivity
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void showLocationMessage() {
+        // Report what we will do about location in analytics.
+        LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        Location location = ReportAnalyticsTask.getLocation(lm);
+        String locationString = "unknown";
+        if (location != null) {
+            locationString = "(" + location.getLatitude() + ", " + location.getLongitude()
+                    + ") from provider " + location.getProvider()
+                    + " with age " + ReportAnalyticsTask.locationAgeDays(location) + " days and accuracy "
+                    + location.getAccuracy() + "m";
+        }
+        String message = "Bloom Reader will include location information in analytics reports. Current location is " + locationString;
+
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle("Share location");
+        alertDialog.setMessage(message);
+        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        alertDialog.show();
+    }
+
+    private void showLocationAnalyticsData() {
+        // Check that the user is actually willing to give us permission to do what was just
+        // requested.
+        if (haveLocationPermission(this) && isLocationEnabled(this)) {
+            showLocationMessage();
+        } else if (!haveLocationPermission(this)) {
+            // We have to be granted the permission before we can show the dialog. Usually we
+            // only request it once, but now they ASKED to see the data that needs it!
+            // Since they asked to see location data, I don't think we need to explain why
+            // we need the necessary permission.
+            showMessageOnLocationPermissionGranted = true;
+            requestLocationPermission();
+        } else {
+            // Currently this won't show the dialog after they return from the system location
+            // settings activity. There are some possible ways we might be able to make it
+            // happen, such as using the onProviderEnabled callback above, but this is a debugging
+            // tool for relatively technical people. They just need to issue the command again.
+            requestTurnOnGps();
+        }
+    }
+
+    // Has the user given permission for this app to get location data?
+    public static boolean haveLocationPermission(Context context) {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ;
+    }
+
+    // Has the user turned on the device service that makes location data possible?
+    public static boolean isLocationEnabled(Context context) {
+        // This is the currently recommended approach, but not useable before API 28.
+        // LocationManager lm = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
+        // return lm.isLocationEnabled();
+
+        // This is a deprecated approach, but the only one I can find for API 21.
+        int locationMode = 0;
+            try {
+                locationMode = android.provider.Settings.Secure.getInt(context.getContentResolver(),
+                        android.provider.Settings.Secure.LOCATION_MODE);
+
+            } catch (android.provider.Settings.SettingNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            return locationMode != android.provider.Settings.Secure.LOCATION_MODE_OFF;
+    }
+
+    public void requestLocationPermission() {
+        // We don't really need GPS precision, but we do need to use GPS rather than depending
+        // on the "network" location, which might be nonexistent or inaccurate in remote locations.
+        String[] permissionsNeeded = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
+        ActivityCompat.requestPermissions(this, permissionsNeeded, 0);
+    }
+
+    // I think of this as requesting to turn on the GPS, but actually it turns on all location
+    // services.
+    public void requestTurnOnGps() {
+        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
     }
 
     private void DisplaySimpleResource(String title, int fileResourceId) {

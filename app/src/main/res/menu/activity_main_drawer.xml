@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <group android:checkableBehavior="none" android:id="@+id/grp1">
         <item
@@ -26,6 +27,10 @@
             android:id="@+id/nav_search_for_bundles"
             android:icon="@drawable/bookshelf"
             android:title="@string/find_books_on_device"
+            />
+        <item
+            android:id="@+id/nav_test_location_analytics"
+            android:title="Check Location Analytics"
             />
     </group>
     <group android:checkableBehavior="none" android:id="@+id/grp2">

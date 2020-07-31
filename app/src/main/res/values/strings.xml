@@ -74,4 +74,14 @@
     <string name="grant_storage_permission">Grant Storage Permission</string>
     <string name="renaming_invalid_book">Renaming invalid book to %1$s</string>
     <string name="preparing_to_show_books">Preparing to show books…</string>
+
+    <string name="share_location">Share location</string>
+    <string name="request_location">Authors &amp; Illustrators like to know where their free books are being read. Can we record the town/city where you\'re reading their books?</string>
+    <string name="allow">Allow</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="dont_allow">Don\'t Allow</string>
+    <!-- Response button to the above request for permission to use location -->
+
+    <string name="turn_on_location">Turn on Location</string>
+    <string name="request_gps">Authors &amp; Illustrators like to know where their free books are being read. But we need you to turn on your device\'s ability to use its GPS Location Service</string>
 </resources>

@@ -55,4 +55,9 @@
         <item name="android:textColor">@android:color/white</item>
         <item name="android:colorBackground">@color/colorBloomRed</item>
     </style>
+
+    <style name="AlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <!-- By default it uses our default accent color, which doesn't contrast enough.-->
+        <item name="colorAccent">@color/alert_buttons</item>
+    </style>
 </resources>

@@ -9,4 +9,7 @@
     <color name="black_overlay">#66000000</color>
 
     <color name="new_book_highlight">#80D8FF</color>
+    <!-- I _think_ this is the standard Android button color...otherwise uses colorAccent above,
+    which doesn't have enough contrast -->
+    <color name="alert_buttons">#009688</color>
 </resources>

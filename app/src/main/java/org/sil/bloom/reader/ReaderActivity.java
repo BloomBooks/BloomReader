@@ -1,9 +1,11 @@
 package org.sil.bloom.reader;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -227,11 +229,15 @@ public class ReaderActivity extends BaseActivity {
                 Log.e("sendAnalytics", "Very unexpectedly we can't get a value whose key we just retrieved");
             }
         }
-        // This should be equivalent to
+        LocationManager lm = null;
+        if(MainActivity.haveLocationPermission(this)) {
+            lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        }
+        // This should be roughly equivalent to
         //Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track(event, p);
         // However reports sent like that have sometimes gotten lost when sent as the activity
         // is closing down. We hope that sending them from a distinct thread may help.
-        new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams(event, p));
+        new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams(event, p, lm ));
     }
 
     // Given a JSONObject, obtained by parsing a JSON string of book properties sent

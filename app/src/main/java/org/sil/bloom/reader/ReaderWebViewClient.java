@@ -1,6 +1,6 @@
 package org.sil.bloom.reader;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;

@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.util.HashSet;
 
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Created by Thomson on 10/19/2017.

@@ -6,7 +6,7 @@ import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import androidx.annotation.IntDef;
+import android.support.annotation.IntDef;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -14,7 +14,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.io.IOUtil;
+import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -364,7 +364,7 @@ public class IOUtilities {
 
     public static String InputStreamToString(InputStream inputStream) {
         try {
-            return IOUtil.toString(inputStream, String.valueOf(StandardCharsets.UTF_8));
+            return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -395,7 +395,7 @@ public class IOUtilities {
             TarArchiveEntry entry = new TarArchiveEntry(file, file.getName());
             tarOutput.putArchiveEntry(entry);
             FileInputStream in = new FileInputStream(file);
-            IOUtil.copy(in, tarOutput);
+            IOUtils.copy(in, tarOutput);
             in.close();
             tarOutput.closeArchiveEntry();
         }

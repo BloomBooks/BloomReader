@@ -4,12 +4,16 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-
-import androidx.appcompat.app.ActionBarDrawerToggle;
-
+import android.support.design.widget.NavigationView;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toolbar;
 
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
@@ -58,7 +62,7 @@ public class ShelfActivity extends MainActivity {
         labelText.setTextColor(forecolor);
         // This bit of magic from https://stackoverflow.com/questions/26788464/how-to-change-color-of-the-back-arrow-in-the-new-material-theme
         // makes the the back arrow use the contrasting foreground color
-        Drawable upArrow = ((androidx.appcompat.widget.Toolbar)toolbar).getNavigationIcon();
+        Drawable upArrow = ((android.support.v7.widget.Toolbar)toolbar).getNavigationIcon();
         upArrow.setColorFilter(forecolor, PorterDuff.Mode.SRC_ATOP);
 
         // And this bit, from https://stackoverflow.com/questions/1309629/how-to-change-colors-of-a-drawable-in-android,

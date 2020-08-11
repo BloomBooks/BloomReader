@@ -3,8 +3,9 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.media.MediaPlayer;
 import android.os.Handler;
-import androidx.appcompat.app.AppCompatActivity;
+import android.support.v7.app.AppCompatActivity;
 
+import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 

@@ -3,7 +3,7 @@ package org.sil.bloom.reader;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
-import androidx.annotation.NonNull;
+import android.support.annotation.NonNull;
 
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.BookOrShelf;

@@ -123,7 +123,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.2.0'
     // Supports the WiFi module's 'server' used to receive books from Bloom desktop
     implementation  'cz.msebera.android:httpclient:4.5.8'
-    implementation 'com.segment.analytics.android:analytics:4.8.2'
+    implementation 'com.segment.analytics.android:analytics:4.7.0'
     implementation 'commons-io:commons-io:20030203.000550'
     // Andrew tried this and had problems. I don't recall the details.
     //implementation  'commons-io:commons-compress:1.15'

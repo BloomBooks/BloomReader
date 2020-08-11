@@ -29,20 +29,21 @@ public class ReportAnalyticsTask extends AsyncTask<ReportAnalyticsTaskParams, Vo
         Properties p = reportAnalyticsTaskParams[0].properties;
         if (locationManager == null) {
             p.putValue("locationSource", "denied");
-        }
-        Location location = getLocation(locationManager);
-
-        // If for any reason we could not get a location, just go ahead and report without it.
-        // But note the failure.
-        if (location == null) {
-            p.putValue("locationSource", "failed");
         } else {
+            Location location = getLocation(locationManager);
 
-            p.putValue("latitude", location.getLatitude());
-            p.putValue("longitude", location.getLongitude());
-            p.putValue("locationSource", location.getProvider());
-            p.putValue("locationAgeDays", locationAgeDays(location));
-            p.putValue("locationAccuracy", location.getAccuracy());
+            // If for any reason we could not get a location, just go ahead and report without it.
+            // But note the failure.
+            if (location == null) {
+                p.putValue("locationSource", "failed");
+            } else {
+
+                p.putValue("latitude", location.getLatitude());
+                p.putValue("longitude", location.getLongitude());
+                p.putValue("locationSource", location.getProvider());
+                p.putValue("locationAgeDays", locationAgeDays(location));
+                p.putValue("locationAccuracy", location.getAccuracy());
+            }
         }
         Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track(reportAnalyticsTaskParams[0].event, reportAnalyticsTaskParams[0].properties);
         return null;

@@ -68,8 +68,10 @@ public class ReadMoonAndCapTest {
 
     private void turnToTheFirstCQ() {
         // It's on page 12, we're starting on page 1
+        // This process seems a bit flaky. I bumped up the sleep time a bit and added a flag
+        // to build.gradle(app) that disables animations for the test.
         for (int p=1; p<12; ++p) {
-            AndroidTestHelper.sleep(500); // Unfortunately necessary
+            AndroidTestHelper.sleep(700); // Unfortunately necessary
             turnThePage();
         }
     }

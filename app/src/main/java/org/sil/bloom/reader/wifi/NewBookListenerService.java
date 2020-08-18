@@ -185,6 +185,7 @@ public class NewBookListenerService extends Service {
             if (success) {
                 // We won't announce subsequent up-to-date advertisements for this book.
                 _announcedBooks.add(_title);
+                GetFromWiFiActivity.sendBookLoadedMessage(_parent, name);
             }
         }
     }
@@ -284,6 +285,7 @@ public class NewBookListenerService extends Service {
 
     public static final String BROADCAST_BOOK_LISTENER_PROGRESS = "org.sil.bloomreader.booklistener.progress";
     public static final String BROADCAST_BOOK_LISTENER_PROGRESS_CONTENT = "org.sil.bloomreader.booklistener.progress.content";
+    public static final String BROADCAST_BOOK_LOADED = "org.sil.bloomreader.booklistener.book.loaded";
 
     void startListenForUDPBroadcast() {
         UDPBroadcastThread = new Thread(new Runnable() {

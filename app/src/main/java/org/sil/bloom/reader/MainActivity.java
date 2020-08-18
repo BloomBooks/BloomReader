@@ -439,7 +439,8 @@ public class MainActivity extends BaseActivity
         try {
             // Reinitialize completely to get the new state of things.
             _bookCollection.init(this, null);
-            highlightItems(newBookPaths);
+            // Don't highlight the set of new books, just update the list displayed. (BL-8808)
+            mBookListAdapter.notifyDataSetChanged();
             resetFileObserver(); // Prevent duplicate notifications
         } catch (ExtStorageUnavailableException e) {
             Log.wtf("BloomReader", "Could not use external storage when reloading project!", e); // should NEVER happen

@@ -119,7 +119,7 @@ public class AcceptFileHandler implements HttpRequestHandler {
         }
         response.setEntity(new StringEntity(result));
         if (listener != null)
-            listener.receivedFile(filePath, result == "success");
+            listener.receivedFile(path, result == "success");
     }
 
     public interface IFileReceivedNotification {

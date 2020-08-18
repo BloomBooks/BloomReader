@@ -70,11 +70,22 @@ public class GetFromWiFiActivity extends BaseActivity {
         LocalBroadcastManager.getInstance(context).sendBroadcast(progressIntent);
     }
 
+    public static void sendBookLoadedMessage(Context context, String bookpath) {
+        Intent bookLoadedIntent = new Intent(NewBookListenerService.BROADCAST_BOOK_LISTENER_PROGRESS)
+                .putExtra(NewBookListenerService.BROADCAST_BOOK_LOADED, bookpath);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(bookLoadedIntent);
+    }
+
     // This class supports receiving the messages sent by calls to sendProgressMessage()
     private class ProgressReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            Bundle extras = intent.getExtras();
+            if (extras.containsKey(NewBookListenerService.BROADCAST_BOOK_LOADED)) {
+                newBookPaths.add(extras.getString(NewBookListenerService.BROADCAST_BOOK_LOADED));
+                return;
+            }
             TextView progressView = (TextView) findViewById(R.id.wifi_progress);
             progressView.append(intent.getStringExtra(NewBookListenerService.BROADCAST_BOOK_LISTENER_PROGRESS_CONTENT));
             // Scroll to the bottom so the new message is visible
@@ -117,8 +128,7 @@ public class GetFromWiFiActivity extends BaseActivity {
 
     @Override
     protected void onNewOrUpdatedBook(String fullPath) {
-        newBookPaths.add(fullPath);
-        playSoundFile(R.raw.bookarrival);
+        // This never gets called!
     }
 
     // Get the human-readable name of the WiFi network that the Android is connected to

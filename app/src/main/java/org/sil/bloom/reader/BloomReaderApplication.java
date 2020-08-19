@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
@@ -159,8 +160,14 @@ public class BloomReaderApplication extends Application {
             Properties p = new Properties();
             p.put("provider", "getInstallerPackageName");
             p.putValue("installer", installer); // The fields of 'campaign' don't seem to apply
+            LocationManager lm = null;
+            if(MainActivity.haveLocationPermission(context)) {
+                lm = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
+            }
 
-            Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("Install Attributed", p);
+            // essentially same as Analytics.with(...).track("Install Attributed", p); but with standard location properties added.
+            // See https://issues.bloomlibrary.org/youtrack/issue/BL-8821.
+            new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams("Install Attributed", p, lm ));
         }
     }
 

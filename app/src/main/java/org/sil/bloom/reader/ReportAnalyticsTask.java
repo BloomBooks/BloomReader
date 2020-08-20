@@ -10,6 +10,7 @@ import android.util.Log;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
+import java.security.Security;
 import java.util.List;
 
 // This task supports reporting analytics on a background thread. We are doing this not so much
@@ -28,19 +29,11 @@ public class ReportAnalyticsTask extends AsyncTask<ReportAnalyticsTaskParams, Vo
         if (locationManager == null) {
             p.putValue("locationSource", "denied");
         } else {
-            Location location = getLocation(locationManager);
-
-            // If for any reason we could not get a location, just go ahead and report without it.
+            // If for any reason we cannot set the location, just go ahead and report without it.
             // But note the failure.
-            if (location == null) {
+            Location bestLocation = setLocations(p, locationManager);
+            if (bestLocation == null) {
                 p.putValue("locationSource", "failed");
-            } else {
-
-                p.putValue("latitude", location.getLatitude());
-                p.putValue("longitude", location.getLongitude());
-                p.putValue("locationSource", location.getProvider());
-                p.putValue("locationAgeDays", locationAgeDays(location));
-                p.putValue("locationAccuracy", location.getAccuracy());
             }
         }
         Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track(reportAnalyticsTaskParams[0].event, reportAnalyticsTaskParams[0].properties);
@@ -54,29 +47,52 @@ public class ReportAnalyticsTask extends AsyncTask<ReportAnalyticsTaskParams, Vo
     }
 
     @Nullable
-    public static Location getLocation(LocationManager locationManager) {
-        try {
-            // We mainly want the most recent location we can get; precision is not very important.
-            // However, we know from experience that in poor countries, IP address doesn't give us
-            // reliable location, and we expect that wifi and other networks will be similarly
-            // unreliable as means of location. So if we have a
-            // reasonably recent high-precision location we will take that in preference to a
-            // lower-precision one that may be even more current. (Elsewhere we request one location
-            // per hour from GPS, if available, to ensure that the "last known location" for the
-            // gps provier will be reasonably recent.)
-            List<String> providers = locationManager.getAllProviders();
-            Location bestLocation = null;
-            for (String provider : providers) {
+    private static Location setLocations(Properties props, LocationManager locationManager) {
+        // We record the locations available from each of the standard providers (network, gps,
+        // and passive) explicitly.  But for the standard location for this report, we mainly
+        // want the most recent location we can get; precision is not very important.
+        // However, we know from experience that in poor countries, IP address doesn't give us
+        // reliable location, and we expect that wifi and other networks will be similarly
+        // unreliable as means of location. So if we have a
+        // reasonably recent high-precision location we will take that in preference to a
+        // lower-precision one that may be even more current. (Elsewhere we request one location
+        // per hour from GPS, if available, to ensure that the "last known location" for the
+        // gps provider will be reasonably recent.)
+        List<String> providers = locationManager.getAllProviders();
+        Location bestLocation = null;
+        for (String provider : providers) {
+            try {
                 Location location = locationManager.getLastKnownLocation(provider);
                 bestLocation = getBestLocation(bestLocation, location);
-            };
-            return bestLocation;
-        } catch (SecurityException se) {
-            // We didn't have permission. Very surprising, since we should not have been
-            // passed a locationManager if we aren't allowed to use it.
-            Log.e("locationError", "unexpectedly forbidden to get location");
-            return null;
+                if (provider.equals("gps") || provider.equals("passive") || provider.equals("network")) {
+                    // Note: "passive" may actually return "gps" or "network" as the actual provider.
+                    props.putValue(provider + "_latitude", location.getLatitude());
+                    props.putValue(provider + "_longitude", location.getLongitude());
+                    props.putValue(provider + "_locationAgeDays", locationAgeDays(location));
+                    props.putValue(provider + "_locationAccuracy", location.getAccuracy());
+                }
+            } catch (SecurityException se) {
+                // We didn't have permission. Very surprising, since we should not have been
+                // passed a locationManager if we aren't allowed to use it.
+                Log.e("locationError", "unexpectedly forbidden to get location for " + provider);
+                // other providers may be okay, so continue the for loop
+            }
         }
+        if (bestLocation != null) {
+            props.putValue("latitude", bestLocation.getLatitude());
+            props.putValue("longitude", bestLocation.getLongitude());
+            props.putValue("locationSource", bestLocation.getProvider());
+            props.putValue("locationAgeDays", locationAgeDays(bestLocation));
+            props.putValue("locationAccuracy", bestLocation.getAccuracy());
+        };
+        return bestLocation;
+    }
+
+    @Nullable
+    // This method is used in MainActivity.showLocationMessage().
+    public static Location getLocation(LocationManager locationManager) {
+        Properties props = new Properties();
+        return setLocations(props, locationManager);
     }
 
     private static long ageMinutes(Location location) {

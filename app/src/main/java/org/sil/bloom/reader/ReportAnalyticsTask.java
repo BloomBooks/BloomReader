@@ -63,6 +63,7 @@ public class ReportAnalyticsTask extends AsyncTask<ReportAnalyticsTaskParams, Vo
         for (String provider : providers) {
             try {
                 Location location = locationManager.getLastKnownLocation(provider);
+                if (location == null) continue;
                 bestLocation = getBestLocation(bestLocation, location);
                 if (provider.equals("gps") || provider.equals("passive") || provider.equals("network")) {
                     // Note: "passive" may actually return "gps" or "network" as the actual provider.

@@ -3,9 +3,9 @@
 
 
 bloom-player@^1.1.68:
-  version "1.1.73"
-  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-1.1.73.tgz#ecd4a9ce04b45b69cb0f82d3e5ef3a1a25912650"
-  integrity sha512-zv3GDGHvH/dfjVzTAh+CFLbkc2Ck6uU4Yt0AGmQBsclqh/AkDPgIDyHp5nMLG9+buXowOsuyuf5bKvTYwUlKHw==
+  version "1.1.95"
+  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-1.1.95.tgz#51688f0bf727e0497b744f503cbbb5e2c08785a6"
+  integrity sha512-AHd6qkJidIlC39R5v9g6+VvhO+jstvn90fu8RP6Xca4J3PamOgGYviL4K6gHtqwCg6M1wBlLoNywpG+AP38oBg==
   dependencies:
     dynamic-import-polyfill "^0.1.1"
 

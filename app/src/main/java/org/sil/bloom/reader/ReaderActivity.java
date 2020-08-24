@@ -28,6 +28,7 @@ public class ReaderActivity extends BaseActivity {
     private JSONObject mBookProgressReport; // to send when activity finishes, if not overwritten first
     WebView mBrowser;
     WebAppInterface mAppInterface;
+    String mDistribution;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,11 +87,20 @@ public class ReaderActivity extends BaseActivity {
             // enhance: possibly this should happen asynchronously, in a Loader like the
             // original.
             // enhance: possibly show and hide the wait view.
-            final BloomFileReader reader = new BloomFileReader(getApplicationContext(), path);
-            final File bookHtmlFile = reader.getHtmlFile();
+            final BloomFileReader fileReader = new BloomFileReader(getApplicationContext(), path);
+            final File bookHtmlFile = fileReader.getHtmlFile();
             String bookFolder = new File(bookHtmlFile.getCanonicalPath()).getParent();
             mBrowser.setWebViewClient(new ReaderWebViewClient("file://" + bookFolder));
             mBrowser.setWebChromeClient(new ReaderWebChromeClient(this));
+
+            // Optional .distribution file used for analytics
+            try {
+                mDistribution = fileReader.getFileContent(".distribution");
+                if (mDistribution != null)
+                    mDistribution = mDistribution.trim();
+            } catch (Exception e){
+                Log.e("sendAnalytics", "Unable to check presence or contents of .distribution file", e);
+            }
 
             // The url determines the content of the WebView, which is the bloomplayer.htm
             // file
@@ -224,10 +234,24 @@ public class ReaderActivity extends BaseActivity {
                 Log.e("sendAnalytics", "Very unexpectedly we can't get a value whose key we just retrieved");
             }
         }
+
+        // Location
         LocationManager lm = null;
         if(MainActivity.haveLocationPermission(this)) {
             lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         }
+
+        // Distribution
+        // We allow for the presence of a .distribution file in the .bloomPub (or .bloomd)
+        // which contains a string describing information about the source and distribution of the book.
+        // To start, the RISE II project will use it to show distribution from SD cards vs. web.
+        // In the future, we could allow sources to add up by modifying that file
+        // and appending to that string. So a book could have that file with
+        // "RISE2 SD Card, bluetooth, bluetooth". And you could have the web have a source like
+        // "bloomdesktop, bluetooth" and "bloomlibrary, bluetooth , bluetooth , bluetooth ".
+        if (mDistribution != null)
+            p.put("distributionSource", mDistribution);
+
         // This should be roughly equivalent to
         //Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track(event, p);
         // However reports sent like that have sometimes gotten lost when sent as the activity

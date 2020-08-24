@@ -97,7 +97,7 @@ public class ReaderActivity extends BaseActivity {
             // shipped with this program, combined with a param pointing to the book we just
             // decompressed.
             final String url = "file:///android_asset/bloom-player/bloomplayer.htm?url=file:///"
-                    + bookHtmlFile.getAbsolutePath()+"&showBackButton=true&allowToggleAppBar=true&initiallyShowAppBar=false&centerVertically=true";
+                    + bookHtmlFile.getAbsolutePath()+"&showBackButton=true&allowToggleAppBar=true&initiallyShowAppBar=false&centerVertically=true&hideFullScreenButton=true";
 
             mBrowser.loadUrl(url);
         } catch (Exception e) {

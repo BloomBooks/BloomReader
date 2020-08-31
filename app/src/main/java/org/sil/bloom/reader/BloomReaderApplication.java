@@ -112,10 +112,16 @@ public class BloomReaderApplication extends Application {
                         return super.openConnection(proxyUrl + path);
                     }
                 })
-                // Tracks Application Opened, Application Installed, Application Updated
+
+                // Tracks Application Opened, Application Installed, Application Updated, etc.
                 .trackApplicationLifecycleEvents()
+
+                // In Aug 2020, we decided to turn these off.
+                // They don't seem to provide anything useful in our simple app, and they
+                // are using up precious offline queue slots (max 1000).
                 // Tracks each screen opened
-                .recordScreenViews()
+                //.recordScreenViews()
+
                 .build();
 
         try {

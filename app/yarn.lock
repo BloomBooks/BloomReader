@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-bloom-player@^1.1.68:
-  version "1.1.99"
-  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-1.1.99.tgz#ab1b71a40c56ce17fbda61230a8effd2680da70c"
-  integrity sha512-wWiczF9pXyz3zhhcliry6nRbXIQS3SxT5HNoj/gmhm6V/DZT3fq4KAwr6LA0qHbFbjruFIgduz4sGYMQalWbpw==
+bloom-player@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-2.0.4.tgz#d66f7f42d513c81da837e07bca31f804171af330"
+  integrity sha512-ufCkOcVBlaHUPKxTkQMoMF/QJAbAO6MbB5W7f1sKUWWgk/lsBwxFeqvvr4hn+5SWnIuLuUCq55QqPcvMNtDsiw==
   dependencies:
     dynamic-import-polyfill "^0.1.1"
 

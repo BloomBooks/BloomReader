@@ -14,11 +14,13 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import com.google.android.material.navigation.NavigationView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
@@ -48,7 +50,9 @@ import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 
@@ -797,6 +801,7 @@ public class MainActivity extends BaseActivity
     }
 
     static final int DOWNLOAD_BOOKS_REQUEST = 1;
+    static final int OPEN_SEARCH_BOOKS_FOLDER = 2;
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
@@ -834,9 +839,9 @@ public class MainActivity extends BaseActivity
             case R.id.nav_release_notes:
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
                 break;
-//            case R.id.nav_search_for_bundles:
-//                searchForBloomBooks();
-//                break;
+            case R.id.nav_search_for_bundles:
+                searchForBloomBooks();
+                break;
             case R.id.nav_test_location_analytics:
                 showLocationAnalyticsData();
                 break;
@@ -968,8 +973,7 @@ public class MainActivity extends BaseActivity
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data)
-    {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == DOWNLOAD_BOOKS_REQUEST && resultCode == RESULT_OK) {
             String[] newBooks = data.getStringArrayExtra(NEW_BOOKS);
@@ -980,6 +984,62 @@ public class MainActivity extends BaseActivity
                 onNewOrUpdatedBook(newBooks[newBooks.length - 1]);
             }
         }
+        if (requestCode == OPEN_SEARCH_BOOKS_FOLDER
+                && resultCode == RESULT_OK) {
+            // The result data contains a URI for the document or directory that
+            // the user selected.
+            Uri uri = null;
+            if (data != null) {
+                uri = data.getData();
+                Uri childrenUri =
+                        DocumentsContract.buildChildDocumentsUriUsingTree(
+                                uri,
+                                DocumentsContract.getTreeDocumentId(uri)
+                        );
+                // get document file from children uri
+                DocumentFile tree = DocumentFile.fromTreeUri(this, childrenUri);
+                if (tree != null) {
+                    DocumentFile[] files = tree.listFiles();
+                    for (DocumentFile f : files) {
+                        Log.d("testing", f.getName());
+                        try {
+                            InputStream input = getContentResolver().openInputStream(f.getUri());
+                            File dest = new File(BookCollection.getLocalBooksDirectory(), f.getName());
+                            IOUtilities.copyFile(input, dest.getPath());
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                // get the list of the documents
+                //tree?.listFiles()?.forEach { doc ->
+                // get the input stream of a single document
+                //val iss = contentResolver.openInputStream(doc.uri)
+                // prepare the output stream
+                //val oss = FileOutputStream(File(filesDir, doc.name))
+                // copy the file
+//                    CopyFile { result ->
+//                            println("file copied? $result")
+//                    }.execute(iss, oss)
+//                }
+            }
+        }
+    }
+
+    private void searchForBloomBooks() {
+        // Choose a directory using the system's file picker.
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
+        // Provide read access to files and sub-directories in the user-selected
+        // directory.
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        // Optionally, specify a URI for the directory that should be opened in
+        // the system file picker when it loads.
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, "/BloomExternal");
+
+        startActivityForResult(intent, OPEN_SEARCH_BOOKS_FOLDER);
+
     }
 
     // This function can't be made to work in Android 11, due to the new scoped storage rules.

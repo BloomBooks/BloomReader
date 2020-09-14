@@ -156,16 +156,10 @@ public class BookCollection {
         }
         loadFromDirectories(booksDirs, activity);
     }
-    // How to get the old Bloom directory.
-//            if(!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
-//            throw new ExtStorageUnavailableException();
-    // File bloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
-    // and the old external one
-//    File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
-//    File remoteBooksDir = new File(remoteStorageDir, "BloomExternal");
 
+    // This is currently the folder where Bloom stores all its data. A couple of things might make
+    // sense to move up to the root filesDir.
     public static File getLocalBooksDirectory() {
-
         File bloomDir = new File(BloomReaderApplication.getBloomApplicationContext().getFilesDir(), "books");
         bloomDir.mkdirs();
         return bloomDir;

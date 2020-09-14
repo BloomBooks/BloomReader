@@ -29,12 +29,12 @@ android {
      * compile your app. This means your app can use the API features included in
      * this API level and lower.
      */
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId "org.sil.bloom.reader"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode versionMajor * 100000 + versionMinor * 1000 + versionRelease.toInteger()
         versionName "${versionMajor}.${versionMinor}.${versionRelease}"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'

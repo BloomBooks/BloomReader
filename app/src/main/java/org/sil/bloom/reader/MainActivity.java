@@ -13,6 +13,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.OpenableColumns;
 import com.google.android.material.navigation.NavigationView;
 import androidx.core.app.ActivityCompat;
@@ -47,6 +48,7 @@ import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
@@ -84,12 +86,12 @@ public class MainActivity extends BaseActivity
         super.onCreate(savedInstanceState);
 
         if (haveStoragePermission(this)) {
-            createMainActivity(savedInstanceState);
+            // The only way we would have storage permission, since we no longer ask for it, is
+            // if we're migrating from an earlier version. So go ahead and do it. Before we create
+            // the main activity, so creating it will see any migrated books.
+            migrateLegacyData();
         }
-        else {
-            setContentView(R.layout.blank);
-            requestStoragePermission(null);
-        }
+        createMainActivity(savedInstanceState);
         requestLocationAccess();
         requestLocationUpdates();
     }
@@ -261,17 +263,11 @@ public class MainActivity extends BaseActivity
                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)  == PackageManager.PERMISSION_GRANTED;
     }
 
-    public void requestStoragePermission(View button) {
-        String[] permissionsNeeded = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        ActivityCompat.requestPermissions(this, permissionsNeeded, 0);
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         // This override is the way we get results of ActivityCompat.requestPermissions().
-        // We make two calls to requestPermissions, one asking permission to read and write
-        // external storage, and one asking permission to use location services.
-        // This initial if determines which request we are receiving an answer about.
+        // Currently our only call to requestPermissions is asking permission to use location services.
+        //The test here just confirms that...it is really left over from when we also needed external storage.
         if (permissions.length > 0 && permissions[0].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
             // We're getting an answer about location
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -288,25 +284,55 @@ public class MainActivity extends BaseActivity
                 // to do it then, we should now.
                 requestLocationUpdates();
             }
-        } else {
-            // the only other thing we ask for is a combination of read and write permission
-            // on local storage, so we must be getting that answer if we're not getting one
-            // about location.
-            // If we don't get access to the Bloom directory, we can't function at all...show
-            // a screen telling the user so.
-            if (grantResults.length > 1
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                    && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                createMainActivity(null);
-            } else {
-                setContentView(R.layout.need_storage_permission);
+        }
+    }
+
+    private void migrateLegacyData() {
+        File oldBloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
+        File newBloomDir = BookCollection.getLocalBooksDirectory();
+        try {
+            if (!oldBloomDir.exists()) {
+                return; // nothing to migrate
+            }
+            // It's slightly wasteful to do this if we already have. However, in the release build,
+            // we delete the directory after copying it, so it will only happen once. Someone who
+            // is messing with alpha or beta might like to see any new books they fetch with the
+            // old release build.
+            boolean testMode = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
+            for (File f : oldBloomDir.listFiles()) {
+                String fileName = f.getName();
+                if (fileName == ".thumbs") {
+                    continue; // this is a directory, and the data can be rebuilt, so save time by not copying
+                }
+                File dest = new File(newBloomDir, fileName);
+                if (dest.exists()) {
+                    continue; // Don't re-copy, and especially don't overwrite a possibly newer version.
+                }
+                if (testMode) {
+                    IOUtilities.copyFile(f.getPath(), dest.getPath());
+                } else {
+                    f.renameTo(dest);
+                }
+            }
+            if (!testMode) {
+                IOUtilities.deleteFileOrDirectory(oldBloomDir);
             }
         }
+        catch (SecurityException e) {
+            Log.e("migrateLegacyData", e.getMessage());
+        }
+
+        // How to get the old BloomExternal directory.
+//            if(!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
+//            throw new ExtStorageUnavailableException();
+        //
+        // and the old external one
+//    File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
+//    File remoteBooksDir = new File(remoteStorageDir, "BloomExternal");
     }
 
     private void createMainActivity(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
-        BloomReaderApplication.setupAnalyticsIfNeeded(this);
         BloomReaderApplication.setupVersionUpdateInfo(this); // may use analytics, so must run after it is set up.
 
         _bookCollection = setupBookCollection();

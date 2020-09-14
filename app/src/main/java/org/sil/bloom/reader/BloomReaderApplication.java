@@ -48,17 +48,7 @@ public class BloomReaderApplication extends Application {
     public void onCreate() {
         super.onCreate();
         sApplicationContext = getApplicationContext();
-        if (MainActivity.haveStoragePermission(this))
-            setupAnalytics(this);
-        else
-            stillNeedToSetupAnalytics = true;
-    }
-
-    public static void setupAnalyticsIfNeeded(Context context) {
-        if (stillNeedToSetupAnalytics) {
-            stillNeedToSetupAnalytics = false;
-            setupAnalytics(context);
-        }
+        setupAnalytics(this);
     }
 
     private static void setupAnalytics(Context context) {

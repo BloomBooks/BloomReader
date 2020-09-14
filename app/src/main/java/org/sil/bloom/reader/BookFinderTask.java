@@ -11,6 +11,9 @@ import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.ENCODED_FILE_EXTENSION;
 
+// This class is currently obsolete. It implements the old "Find books on this device" command
+// which is not possible under Android 11 scoped storage. Keeping it in case we implement some
+// more limited book search command and find it useful.
 public class BookFinderTask extends AsyncTask<Void, Void, Void> {
 
     private Activity activity;

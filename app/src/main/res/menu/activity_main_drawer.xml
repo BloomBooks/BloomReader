@@ -27,11 +27,11 @@
             android:id="@+id/nav_share_app"
             android:icon="@drawable/ic_share"
             android:title="@string/share_app" />
-        <item
+        <!--item
             android:id="@+id/nav_search_for_bundles"
             android:icon="@drawable/bookshelf"
             android:title="@string/find_books_on_device"
-            />
+            /-->
         <item
             android:id="@+id/nav_test_location_analytics"
             android:title="Check Location Analytics"

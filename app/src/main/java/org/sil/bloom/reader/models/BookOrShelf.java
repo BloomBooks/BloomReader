@@ -124,12 +124,6 @@ public class BookOrShelf {
     }
 
     private boolean isInOnDeviceBloomFolder() {
-        try {
             return path.startsWith(BookCollection.getLocalBooksDirectory().getAbsolutePath());
-        }
-        catch (ExtStorageUnavailableException e) {
-            e.printStackTrace();
-            return false;
-        }
     }
 }

@@ -7,6 +7,8 @@ import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.core.content.ContextCompat;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.sil.bloom.reader.BloomFileReader;
@@ -144,7 +146,7 @@ public class BookCollection {
         return booksAndShelves;
     }
 
-    public void init(Activity activity, InitializeLibraryTask task) throws ExtStorageUnavailableException {
+    public void init(Activity activity, InitializeLibraryTask task) {
         Context context = activity.getApplicationContext();
         File[] booksDirs = getLocalAndRemovableBooksDirectories(context);
         mLocalBooksDirectory = booksDirs[0];
@@ -154,21 +156,50 @@ public class BookCollection {
         }
         loadFromDirectories(booksDirs, activity);
     }
+    // How to get the old Bloom directory.
+//            if(!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
+//            throw new ExtStorageUnavailableException();
+    // File bloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
+    // and the old external one
+//    File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
+//    File remoteBooksDir = new File(remoteStorageDir, "BloomExternal");
 
-    public static File getLocalBooksDirectory() throws ExtStorageUnavailableException {
-        if(!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
-            throw new ExtStorageUnavailableException();
-        File bloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
+    public static File getLocalBooksDirectory() {
+
+        File bloomDir = new File(BloomReaderApplication.getBloomApplicationContext().getFilesDir(), "books");
         bloomDir.mkdirs();
         return bloomDir;
     }
 
-    public static File[] getLocalAndRemovableBooksDirectories(Context context) throws ExtStorageUnavailableException {
+    private static boolean isExternalStorageReadable() {
+        return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED ||
+                Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED_READ_ONLY;
+    }
+
+    public static File[] getLocalAndRemovableBooksDirectories(Context context) {
         File localBooksDir = getLocalBooksDirectory();
-        File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
-        File remoteBooksDir = new File(remoteStorageDir, "BloomExternal");
-        if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
-            return new File[] {localBooksDir, remoteBooksDir};
+//        if (!isExternalStorageReadable()) {
+//            return new File[] {localBooksDir};
+//        }
+        File[] externalStorageVolumes =
+                ContextCompat.getExternalFilesDirs(context, null);
+        if (externalStorageVolumes.length == 0) {
+            return new File[] {localBooksDir};
+        }
+        // Enhance: possibly we should include any "books" directories on any
+        // available external storage volumes.
+        File primaryExternalStorage = externalStorageVolumes[0];
+        File remoteBooksDir = new File(primaryExternalStorage, "books");
+        try {
+            // If possible create it. This is where we hope Bloom Desktop will be able to put books.
+            // Its existence signals BD to put USB transfers here.
+            remoteBooksDir.mkdirs();
+            if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
+                return new File[] {localBooksDir, remoteBooksDir};
+        } catch (SecurityException e) {
+            // if we're not allowed to access it or create it, just ignore it.
+        }
+
         return new File[] {localBooksDir};
     }
 
@@ -272,7 +303,7 @@ public class BookCollection {
 
     // is this coming from somewhere other than where we store books?
     // then move or copy it in
-    public String ensureBookIsInCollection(Context context, Uri bookUri, String filename) throws ExtStorageUnavailableException {
+    public String ensureBookIsInCollection(Context context, Uri bookUri, String filename) {
         if (bookUri == null || bookUri.getPath() == null)
             return null; // Play console proves this is possible somehow
 

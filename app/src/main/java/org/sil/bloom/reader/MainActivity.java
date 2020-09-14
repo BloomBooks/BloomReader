@@ -309,54 +309,50 @@ public class MainActivity extends BaseActivity
         BloomReaderApplication.setupAnalyticsIfNeeded(this);
         BloomReaderApplication.setupVersionUpdateInfo(this); // may use analytics, so must run after it is set up.
 
+        _bookCollection = setupBookCollection();
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+        configureActionBar(toggle);
+
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+        // This menu option should not be shown in production.
+        if (!BuildConfig.DEBUG && !BuildConfig.FLAVOR.equals("alpha")) {
+            navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
+        }
+
+        mBookRecyclerView = findViewById(R.id.book_list2);
+        SetupCollectionListView(mBookRecyclerView);
+
+        // If we were started by some external process, we need to process any file
+        // we were given (a book or bundle)
+        if (savedInstanceState != null)
+            alreadyOpenedFileFromIntent = savedInstanceState.getBoolean(ALREADY_OPENED_FILE_FROM_INTENT_KEY, false);
+        processIntentData();
+
+        // Insert the build version and date into the appropriate control.
+        // We have to find it indirectly through the navView's header or it won't be found
+        // this early in the view construction.
+        TextView versionDate = (TextView) navigationView.getHeaderView(0).findViewById(R.id.versionDate);
         try {
-            _bookCollection= setupBookCollection();
-
-            Toolbar toolbar = findViewById(R.id.toolbar);
-            setSupportActionBar(toolbar);
-
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
-
-
-            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                    this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-            drawer.addDrawerListener(toggle);
-            toggle.syncState();
-            configureActionBar(toggle);
-
-            NavigationView navigationView = findViewById(R.id.nav_view);
-            navigationView.setNavigationItemSelectedListener(this);
-            // This menu option should not be shown in production.
-            if (!BuildConfig.DEBUG && !BuildConfig.FLAVOR.equals("alpha")) {
-                navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
-            }
-
-            mBookRecyclerView = findViewById(R.id.book_list2);
-            SetupCollectionListView(mBookRecyclerView);
-
-            // If we were started by some external process, we need to process any file
-            // we were given (a book or bundle)
-            if (savedInstanceState != null)
-                alreadyOpenedFileFromIntent = savedInstanceState.getBoolean(ALREADY_OPENED_FILE_FROM_INTENT_KEY, false);
-            processIntentData();
-
-            // Insert the build version and date into the appropriate control.
-            // We have to find it indirectly through the navView's header or it won't be found
-            // this early in the view construction.
-            TextView versionDate = (TextView)navigationView.getHeaderView(0).findViewById(R.id.versionDate);
-            try {
-                String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-                Date buildDate = new Date(BuildConfig.TIMESTAMP);
-                String date = DateFormat.format("dd MMM yyyy", buildDate).toString();
-                versionDate.setText(getVersionAndDateText(versionName, date));
-            } catch (PackageManager.NameNotFoundException e) {
-                e.printStackTrace();
-            }
+            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            Date buildDate = new Date(BuildConfig.TIMESTAMP);
+            String date = DateFormat.format("dd MMM yyyy", buildDate).toString();
+            versionDate.setText(getVersionAndDateText(versionName, date));
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
         }
-        catch(ExtStorageUnavailableException e){
-            externalStorageUnavailable(e);
-        }
+
 
         // Cleans up old-style thumbnails - could be removed someday after it's run on most devices with old-style thumbnails
         BookCollection.cleanUpOldThumbs(this);
@@ -376,7 +372,7 @@ public class MainActivity extends BaseActivity
     }
 
     // ShelfActivity does this differently.
-    protected BookCollection setupBookCollection() throws ExtStorageUnavailableException {
+    protected BookCollection setupBookCollection() {
         BloomReaderApplication.theOneBookCollection = new BookCollection();
         new InitializeLibraryTask(this).execute();
         return BloomReaderApplication.theOneBookCollection;
@@ -429,11 +425,7 @@ public class MainActivity extends BaseActivity
     // Return value indicates success.
     private boolean importBook(Uri bookUri, String filename, boolean importingOneFile) {
         String newPath = null;
-        try {
-            newPath = _bookCollection.ensureBookIsInCollection(this, bookUri, filename);
-        } catch (ExtStorageUnavailableException e) {
-            externalStorageUnavailable(e);
-        }
+        newPath = _bookCollection.ensureBookIsInCollection(this, bookUri, filename);
         if (newPath != null) {
             if (importingOneFile) {
                 openBook(this, newPath);
@@ -460,15 +452,11 @@ public class MainActivity extends BaseActivity
 
     // Called by ImportBundleTask with the list of new books and shelves
     public void bloomBundleImported(List<String> newBookPaths) {
-        try {
             // Reinitialize completely to get the new state of things.
             _bookCollection.init(this, null);
             // Don't highlight the set of new books, just update the list displayed. (BL-8808)
             mBookListAdapter.notifyDataSetChanged();
             resetFileObserver(); // Prevent duplicate notifications
-        } catch (ExtStorageUnavailableException e) {
-            Log.wtf("BloomReader", "Could not use external storage when reloading project!", e); // should NEVER happen
-        }
     }
 
     @Override
@@ -483,26 +471,21 @@ public class MainActivity extends BaseActivity
     private void resumeMainActivity() {
         onResumeIsWaitingForStoragePermission = false;
         updateFilter();
-        try {
-            // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
-            // book to our directory using MTP.
-            startObserving();
-            // And right now we will trigger the notification if anyone or anything has changed a
-            // book in our folder while we were paused.
-            String booksDir = BookCollection.getLocalBooksDirectory().getPath();
-            notifyIfNewFileChanges(booksDir);
-            String bookToHighlight = ((BloomReaderApplication) this.getApplication()).getBookToHighlight();
-            if (bookToHighlight != null) {
-                updateForNewBook(bookToHighlight);
-                ((BloomReaderApplication) this.getApplication()).setBookToHighlight(null);
-            }
+        // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
+        // book to our directory using MTP.
+        startObserving();
+        // And right now we will trigger the notification if anyone or anything has changed a
+        // book in our folder while we were paused.
+        String booksDir = BookCollection.getLocalBooksDirectory().getPath();
+        notifyIfNewFileChanges(booksDir);
+        String bookToHighlight = ((BloomReaderApplication) this.getApplication()).getBookToHighlight();
+        if (bookToHighlight != null) {
+            updateForNewBook(bookToHighlight);
+            ((BloomReaderApplication) this.getApplication()).setBookToHighlight(null);
+        }
 
-            //Periodic cleanup
-            SharingManager.fileCleanup(this);
-        }
-        catch (ExtStorageUnavailableException e){
-            externalStorageUnavailable(e);
-        }
+        //Periodic cleanup
+        SharingManager.fileCleanup(this);
     }
 
     // a hook to allow ShelfActivity to set a real filter.
@@ -825,9 +808,9 @@ public class MainActivity extends BaseActivity
             case R.id.nav_release_notes:
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
                 break;
-            case R.id.nav_search_for_bundles:
-                searchForBloomBooks();
-                break;
+//            case R.id.nav_search_for_bundles:
+//                searchForBloomBooks();
+//                break;
             case R.id.nav_test_location_analytics:
                 showLocationAnalyticsData();
                 break;
@@ -973,47 +956,51 @@ public class MainActivity extends BaseActivity
         }
     }
 
-    private void searchForBloomBooks() {
-        fileSearchState = new FileSearchState();
-        BookFinderTask.BookSearchListener bookSearchListener = new BookFinderTask.BookSearchListener() {
-            @Override
-            public void onNewBookOrShelf(File bookOrShelfFile) {
-                String filePath = bookOrShelfFile.getPath();
-                // Don't add books found in BloomExternal to Bloom!
-                // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
-                if (filePath.contains("/BloomExternal/"))
-                    return;
-                if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
-                    Log.d("BookSearch", "Found " + filePath);
-                    Uri bookUri = Uri.fromFile(bookOrShelfFile);
-                    if (importBook(bookUri, bookOrShelfFile.getName(),false))
-                        fileSearchState.bloomdsAdded.add(bookUri);
-                }
-            }
-
-            @Override
-            public void onNewBloomBundle(File bundleFile) {
-                Log.d("BookSearch", "Found " + bundleFile.getPath());
-                fileSearchState.bundlesToAdd.add(Uri.fromFile(bundleFile));
-            }
-
-            @Override
-            public void onSearchComplete() {
-                findViewById(R.id.searching_text).setVisibility(View.GONE);
-                if (fileSearchState.nothingAdded())
-                    Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
-                else {
-                    resetFileObserver();  // Prevents repeat notifications later
-                    // Multiple AsyncTask's will execute sequentially
-                    // https://developer.android.com/reference/android/os/AsyncTask#order-of-execution
-                    new ImportBundleTask(MainActivity.this).execute(fileSearchState.bundlesToAddAsArray());
-                    new FileCleanupTask(MainActivity.this).execute(fileSearchState.bloomdsAddedAsArray());
-                }
-            }
-        };
-        new BookFinderTask(this, bookSearchListener).execute();
-        findViewById(R.id.searching_text).setVisibility(View.VISIBLE);
-    }
+    // This function can't be made to work in Android 11, due to the new scoped storage rules.
+    // Keeping the code as we may implement something similar where the user selects a root folder
+    // to search in (and thus implicitly gives us permission to access it, albeit through
+    // SAF (Storage Access Framework) rather than the File system.
+//    private void searchForBloomBooks() {
+//        fileSearchState = new FileSearchState();
+//        BookFinderTask.BookSearchListener bookSearchListener = new BookFinderTask.BookSearchListener() {
+//            @Override
+//            public void onNewBookOrShelf(File bookOrShelfFile) {
+//                String filePath = bookOrShelfFile.getPath();
+//                // Don't add books found in BloomExternal to Bloom!
+//                // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
+//                if (filePath.contains("/BloomExternal/"))
+//                    return;
+//                if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
+//                    Log.d("BookSearch", "Found " + filePath);
+//                    Uri bookUri = Uri.fromFile(bookOrShelfFile);
+//                    if (importBook(bookUri, bookOrShelfFile.getName(),false))
+//                        fileSearchState.bloomdsAdded.add(bookUri);
+//                }
+//            }
+//
+//            @Override
+//            public void onNewBloomBundle(File bundleFile) {
+//                Log.d("BookSearch", "Found " + bundleFile.getPath());
+//                fileSearchState.bundlesToAdd.add(Uri.fromFile(bundleFile));
+//            }
+//
+//            @Override
+//            public void onSearchComplete() {
+//                findViewById(R.id.searching_text).setVisibility(View.GONE);
+//                if (fileSearchState.nothingAdded())
+//                    Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
+//                else {
+//                    resetFileObserver();  // Prevents repeat notifications later
+//                    // Multiple AsyncTask's will execute sequentially
+//                    // https://developer.android.com/reference/android/os/AsyncTask#order-of-execution
+//                    new ImportBundleTask(MainActivity.this).execute(fileSearchState.bundlesToAddAsArray());
+//                    new FileCleanupTask(MainActivity.this).execute(fileSearchState.bloomdsAddedAsArray());
+//                }
+//            }
+//        };
+//        new BookFinderTask(this, bookSearchListener).execute();
+//        findViewById(R.id.searching_text).setVisibility(View.VISIBLE);
+//    }
 
     @Override
     protected void onSaveInstanceState(Bundle savedInstanceState) {

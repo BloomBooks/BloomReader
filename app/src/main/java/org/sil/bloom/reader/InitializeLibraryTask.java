@@ -47,12 +47,7 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     protected Void doInBackground(Void... v) {
-        try {
-            BloomReaderApplication.theOneBookCollection.init(mMain, this);
-        }
-        catch (ExtStorageUnavailableException e) {
-            mExceptionCaught = e;
-        }
+        BloomReaderApplication.theOneBookCollection.init(mMain, this);
         return null;
     }
     @Override

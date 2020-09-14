@@ -6,7 +6,6 @@ import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
 
@@ -20,7 +19,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     abstract protected void onNewOrUpdatedBook(String fullPath);
 
     // Call in onResume() if subclass wants notifications.
-    protected void startObserving() throws ExtStorageUnavailableException{
+    protected void startObserving(){
         createFileObserver();
     }
 
@@ -33,12 +32,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     // If we import a bundle while the FileObserver is running, the user has already been notified
     // about these files, and we don't want another notification the next time onResume() is called.
     protected void resetFileObserver() {
-        try {
-            mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile(BookCollection.getLocalBooksDirectory()).time;
-        }
-        catch (ExtStorageUnavailableException e) {
-            e.printStackTrace();
-        }
+        mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile(BookCollection.getLocalBooksDirectory()).time;
     }
 
     // We want to monitor for new and changed books. We ought to be able to get notifications
@@ -59,7 +53,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     // notification.
     // There should be no contention for access to something.modified, because BloomReader never
     // accesses or locks it; all it does is check its modify time.
-    private void createFileObserver() throws ExtStorageUnavailableException {
+    private void createFileObserver() {
         final String pathToWatch = BookCollection.getLocalBooksDirectory().getPath();
         String [] mostRecent = new String[1];
         if (mHandler == null) {

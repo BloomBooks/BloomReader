@@ -108,7 +108,7 @@ public class ShelfActivity extends MainActivity {
     }
 
     @Override
-    protected BookCollection setupBookCollection() throws ExtStorageUnavailableException {
+    protected BookCollection setupBookCollection() {
         if (BloomReaderApplication.theOneBookCollection == null) {
             // Presume the OS threw away and re-created the BloomReaderApplication while we
             // weren't looking. We need to do the full job of making one.

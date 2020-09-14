@@ -72,7 +72,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
                 file.getPath().startsWith(Environment.getExternalStorageDirectory().getPath()));
     }
 
-    private boolean isABookInOurLibrary(File file) throws ExtStorageUnavailableException {
+    private boolean isABookInOurLibrary(File file) {
         // The library does not include bloombundles
         if (file.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
             return false;
@@ -89,7 +89,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return !dir.equals(getBloomDirectory());
     }
 
-    private File getBloomDirectory() throws ExtStorageUnavailableException {
+    private File getBloomDirectory() {
         if (bloomDirectory == null)
             bloomDirectory = BookCollection.getLocalBooksDirectory();
         return bloomDirectory;

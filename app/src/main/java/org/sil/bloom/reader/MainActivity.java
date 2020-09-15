@@ -199,6 +199,11 @@ public class MainActivity extends BaseActivity
             return;
         }
         LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        if (lm == null) {
+            // We saw this happen in the Play console
+            Log.e("locationError", "unexpectedly unable to get a location manager");
+            return;
+        }
         long minTimeMs = 60*60*1000; // hourly
         // an hourly check is not expensive, and we want the age to come out under an hour if we're
         // getting them, so don't bother with a minimum distance.

@@ -7,6 +7,10 @@
             android:id="@+id/nav_get_wifi"
             android:icon="@drawable/ic_wifi_black_24dp"
             android:title="@string/receive_books_over_wifi" />
+        <item
+            android:id="@+id/nav_get_usb"
+            android:icon="@drawable/ic_baseline_usb_24"
+            android:title="@string/receive_books_over_usb" />
         <!--item
             android:id="@+id/nav_catalog"
             android:icon="@drawable/ic_menu_get_books"

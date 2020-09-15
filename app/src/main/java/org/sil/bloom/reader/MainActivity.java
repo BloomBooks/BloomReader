@@ -782,6 +782,14 @@ public class MainActivity extends BaseActivity
                 Intent intent = new Intent(this, GetFromWiFiActivity.class);
                 this.startActivityForResult(intent, DOWNLOAD_BOOKS_REQUEST);
                 break;
+            case R.id.nav_get_usb:
+                final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .setTitle(getString(R.string.receive_books_over_usb))
+                        .setMessage(getString(R.string.ready_to_receive_usb))
+                        .create();
+                d.show();
+                break;
             case R.id.nav_share_app:
                 ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
                 shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);

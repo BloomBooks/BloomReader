@@ -209,7 +209,19 @@ public class MainActivity extends BaseActivity
         // getting them, so don't bother with a minimum distance.
         long minDistanceM = 0;
         try {
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTimeMs, minDistanceM, new LocationListener() {
+            List<String> allProviders = lm.getAllProviders();
+            String provider = null;
+            if (allProviders.contains(LocationManager.GPS_PROVIDER))
+                provider = LocationManager.GPS_PROVIDER;
+            else if (allProviders.contains(LocationManager.NETWORK_PROVIDER))
+                provider = LocationManager.NETWORK_PROVIDER;
+            else if (allProviders.contains(LocationManager.PASSIVE_PROVIDER))
+                provider = LocationManager.PASSIVE_PROVIDER;
+            if (provider == null) {
+                Log.e("locationError", "no location provider available");
+                return;
+            }
+            lm.requestLocationUpdates(provider, minTimeMs, minDistanceM, new LocationListener() {
                 // We don't actually want the information, we just want lastKnownLocation to be
                 // reasonably current. But the API requires these to be implemented.
                 @Override
@@ -233,7 +245,11 @@ public class MainActivity extends BaseActivity
                 }
             });
         } catch (SecurityException se) {
-            Log.e("locationError", "unexpectedly forbidden to request locations");
+            Log.e("locationError", "unexpectedly forbidden to request location");
+        } catch (Exception e) {
+            // Don't crash the program just because we can't update the location.
+            // We were getting IllegalArgumentExceptions at one point.
+            Log.e("locationError", "unexpectedly unable to request location");
         }
     }
 

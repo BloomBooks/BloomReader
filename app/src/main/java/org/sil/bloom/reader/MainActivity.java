@@ -838,16 +838,7 @@ public class MainActivity extends BaseActivity
 
     private void showLocationMessage() {
         // Report what we will do about location in analytics.
-        LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        Location location = ReportAnalyticsTask.getLocation(lm);
-        String locationString = "unknown";
-        if (location != null) {
-            locationString = "(" + location.getLatitude() + ", " + location.getLongitude()
-                    + ") from provider " + location.getProvider()
-                    + " with age " + ReportAnalyticsTask.locationAgeDays(location) + " days and accuracy "
-                    + location.getAccuracy() + "m";
-        }
-        String message = "Bloom Reader will include location information in analytics reports. Current location is " + locationString;
+        String message = "We would like to record your city because the people who share these books for free like to know where their books are being read.";
 
         AlertDialog alertDialog = new AlertDialog.Builder(this, R.style.AlertDialogTheme).create();
         alertDialog.setTitle("Share location");

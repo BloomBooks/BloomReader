@@ -850,7 +850,7 @@ public class MainActivity extends BaseActivity
         String message = "Bloom Reader will include location information in analytics reports. Current location is " + locationString;
 
         AlertDialog alertDialog = new AlertDialog.Builder(this, R.style.AlertDialogTheme).create();
-        alertDialog.setTitle("Share location");
+        alertDialog.setTitle(getString(R.string.share_location));
         alertDialog.setMessage(message);
         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
                 new DialogInterface.OnClickListener() {

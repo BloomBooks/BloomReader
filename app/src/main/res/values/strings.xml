@@ -80,7 +80,7 @@
     <string name="preparing_to_show_books">Preparing to show books…</string>
 
     <string name="share_location">Share location</string>
-    <string name="request_location">Authors &amp; Illustrators like to know where their free books are being read. Can we record the town/city where you\'re reading their books?</string>
+    <string name="request_location">We would like to record your city because the people who share these books for free like to know where their books are being read.</string>
     <string name="allow">Allow</string>
     <!-- Response button to the above request for permission to use location -->
     <string name="dont_allow">Don\'t Allow</string>

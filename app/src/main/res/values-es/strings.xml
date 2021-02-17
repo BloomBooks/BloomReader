@@ -64,9 +64,21 @@
     <string name="about_bloom">Acerca de Bloom</string>
     <string name="about_sil">Acerca de SIL</string>
     <string name="or">o</string>
+    <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
     <string name="receive_books_over_wifi">Recibir libros desde la computadora</string>
+    <!-- Used both as a menu option and as the title of the resulting dialog-->
+    <string name="receive_books_over_usb">Recibir libros por USB</string>
+    <string name="ready_to_receive_usb">Bloom Reader está listo para recibir libros a través del cable USB desde el programa Bloom Editor</string>
     <string name="need_storage_permission">Bloom Reader necesita acceso al almacenamiento de archivos para funcionar.</string>
     <string name="grant_storage_permission">Otorgar permiso de almacenamiento</string>
     <string name="renaming_invalid_book">Renombrando el libro inválido a %1$s</string>
     <string name="preparing_to_show_books">Preparando para mostrar los libros…</string>
+    <string name="share_location">Compartir ubicación</string>
+    <string name="request_location">Nos gustaría registrar la ciudad donde usted reside porque aquellos que gratuitamente comparten estos libros les gusta saber dónde se leen sus libros.</string>
+    <string name="allow">Si</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="dont_allow">No</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="turn_on_location">Activar ubicación</string>
+    <string name="request_gps">A los autores e ilustradores les gusta saber dónde se leen sus libros gratuitos. Pero necesitamos que usted active el servicio de localización GPS en su dispositivo.</string>
 </resources>

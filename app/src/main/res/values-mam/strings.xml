@@ -64,9 +64,21 @@
     <string name="about_bloom">Tqanil tib\'aj Bloom</string>
     <string name="about_sil">Tqanil tib\'aj SIL</string>
     <string name="or">mo</string>
+    <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
     <string name="receive_books_over_wifi">K\'amol u\'jb\'il ntzaj q\'o\'n toj xk\'utz\'ib\'</string>
+    <!-- Used both as a menu option and as the title of the resulting dialog-->
+    <string name="receive_books_over_usb">Receive books via USB</string>
+    <string name="ready_to_receive_usb">Bloom Reader is ready to receive books via USB cable from the Bloom Editor program</string>
     <string name="need_storage_permission">Taj Bloom Reader amb\'il tu\'n tokx toj k\'ub\'il kye qe nak\'ub\'il aq\'unb\'il tu\'ntzan taq\'unan.</string>
     <string name="grant_storage_permission">Q\'ob\'il tu\'mel te k\'ub\'il</string>
     <string name="renaming_invalid_book">In ok q\'etl juntl tb\'i u\'jb\'il  mixti\' xk\'amli %1$s</string>
     <string name="preparing_to_show_books">Preparing to show books…</string>
+    <string name="share_location">Share location</string>
+    <string name="request_location">We would like to record your city because the people who share these books for free like to know where their books are being read.</string>
+    <string name="allow">Allow</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="dont_allow">Don\'t Allow</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="turn_on_location">Turn on Location</string>
+    <string name="request_gps">Authors &amp; Illustrators like to know where their free books are being read. But we need you to turn on your device\'s ability to use its GPS Location Service</string>
 </resources>

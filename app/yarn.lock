@@ -2,14 +2,27 @@
 # yarn lockfile v1
 
 
-bloom-player@^2.0.4:
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-2.0.4.tgz#d66f7f42d513c81da837e07bca31f804171af330"
-  integrity sha512-ufCkOcVBlaHUPKxTkQMoMF/QJAbAO6MbB5W7f1sKUWWgk/lsBwxFeqvvr4hn+5SWnIuLuUCq55QqPcvMNtDsiw==
+bloom-player@^2.0.45:
+  version "2.0.45"
+  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-2.0.45.tgz#bc84d3b3159b302765bcc1afa38701c894877d9c"
+  integrity sha512-ZdQkVRyG6D24qwIRWAez7LC5d7STHDcyJyryOaMAAkPU1w1+qILMxn9fXslgsvgYc0VtXslbyWU/EIaEV31JcA==
   dependencies:
     dynamic-import-polyfill "^0.1.1"
+    jquery.nicescroll "^3.7.6"
 
 dynamic-import-polyfill@^0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/dynamic-import-polyfill/-/dynamic-import-polyfill-0.1.1.tgz#e1f9eb1876ee242bd56572f8ed4df768e143083f"
   integrity sha512-m953zv0w5oDagTItWm6Auhmk/pY7EiejaqiVbnzSS3HIjh1FCUeK7WzuaVtWPNs58A+/xpIE+/dVk6pKsrua8g==
+
+jquery.nicescroll@^3.7.6:
+  version "3.7.6"
+  resolved "https://registry.yarnpkg.com/jquery.nicescroll/-/jquery.nicescroll-3.7.6.tgz#afeff3e80658dabe4f78d2d2e84250060fea0852"
+  integrity sha1-r+/z6AZY2r5PeNLS6EJQBg/qCFI=
+  dependencies:
+    jquery ">=1.8.3"
+
+jquery@>=1.8.3:
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.5.1.tgz#d7b4d08e1bfdb86ad2f1a3d039ea17304717abb5"
+  integrity sha512-XwIBPqcMn57FxfT+Go5pzySnm4KWkT1Tv7gjrpT1srtf8Weynl6R273VJ5GjkRb51IzMp5nbaPjJXMWeju2MKg==

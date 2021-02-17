@@ -36,7 +36,7 @@
     <string name="failed_book_import2">Bloom Reader n\'a pas pu lire le livre «%1$s».</string>
     <string name="external_storage_unavailable">Impossible d\'accéder à l\'emplacement où sont conservés les fichiers. Manquerait-il la carte SD ?</string>
     <string name="share_app_link"><u>Partager le lien pour avoir Bloom Reader sur Google Play</u></string>
-    <string name="share_app_with_friend">Partagez cette application Bloom Reader avec des amis !</string>
+    <string name="share_app_with_friend">Partagez cette application Bloom Reader avec des amis !</string>
     <string name="share_books_with_friend">Partager tous vos livres avec un ami qui a déjà Bloom Reader .</string>
     <string name="share_app_via">Partager l\'application via</string>
     <string name="share_link_via">Partager le lien via</string>
@@ -64,9 +64,21 @@
     <string name="about_bloom">À propos de Bloom</string>
     <string name="about_sil">À propos de SIL</string>
     <string name="or">ou</string>
+    <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
     <string name="receive_books_over_wifi">Recevoir des livres depuis un ordinateur</string>
+    <!-- Used both as a menu option and as the title of the resulting dialog-->
+    <string name="receive_books_over_usb">Recevoir les livres par USB</string>
+    <string name="ready_to_receive_usb">Bloom Reader est prêt à recevoir des livres par câble USB depuis le programme Bloom Editor</string>
     <string name="need_storage_permission">Pour fonctionner, Bloom Reader doit accéder au stockage des fichiers.</string>
     <string name="grant_storage_permission">Accorder la permission de stockage</string>
     <string name="renaming_invalid_book">Changement de nom d\'un livre non valable à %1$s</string>
     <string name="preparing_to_show_books">Préparation de l\'affichage des livres…</string>
+    <string name="share_location">Partager ma localisation</string>
+    <string name="request_location">Nous aimerions enregistrer le nom de votre ville parce que les gens qui partagent ces livres gratuitement aiment savoir où on lit leurs livres.</string>
+    <string name="allow">Autoriser</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="dont_allow">Ne pas autoriser</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="turn_on_location">Activer les services de localisation</string>
+    <string name="request_gps">Les auteurs &amp; les illustrateurs aiment savoir où on lit leurs livres gratuits. Mais nous avons besoin que vous activiez la capacité de votre appareil à utiliser son service de localisation GPS</string>
 </resources>

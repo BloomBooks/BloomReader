@@ -64,9 +64,21 @@
     <string name="about_bloom">د بلوم په اړه</string>
     <string name="about_sil">د SIL په اړه</string>
     <string name="or">یا</string>
+    <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
     <string name="receive_books_over_wifi">له کمپیوټر څخه کتابونه ترلاسه کول</string>
+    <!-- Used both as a menu option and as the title of the resulting dialog-->
+    <string name="receive_books_over_usb">Receive books via USB</string>
+    <string name="ready_to_receive_usb">Bloom Reader is ready to receive books via USB cable from the Bloom Editor program</string>
     <string name="need_storage_permission">بلوم ریډر د کار کولو لپاره د فایل ذخیره کولو ته لاسرسی ته اړتیا لري.</string>
     <string name="grant_storage_permission">د زېرمه کولو اجازه ورکړه</string>
     <string name="renaming_invalid_book">%1$s ته د ناسم کتاب نوم بدلول</string>
     <string name="preparing_to_show_books">Preparing to show books…</string>
+    <string name="share_location">Share location</string>
+    <string name="request_location">We would like to record your city because the people who share these books for free like to know where their books are being read.</string>
+    <string name="allow">Allow</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="dont_allow">Don\'t Allow</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="turn_on_location">Turn on Location</string>
+    <string name="request_gps">Authors &amp; Illustrators like to know where their free books are being read. But we need you to turn on your device\'s ability to use its GPS Location Service</string>
 </resources>

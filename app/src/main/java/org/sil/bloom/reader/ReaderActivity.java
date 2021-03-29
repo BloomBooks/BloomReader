@@ -110,6 +110,13 @@ public class ReaderActivity extends BaseActivity {
                     + bookHtmlFile.getAbsolutePath()+"&showBackButton=true&allowToggleAppBar=true&initiallyShowAppBar=false"
                     + "&centerVertically=true&hideFullScreenButton=true&independent=false&host=bloomreader";
 
+            // I'm not sure if this really a helpful setting or if we are actually just working around a bug in Android Webview...
+            // Randomly, some devices started having display issues with videos. They would be very jerky or skip.
+            // It seemed to be related to a recent version of Android Webview as uninstalling updates seemed to fix it
+            // and reinstalling seemed to break it. But we could never prove it definitively.
+            // But then adding this line seems to make the problem go away. See https://issues.bloomlibrary.org/youtrack/issue/BL-9727.
+            mBrowser.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
             mBrowser.loadUrl(url);
         } catch (Exception e) {
             Log.e("Load", e.getMessage());

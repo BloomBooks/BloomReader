@@ -290,10 +290,70 @@ public class BookCollection {
         }
         boolean copied = IOUtilities.copyBloomdFile(context, bookUri, destination);
         if(copied){
+            destination = FixDuplicate(destination);
             // it's probably not in our list that we display yet, so make an entry there
             addBookIfNeeded(destination);
             return destination;
         } else{
+            return null;
+        }
+    }
+
+    // If we can determine that newBloomFile is the same book as one that we have already,
+    // replace the existing one with the new one, and return its path.
+    // The particular kind of duplicates we're looking for are those browsers generate
+    // when the user downloads a new version of a book. So if the newBloomFile looks like
+    // X (n) and we already have a book X, we'll check to see if they are the same.
+    // Ideally, we might check all books, but I think in general that will be too slow.
+    String FixDuplicate(String newBloomFile){
+        final File bloomFile = new File(newBloomFile);
+        File parent = bloomFile.getParentFile();
+        String name = bloomFile.getName();
+        int index = name.lastIndexOf("(");
+
+        if (index < 0)
+            return newBloomFile; // Can't be this sort of duplicate
+        String similarBookName = name.substring(0, index);
+        // Trim white space from the end...but not at the beginning, in the unlikely event of any being there.
+        int lastSpace = similarBookName.lastIndexOf(" ");
+        if (lastSpace >= 0)
+            similarBookName = similarBookName.substring(0,lastSpace);
+
+        // This is what we'd expect the original to be called if previously downloaded.
+        String possibleMatch = parent.getPath() + File.separator + similarBookName + IOUtilities.BOOK_FILE_EXTENSION;
+        final File similarBookFile = new File(possibleMatch);
+        if (!similarBookFile.exists())
+            return newBloomFile; // we don't have a book at the expected location. Maybe the book name really has parens! Or deleted previously.
+
+        String oldId = getBookId(similarBookFile);
+        String newId = getBookId(bloomFile);
+        if (!oldId.equals(newId) || oldId == null)
+            return newBloomFile; // can't confirm they are the same book, keep both
+
+        // They are the same! Fix things.
+        similarBookFile.delete();
+        bloomFile.renameTo(similarBookFile);
+        return possibleMatch;
+// Some of this research might be useful if we decide on a more complex approach to
+// finding possible matches.
+//        final String searchFor = similarBookName; // must be final to use in filter
+//        FilenameFilter filter = new FilenameFilter() {
+//
+//            public boolean accept(File f, String name)
+//            {
+//                return name.startsWith(searchFor);
+//            }
+//        };
+//        File[] matches = parent.listFiles(filter);
+    }
+
+    String getBookId(File bloomFile) {
+        try {
+            byte[] metaBytes = IOUtilities.ExtractZipEntry(bloomFile, "meta.json");
+            String json = new String(metaBytes, "UTF-8");
+            JSONObject data = new JSONObject(json);
+            return data.getString("bookInstanceId");
+        } catch (Exception e) {
             return null;
         }
     }

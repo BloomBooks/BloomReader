@@ -12,6 +12,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
@@ -51,7 +52,6 @@ import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
@@ -90,9 +90,8 @@ public class MainActivity extends BaseActivity
         super.onCreate(savedInstanceState);
 
         if (haveStoragePermission(this)) {
-            // The only way we would have storage permission, since we no longer ask for it, is
-            // if we're migrating from an earlier version. So go ahead and do it. Before we create
-            // the main activity, so creating it will see any migrated books.
+            // We are either migrating from a previous version or running pre-Android-11.
+            // Migrate before we create the main activity, so it will see any migrated books.
             migrateLegacyData();
         }
         createMainActivity(savedInstanceState);
@@ -264,14 +263,17 @@ public class MainActivity extends BaseActivity
 
     public static boolean haveStoragePermission(Context context) {
         return ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-               ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)  == PackageManager.PERMISSION_GRANTED;
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public void requestStoragePermission() {
+        String[] permissionsNeeded = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        ActivityCompat.requestPermissions(this, permissionsNeeded, 0);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         // This override is the way we get results of ActivityCompat.requestPermissions().
-        // Currently our only call to requestPermissions is asking permission to use location services.
-        //The test here just confirms that...it is really left over from when we also needed external storage.
         if (permissions.length > 0 && permissions[0].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
             // We're getting an answer about location
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -1027,6 +1029,16 @@ public class MainActivity extends BaseActivity
     }
 
     private void searchForBloomBooks() {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+            if (!haveStoragePermission(this)) {
+                requestStoragePermission();
+            }
+            if (haveStoragePermission(this)) {
+                searchForBloomBooks_preAndroid11();
+                return;
+            }
+        }
+
         // Choose a directory using the system's file picker.
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
 
@@ -1039,54 +1051,51 @@ public class MainActivity extends BaseActivity
         intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, "/BloomExternal");
 
         startActivityForResult(intent, OPEN_SEARCH_BOOKS_FOLDER);
-
     }
 
     // This function can't be made to work in Android 11, due to the new scoped storage rules.
-    // Keeping the code as we may implement something similar where the user selects a root folder
-    // to search in (and thus implicitly gives us permission to access it, albeit through
-    // SAF (Storage Access Framework) rather than the File system.
-//    private void searchForBloomBooks() {
-//        fileSearchState = new FileSearchState();
-//        BookFinderTask.BookSearchListener bookSearchListener = new BookFinderTask.BookSearchListener() {
-//            @Override
-//            public void onNewBookOrShelf(File bookOrShelfFile) {
-//                String filePath = bookOrShelfFile.getPath();
-//                // Don't add books found in BloomExternal to Bloom!
-//                // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
-//                if (filePath.contains("/BloomExternal/"))
-//                    return;
-//                if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
-//                    Log.d("BookSearch", "Found " + filePath);
-//                    Uri bookUri = Uri.fromFile(bookOrShelfFile);
-//                    if (importBook(bookUri, bookOrShelfFile.getName(),false))
-//                        fileSearchState.bloomdsAdded.add(bookUri);
-//                }
-//            }
-//
-//            @Override
-//            public void onNewBloomBundle(File bundleFile) {
-//                Log.d("BookSearch", "Found " + bundleFile.getPath());
-//                fileSearchState.bundlesToAdd.add(Uri.fromFile(bundleFile));
-//            }
-//
-//            @Override
-//            public void onSearchComplete() {
-//                findViewById(R.id.searching_text).setVisibility(View.GONE);
-//                if (fileSearchState.nothingAdded())
-//                    Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
-//                else {
-//                    resetFileObserver();  // Prevents repeat notifications later
-//                    // Multiple AsyncTask's will execute sequentially
-//                    // https://developer.android.com/reference/android/os/AsyncTask#order-of-execution
-//                    new ImportBundleTask(MainActivity.this).execute(fileSearchState.bundlesToAddAsArray());
-//                    new FileCleanupTask(MainActivity.this).execute(fileSearchState.bloomdsAddedAsArray());
-//                }
-//            }
-//        };
-//        new BookFinderTask(this, bookSearchListener).execute();
-//        findViewById(R.id.searching_text).setVisibility(View.VISIBLE);
-//    }
+    // However, devices running 10 or less can still use this, more straightforward method.
+    private void searchForBloomBooks_preAndroid11() {
+        fileSearchState = new FileSearchState();
+        BookFinderTask.BookSearchListener bookSearchListener = new BookFinderTask.BookSearchListener() {
+            @Override
+            public void onNewBookOrShelf(File bookOrShelfFile) {
+                String filePath = bookOrShelfFile.getPath();
+                // Don't add books found in BloomExternal to Bloom!
+                // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
+                if (filePath.contains("/BloomExternal/"))
+                    return;
+                if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
+                    Log.d("BookSearch", "Found " + filePath);
+                    Uri bookUri = Uri.fromFile(bookOrShelfFile);
+                    if (importBook(bookUri, bookOrShelfFile.getName(),false))
+                        fileSearchState.bloomdsAdded.add(bookUri);
+                }
+            }
+
+            @Override
+            public void onNewBloomBundle(File bundleFile) {
+                Log.d("BookSearch", "Found " + bundleFile.getPath());
+                fileSearchState.bundlesToAdd.add(Uri.fromFile(bundleFile));
+            }
+
+            @Override
+            public void onSearchComplete() {
+                findViewById(R.id.searching_text).setVisibility(View.GONE);
+                if (fileSearchState.nothingAdded())
+                    Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
+                else {
+                    resetFileObserver();  // Prevents repeat notifications later
+                    // Multiple AsyncTask's will execute sequentially
+                    // https://developer.android.com/reference/android/os/AsyncTask#order-of-execution
+                    new ImportBundleTask(MainActivity.this).execute(fileSearchState.bundlesToAddAsArray());
+                    new FileCleanupTask(MainActivity.this).execute(fileSearchState.bloomdsAddedAsArray());
+                }
+            }
+        };
+        new BookFinderTask(this, bookSearchListener).execute();
+        findViewById(R.id.searching_text).setVisibility(View.VISIBLE);
+    }
 
     @Override
     protected void onSaveInstanceState(Bundle savedInstanceState) {

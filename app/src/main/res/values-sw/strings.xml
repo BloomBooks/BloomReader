@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Bloom Reader</string>
+    <string name="delete">Futa</string>
+    <string name="deleteConfirmation">Futa kutoka kwenye kifaa?</string>
+    <!-- %1$s is a book title -->
+    <string name="deleteExplanationBook">%1$s zitatoweka kutoka kwenye kifaa chako.</string>
+    <!-- %1$s is the name of the shelf -->
+    <string name="deleteExplanationEmptyShelf">Rafu ya vitabu ya %1$s itatoweka kutoka kwenye kifaa chako.</string>
+    <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
+    <string name="deleteExplanationShelf">Vitabu vyote vya %1$d na rafu ya vitabu kwenye rafu ya vitabu vya %2$s vitatoweka kutoka kwenye kifaa chako.</string>
+    <string name="deleteConfirmButton">Futa sasa</string>
+    <string name="share">Shiriki</string>
+    <!-- %1$s is a book title -->
+    <string name="shareBook">Shiriki%1$s</string>
+    <string name="cancel">Ghairi</string>
+    <string name="ok">Sawa</string>
+    <string name="navigation_drawer_open">Fungua droo ya uabiri</string>
+    <string name="navigation_drawer_close">Funga droo ya uabiri</string>
+    <string name="get_books_local_wifi">Pokea vitabu kutoka Bloom kwenye kompyuta, kupitia Wifi</string>
+    <!-- %1$s is a book title -->
+    <string name="already_have_version">Tumepata \"%1$s\", tayari ina toleo hili.</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_new_version">Tumepata toleo jipya la \"%1$s\" kutoka \"%2$s\", linaomba…</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_file">Tumepata%1$s\"kutoka\"%2$s\", inaomba…</string>
+    <!-- As in, Done receiving a file-->
+    <string name="done">Imekamilika.</string>
+    <string name="transferFailed">Hitilafu imetokea. Ikiwa chanzo bado kinapatikana, tutajaribu tena hivi karibuni.</string>
+    <string name="downloading">Inapakua…</string>
+    <!-- %1$s is a description of the sending network -->
+    <string name="looking_for_adds">Inatafuta matangazo ya vitabu kwenye mtandao wa WiFi %1s…</string>
+    <string name="device_hotspot">Hotspot ya Kifaa</string>
+    <string name="no_wifi_connected">Kifaa haionekani kushikamana na mtandao wa WiFi.</string>
+    <string name="failed_book_import">Imeshindwa kuagiza kitabu.</string>
+    <string name="failed_book_import2">Bloom Reader haikuweza kusoma kitabu \"%1$s\".</string>
+    <string name="external_storage_unavailable">Imeshindwa kufikia hifadhi ya faili. Je! Kadi ya SD inakosekana?</string>
+    <string name="share_app_link"><u> Shiriki kiungo ili upate Bloom Reader kwenye Google Play </u></string>
+    <string name="share_app_with_friend">Shiriki programu hii ya Bloom Reader na rafiki!</string>
+    <string name="share_books_with_friend">Shiriki vitabu vyako vyote na rafiki ambaye tayari ameweka Bloom Reader.</string>
+    <string name="share_app_via">Shiriki Programu kupitia</string>
+    <string name="share_link_via">Shiriki Kiungo kupitia</string>
+    <string name="share_books_via">Shiriki vitabu kupitia</string>
+    <!-- %1$s is the app name (defined by app_name) -->
+    <string name="recommend_app">Soma vitabu vya Bloom na programu ya%1$s:</string>
+    <string name="failed_to_share_apk">Imeshindwa kushiriki faili ya programu.</string>
+    <string name="failed_to_share_books">Imeshindwa kushiriki vitabu</string>
+    <string name="failed_to_open_book">Haiwezi kufungua kitabu</string>
+    <!-- %1$s is a book title -->
+    <string name="missing_book">%1$shaipo. Inawezekana ilikuwa kwenye kadi ya sd ambayo iliondolewa, au inaweza kuwa ilifutwa.</string>
+    <string name="device_storage_is_full">Imeshindwa kufungua kitabu. Hifadhi ya kifaa imejaa. Fungua nafasi na ujaribu tena.</string>
+    <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
+    <string name="adding_book">Kuongeza %1$s...</string>
+    <string name="bundle_import_out_of_space">Hakuna nafasi ya kutosha kwenye kifaa kwa vitabu vyote kwenye kifungu hiki.</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">Kulikuwa na tatizo kusoma %1$s. Jaribu kuipakua tena.</string>
+    <string name="share_app">Shirki programu ya Bloom Reader</string>
+    <string name="share_books">Shiriki Vitabu</string>
+    <string name="find_books_on_device">Pata vitabu vya Bloom kwenye kifaa hiki</string>
+    <string name="searching">Inatafuta...</string>
+    <string name="no_books_added">Hakuna vitabu vipya vya Bloom au vifungu vinavyopatikana kwenye kifaa.</string>
+    <string name="release_notes">Toa Maelezo</string>
+    <string name="about_bloom_reader">Kuhusu programu ya Bloom reader</string>
+    <string name="about_bloom">Kuhusu Bloom</string>
+    <string name="about_sil">Kuhusu SIL</string>
+    <string name="or">au</string>
+    <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
+    <string name="receive_books_over_wifi">Pokea vitabu kupitia Wi-Fi</string>
+    <!-- Used both as a menu option and as the title of the resulting dialog-->
+    <string name="receive_books_over_usb">Pokea vitabu kupitia USB</string>
+    <string name="ready_to_receive_usb">Bloom Reader iko tayari kupokea vitabu kupitia kebo ya USB kutoka kwa programu ya Mhariri wa Bloom</string>
+    <string name="need_storage_permission">Bloom Reader inahitaji ufikiaji wa kuhifadhi faili ili ifanye kazi.</string>
+    <string name="grant_storage_permission">Toa Ruhusa ya Kuhifadhi</string>
+    <string name="renaming_invalid_book">Kubadilisha jina la kitabu batili kuwa%1$s</string>
+    <string name="preparing_to_show_books">Inajiandaa Kuonyesha Vitabu…</string>
+    <string name="share_location">Shiriki eneo</string>
+    <string name="request_location">Tungependa kurekodi jiji lako kwa sababu watu wanaoshiriki vitabu hivi bure wanapenda kujua mahali ambapo vitabu vyao vinasomwa.</string>
+    <string name="allow">Ruhusu</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="dont_allow">Usiruhusu</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="turn_on_location">Onyesha eneo</string>
+    <string name="request_gps">Waandishi &amp; Wafafanuzi hupenda kujua ni wapi vitabu vyao vya bure husomwa. Lakini tunahitaji uwashe uwezo wa kifaa chako kutumia Huduma yake ya eneo ya GPS</string>
+</resources>

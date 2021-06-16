@@ -184,7 +184,10 @@ public class MainActivity extends BaseActivity
                         }
                         Properties p = new Properties();
                         p.putValue("granted", doTurnOn[0]);
-                        Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track("requestGps", p);
+
+                        Context context = BloomReaderApplication.getBloomApplicationContext();
+                        if (context != null)
+                            Analytics.with(context).track("requestGps", p);
                     }
                 });
                 alertDialog.show();

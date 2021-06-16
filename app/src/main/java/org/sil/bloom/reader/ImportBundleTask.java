@@ -147,9 +147,10 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
                     importError.getBundleName() + ": " + exception.getMessage());
                 importError.mException.printStackTrace();
 
-                toastMessage = importError.mException.getMessage().contains("ENOSPC") ?
-                    activity.getString(R.string.bundle_import_out_of_space) :
-                    activity.getString(R.string.bundle_import_error, bundleName);
+                toastMessage = importError.mException.getMessage() != null &&
+                        importError.mException.getMessage().contains("ENOSPC") ?
+                        activity.getString(R.string.bundle_import_out_of_space) :
+                        activity.getString(R.string.bundle_import_error, bundleName);
 
                 // IOExceptions skip the file cleanup; so do it now.
                 new FileCleanupTask(activity).execute(importError.mUri);

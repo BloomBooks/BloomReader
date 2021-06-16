@@ -79,6 +79,9 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
 
     static private void addProgressViews(MainActivity main)
     {
+        if (main == null)
+            return;
+
         // Add TextView and ProgressBar to main content LinearLayout.  These will be removed automatically
         // when the asynchronous loading task finishes.
         LinearLayout linearLayout = main.findViewById(R.id.content_main);
@@ -108,6 +111,9 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
 
     static private void removeProgressViews(MainActivity main)
     {
+        if (main == null)
+            return;
+
         // Remove TextView and ProgressBar from main content LinearLayout
         main.mLoadingTextView.setVisibility(View.INVISIBLE);
         main.mLoadingProgressBar.setVisibility(View.INVISIBLE);

@@ -1,5 +1,6 @@
 package org.sil.bloom.reader;
 
+import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
@@ -36,7 +37,12 @@ public class ReportAnalyticsTask extends AsyncTask<ReportAnalyticsTaskParams, Vo
                 p.putValue("locationSource", "failed");
             }
         }
-        Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track(reportAnalyticsTaskParams[0].event, reportAnalyticsTaskParams[0].properties);
+
+        Context context = BloomReaderApplication.getBloomApplicationContext();
+        // Play Console reports we sometimes get null here which causes a crash.
+        // I wish I understood what was happening better, but anything is better than crashing the app just to send analytics.
+        if (context != null)
+            Analytics.with(context).track(reportAnalyticsTaskParams[0].event, reportAnalyticsTaskParams[0].properties);
         return null;
     }
 

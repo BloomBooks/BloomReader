@@ -190,8 +190,11 @@ public class BloomReaderApplication extends Application {
         // The value used with identify() needs to be globally unique. Just in case somebody
         // might reuse a deviceId in a different project, we concatenate them.
         String deviceId = project + "-" + device;
-        Analytics.with(getBloomApplicationContext()).identify(deviceId);
-        Analytics.with(getBloomApplicationContext()).group(project);
+        Context context = getBloomApplicationContext();
+        if (context != null) {
+            Analytics.with(context).identify(deviceId);
+            Analytics.with(context).group(project);
+        }
     }
 
     private static boolean parseDeviceIdFile(){

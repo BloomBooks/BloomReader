@@ -137,6 +137,7 @@ public class SharingManager {
 
         // Clean up book files staged in cache dir
         String[] cacheItems = context.getCacheDir().list();
+        if (cacheItems == null) { return; }
         for (int i=0; i<cacheItems.length; ++i) {
             if (cacheItems[i].endsWith(BOOK_FILE_EXTENSION)){
                 File file = new File(context.getCacheDir() + File.separator + cacheItems[i]);

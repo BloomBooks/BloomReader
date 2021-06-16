@@ -1,6 +1,7 @@
 package org.sil.bloom.reader;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -11,6 +12,8 @@ import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
+
+import static android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME;
 
 /*
     Used to clean up a bloombundle or bloomd file after importing the contents into
@@ -51,8 +54,12 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             if (nonRemovableStorageDir == null)
                 return;
 
+            String fileNameFromUri = fileNameFromUri(uriToCleanUp);
+            if (fileNameFromUri == null || fileNameFromUri.isEmpty())
+                return;
+
             // Returns null if the file is not found
-            File fileToDelete = searchForFile(nonRemovableStorageDir, uriToCleanUp);
+            File fileToDelete = searchForFile(nonRemovableStorageDir, fileNameFromUri);
 
             if (fileToDelete != null)
                 fileToDelete.delete();
@@ -80,10 +87,10 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return file.getPath().startsWith(getBloomDirectory().getPath());
     }
 
-    private boolean shouldSearchThisDirectory(File dir, Uri uriToCleanUp) throws ExtStorageUnavailableException {
+    private boolean shouldSearchThisDirectory(File dir, String fileName) throws ExtStorageUnavailableException {
         // We don't want to find the bloomd's in our library
         // Bundles are fair game everywhere
-        if (uriToCleanUp.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
+        if (fileName.endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
             return true;
 
         return !dir.equals(getBloomDirectory());
@@ -95,7 +102,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return bloomDirectory;
     }
 
-    private File searchForFile(File dir, Uri uriToCleanUp) throws ExtStorageUnavailableException {
+    private File searchForFile(File dir, String fileName) throws ExtStorageUnavailableException {
         if (dir == null)
             return null;
 
@@ -104,10 +111,10 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             return null;
 
         for (File f : list) {
-            if (f.isFile() && matchesSearchFile(f, uriToCleanUp))
+            if (f.isFile() && f.getName().equals(fileName))
                 return f;
-            if (f.isDirectory() && shouldSearchThisDirectory(f, uriToCleanUp)) {
-                File fileToDelete = searchForFile(f, uriToCleanUp);
+            if (f.isDirectory() && shouldSearchThisDirectory(f, fileName)) {
+                File fileToDelete = searchForFile(f, fileName);
                 if (fileToDelete != null)
                     return fileToDelete;
             }
@@ -115,16 +122,26 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return null;
     }
 
-    private boolean matchesSearchFile(File file, Uri searchFileUri) {
-        return file.getName().equals(fileNameFromUri(searchFileUri));
-    }
+    private String fileNameFromUri(Uri contentURI) {
 
-    private String fileNameFromUri(Uri uri) {
+        String fileName = "";
+        try {
+            String fileNameOrPath = IOUtilities.getFileNameOrPathFromUri(context, contentURI);
+            if (fileNameOrPath != null && !fileNameOrPath.isEmpty())
+                fileName = IOUtilities.getFilename(fileNameOrPath);
+        } catch (Exception e) {
+            fileName = "";
+        }
+        if (!fileName.isEmpty())
+            return fileName;
+
+        // From here to the end was the original code, but it seems to have stopped working in Android 10.
+        // Prefer the method above, but fallback to this.
         // expected path is something like /document/primary:MyBook.bloomd
-        String path = uri.getPath();
+        String path = contentURI.getPath();
         int separatorIndex = Math.max(
-                                path.lastIndexOf(File.separator),
-                                path.lastIndexOf(':')
+                path.lastIndexOf(File.separator),
+                path.lastIndexOf(':')
         );
         if (separatorIndex < 0)
             return path;

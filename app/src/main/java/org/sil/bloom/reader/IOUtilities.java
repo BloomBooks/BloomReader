@@ -1,12 +1,16 @@
 package org.sil.bloom.reader;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import androidx.annotation.IntDef;
+
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -499,5 +503,26 @@ public class IOUtilities {
                              path.lastIndexOf(':'))
                     + 1;
         return path.substring(start);
+    }
+
+    static String getFileNameOrPathFromUri(Context context, Uri uri) {
+        String nameOrPath = uri.getPath();
+        // Content URI's do not use the actual filename in the "path"
+        if (uri.getScheme().equals("content")) {
+            ContentResolver contentResolver = context.getContentResolver();
+            if (contentResolver == null) // Play console showed us this could be null somehow
+                return null;
+            try (Cursor cursor = contentResolver.query(uri, null, null, null, null)) {
+                if (cursor != null) {
+                    if (cursor.moveToFirst())
+                        nameOrPath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } catch (SecurityException se) {
+                // Not sure how this happens, but we see it on the Play Console.
+                // Perhaps someone has chosen Bloom Reader to try to process an intent we shouldn't be trying to handle?
+                return null;
+            }
+        }
+        return nameOrPath;
     }
 }

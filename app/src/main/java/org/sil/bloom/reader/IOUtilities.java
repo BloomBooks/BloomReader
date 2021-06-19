@@ -80,6 +80,13 @@ public class IOUtilities {
             byte[] buffer = new byte[BUFFER_SIZE];
             while ((ze = zis.getNextEntry()) != null) {
                 File file = new File(targetDirectory, ze.getName());
+
+                // Prevent path traversal vulnerability. See https://support.google.com/faqs/answer/9294009.
+                String fileCanonicalPath = file.getCanonicalPath();
+                if (!fileCanonicalPath.startsWith(targetDirectory.getCanonicalPath())) {
+                    throw new IOException(String.format("Zip file target path is invalid: %s", fileCanonicalPath));
+                }
+
                 File dir = ze.isDirectory() ? file : file.getParentFile();
                 if (!dir.isDirectory() && !dir.mkdirs())
                     throw new FileNotFoundException("Failed to ensure directory: " +

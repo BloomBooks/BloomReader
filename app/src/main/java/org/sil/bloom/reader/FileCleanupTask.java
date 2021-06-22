@@ -11,6 +11,7 @@ import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 
 /*
     Used to clean up a bloombundle or bloomd file after importing the contents into
@@ -22,11 +23,13 @@ import java.io.File;
  */
 
 public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
-    private Context context;
+
+    private final WeakReference<Context> contextRef;
     private File bloomDirectory; // We don't want to remove bloomd's from here
 
     public FileCleanupTask(Context context) {
-        this.context = context;
+        // See https://stackoverflow.com/questions/44309241/warning-this-asynctask-class-should-be-static-or-leaks-might-occur/46166223#46166223
+        this.contextRef = new WeakReference<>(context);
     }
 
     @Override
@@ -47,6 +50,10 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
                 return;
             }
 
+            Context context = contextRef.get();
+            if (context == null)
+                return;
+
             File nonRemovableStorageDir = IOUtilities.nonRemovablePublicStorageRoot(context);
             if (nonRemovableStorageDir == null)
                 return;
@@ -57,7 +64,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             if (fileToDelete != null)
                 fileToDelete.delete();
         }
-        catch (ExtStorageUnavailableException|SecurityException e) {
+        catch (SecurityException e) {
             // SecurityException can be thrown by File.delete()
             Log.e("BloomReader", e.getLocalizedMessage());
         }
@@ -80,7 +87,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return file.getPath().startsWith(getBloomDirectory().getPath());
     }
 
-    private boolean shouldSearchThisDirectory(File dir, Uri uriToCleanUp) throws ExtStorageUnavailableException {
+    private boolean shouldSearchThisDirectory(File dir, Uri uriToCleanUp) {
         // We don't want to find the bloomd's in our library
         // Bundles are fair game everywhere
         if (uriToCleanUp.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
@@ -95,7 +102,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return bloomDirectory;
     }
 
-    private File searchForFile(File dir, Uri uriToCleanUp) throws ExtStorageUnavailableException {
+    private File searchForFile(File dir, Uri uriToCleanUp) {
         if (dir == null)
             return null;
 

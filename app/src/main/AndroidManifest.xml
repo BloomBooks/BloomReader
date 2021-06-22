@@ -20,6 +20,7 @@
 
     <!-- Dangerous Permissions - must be requested at runtime -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
     <!-- hasFragileUserData prompts the user with the option to keep app data upon uninstall -->

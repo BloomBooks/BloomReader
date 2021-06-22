@@ -15,14 +15,13 @@ import java.io.IOException;
 
 public class BloomFileReader {
 
-    private Context context;
+    private final Context context;
     private String bloomFilePath;
     private Uri bookUri;
     private File bookDirectory;
     private JSONObject metaProperties;
 
     private static final String CURRENT_BOOK_FOLDER = "currentbook";
-    private static final String VALIDATE_BOOK_FILE_FOLDER = "validating";
     private static final String THUMBNAIL_NAME_1 = "thumbnail.png";
     private static final String THUMBNAIL_NAME_2 = "thumbnail.jpg";
     private static final String META_JSON_FILE = "meta.json";
@@ -115,7 +114,7 @@ public class BloomFileReader {
         return html != null && html.contains(BOOK_AUDIO_MATCH) && audioFilesExist;
     }
 
-    public Uri getThumbnail(File thumbsDirectory) throws IOException{
+    public Uri getThumbnail(File thumbsDirectory) throws IOException {
         Uri thumbUri = null;
         // This function is called in a background thread for books that are not the current one
         // being opened. It must not race for the same directory.
@@ -124,16 +123,16 @@ public class BloomFileReader {
         File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_1);
         if (!thumb.exists())
             thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_2);
-        if(thumb.exists()){
+        if (thumb.exists()) {
             String toPath = thumbsDirectory.getPath() + File.separator + bookName;
-            if(IOUtilities.copyFile(thumb.getPath(), toPath));
+            if (IOUtilities.copyFile(thumb.getPath(), toPath))
                 thumbUri = Uri.fromFile(new File(toPath));
-        }
-        else{
+        } else {
             String noThumbPath = thumbsDirectory + File.separator + BookCollection.NO_THUMBS_DIR + File.separator + bookName;
             (new File(noThumbPath)).createNewFile();
         }
         closeFile();
+
         return thumbUri;
     }
 

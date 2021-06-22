@@ -18,11 +18,11 @@ import java.util.List;
 import static org.sil.bloom.reader.models.BookCollection.getLocalBooksDirectory;
 
 public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
-    private WeakReference<MainActivity> mainActivityRef;
-    private Toast toast;
-    private List<String> newBookPaths;
-    private List<Uri> bundlesToCleanUp;
-    private ImportBundleErrorHandler importBundleErrorHandler;
+    private final WeakReference<MainActivity> mainActivityRef;
+    private final Toast toast;
+    private final List<String> newBookPaths;
+    private final List<Uri> bundlesToCleanUp;
+    private final ImportBundleErrorHandler importBundleErrorHandler;
 
     @SuppressLint("ShowToast")
     ImportBundleTask(MainActivity mainActivity) {
@@ -67,7 +67,7 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
             return;
 
         if (newBookPaths.size() > 0)
-            mainActivity.bloomBundleImported(newBookPaths);
+            mainActivity.bloomBundleImported();
 
         if (importBundleErrorHandler.hasErrors()) {
             importBundleErrorHandler.toastErrors();
@@ -97,7 +97,6 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
             if (newBookPaths.isEmpty()) {
                 importBundleErrorHandler.addErrorUri(bloomBundleUri, null);
             }
-            return;
         } catch (IOException e) {
             // It could be that a .bloombundle.enc file really is still uuencoded I suppose.
             // Or the file could have been corrupted.
@@ -147,10 +146,12 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
                     importError.getBundleName() + ": " + exception.getMessage());
                 importError.mException.printStackTrace();
 
-                toastMessage = importError.mException.getMessage() != null &&
-                        importError.mException.getMessage().contains("ENOSPC") ?
-                        activity.getString(R.string.bundle_import_out_of_space) :
-                        activity.getString(R.string.bundle_import_error, bundleName);
+                if (importError.mException.getMessage() != null &&
+                        importError.mException.getMessage().contains("ENOSPC")) {
+                    toastMessage = activity.getString(R.string.bundle_import_out_of_space);
+                } else {
+                    toastMessage = activity.getString(R.string.bundle_import_error, bundleName);
+                }
 
                 // IOExceptions skip the file cleanup; so do it now.
                 new FileCleanupTask(activity).execute(importError.mUri);
@@ -166,9 +167,9 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
         }
     }
 
-    private class ImportErrorObject {
-        private Uri mUri;
-        private IOException mException;
+    private static class ImportErrorObject {
+        private final Uri mUri;
+        private final IOException mException;
 
         ImportErrorObject(Uri uri, IOException exc) {
             mUri = uri;
@@ -177,7 +178,7 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
 
         String getBundleName() {
             String path = mUri.getEncodedPath();
-            return (path.contains("/")) ? Uri.decode(path.substring(path.lastIndexOf("/") + 1)) : "";
+            return (path != null && path.contains("/")) ? Uri.decode(path.substring(path.lastIndexOf("/") + 1)) : "";
         }
     }
 }

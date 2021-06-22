@@ -1,10 +1,10 @@
 package org.sil.bloom.reader;
 
-
 import android.app.Activity;
 import android.os.AsyncTask;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
@@ -14,16 +14,21 @@ import static org.sil.bloom.reader.IOUtilities.ENCODED_FILE_EXTENSION;
 // This class implements the "Find books on this device" command for Android pre-11.
 public class BookFinderTask extends AsyncTask<Void, Void, Void> {
 
-    private final Activity activity;
+    private final WeakReference<Activity> activityRef;
     private final BookSearchListener bookSearchListener;
 
-    public BookFinderTask(Activity activity, BookSearchListener bookSearchListener)  {
-        this.activity = activity;
+    public BookFinderTask(Activity activity, BookSearchListener bookSearchListener) {
+        // See https://stackoverflow.com/questions/44309241/warning-this-asynctask-class-should-be-static-or-leaks-might-occur/46166223#46166223
+        this.activityRef = new WeakReference<>(activity);
         this.bookSearchListener = bookSearchListener;
     }
 
     @Override
     public Void doInBackground(Void... v) {
+        Activity activity = activityRef.get();
+        if (activity == null)
+            return null;
+
         scan(IOUtilities.removablePublicStorageRoot(activity));
         scan(IOUtilities.nonRemovablePublicStorageRoot(activity));
 
@@ -32,7 +37,8 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     public void onPostExecute(Void v) {
-        bookSearchListener.onSearchComplete();
+        if (bookSearchListener != null)
+            bookSearchListener.onSearchComplete();
     }
 
     private void scan(File root) {
@@ -63,26 +69,20 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
     }
 
     private void foundNewBookOrShelf(final File bookOrShelfFile) {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                bookSearchListener.onNewBookOrShelf(bookOrShelfFile);
-            }
-        });
+        Activity activity = activityRef.get();
+        if (activity != null)
+            activity.runOnUiThread(() -> {
+                if (bookSearchListener != null)
+                    bookSearchListener.onNewBookOrShelf(bookOrShelfFile);
+            });
     }
 
     private void foundNewBundle(final File bundle) {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                bookSearchListener.onNewBloomBundle(bundle);
-            }
-        });
-    }
-
-    public interface BookSearchListener {
-        void onNewBookOrShelf(File bloomdFile);
-        void onNewBloomBundle(File bundleFile);
-        void onSearchComplete();
+        Activity activity = activityRef.get();
+        if (activity != null)
+            activity.runOnUiThread(() -> {
+                if (bookSearchListener != null)
+                    bookSearchListener.onNewBloomBundle(bundle);
+            });
     }
 }

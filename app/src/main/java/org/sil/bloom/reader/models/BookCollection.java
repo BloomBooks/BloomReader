@@ -37,8 +37,8 @@ public class BookCollection {
 
     public static final String BOOKSHELF_PREFIX = "bookshelf:";
     // All the books and shelves loaded from the folder on 'disk'.
-    // CopyOnWriteArrayList allows thread-safe unsychronized access.
-    private List<BookOrShelf> _booksAndShelves = new CopyOnWriteArrayList<BookOrShelf>();
+    // CopyOnWriteArrayList allows thread-safe unsynchronized access.
+    private final List<BookOrShelf> _booksAndShelves = new CopyOnWriteArrayList<BookOrShelf>();
     // The books and folders we are currently displaying. As this is accessed from multiple
     // threads and is not thread-safe, all methods using it directly should be synchronized.
     // To minimise blocking threads, typically time-consuming modifications are performed
@@ -54,7 +54,7 @@ public class BookCollection {
     private String mFilter = null;
     // The set of shelf ids for the shelves we actually have. Books with none of these pass
     // the empty filter.
-    private Set<String> mShelfIds = new HashSet<String>();
+    private final Set<String> mShelfIds = new HashSet<String>();
 
     private InitializeLibraryTask mInitializeTask = null;
 
@@ -201,7 +201,7 @@ public class BookCollection {
         mShelfIds.clear();
         _booksAndShelves.clear();
         if (mInitializeTask != null) {
-            Integer count = 0;
+            int count = 0;
             for (File booksDir : booksDirs) {
                 count += booksDir.listFiles(new FilenameFilter() {
                     public boolean accept(File dir, String name) {

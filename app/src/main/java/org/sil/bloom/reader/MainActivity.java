@@ -3,7 +3,6 @@ package org.sil.bloom.reader;
 import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -17,18 +16,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
-import com.google.android.material.navigation.NavigationView;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.view.GravityCompat;
-import androidx.documentfile.provider.DocumentFile;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AlertDialog;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.LinearSmoothScroller;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.widget.Toolbar;
 import android.text.SpannableString;
 import android.text.format.DateFormat;
 import android.text.method.LinkMovementMethod;
@@ -42,6 +29,22 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.documentfile.provider.DocumentFile;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSmoothScroller;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.navigation.NavigationView;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
@@ -114,27 +117,18 @@ public class MainActivity extends BaseActivity
                 alertDialog.setMessage(getString(R.string.request_location));
                 final boolean[] wasDontAllowPressed = {false}; // we just want a boolean, but to use in callbacks has to be final.
                 alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.allow),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
+                        (dialog, which) -> dialog.dismiss());
                 alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dont_allow),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                wasDontAllowPressed[0] = true;
-                                dialog.dismiss();
-                            }
+                        (dialog, which) -> {
+                            wasDontAllowPressed[0] = true;
+                            dialog.dismiss();
                         });
-                alertDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        // We want this to happen even if the user dismisses the dialog
-                        // by tapping outside it rather than by tapping OK.
-                        // But not if they actually tapped "don't allow"
-                        if (!wasDontAllowPressed[0]) {
-                            requestLocationPermission();
-                        }
+                alertDialog.setOnDismissListener(dialog -> {
+                    // We want this to happen even if the user dismisses the dialog
+                    // by tapping outside it rather than by tapping OK.
+                    // But not if they actually tapped "don't allow"
+                    if (!wasDontAllowPressed[0]) {
+                        requestLocationPermission();
                     }
                 });
                 alertDialog.show();
@@ -163,37 +157,28 @@ public class MainActivity extends BaseActivity
                 alertDialog.setTitle(getString(R.string.turn_on_location));
                 alertDialog.setMessage(getString(R.string.request_gps));
                 alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                doTurnOn[0] = true;
-                                dialog.dismiss();
-                                // It doesn't seem to work to requestTurnOnGps() here.
-                                // I think the problem is that the switch from the dialog
-                                // activity back to this caused by dismiss() beats the switch
-                                // to the system settings dialog.
-                            }
+                        (dialog, which) -> {
+                            doTurnOn[0] = true;
+                            dialog.dismiss();
+                            // It doesn't seem to work to requestTurnOnGps() here.
+                            // I think the problem is that the switch from the dialog
+                            // activity back to this caused by dismiss() beats the switch
+                            // to the system settings dialog.
                         });
                 alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel),
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                alertDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        // This gets set true if it was the OK button that dismissed the dialog.
-                        // There must be a better way to know that, but I'm sick of looking.
-                        if (doTurnOn[0]) {
-                            requestTurnOnGps();
-                        }
-                        Properties p = new Properties();
-                        p.putValue("granted", doTurnOn[0]);
-
-                        Context context = BloomReaderApplication.getBloomApplicationContext();
-                        if (context != null)
-                            Analytics.with(context).track("requestGps", p);
+                        (dialog, which) -> dialog.dismiss());
+                alertDialog.setOnDismissListener(dialog -> {
+                    // This gets set true if it was the OK button that dismissed the dialog.
+                    // There must be a better way to know that, but I'm sick of looking.
+                    if (doTurnOn[0]) {
+                        requestTurnOnGps();
                     }
+                    Properties p = new Properties();
+                    p.putValue("granted", doTurnOn[0]);
+
+                    Context context = BloomReaderApplication.getBloomApplicationContext();
+                    if (context != null)
+                        Analytics.with(context).track("requestGps", p);
                 });
                 alertDialog.show();
             }
@@ -233,7 +218,7 @@ public class MainActivity extends BaseActivity
                 // We don't actually want the information, we just want lastKnownLocation to be
                 // reasonably current. But the API requires these to be implemented.
                 @Override
-                public void onLocationChanged(Location location) {
+                public void onLocationChanged(@NonNull Location location) {
                 }
 
                 @Override
@@ -241,7 +226,7 @@ public class MainActivity extends BaseActivity
                 }
 
                 @Override
-                public void onProviderEnabled(String provider) {
+                public void onProviderEnabled(@NonNull String provider) {
                     // Enhance: seems to get called when the user turns it on, even in the
                     // background. Could possibly be used to show the dialog, if the user
                     // was put into the settings screen as a result of asking to check
@@ -249,7 +234,7 @@ public class MainActivity extends BaseActivity
                 }
 
                 @Override
-                public void onProviderDisabled(String provider) {
+                public void onProviderDisabled(@NonNull String provider) {
                 }
             });
         } catch (SecurityException se) {
@@ -266,36 +251,49 @@ public class MainActivity extends BaseActivity
                 ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
-    public void requestStoragePermission() {
+    public void requestStoragePermission(int requestCode) {
         String[] permissionsNeeded = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        ActivityCompat.requestPermissions(this, permissionsNeeded, 0);
+        ActivityCompat.requestPermissions(this, permissionsNeeded, requestCode);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         // This override is the way we get results of ActivityCompat.requestPermissions().
-        if (permissions.length > 0 && permissions[0].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
-            // We're getting an answer about location
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (showMessageOnLocationPermissionGranted) {
-                    showMessageOnLocationPermissionGranted = false;
-                    showLocationMessage();
+        if (permissions.length <= 0)
+            return;
+        switch(requestCode) {
+            case LOCATION_PERMISSION:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (showMessageOnLocationPermissionGranted) {
+                        showMessageOnLocationPermissionGranted = false;
+                        showLocationMessage();
+                    }
+                    if (!isLocationEnabled(this)) {
+                        // They just gave us permission, so hopefully this isn't unexpected.
+                        // The pre-permission dialog does also indicate that this might be needed.
+                        requestTurnOnGps();
+                    }
+                    // Usually done when the activity is created, but if we didn't have permission
+                    // to do it then, we should now.
+                    requestLocationUpdates();
                 }
-                if (!isLocationEnabled(this)) {
-                    // They just gave us permission, so hopefully this isn't unexpected.
-                    // The pre-permission dialog does also indicate that this might be needed.
-                    requestTurnOnGps();
+                break;
+            case STORAGE_PERMISSION_SEARCH:
+                // The two requested are write and read
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    searchForBloomBooks_preAndroid11();
+                } else {
+                    searchForBloomBooksUsingSaf();
                 }
-                // Usually done when the activity is created, but if we didn't have permission
-                // to do it then, we should now.
-                requestLocationUpdates();
-            }
+                break;
         }
     }
 
     private void migrateLegacyData() {
         File oldBloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
         File newBloomDir = BookCollection.getLocalBooksDirectory();
+        boolean failure = false;
         try {
             if (!oldBloomDir.exists()) {
                 return; // nothing to migrate
@@ -304,23 +302,26 @@ public class MainActivity extends BaseActivity
             // we delete the directory after copying it, so it will only happen once. Someone who
             // is messing with alpha or beta might like to see any new books they fetch with the
             // old release build.
-            boolean testMode = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
-            for (File f : oldBloomDir.listFiles()) {
+            boolean preserveOldDirectory = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
+            File [] filesInOldBloomDir = oldBloomDir.listFiles();
+            if (filesInOldBloomDir == null)
+                return;
+            for (File f : filesInOldBloomDir) {
                 String fileName = f.getName();
-                if (fileName == ".thumbs") {
+                if (fileName.equals(".thumbs")) {
                     continue; // this is a directory, and the data can be rebuilt, so save time by not copying
                 }
                 File dest = new File(newBloomDir, fileName);
                 if (dest.exists()) {
                     continue; // Don't re-copy, and especially don't overwrite a possibly newer version.
                 }
-                if (testMode) {
+                if (preserveOldDirectory) {
                     IOUtilities.copyFile(f.getPath(), dest.getPath());
                 } else {
-                    f.renameTo(dest);
+                    failure |= !f.renameTo(dest);
                 }
             }
-            if (!testMode) {
+            if (!failure && !preserveOldDirectory) {
                 IOUtilities.deleteFileOrDirectory(oldBloomDir);
             }
         }
@@ -349,7 +350,7 @@ public class MainActivity extends BaseActivity
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
@@ -375,7 +376,7 @@ public class MainActivity extends BaseActivity
         // Insert the build version and date into the appropriate control.
         // We have to find it indirectly through the navView's header or it won't be found
         // this early in the view construction.
-        TextView versionDate = (TextView) navigationView.getHeaderView(0).findViewById(R.id.versionDate);
+        TextView versionDate = navigationView.getHeaderView(0).findViewById(R.id.versionDate);
         try {
             String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
             Date buildDate = new Date(BuildConfig.TIMESTAMP);
@@ -451,13 +452,12 @@ public class MainActivity extends BaseActivity
         alreadyOpenedFileFromIntent = true;
     }
 
-    // Copy a book to our Bloom folder and add it to the library.
+    // Copy a book to our books folder and add it to the library.
     // If we're importingOneFile (ie not doing a FileSearch of the device),
     // we'll go ahead and open the book and do file cleanup.
     // Return value indicates success.
     private boolean importBook(Uri bookUri, String filename, boolean importingOneFile) {
-        String newPath = null;
-        newPath = _bookCollection.ensureBookIsInCollection(this, bookUri, filename);
+        String newPath = _bookCollection.ensureBookIsInCollection(this, bookUri, filename);
         if (newPath != null) {
             if (importingOneFile) {
                 openBook(this, newPath);
@@ -482,13 +482,13 @@ public class MainActivity extends BaseActivity
         new ImportBundleTask(this).execute(bloomBundleUri);
     }
 
-    // Called by ImportBundleTask with the list of new books and shelves
-    public void bloomBundleImported(List<String> newBookPaths) {
-            // Reinitialize completely to get the new state of things.
-            _bookCollection.init(this, null);
-            // Don't highlight the set of new books, just update the list displayed. (BL-8808)
-            mBookListAdapter.notifyDataSetChanged();
-            resetFileObserver(); // Prevent duplicate notifications
+    // Called by ImportBundleTask
+    public void bloomBundleImported() {
+        // Reinitialize completely to get the new state of things.
+        _bookCollection.init(this, null);
+        // Don't highlight the set of new books, just update the list displayed. (BL-8808)
+        mBookListAdapter.notifyDataSetChanged();
+        resetFileObserver(); // Prevent duplicate notifications
     }
 
     @Override
@@ -542,12 +542,7 @@ public class MainActivity extends BaseActivity
     @Override
     protected void onNewOrUpdatedBook(String filePath) {
         final String filePathLocal = filePath;
-        runOnUiThread(new Runnable(){
-            @Override
-            public void run() {
-                updateForNewBook(filePathLocal);
-            }
-        });
+        runOnUiThread(() -> updateForNewBook(filePathLocal));
     }
 
     public static void skipNextNewFileSound() {
@@ -651,16 +646,13 @@ public class MainActivity extends BaseActivity
             message = getString(R.string.deleteExplanationShelf, booksAndShelves.size(), shelf.name);
         new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(message)
                 .setTitle(R.string.deleteConfirmation)
-                .setPositiveButton(R.string.deleteConfirmButton, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int i) {
-                        Log.i("BloomReader", "DeleteShelf " + shelf.toString());
-                        for(BookOrShelf b : booksAndShelves)
-                            _bookCollection.deleteFromDevice(b);
-                        mBookListAdapter.notifyDataSetChanged();
-                        closeContextualActionBar();
-                        dialog.dismiss();
-                    }
+                .setPositiveButton(R.string.deleteConfirmButton, (dialog, i) -> {
+                    Log.i("BloomReader", "DeleteShelf " + shelf.toString());
+                    for(BookOrShelf b : booksAndShelves)
+                        _bookCollection.deleteFromDevice(b);
+                    mBookListAdapter.notifyDataSetChanged();
+                    closeContextualActionBar();
+                    dialog.dismiss();
                 })
                 .setNegativeButton(android.R.string.no, null)
                 .show();
@@ -669,15 +661,12 @@ public class MainActivity extends BaseActivity
     private void deleteBook(final BookOrShelf book) {
         new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(getString(R.string.deleteExplanationBook, book.name))
                 .setTitle(getString(R.string.deleteConfirmation))
-                .setPositiveButton(getString(R.string.deleteConfirmButton), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Log.i("BloomReader", "DeleteBook "+ book.toString());
-                        _bookCollection.deleteFromDevice(book);
-                        mBookListAdapter.notifyDataSetChanged();
-                        closeContextualActionBar();
-                        dialog.dismiss();
-                    }
+                .setPositiveButton(getString(R.string.deleteConfirmButton), (dialog, which) -> {
+                    Log.i("BloomReader", "DeleteBook "+ book.toString());
+                    _bookCollection.deleteFromDevice(book);
+                    mBookListAdapter.notifyDataSetChanged();
+                    closeContextualActionBar();
+                    dialog.dismiss();
                 })
                 .setNegativeButton(android.R.string.no, null)
                 .show();
@@ -711,17 +700,16 @@ public class MainActivity extends BaseActivity
 
             @Override
             public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
-                switch(item.getItemId()) {
-                    case R.id.share:
-                        shareBookOrShelf();
-                        mode.finish();
-                        return true;
-                    case R.id.delete:
-                        deleteBookOrShelf();
-                        return true;
-                    default:
-                        return false;
+                int itemId = item.getItemId();
+                if (itemId == R.id.share) {
+                    shareBookOrShelf();
+                    mode.finish();
+                    return true;
+                } else if (itemId == R.id.delete) {
+                    deleteBookOrShelf();
+                    return true;
                 }
+                return false;
             }
 
             @Override
@@ -793,69 +781,43 @@ public class MainActivity extends BaseActivity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        switch(id) {
-            case R.id.delete:
-                return true;
+        if (id == R.id.delete) {
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    static final int DOWNLOAD_BOOKS_REQUEST = 1;
-    static final int OPEN_SEARCH_BOOKS_FOLDER = 2;
+    static final int LOCATION_PERMISSION = 100;
+//    static final int STORAGE_PERMISSION_USB = 2 * 100;
+    static final int STORAGE_PERMISSION_SEARCH = 3 * 100;
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
-//        if (id == R.id.nav_catalog) {
-//
-//        } else if (id == R.id.nav_share) {
-//
-//        }
-//        else
-        switch (id) {
-            case R.id.nav_get_wifi:
-                Intent intent = new Intent(this, GetFromWiFiActivity.class);
-                this.startActivityForResult(intent, DOWNLOAD_BOOKS_REQUEST);
-                break;
-            case R.id.nav_get_usb:
-                final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
-                        .setPositiveButton(android.R.string.ok, null)
-                        .setTitle(getString(R.string.receive_books_over_usb))
-                        .setMessage(getString(R.string.ready_to_receive_usb))
-                        .create();
-                d.show();
-                break;
-            case R.id.nav_share_app:
-                ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
-                shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
-                break;
-            case R.id.nav_share_books:
-                ShareAllBooksDialogFragment shareBooksDialogFragment = new ShareAllBooksDialogFragment();
-                shareBooksDialogFragment.show(getSupportFragmentManager(), ShareAllBooksDialogFragment.SHARE_BOOKS_DIALOG_FRAGMENT_TAG);
-                break;
-            case R.id.nav_release_notes:
-                DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
-                break;
-            case R.id.nav_search_for_bundles:
-                searchForBloomBooks();
-                break;
-            case R.id.nav_test_location_analytics:
-                showLocationAnalyticsData();
-                break;
-            case R.id.about_reader:
-                DisplaySimpleResource(getString(R.string.about_bloom_reader), R.raw.about_reader);
-                break;
-            case R.id.about_bloom:
-                DisplaySimpleResource(getString(R.string.about_bloom), R.raw.about_bloom);
-                break;
-            case R.id.about_sil:
-                DisplaySimpleResource(getString(R.string.about_sil), R.raw.about_sil);
-                break;
+        if (id == R.id.nav_get_wifi) {
+            Intent intent = new Intent(this, GetFromWiFiActivity.class);
+            mGetBooksFromWiFi.launch(intent);
+        } else if (id == R.id.nav_get_usb) {
+            GetFromUsb();
+        } else if (id == R.id.nav_share_app) {
+            ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
+            shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
+        } else if (id == R.id.nav_share_books) {
+            ShareAllBooksDialogFragment shareBooksDialogFragment = new ShareAllBooksDialogFragment();
+            shareBooksDialogFragment.show(getSupportFragmentManager(), ShareAllBooksDialogFragment.SHARE_BOOKS_DIALOG_FRAGMENT_TAG);
+        } else if (id == R.id.nav_release_notes) {
+            DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
+        } else if (id == R.id.nav_search_for_bundles) {
+            searchForBloomBooks();
+        } else if (id == R.id.nav_test_location_analytics) {
+            showLocationAnalyticsData();
+        } else if (id == R.id.about_reader) {
+            DisplaySimpleResource(getString(R.string.about_bloom_reader), R.raw.about_reader);
+        } else if (id == R.id.about_bloom) {
+            DisplaySimpleResource(getString(R.string.about_bloom), R.raw.about_bloom);
+        } else if (id == R.id.about_sil) {
+            DisplaySimpleResource(getString(R.string.about_sil), R.raw.about_sil);
         }
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -863,6 +825,18 @@ public class MainActivity extends BaseActivity
         return true;
     }
 
+    private void GetFromUsb() {
+        getFromUsbPreAndroid11();
+    }
+
+    private void getFromUsbPreAndroid11() {
+        final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
+                .setPositiveButton(android.R.string.ok, null)
+                .setTitle(getString(R.string.receive_books_over_usb))
+                .setMessage(getString(R.string.ready_to_receive_usb))
+                .create();
+        d.show();
+    }
     private void showLocationMessage() {
         // Report what we will do about location in analytics.
         LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -880,11 +854,7 @@ public class MainActivity extends BaseActivity
         alertDialog.setTitle(getString(R.string.share_location));
         alertDialog.setMessage(message);
         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
+                (dialog, which) -> dialog.dismiss());
         alertDialog.show();
     }
 
@@ -916,12 +886,12 @@ public class MainActivity extends BaseActivity
 
     // Has the user turned on the device service that makes location data possible?
     public static boolean isLocationEnabled(Context context) {
-        // This is the currently recommended approach, but not useable before API 28.
+        // This is the currently recommended approach, but not usable before API 28.
         // LocationManager lm = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
         // return lm.isLocationEnabled();
 
         // This is a deprecated approach, but the only one I can find for API 21.
-        int locationMode = 0;
+        int locationMode;
             try {
                 locationMode = android.provider.Settings.Secure.getInt(context.getContentResolver(),
                         android.provider.Settings.Secure.LOCATION_MODE);
@@ -966,98 +936,29 @@ public class MainActivity extends BaseActivity
 
     // invoked by click on bloomUrl textview in nav_header_main because it has onClick property
     public void bloomUrlClicked(View v) {
-        // for some reason, it doesn't work with just bloomlibrary.org. Seems to thing a URL
-        // must have http://www. Fails to resolve activity.
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.bloomlibrary.org"));
-        if (browserIntent.resolveActivity(getPackageManager()) != null) {
-            startActivity(browserIntent);
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == DOWNLOAD_BOOKS_REQUEST && resultCode == RESULT_OK) {
-            String[] newBooks = data.getStringArrayExtra(NEW_BOOKS);
-            for (String bookPath : newBooks) {
-                _bookCollection.addBookIfNeeded(bookPath);
-            }
-            if (newBooks.length > 0) {
-                onNewOrUpdatedBook(newBooks[newBooks.length - 1]);
-            }
-        }
-        if (requestCode == OPEN_SEARCH_BOOKS_FOLDER
-                && resultCode == RESULT_OK) {
-            // The result data contains a URI for the document or directory that
-            // the user selected.
-            Uri uri = null;
-            if (data != null) {
-                uri = data.getData();
-                Uri childrenUri =
-                        DocumentsContract.buildChildDocumentsUriUsingTree(
-                                uri,
-                                DocumentsContract.getTreeDocumentId(uri)
-                        );
-                // get document file from children uri
-                DocumentFile tree = DocumentFile.fromTreeUri(this, childrenUri);
-                if (tree != null) {
-                    DocumentFile[] files = tree.listFiles();
-                    for (DocumentFile f : files) {
-                        Log.d("testing", f.getName());
-                        try {
-                            InputStream input = getContentResolver().openInputStream(f.getUri());
-                            File dest = new File(BookCollection.getLocalBooksDirectory(), f.getName());
-                            IOUtilities.copyFile(input, dest.getPath());
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-                // get the list of the documents
-                //tree?.listFiles()?.forEach { doc ->
-                // get the input stream of a single document
-                //val iss = contentResolver.openInputStream(doc.uri)
-                // prepare the output stream
-                //val oss = FileOutputStream(File(filesDir, doc.name))
-                // copy the file
-//                    CopyFile { result ->
-//                            println("file copied? $result")
-//                    }.execute(iss, oss)
-//                }
-            }
-        }
+        Intent defaultBrowser = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER);
+        defaultBrowser.setData(Uri.parse("https://bloomlibrary.org"));
+        startActivity(defaultBrowser);
     }
 
     private void searchForBloomBooks() {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-            if (!haveStoragePermission(this)) {
-                requestStoragePermission();
-            }
             if (haveStoragePermission(this)) {
                 searchForBloomBooks_preAndroid11();
-                return;
+            } else {
+                requestStoragePermission(STORAGE_PERMISSION_SEARCH);
             }
+            return;
         }
 
-        // Choose a directory using the system's file picker.
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-
-        // Provide read access to files and sub-directories in the user-selected
-        // directory.
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        // Optionally, specify a URI for the directory that should be opened in
-        // the system file picker when it loads.
-        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, "/BloomExternal");
-
-        startActivityForResult(intent, OPEN_SEARCH_BOOKS_FOLDER);
+        searchForBloomBooksUsingSaf();
     }
 
     // This function can't be made to work in Android 11, due to the new scoped storage rules.
-    // However, devices running 10 or less can still use this, more straightforward method.
+    // However, devices running 10 or less can still use this more straightforward method.
     private void searchForBloomBooks_preAndroid11() {
         fileSearchState = new FileSearchState();
-        BookFinderTask.BookSearchListener bookSearchListener = new BookFinderTask.BookSearchListener() {
+        BookSearchListener bookSearchListener = new BookSearchListener() {
             @Override
             public void onNewBookOrShelf(File bookOrShelfFile) {
                 String filePath = bookOrShelfFile.getPath();
@@ -1068,7 +969,7 @@ public class MainActivity extends BaseActivity
                 if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
                     Log.d("BookSearch", "Found " + filePath);
                     Uri bookUri = Uri.fromFile(bookOrShelfFile);
-                    if (importBook(bookUri, bookOrShelfFile.getName(),false))
+                    if (importBook(bookUri, bookOrShelfFile.getName(), false))
                         fileSearchState.bloomdsAdded.add(bookUri);
                 }
             }
@@ -1097,9 +998,83 @@ public class MainActivity extends BaseActivity
         findViewById(R.id.searching_text).setVisibility(View.VISIBLE);
     }
 
+    private void searchForBloomBooksUsingSaf() {
+        // Choose a directory using the system's file picker.
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
+        // Provide read access to files and sub-directories in the user-selected
+        // directory.
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        // Optionally, specify a URI for the directory that should be opened in
+        // the system file picker when it loads.
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, "/BloomExternal");
+        mGetDirectoryToSearchForBooks.launch(intent);
+    }
+
     @Override
-    protected void onSaveInstanceState(Bundle savedInstanceState) {
+    protected void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
         savedInstanceState.putBoolean(ALREADY_OPENED_FILE_FROM_INTENT_KEY, alreadyOpenedFileFromIntent);
     }
+
+    private final ActivityResultLauncher<Intent> mGetBooksFromWiFi = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    String[] newBooks = result.getData().getStringArrayExtra(NEW_BOOKS);
+                    if (newBooks != null) {
+                        for (String bookPath : newBooks) {
+                            _bookCollection.addBookIfNeeded(bookPath);
+                        }
+                        if (newBooks.length > 0) {
+                            onNewOrUpdatedBook(newBooks[newBooks.length - 1]);
+                        }
+                    }
+                }
+            }
+    );
+
+    private final ActivityResultLauncher<Intent> mGetDirectoryToSearchForBooks = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    // The result data contains a URI for the document or directory that the user selected.
+                    Uri uri = null;
+                    Intent intent = result.getData();
+                    if (intent != null) {
+                        uri = intent.getData();
+                        Uri childrenUri =
+                                DocumentsContract.buildChildDocumentsUriUsingTree(
+                                        uri,
+                                        DocumentsContract.getTreeDocumentId(uri)
+                                );
+                        // get document file from children uri
+                        DocumentFile tree = DocumentFile.fromTreeUri(this, childrenUri);
+                        if (tree != null) {
+                            DocumentFile[] files = tree.listFiles();
+                            for (DocumentFile f : files) {
+                                Log.d("testing", f.getName());
+                                try {
+                                    InputStream input = getContentResolver().openInputStream(f.getUri());
+                                    File dest = new File(BookCollection.getLocalBooksDirectory(), f.getName());
+                                    IOUtilities.copyFile(input, dest.getPath());
+                                } catch (FileNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                        // get the list of the documents
+                        //tree?.listFiles()?.forEach { doc ->
+                        // get the input stream of a single document
+                        //val iss = contentResolver.openInputStream(doc.uri)
+                        // prepare the output stream
+                        //val oss = FileOutputStream(File(filesDir, doc.name))
+                        // copy the file
+//                    CopyFile { result ->
+//                            println("file copied? $result")
+//                    }.execute(iss, oss)
+//                }
+                    }
+                }
+            }
+    );
 }

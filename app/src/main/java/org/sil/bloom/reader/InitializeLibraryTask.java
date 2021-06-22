@@ -21,9 +21,9 @@ import java.util.TimerTask;
 // with a progress bar at the bottom that shows progress working through the list of books.
 // See https://issues.bloomlibrary.org/youtrack/issue/BL-7432.
 public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
-    private ExtStorageUnavailableException mExceptionCaught = null;
+    private final ExtStorageUnavailableException mExceptionCaught = null;
     private MainActivity mMain = null;
-    private long mBeginningTime = new Date().getTime();
+    private final long mBeginningTime = new Date().getTime();
     private Timer mTimer;
 
     public InitializeLibraryTask(MainActivity main) {
@@ -32,13 +32,10 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
     }
     // Initialize the  maximum value for the progress bar to better reflect reality.  It still
     // may not be perfect.  It seems safest to do this on the UI thread.
-    public void setBookCount(final Integer count) {
-        mMain.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mMain.mLoadingProgressBar.setMax(count);
-            }
-        });
+    public void setBookCount(final int count) {
+        if (mMain != null) {
+            mMain.runOnUiThread(() -> mMain.mLoadingProgressBar.setMax(count));
+        }
     }
     // Advance the progress bar for one book being processed.
     public void incrementBookProgress() {
@@ -65,11 +62,12 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
         }
         // Ensure all the books are displayed at the end of loading.
         mMain.mBookListAdapter.notifyDataSetChanged();
-        mMain = null;   // release reference
 
         if (mExceptionCaught != null) {
             mMain.externalStorageUnavailable(mExceptionCaught);
         }
+
+        mMain = null;   // release reference
     }
 
     static private void addProgressViews(MainActivity main)
@@ -143,12 +141,11 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
         }
         public void run() {
             mTimer.cancel(); //Terminate the timer thread
-            // Run the remove method on the UI thread
-            mMain.runOnUiThread(new Runnable() {
-                public void run() {
-                    removeProgressViews(mMain);
-                }
-            });
+
+            if (mMain != null) {
+                // Run the remove method on the UI thread
+                mMain.runOnUiThread(() -> removeProgressViews(mMain));
+            }
         }
     }
 }

@@ -58,8 +58,12 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             if (nonRemovableStorageDir == null)
                 return;
 
+            String fileNameFromUri = fileNameFromUri(uriToCleanUp);
+            if (fileNameFromUri == null || fileNameFromUri.isEmpty())
+                return;
+
             // Returns null if the file is not found
-            File fileToDelete = searchForFile(nonRemovableStorageDir, uriToCleanUp);
+            File fileToDelete = searchForFile(nonRemovableStorageDir, fileNameFromUri);
 
             if (fileToDelete != null)
                 fileToDelete.delete();
@@ -87,10 +91,10 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return file.getPath().startsWith(getBloomDirectory().getPath());
     }
 
-    private boolean shouldSearchThisDirectory(File dir, Uri uriToCleanUp) {
+    private boolean shouldSearchThisDirectory(File dir, String fileName) {
         // We don't want to find the bloomd's in our library
         // Bundles are fair game everywhere
-        if (uriToCleanUp.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
+        if (fileName.endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
             return true;
 
         return !dir.equals(getBloomDirectory());
@@ -102,7 +106,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return bloomDirectory;
     }
 
-    private File searchForFile(File dir, Uri uriToCleanUp) {
+    private File searchForFile(File dir, String fileName) {
         if (dir == null)
             return null;
 
@@ -111,10 +115,10 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             return null;
 
         for (File f : list) {
-            if (f.isFile() && matchesSearchFile(f, uriToCleanUp))
+            if (f.isFile() && f.getName().equals(fileName))
                 return f;
-            if (f.isDirectory() && shouldSearchThisDirectory(f, uriToCleanUp)) {
-                File fileToDelete = searchForFile(f, uriToCleanUp);
+            if (f.isDirectory() && shouldSearchThisDirectory(f, fileName)) {
+                File fileToDelete = searchForFile(f, fileName);
                 if (fileToDelete != null)
                     return fileToDelete;
             }
@@ -122,16 +126,33 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return null;
     }
 
-    private boolean matchesSearchFile(File file, Uri searchFileUri) {
-        return file.getName().equals(fileNameFromUri(searchFileUri));
-    }
+    private String fileNameFromUri(Uri contentURI) {
 
-    private String fileNameFromUri(Uri uri) {
+        String fileName = "";
+        try {
+            Context context = contextRef.get();
+            if (context == null)
+                return "";
+
+            String fileNameOrPath = IOUtilities.getFileNameOrPathFromUri(context, contentURI);
+            if (fileNameOrPath != null && !fileNameOrPath.isEmpty())
+                fileName = IOUtilities.getFilename(fileNameOrPath);
+        } catch (Exception e) {
+            fileName = "";
+        }
+        if (!fileName.isEmpty())
+            return fileName;
+
+        // From here to the end was the original code, but it seems to have stopped working in Android 10.
+        // Prefer the method above, but fallback to this.
+        // I admit that the ideal would be to test that the code above works and get rid of the below.
+        // But I have 0% confidence that I could properly test all the right combinations of Android
+        // versions and uri variations. So, I felt the safest thing was to leave this fallback in place.
         // expected path is something like /document/primary:MyBook.bloomd
-        String path = uri.getPath();
+        String path = contentURI.getPath();
         int separatorIndex = Math.max(
-                                path.lastIndexOf(File.separator),
-                                path.lastIndexOf(':')
+                path.lastIndexOf(File.separator),
+                path.lastIndexOf(':')
         );
         if (separatorIndex < 0)
             return path;

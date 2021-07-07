@@ -1,11 +1,9 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.PointF;
 import android.location.Location;
 import android.location.LocationListener;
@@ -15,7 +13,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
-import android.provider.OpenableColumns;
 import android.text.SpannableString;
 import android.text.format.DateFormat;
 import android.text.method.LinkMovementMethod;
@@ -418,26 +415,7 @@ public class MainActivity extends BaseActivity
         if (uri == null || alreadyOpenedFileFromIntent)
             return;
         Log.i("Intents", "processing "+intent.toString());
-        String nameOrPath = uri.getPath();
-        // Content URI's do not use the actual filename in the "path"
-        if (uri.getScheme().equals("content")) {
-            ContentResolver contentResolver = getContentResolver();
-            if (contentResolver == null) // Play console showed us this could be null somehow
-                return;
-            Cursor cursor;
-            try {
-                cursor = contentResolver.query(uri, null, null, null, null);
-            } catch (SecurityException se) {
-                // Not sure how this happens, but we see it on the Play Console.
-                // Perhaps someone has chosen Bloom Reader to try to process an intent we shouldn't be trying to handle?
-                return;
-            }
-            if (cursor != null) {
-                if (cursor.moveToFirst())
-                    nameOrPath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                cursor.close();
-            }
-        }
+        String nameOrPath = IOUtilities.getFileNameOrPathFromUri(this, uri);
         if (nameOrPath == null) // reported as crash on Play console
             return;
         if (nameOrPath.endsWith(BOOK_FILE_EXTENSION) ||

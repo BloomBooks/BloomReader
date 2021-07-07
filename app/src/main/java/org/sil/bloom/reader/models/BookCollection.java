@@ -177,17 +177,21 @@ public class BookCollection {
         _booksAndShelves.clear();
         if (mInitializeTask != null) {
             Integer count = 0;
-            for (File booksDir : booksDirs) {
-                count += booksDir.listFiles(new FilenameFilter() {
-                    public boolean accept(File dir, String name) {
-                        return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
-                    }
-                }).length;
+            if (booksDirs != null && booksDirs.length > 0) {
+                for (File booksDir : booksDirs) {
+                    count += booksDir.listFiles(new FilenameFilter() {
+                        public boolean accept(File dir, String name) {
+                            return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
+                        }
+                    }).length;
+                }
             }
             mInitializeTask.setBookCount(count);
         }
-        for (File booksDir : booksDirs)
-            loadFromDirectory(booksDir, activity);
+        if (booksDirs != null && booksDirs.length > 0) {
+            for (File booksDir : booksDirs)
+                loadFromDirectory(booksDir, activity);
+        }
     }
 
     private void loadFromDirectory(File directory, Activity activity) {

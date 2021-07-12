@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
+import java.lang.ref.WeakReference;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -22,21 +23,26 @@ import java.util.TimerTask;
 // See https://issues.bloomlibrary.org/youtrack/issue/BL-7432.
 public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
     private ExtStorageUnavailableException mExceptionCaught = null;
-    private MainActivity mMain = null;
-    private long mBeginningTime = new Date().getTime();
+    private final WeakReference<MainActivity> mainActivityRef;
+    private final long mBeginningTime = new Date().getTime();
     private Timer mTimer;
 
-    public InitializeLibraryTask(MainActivity main) {
-        mMain = main;
-        addProgressViews(main);
+    public InitializeLibraryTask(MainActivity mainActivity) {
+        this.mainActivityRef = new WeakReference<>(mainActivity);
+        addProgressViews(mainActivity);
     }
     // Initialize the  maximum value for the progress bar to better reflect reality.  It still
     // may not be perfect.  It seems safest to do this on the UI thread.
     public void setBookCount(final Integer count) {
-        mMain.runOnUiThread(new Runnable() {
+        // get a reference to the activity if it is still there
+        final MainActivity mainActivity = mainActivityRef.get();
+        if (mainActivity == null || mainActivity.isFinishing())
+            return;
+
+        mainActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mMain.mLoadingProgressBar.setMax(count);
+                mainActivity.mLoadingProgressBar.setMax(count);
             }
         });
     }
@@ -48,7 +54,12 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected Void doInBackground(Void... v) {
         try {
-            BloomReaderApplication.theOneBookCollection.init(mMain, this);
+            // get a reference to the activity if it is still there
+            final MainActivity mainActivity = mainActivityRef.get();
+            if (mainActivity == null || mainActivity.isFinishing())
+                return null;
+
+            BloomReaderApplication.theOneBookCollection.init(mainActivity, this);
         }
         catch (ExtStorageUnavailableException e) {
             mExceptionCaught = e;
@@ -57,23 +68,32 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
     }
     @Override
     protected void onProgressUpdate(Void... v) {
-        mMain.mLoadingProgressBar.incrementProgressBy(1);
+        // get a reference to the activity if it is still there
+        final MainActivity mainActivity = mainActivityRef.get();
+        if (mainActivity == null || mainActivity.isFinishing())
+            return;
+
+        mainActivity.mLoadingProgressBar.incrementProgressBy(1);
     }
     @Override
     protected void onPostExecute(Void v) {
+        // get a reference to the activity if it is still there
+        final MainActivity mainActivity = mainActivityRef.get();
+        if (mainActivity == null || mainActivity.isFinishing())
+            return;
+
         long now = new Date().getTime();
-        long delta = now -mBeginningTime;
+        long delta = now - mBeginningTime;
         if (delta < 1000) {   // want message to be visible for at least one second
-            ScheduleRemovingProgressNotice(delta);
+            scheduleRemovingProgressNotice(mainActivity, delta);
         } else {
-            removeProgressViews(mMain);
+            removeProgressViews(mainActivity);
         }
         // Ensure all the books are displayed at the end of loading.
-        mMain.mBookListAdapter.notifyDataSetChanged();
-        mMain = null;   // release reference
+        mainActivity.mBookListAdapter.notifyDataSetChanged();
 
         if (mExceptionCaught != null) {
-            mMain.externalStorageUnavailable(mExceptionCaught);
+            mainActivity.externalStorageUnavailable(mExceptionCaught);
         }
     }
 
@@ -131,13 +151,16 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
 
     }
 
-    private void ScheduleRemovingProgressNotice(long delta) {
+    private void scheduleRemovingProgressNotice(MainActivity mainActivity, long delta) {
+        if (mainActivity == null || mainActivity.isFinishing())
+            return;
+
         long wait = 1000 - delta;
         if (wait < 50) {
             wait = 50;     // let's wait more than just a millisecond or so...
         }
         mTimer = new Timer();
-        mTimer.schedule(new HideTask(mMain), wait);
+        mTimer.schedule(new HideTask(mainActivity), wait);
     }
 
     private class HideTask extends TimerTask {
@@ -148,8 +171,10 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
         }
         public void run() {
             mTimer.cancel(); //Terminate the timer thread
+
             // Run the remove method on the UI thread
-            mMain.runOnUiThread(new Runnable() {
+            if (mMain != null)
+                mMain.runOnUiThread(new Runnable() {
                 public void run() {
                     removeProgressViews(mMain);
                 }

@@ -34,9 +34,19 @@
         <!-- Some activities which declare android:theme="@style/AppTheme.NoActionBar" actually
         do have action bars, but we're choosing to configure a toolbar as our action bar
         using setSupportActionBar() -->
+        <!-- android:launchMode="singleTask" prevents MainActivity (thus BR) from
+        launching multiple instances.
+        Otherwise, opening a .bloomd file directly in a file manager or
+        browser while BR is running can cause a second instance to be created in the
+        other app's task. One reason we want to prevent this is so we can
+        accurately store and retrieve analytics information across app restarts.
+        For example, two instances running at the same time would compete to set
+        settings' PendingProgressReport.
+        -->
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
+            android:launchMode="singleTask"
             android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
             <intent-filter>

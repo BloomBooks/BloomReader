@@ -39,6 +39,7 @@ import android.widget.Toast;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
+import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.ExtStorageUnavailableException;
@@ -81,6 +82,8 @@ public class MainActivity extends BaseActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        checkForPendingReadBookAnalyticsEvent();
+
         if (haveStoragePermission(this)) {
             createMainActivity(savedInstanceState);
         }
@@ -90,6 +93,23 @@ public class MainActivity extends BaseActivity
         }
         requestLocationAccess();
         requestLocationUpdates();
+    }
+
+    // If we weren't able to send an analytics event the last time a user read a book
+    // (probably because the app or device was shut down), send it now.
+    // If changes are made here, check for needed changes in ReaderActivity.MakeFinalReport
+    private void checkForPendingReadBookAnalyticsEvent() {
+        Settings settings = Settings.load(this);
+        JSONObject progressReport = settings.getPendingProgressReport();
+        if (progressReport == null) {
+            return;
+        }
+
+        sendAnalytics(progressReport);
+
+        settings.setBookReadDuration(0);
+        settings.setPendingProgressReport(null);
+        settings.save(this);
     }
 
     // If we haven't already requested the user to do the necessary stuff so we can send
@@ -302,6 +322,19 @@ public class MainActivity extends BaseActivity
         }
     }
 
+    // This is called when BR is running and another app launches us by intent
+    // (like opening a .bloomd).
+    // It is called because we have set android:launchMode="singleTask" in AndroidManifest.xml.
+    // See more info there about why we have set things up this way.
+    // Note that if there is a ReaderActivity (or any other activity) running at the time,
+    // the OS destroys them before calling this.
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        checkForPendingReadBookAnalyticsEvent();
+        processIntentData(intent);
+    }
+
     private void createMainActivity(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
         BloomReaderApplication.setupAnalyticsIfNeeded(this);
@@ -337,7 +370,7 @@ public class MainActivity extends BaseActivity
             // we were given (a book or bundle)
             if (savedInstanceState != null)
                 alreadyOpenedFileFromIntent = savedInstanceState.getBoolean(ALREADY_OPENED_FILE_FROM_INTENT_KEY, false);
-            processIntentData();
+            processIntentData(getIntent());
 
             // Insert the build version and date into the appropriate control.
             // We have to find it indirectly through the navView's header or it won't be found
@@ -380,9 +413,7 @@ public class MainActivity extends BaseActivity
         return BloomReaderApplication.theOneBookCollection;
     }
 
-    private void processIntentData() {
-        // It's not necessary to split these two lines apart, but it sure makes debugging intents easier!
-        Intent intent = getIntent();
+    private void processIntentData(Intent intent) {
         Uri uri = intent.getData();
         if (uri == null || alreadyOpenedFileFromIntent)
             return;

@@ -5,11 +5,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 
 import com.google.android.material.navigation.NavigationView;
@@ -26,6 +28,7 @@ import androidx.appcompat.widget.Toolbar;
 import android.text.SpannableString;
 import android.text.format.DateFormat;
 import android.text.method.LinkMovementMethod;
+import android.text.style.ForegroundColorSpan;
 import android.text.util.Linkify;
 import android.util.Log;
 import android.view.ActionMode;
@@ -348,13 +351,7 @@ public class MainActivity extends BaseActivity
 
             getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-
-            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                    this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-            drawer.addDrawerListener(toggle);
-            toggle.syncState();
-            configureActionBar(toggle);
+            initializeNavigationDrawer(toolbar);
 
             NavigationView navigationView = findViewById(R.id.nav_view);
             navigationView.setNavigationItemSelectedListener(this);
@@ -394,6 +391,56 @@ public class MainActivity extends BaseActivity
 
         if (onResumeIsWaitingForStoragePermission)
             resumeMainActivity();
+    }
+
+    private void initializeNavigationDrawer(final Toolbar toolbar) {
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+
+        final Context context = this;
+        final NavigationView navMenu = findViewById(R.id.nav_view);
+        final MenuItem analyticsStatusMenuItem = navMenu.getMenu().findItem(R.id.analytics_status);
+
+        // This has to be final, but we need a new one each time (can't execute same task twice),
+        // so we cheat by putting it in an array.
+        final EnsureStatsSentAsyncTask[] ensureStatsSentAsyncTask = new EnsureStatsSentAsyncTask[1];
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close){
+
+            // When the drawer is opened, we start a background process which will update the stats menu item
+            // if we can verify all analytics events have been sent.
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+
+                ensureStatsSentAsyncTask[0] = new EnsureStatsSentAsyncTask(context, new EnsureStatsSentAsyncTask.AsyncResponse() {
+                    @Override
+                    public void processComplete(boolean success) {
+                        // Not localizing failed message because we don't expect it to ever be shown.
+                        SpannableString s = new SpannableString(success ? "✓ " + getString(R.string.all_reading_stats_sent) : "Failed to check if stats were sent.");
+                        s.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.colorBloomRed)), 0, s.length(), 0);
+                        analyticsStatusMenuItem.setTitle(s);
+                    }
+                });
+                ensureStatsSentAsyncTask[0].execute();
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                if (ensureStatsSentAsyncTask[0] != null) {
+                    ensureStatsSentAsyncTask[0].cancel(false);
+                }
+
+                // Reset the message to the default initial state
+                SpannableString s = new SpannableString(getString(R.string.attempting_to_send_reading_stats));
+                s.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.colorDeemphasizeText)), 0, s.length(), 0);
+                analyticsStatusMenuItem.setTitle(s);
+
+                super.onDrawerClosed(drawerView);
+            }
+        };
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+        configureActionBar(toggle);
     }
 
     private String getVersionAndDateText(String versionName, String date) {

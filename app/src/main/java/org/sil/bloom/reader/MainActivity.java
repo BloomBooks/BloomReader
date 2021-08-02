@@ -335,6 +335,7 @@ public class MainActivity extends BaseActivity
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         checkForPendingReadBookAnalyticsEvent();
+        alreadyOpenedFileFromIntent = false;
         processIntentData(intent);
     }
 

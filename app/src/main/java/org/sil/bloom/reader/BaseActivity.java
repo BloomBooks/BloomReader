@@ -66,26 +66,23 @@ public abstract class BaseActivity extends AppCompatActivity {
             mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile(new File(pathToWatch)).time;
             mHandler = new Handler();
         }
-        mObserver = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // must match what is written in AndroidDeviceUsbConnection.SendFile
-                    // Note that the file might not exist. By test, the value we get for
-                    // lastModified in that case is such that if it is later created,
-                    // we will interpret that as an update.
-                    String markerFilePath = pathToWatch + "/" + "something.modified";
-                    long markerModified = new File(markerFilePath).lastModified();
-                    if (markerModified == mostRecentMarkerFileModifiedTime)
-                        return; // presume nothing changed
-                    mostRecentMarkerFileModifiedTime = markerModified;
-                    // Now look and see what actually changed (most recently)
-                    notifyIfNewFileChanges(pathToWatch);
+        mObserver = () -> {
+            try {
+                // must match what is written in AndroidDeviceUsbConnection.SendFile
+                // Note that the file might not exist. By test, the value we get for
+                // lastModified in that case is such that if it is later created,
+                // we will interpret that as an update.
+                String markerFilePath = pathToWatch + "/" + "something.modified";
+                long markerModified = new File(markerFilePath).lastModified();
+                if (markerModified == mostRecentMarkerFileModifiedTime)
+                    return; // presume nothing changed
+                mostRecentMarkerFileModifiedTime = markerModified;
+                // Now look and see what actually changed (most recently)
+                notifyIfNewFileChanges(pathToWatch);
 
-                } finally {
-                    // We will run this task again a second later (unless stopObserving is called).
-                    mHandler.postDelayed(mObserver, 1000);
-                }
+            } finally {
+                // We will run this task again a second later (unless stopObserving is called).
+                mHandler.postDelayed(mObserver, 1000);
             }
         };
         // Start the loop.
@@ -136,12 +133,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         if (bloomApplicationContext == null)
             return; // unlikely, but better to skip the sound than crash.
         final MediaPlayer mp = MediaPlayer.create(bloomApplicationContext, id);
-        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                mp.release();
-            }
-        });
+        mp.setOnCompletionListener(mediaPlayer -> mp.release());
         mp.start();
     }
 }

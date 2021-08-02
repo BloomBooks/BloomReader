@@ -165,36 +165,43 @@ public class BookCollection {
         return bloomDir;
     }
 
-    private static boolean isExternalStorageReadable() {
-        return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED ||
-                Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED_READ_ONLY;
-    }
+//    private static boolean isExternalStorageReadable() {
+//        return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED ||
+//                Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED_READ_ONLY;
+//    }
 
     public static File[] getLocalAndRemovableBooksDirectories(Context context) {
         File localBooksDir = getLocalBooksDirectory();
 //        if (!isExternalStorageReadable()) {
 //            return new File[] {localBooksDir};
 //        }
-        File[] externalStorageVolumes =
-                ContextCompat.getExternalFilesDirs(context, null);
-        if (externalStorageVolumes.length == 0) {
-            return new File[] {localBooksDir};
-        }
-        // Enhance: possibly we should include any "books" directories on any
-        // available external storage volumes.
-        File primaryExternalStorage = externalStorageVolumes[0];
-        File remoteBooksDir = new File(primaryExternalStorage, "books");
-        try {
-            // If possible create it. This is where we hope Bloom Desktop will be able to put books.
-            // Its existence signals BD to put USB transfers here.
-            remoteBooksDir.mkdirs();
-            if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
-                return new File[] {localBooksDir, remoteBooksDir};
-        } catch (SecurityException e) {
-            // if we're not allowed to access it or create it, just ignore it.
-        }
+//        File[] externalStorageVolumes =
+//                ContextCompat.getExternalFilesDirs(context, null);
+//        if (externalStorageVolumes.length == 0) {
+//            return new File[] {localBooksDir};
+//        }
+//        // Enhance: possibly we should include any "books" directories on any
+//        // available external storage volumes.
+//        File primaryExternalStorage = externalStorageVolumes[0];
+//        File remoteBooksDir = new File(primaryExternalStorage, "books");
+//        try {
+//            // If possible create it. This is where we hope Bloom Desktop will be able to put books.
+//            // Its existence signals BD to put USB transfers here.
+//            remoteBooksDir.mkdirs();
+//            if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
+//                return new File[] {localBooksDir, remoteBooksDir};
+//        } catch (SecurityException e) {
+//            // if we're not allowed to access it or create it, just ignore it.
+//        }
 
-        return new File[] {localBooksDir};
+        //TODO see if we have permissions to a BloomExternal on external storage?
+        // like this?
+        File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
+        File remoteBooksDir = new File(remoteStorageDir, "BloomExternal");
+        if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
+            return new File[]{localBooksDir, remoteBooksDir};
+
+        return new File[]{localBooksDir};
     }
 
     private void loadFromDirectories(File[] booksDirs, Activity activity) {
@@ -220,6 +227,10 @@ public class BookCollection {
     }
 
     private void loadFromDirectory(File directory, Activity activity) {
+
+        //TODO Might need to do something similar if we need to access BloomExternal or another
+        // directory via SAF
+
         File[] files = directory.listFiles();
         ArrayList<BookOrShelf> books = new ArrayList<BookOrShelf>();
         if(files != null) {
@@ -301,7 +312,7 @@ public class BookCollection {
 
     // is this coming from somewhere other than where we store books?
     // then move or copy it in
-    public String ensureBookIsInCollection(Context context, Uri bookUri, String filename) {
+    public String ensureBookIsInCollection(Context context, Uri bookUri) {
         if (bookUri == null || bookUri.getPath() == null)
             return null; // Play console proves this is possible somehow
 
@@ -313,12 +324,13 @@ public class BookCollection {
             return bookUri.getPath();
 
         Log.d("BloomReader", "Copying book into Bloom directory");
+        String filename = IOUtilities.getFileNameFromUri(context, bookUri);
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + filename;
         if (filename.endsWith(IOUtilities.BOOK_FILE_EXTENSION + IOUtilities.ENCODED_FILE_EXTENSION)) {
             destination = destination.substring(0, destination.length() - IOUtilities.ENCODED_FILE_EXTENSION.length());
         }
         boolean copied = IOUtilities.copyBloomdFile(context, bookUri, destination);
-        if(copied){
+        if (copied){
             destination = FixDuplicate(destination);
             // it's probably not in our list that we display yet, so make an entry there
             addBookIfNeeded(destination);

@@ -9,8 +9,6 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
-
 import java.lang.ref.WeakReference;
 import java.util.Date;
 import java.util.Timer;
@@ -22,7 +20,6 @@ import java.util.TimerTask;
 // with a progress bar at the bottom that shows progress working through the list of books.
 // See https://issues.bloomlibrary.org/youtrack/issue/BL-7432.
 public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
-    private final ExtStorageUnavailableException mExceptionCaught = null;
     private final WeakReference<MainActivity> mainActivityRef;
     private final long mBeginningTime = new Date().getTime();
     private Timer mTimer;
@@ -81,10 +78,6 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
         }
         // Ensure all the books are displayed at the end of loading.
         mainActivity.mBookListAdapter.notifyDataSetChanged();
-
-        if (mExceptionCaught != null) {
-            mainActivity.externalStorageUnavailable(mExceptionCaught);
-        }
     }
 
     static private void addProgressViews(MainActivity main)

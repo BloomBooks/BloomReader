@@ -3,12 +3,10 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -58,12 +56,15 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             if (nonRemovableStorageDir == null)
                 return;
 
-            String fileNameFromUri = fileNameFromUri(uriToCleanUp);
+            String fileNameFromUri = IOUtilities.getFileNameFromUri(context, uriToCleanUp);
             if (fileNameFromUri == null || fileNameFromUri.isEmpty())
                 return;
 
+            //TODO we should be able to delete the file directly using the uri
+            // and the below doesn't work if you don't have legacy storage permission
+
             // Returns null if the file is not found
-            File fileToDelete = searchForFile(nonRemovableStorageDir, fileNameFromUri);
+            File fileToDelete = legacyStorageSearchForFile(nonRemovableStorageDir, fileNameFromUri);
 
             if (fileToDelete != null)
                 fileToDelete.delete();
@@ -75,12 +76,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
     }
 
     private boolean isOnNonRemovableStorage(File file) {
-        if (Build.VERSION.SDK_INT >= 21)
-            return !Environment.isExternalStorageRemovable(file);
-
-        // True if default storage is non-removable and the file is in that directory
-        return (!Environment.isExternalStorageRemovable() &&
-                file.getPath().startsWith(Environment.getExternalStorageDirectory().getPath()));
+        return !Environment.isExternalStorageRemovable(file);
     }
 
     private boolean isABookInOurLibrary(File file) {
@@ -106,7 +102,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return bloomDirectory;
     }
 
-    private File searchForFile(File dir, String fileName) {
+    private File legacyStorageSearchForFile(File dir, String fileName) {
         if (dir == null)
             return null;
 
@@ -118,44 +114,11 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             if (f.isFile() && f.getName().equals(fileName))
                 return f;
             if (f.isDirectory() && shouldSearchThisDirectory(f, fileName)) {
-                File fileToDelete = searchForFile(f, fileName);
+                File fileToDelete = legacyStorageSearchForFile(f, fileName);
                 if (fileToDelete != null)
                     return fileToDelete;
             }
         }
         return null;
-    }
-
-    private String fileNameFromUri(Uri contentURI) {
-
-        String fileName = "";
-        try {
-            Context context = contextRef.get();
-            if (context == null)
-                return "";
-
-            String fileNameOrPath = IOUtilities.getFileNameOrPathFromUri(context, contentURI);
-            if (fileNameOrPath != null && !fileNameOrPath.isEmpty())
-                fileName = IOUtilities.getFilename(fileNameOrPath);
-        } catch (Exception e) {
-            fileName = "";
-        }
-        if (!fileName.isEmpty())
-            return fileName;
-
-        // From here to the end was the original code, but it seems to have stopped working in Android 10.
-        // Prefer the method above, but fallback to this.
-        // I admit that the ideal would be to test that the code above works and get rid of the below.
-        // But I have 0% confidence that I could properly test all the right combinations of Android
-        // versions and uri variations. So, I felt the safest thing was to leave this fallback in place.
-        // expected path is something like /document/primary:MyBook.bloomd
-        String path = contentURI.getPath();
-        int separatorIndex = Math.max(
-                path.lastIndexOf(File.separator),
-                path.lastIndexOf(':')
-        );
-        if (separatorIndex < 0)
-            return path;
-        return path.substring(separatorIndex + 1);
     }
 }

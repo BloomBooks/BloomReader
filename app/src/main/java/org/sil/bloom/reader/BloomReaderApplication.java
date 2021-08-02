@@ -18,7 +18,6 @@ import com.segment.analytics.Properties;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
 import java.io.IOException;

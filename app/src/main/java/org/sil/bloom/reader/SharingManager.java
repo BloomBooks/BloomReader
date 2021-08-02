@@ -5,11 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
-import androidx.core.app.ShareCompat;
-import androidx.core.content.FileProvider;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.core.app.ShareCompat;
+import androidx.core.content.FileProvider;
 
 import org.apache.commons.io.FileUtils;
 import org.sil.bloom.reader.models.BookOrShelf;
@@ -27,7 +27,7 @@ import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 
 public class SharingManager {
 
-    private Activity mActivity;
+    private final Activity mActivity;
 
     public SharingManager(Activity activity) {
         mActivity = activity;
@@ -51,7 +51,7 @@ public class SharingManager {
 
     public void shareApkFile() {
         try {
-            File apkFile = copyApkToExternalStorageForSharing();
+            File apkFile = copyApkToDirectoryForSharing();
             // vnd.android.package-archive is the correct type but
             // bluetooth is not listed as an option for this on
             // older versions of android
@@ -104,12 +104,9 @@ public class SharingManager {
     }
 
     private BundleTask bundleAndShare(File[] files, final BundleTask.BundleTaskDoneListener taskDoneListener) {
-        BundleTask bundleTask = new BundleTask(sharedBloomBundlePath(), new BundleTask.BundleTaskDoneListener() {
-            @Override
-            public void onBundleTaskDone(File bundleFile) {
-                taskDoneListener.onBundleTaskDone(bundleFile); // Callback to dialog with spinner so it can close
-                shareBloomBundle(bundleFile);
-            }
+        BundleTask bundleTask = new BundleTask(sharedBloomBundlePath(), bundleFile -> {
+            taskDoneListener.onBundleTaskDone(bundleFile); // Callback to dialog with spinner so it can close
+            shareBloomBundle(bundleFile);
         });
         bundleTask.execute(files);
         return bundleTask;
@@ -122,7 +119,7 @@ public class SharingManager {
             shareFile(bundleFile, "application/zip", mActivity.getString(R.string.share_books_via));
     }
 
-    // We have to stage the apk to share in public storage, and bloom bundles have to be
+    // We stage the apk to share in a shareable directory (see filepaths.xml), and bloom bundles have to be
     // created somewhere.
     // This gets called now and then to delete the files there if they are more than a day old.
     public static void fileCleanup(Context context){
@@ -138,9 +135,9 @@ public class SharingManager {
         // Clean up book files staged in cache dir
         String[] cacheItems = context.getCacheDir().list();
         if (cacheItems == null) { return; }
-        for (int i=0; i<cacheItems.length; ++i) {
-            if (cacheItems[i].endsWith(BOOK_FILE_EXTENSION)){
-                File file = new File(context.getCacheDir() + File.separator + cacheItems[i]);
+        for (String cacheItem : cacheItems) {
+            if (cacheItem.endsWith(BOOK_FILE_EXTENSION)) {
+                File file = new File(context.getCacheDir() + File.separator + cacheItem);
                 if (file.lastModified() < yesterday)
                     file.delete();
             }
@@ -157,7 +154,7 @@ public class SharingManager {
         mActivity.startActivity(Intent.createChooser(shareIntent, dialogTitle));
     }
 
-    private File copyApkToExternalStorageForSharing() throws IOException{
+    private File copyApkToDirectoryForSharing() throws IOException{
         String apkPath = mActivity.getApplicationInfo().publicSourceDir;
         File srcApk = new File(apkPath);
         File destApk = new File(sharedApkPath());
@@ -169,20 +166,20 @@ public class SharingManager {
         return destApk;
     }
 
-    private static String sharedFilePath(String fileName) {
-        String sharedApkPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-        sharedApkPath += File.separator + fileName;
-        return sharedApkPath;
+    private static String pathForSharingFile(String fileName) {
+        String sharedFilePath = new File(BloomReaderApplication.getBloomApplicationContext().getFilesDir(), "tempForSharing").getAbsolutePath();
+        sharedFilePath += File.separator + fileName;
+        return sharedFilePath;
     }
 
     private static String sharedApkPath() {
-        return sharedFilePath("BloomReader.apk");
+        return pathForSharingFile("BloomReader.apk");
     }
 
     private static String sharedBloomBundlePath() {
         String deviceName = BloomReaderApplication.getOurDeviceName();
         deviceName = (deviceName != null && !deviceName.isEmpty()) ? deviceName : "my";
 
-        return sharedFilePath(deviceName + IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION);
+        return pathForSharingFile(deviceName + IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION);
     }
 }

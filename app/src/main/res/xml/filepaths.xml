@@ -2,4 +2,6 @@
 <paths>
     <external-path name="Bloom" path="/" />
     <cache-path name="Bloom-Cache" path="/" />
+    <files-path name="Shareable" path="tempForSharing/" />
+    <files-path name="Books" path="books/" />
 </paths>

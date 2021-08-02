@@ -12,7 +12,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 /**
  * Created by Thomson on 10/20/2017.

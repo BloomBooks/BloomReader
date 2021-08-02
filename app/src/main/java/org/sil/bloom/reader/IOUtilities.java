@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import androidx.annotation.IntDef;
 
@@ -400,6 +399,11 @@ public class IOUtilities {
     }
 
     public static void tar(File[] files, String destinationPath) throws IOException {
+        File destination = new File(destinationPath);
+        File destDirectory = destination.getParentFile();
+        if (!destDirectory.exists())
+            destDirectory.mkdirs();
+
         TarArchiveOutputStream tarOutput = new TarArchiveOutputStream(new FileOutputStream(destinationPath));
         tarOutput.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
         for(File file : files) {
@@ -414,13 +418,9 @@ public class IOUtilities {
     }
 
     public static void makeBloomBundle(String destinationPath) throws IOException {
-        FilenameFilter filter = new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String filename) {
-                return filename.endsWith(BOOK_FILE_EXTENSION)
-                        || filename.endsWith(BOOKSHELF_FILE_EXTENSION);
-            }
-        };
+
+        FilenameFilter filter = (dir, filename) ->
+                filename.endsWith(BOOK_FILE_EXTENSION) || filename.endsWith(BOOKSHELF_FILE_EXTENSION);
         tar(getLocalBooksDirectory().getAbsolutePath(), filter, destinationPath);
         //zip(getLocalBooksDirectory().getAbsolutePath(), filter, destinationPath);
     }
@@ -475,14 +475,7 @@ public class IOUtilities {
     }
 
     private static boolean isRemovable(File dir) {
-        if (Build.VERSION.SDK_INT >= 21)
-            return Environment.isExternalStorageRemovable(dir);
-
-        boolean defaultStorageRemovable = Environment.isExternalStorageRemovable();
-        if (dir.getPath().startsWith(Environment.getExternalStorageDirectory().getPath()))
-            return defaultStorageRemovable;
-        else
-            return !defaultStorageRemovable;
+        return Environment.isExternalStorageRemovable(dir);
     }
 
     private static File storageRootFromAppFilesDir(File appFilesDir) {
@@ -496,7 +489,7 @@ public class IOUtilities {
         return null;
     }
 
-    public static String getFilename(String path) {
+    static String getFilename(String path) {
         // Check for colon because files on SD card root have a path like
         // 1234-ABCD:book.bloomd
         int start = Math.max(path.lastIndexOf(File.separator),
@@ -505,7 +498,20 @@ public class IOUtilities {
         return path.substring(start);
     }
 
-    static String getFileNameOrPathFromUri(Context context, Uri uri) {
+    public static String getFileNameFromUri(Context context, Uri uri) {
+        String fileName = null;
+        try {
+            String fileNameOrPath = IOUtilities.getFileNameOrPathFromUri(context, uri);
+            if (fileNameOrPath != null && !fileNameOrPath.isEmpty())
+                fileName = IOUtilities.getFilename(fileNameOrPath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return fileName;
+    }
+
+    public static String getFileNameOrPathFromUri(Context context, Uri uri) {
         String nameOrPath = uri.getPath();
         // Content URI's do not use the actual filename in the "path"
         if (uri.getScheme().equals("content")) {

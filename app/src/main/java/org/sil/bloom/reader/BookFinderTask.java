@@ -1,6 +1,7 @@
 package org.sil.bloom.reader;
 
 import android.app.Activity;
+import android.net.Uri;
 import android.os.AsyncTask;
 
 import java.io.File;
@@ -70,19 +71,21 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
 
     private void foundNewBookOrShelf(final File bookOrShelfFile) {
         Activity activity = activityRef.get();
-        if (activity != null)
+        if (activity != null) {
             activity.runOnUiThread(() -> {
                 if (bookSearchListener != null)
-                    bookSearchListener.onNewBookOrShelf(bookOrShelfFile);
+                    bookSearchListener.onNewBookOrShelf(bookOrShelfFile, Uri.fromFile(bookOrShelfFile));
             });
+        }
     }
 
-    private void foundNewBundle(final File bundle) {
+    private void foundNewBundle(final File bundleFile) {
         Activity activity = activityRef.get();
-        if (activity != null)
+        if (activity != null) {
             activity.runOnUiThread(() -> {
                 if (bookSearchListener != null)
-                    bookSearchListener.onNewBloomBundle(bundle);
+                    bookSearchListener.onNewBloomBundle(Uri.fromFile(bundleFile));
             });
+        }
     }
 }

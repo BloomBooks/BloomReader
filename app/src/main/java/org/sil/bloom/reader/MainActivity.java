@@ -1,6 +1,7 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
+import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -549,10 +550,16 @@ public class MainActivity extends BaseActivity
             // book in our folder while we were paused.
             String booksDir = BookCollection.getLocalBooksDirectory().getPath();
             notifyIfNewFileChanges(booksDir);
-            String bookToHighlight = ((BloomReaderApplication) this.getApplication()).getBookToHighlight();
-            if (bookToHighlight != null) {
-                updateForNewBook(bookToHighlight);
-                ((BloomReaderApplication) this.getApplication()).setBookToHighlight(null);
+
+            Application uncheckedApp = this.getApplication();
+            // Play console proves this can be false
+            if (uncheckedApp instanceof BloomReaderApplication) {
+                BloomReaderApplication brApp = (BloomReaderApplication) uncheckedApp;
+                String bookToHighlight = brApp.getBookToHighlight();
+                if (bookToHighlight != null) {
+                    updateForNewBook(bookToHighlight);
+                    brApp.setBookToHighlight(null);
+                }
             }
 
             //Periodic cleanup

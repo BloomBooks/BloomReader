@@ -179,11 +179,12 @@ public class BookCollection {
             Integer count = 0;
             if (booksDirs != null && booksDirs.length > 0) {
                 for (File booksDir : booksDirs) {
-                    count += booksDir.listFiles(new FilenameFilter() {
+                    File[] files = booksDir.listFiles(new FilenameFilter() {
                         public boolean accept(File dir, String name) {
                             return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
                         }
-                    }).length;
+                    });
+                    count += files != null ? files.length : 0;
                 }
             }
             mInitializeTask.setBookCount(count);

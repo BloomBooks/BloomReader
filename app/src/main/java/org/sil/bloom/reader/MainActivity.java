@@ -696,20 +696,21 @@ public class MainActivity extends BaseActivity
     }
 
     private void openBook(Context context, String path) {
-        if (!new File(path).exists()) {
-            // Possibly deleted - possibly on an sd card that got removed
-            Toast.makeText(this, getString(R.string.missing_book, BookOrShelf.getNameFromPath(path)), Toast.LENGTH_LONG).show();
-            // Remove the book from the collection
-            _bookCollection.deleteFromDevice(_bookCollection.getBookOrShelfByPath(path));
-            mBookListAdapter.notifyDataSetChanged();
-            return;
-        }
         BookOrShelf bookOrShelf = _bookCollection.getBookOrShelfByPath(path);
         if (bookOrShelf == null) {
             // Play console shows this can happen somehow.
             // Maybe we when fix the concurrency issues, this goes away, too.
             return;
         }
+        if (bookOrShelf.uri == null && !new File(path).exists()) {
+            // Possibly deleted - possibly on an sd card that got removed
+            Toast.makeText(this, getString(R.string.missing_book, BookOrShelf.getNameFromPath(path)), Toast.LENGTH_LONG).show();
+            // Remove the book from the collection
+            _bookCollection.deleteFromDevice(_bookCollection.getBookOrShelfByPath(path));
+            mBookListAdapter.notifyDataSetChanged();
+            return;
+        };
+        // Enhance: is there a way to usefully check for  uris to things that don't exist?
         if (bookOrShelf.isShelf()) {
             Intent intent = new Intent(context, ShelfActivity.class);
             intent.putExtra("filter", bookOrShelf.shelfId);
@@ -719,6 +720,9 @@ public class MainActivity extends BaseActivity
         } else {
             Intent intent = new Intent(context, ReaderActivity.class);
             intent.putExtra("bookPath", path);
+            if (bookOrShelf.uri != null) {
+                intent.putExtra("bookUri", bookOrShelf.uri.toString());
+            }
             intent.putExtra("brandingProjectName", bookOrShelf.brandingProjectName);
             context.startActivity(intent);
         }
@@ -962,6 +966,9 @@ public class MainActivity extends BaseActivity
     // However, that would mean users with Android 11 could have different experiences
     // and even the same user would have different experiences if he uninstalled/reinstalled.
     private boolean osAllowsGeneralStorageAccess() {
+        // Counter-intuitively, Build.VERSION.SDK_IN is the version of the Android system
+        // we are running under, not the one we were built for. Q is Android 10, the last
+        // version where the user could give us this permission.
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q;
     }
 

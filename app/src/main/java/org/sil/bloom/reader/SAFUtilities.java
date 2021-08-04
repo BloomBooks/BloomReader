@@ -15,6 +15,11 @@ import androidx.documentfile.provider.DocumentFile;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,6 +47,22 @@ public class SAFUtilities {
         return hasPermission(context, BloomDirectoryTreeUri);
     }
 
+    public static Uri getUriForFolder(Context context, String folder) {
+        // Typically, we are looking for something like /storage/1DE5-2C02/BloomExternal,
+        // and if we have permission to access it, the URL will look like
+        // content://com.android.externalstorage.documents/tree/1DE5-2C02%3ABloomExternal.
+        // which has a getPath() of /tree/1DE5-2C02:BloomExternal
+        // If we were looking for arbitrary folders, we'd have to give more thought to other
+        // characters that may need encoding.
+        String searchFor = "/" + folder.replace("/storage/", "").replace("/", ":");
+        for(Uri uri:getUrisWithPermissions(context)) {
+            if (uri.getPath().endsWith(searchFor)) {
+                return uri;
+            }
+        }
+        return null;
+    }
+
     public static Intent getDirectoryPermissionIntent(Uri initialDirectoryUri) {
         // Choose a directory using the system's file picker.
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
@@ -57,6 +78,18 @@ public class SAFUtilities {
 
         return intent;
     }
+
+    public static String fileNameFromUri(Uri uri) {
+        String path = uri.getPath();
+        int index = path.lastIndexOf(":");
+        if (index < 0) {
+            index = path.lastIndexOf("/");
+            if (index == 0)
+                return path; // unlikely to ever happen
+        }
+        return path.substring(index);
+    }
+
 
     public static void searchDirectoryForBooks(Context context, Uri uri, BookSearchListener bookSearchListener) {
         //uri = Uri.parse("content://com.android.externalstorage.documents/tree/primary%3AAlarms");
@@ -89,6 +122,28 @@ public class SAFUtilities {
 //                            println("file copied? $result")
 //                    }.execute(iss, oss)
 //                }
+    }
+
+    public static int countBooksIn(Context context, Uri rootUri) {
+        final int[] count = {0};
+        BookSearchListener listener = new BookSearchListener() {
+            @Override
+            public void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+                count[0]++;
+            }
+
+            @Override
+            public void onNewBloomBundle(Uri bundleUri) {
+
+            }
+
+            @Override
+            public void onSearchComplete() {
+
+            }
+        };
+        traverseDirectoryEntries(context, rootUri, listener);
+        return count[0];
     }
 
     private static void traverseDirectoryEntries(Context context, Uri rootUri, BookSearchListener bookSearchListener) {

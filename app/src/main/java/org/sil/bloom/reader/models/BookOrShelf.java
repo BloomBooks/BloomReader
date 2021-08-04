@@ -2,10 +2,13 @@ package org.sil.bloom.reader.models;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sil.bloom.reader.BloomFileReader;
+import org.sil.bloom.reader.BloomReaderApplication;
+import org.sil.bloom.reader.IOUtilities;
 
 import java.io.File;
 import java.util.Comparator;
@@ -18,7 +21,8 @@ import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 public class BookOrShelf {
     public static final String SHARED_PREFERENCES_TAG = "org.sil.bloom.reader.BookMetaJson";
     public static final String HAS_AUDIO = "hasAudio";
-    public final String path;
+    public final String path; // May actually be the toString() of a Uri (if it starts with content:)
+    public final Uri uri;
     public final String name;
     public boolean highlighted = false;
     // currently only applies to bookshelf. But that could change.
@@ -36,6 +40,13 @@ public class BookOrShelf {
         //this.id = id;
         this.path = path;
         this.name = name;
+        this.uri = null;
+    }
+
+    public BookOrShelf(Uri uri) {
+        this.uri = uri;
+        this.path = uri.getPath();
+        this.name = BookOrShelf.getNameFromPath(path);
     }
 
     public BookOrShelf(String path) {
@@ -48,6 +59,11 @@ public class BookOrShelf {
 
     public boolean isShelf() {
         return path.endsWith(BOOKSHELF_FILE_EXTENSION);
+    }
+
+    public long lastModified() {
+        if (uri != null) return IOUtilities.lastModified(BloomReaderApplication.getBloomApplicationContext(), uri);
+        else return new File(path).lastModified();
     }
 
     private JSONObject getBookMeta(Context context) {
@@ -64,7 +80,8 @@ public class BookOrShelf {
 
             // BookMeta not found in cache - need to get it from file
             bookMeta = new JSONObject();
-            boolean hasAudio = new BloomFileReader(context, path).hasAudio();
+            BloomFileReader reader = new BloomFileReader(context, path, uri);
+            boolean hasAudio = reader.hasAudio();
             bookMeta.put(HAS_AUDIO, hasAudio);
             SharedPreferences.Editor valuesEditor = values.edit();
             valuesEditor.putString(metaCacheKey(), bookMeta.toString());
@@ -79,8 +96,7 @@ public class BookOrShelf {
 
     private String metaCacheKey() {
         // A combination of the filepath and modified timestamp on the file
-        File bookFile = new File(path);
-        return path + " - " + String.valueOf(bookFile.lastModified());
+        return path + " - " + String.valueOf(lastModified());
     }
 
     public boolean hasAudio(Context context) {

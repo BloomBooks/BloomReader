@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Environment;
 import androidx.annotation.IntDef;
 
+import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.widget.Toast;
@@ -18,6 +19,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -253,6 +255,111 @@ public class IOUtilities {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    // The same test, but here we only have available a URI.
+    public static boolean isValidZipUri(Uri input, @FileChecks int checkType, TextFileContent desiredFile) {
+        String key = input.toString();
+        Context context = getBloomApplicationContext();
+        if (sCheckedFiles == null) {
+            if (context != null) {
+                sCheckedFiles = context.getSharedPreferences(CHECKED_FILES_TAG, 0);
+            }
+        }
+        if (sCheckedFiles != null) {
+            long timestamp = sCheckedFiles.getLong(key, 0L);
+            if (timestamp == lastModified(context, input) && timestamp != 0L)
+                return true;
+        }
+        try {
+            // REVIEW very minimal check for .bloomd files: are there any filenames guaranteed to exist
+            // in any .bloomd file regardless of age?
+            int countHtml = 0;
+            int countCss = 0;
+            InputStream fs = context.getContentResolver().openInputStream(input);
+            ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fs));
+            try {
+                ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    if (entry.isDirectory())
+                        continue;
+                    String entryName = entry.getName().toLowerCase(Locale.ROOT);
+                    // For validation purposes we're only interested in html files in the root directory.
+                    // Activities, for example, may legitimately have their own.
+                    if ((entryName.endsWith(".htm") || entryName.endsWith(".html")) && entryName.indexOf("/") < 0)
+                        ++countHtml;
+                    else if (entryName.endsWith(".css"))
+                        ++countCss;
+                    int realSize = (int) entry.getSize();
+                    byte[] buffer = new byte[realSize];
+                    if (realSize != 0) {
+                    // The Java ZipEntry code does not always return the full data content even when the buffer is large
+                    // enough for it.  Whether this is a bug or a feature, or just the way it is, depends on your point
+                    // of view I suppose.  So we have a loop here in case the initial read wasn't enough.
+                    int size = 0;
+                        int moreReadSize = zis.read(buffer, size, realSize - size);
+                        while (moreReadSize > 0) {
+                                size += moreReadSize;
+                                moreReadSize = zis.read(buffer, size, realSize - size);
+                        } ;
+                        if (size != realSize) {
+                            // It would probably throw before getting here, but just in case, write
+                            // out some debugging information and return false.
+                            int compressedSize = (int) entry.getCompressedSize();
+                            int method = entry.getMethod();
+                            String type = "UNKNOWN (" + method + ")";
+                            switch (entry.getMethod()) {
+                                case ZipEntry.STORED:
+                                    type = "STORED";
+                                    break;
+                                case ZipEntry.DEFLATED:
+                                    type Bloom= "DEFLATED";
+                                    break;
+                            }
+                            Log.e("IOUtilities", "Unzip size read " + size + " != size expected " + realSize +
+                                    " for " + entry.getName() + " in " + BookOrShelf.getNameFromPath(input.getPath()) + ", compressed size = " + compressedSize + ", storage method = " + type);
+                            return false;
+                        }
+                    }
+                    if (desiredFile != null && entryName.equals(desiredFile.getFilename())) {
+                        // save the desired file content so we won't have to unzip again
+                        desiredFile.Content = new String(buffer, desiredFile.getEncoding());
+                    }
+                }
+            } finally {
+                zis.close();
+                fs.close();
+            }
+            boolean retval;
+            if (checkType == IOUtilities.CHECK_BLOOMD)
+                retval = countHtml == 1 && countCss > 0;
+            else
+                retval = true;
+            if (retval && sCheckedFiles != null) {
+                SharedPreferences.Editor editor = sCheckedFiles.edit();
+                editor.putLong(key, lastModified(context, input));
+                editor.apply();
+            }
+            return retval;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static long lastModified(Context context, Uri uri) {
+        long lastModified = 0;
+        final Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+        try
+        {
+            if (cursor.moveToFirst())
+                lastModified = cursor.getLong(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
+        }
+        finally
+        {
+            cursor.close();
+        }
+
+        return lastModified;
     }
 
     public static byte[] ExtractZipEntry(File input, String entryName) {

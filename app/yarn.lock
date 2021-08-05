@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-bloom-player@^2.0.46:
-  version "2.0.73"
-  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-2.0.73.tgz#d14bc2fa3a03a9137c1d6040f9c5e42653ecef0c"
-  integrity sha512-Wg9h+akO8favZG91TEKbrOJxb578OycaEj7a317J9BGhzHsaDWaaS1QBnxAolJyCDh0/1JF4fkYerFGrG2g0Tg==
+bloom-player@^2.0.75:
+  version "2.0.75"
+  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-2.0.75.tgz#1f44a4b12af4ea1b9bad6a8063a3c1dcd1974d0d"
+  integrity sha512-gc3+HZOiJ+zv23bahpvHKlvqd9pECh7K+7KYMI1V2bLUqJhYHMOUWuYMTsGGZy03sdILum/85SfiifPXPD1uOA==
   dependencies:
     dynamic-import-polyfill "^0.1.1"
     jquery.nicescroll "^3.7.6"

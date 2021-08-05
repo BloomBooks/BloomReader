@@ -313,7 +313,7 @@ public class IOUtilities {
                                     type = "STORED";
                                     break;
                                 case ZipEntry.DEFLATED:
-                                    type Bloom= "DEFLATED";
+                                    type = "DEFLATED";
                                     break;
                             }
                             Log.e("IOUtilities", "Unzip size read " + size + " != size expected " + realSize +

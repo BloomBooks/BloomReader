@@ -44,7 +44,7 @@ public class BloomFileReader {
     }
 
     public BloomFileReader(Context context, BookOrShelf book) {
-        this(context, book.path, book.uri);
+        this(context, book.pathOrUri, book.uri);
     }
 
     public File getHtmlFile() throws IOException{

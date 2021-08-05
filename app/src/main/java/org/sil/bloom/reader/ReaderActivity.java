@@ -306,8 +306,8 @@ public class ReaderActivity extends BaseActivity {
     }
 
     @Override
-    protected void onNewOrUpdatedBook(String fullPath) {
-        ((BloomReaderApplication) this.getApplication()).setBookToHighlight(fullPath);
+    protected void onNewOrUpdatedBook(String pathOrUri) {
+        ((BloomReaderApplication) this.getApplication()).setBookToHighlight(pathOrUri);
         Intent intent = new Intent(this, MainActivity.class);
         // Clears the history so now the back button doesn't take from the main activity
         // back to here.

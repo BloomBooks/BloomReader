@@ -117,7 +117,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     public int highlightItem(BookOrShelf bookOrShelf){
         List<String> paths = new ArrayList<>(1);
-        paths.add(bookOrShelf.path);
+        paths.add(bookOrShelf.pathOrUri);
         return highlightItems(paths);
     }
 
@@ -130,7 +130,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         for (int i=0; i<bookCollection.size(); ++i){
             BookOrShelf bookOrShelf = bookCollection.get(i);
             for(String path : paths){
-                if (path.equals(bookOrShelf.path)) {
+                if (path.equals(bookOrShelf.pathOrUri)) {
                     bookOrShelf.highlighted = true;
                     if (firstHighlighted == -1)
                         firstHighlighted = i;

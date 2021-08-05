@@ -115,8 +115,8 @@ public class AlphanumComparator implements Comparator<BookOrShelf> {
             if (nameCompare != 0)
                 return nameCompare;
         }
-        String p1 = one.path;
-        String p2 = two.path;
+        String p1 = one.pathOrUri;
+        String p2 = two.pathOrUri;
         if (p1 == null ^ p2 == null) {
             return (p1 == null) ? 1 : -1;
         }

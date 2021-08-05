@@ -43,6 +43,14 @@ public class SAFUtilities {
         return getUrisWithPermissions(context).contains(uri);
     }
 
+    // Given a string that might be either a file path or the toString() of an SAF URI, return
+    // the URI if that's what it is.
+    public static Uri tryGetUri(String pathOrUri) {
+        if (pathOrUri.startsWith("content://"))
+            return Uri.parse(pathOrUri);
+        return null;
+    }
+
     public static boolean hasPermissionToBloomDirectory(Context context) {
         return hasPermission(context, BloomDirectoryTreeUri);
     }
@@ -215,5 +223,13 @@ public class SAFUtilities {
                 // ignore exception
             }
         }
+    }
+
+    public static Uri fileUriFromDirectoryUri(Context context, Uri dir, String name) {
+        DocumentFile dfDir = DocumentFile.fromTreeUri(context, dir);
+        DocumentFile dfFile = dfDir.findFile(name);
+        if (dfFile == null)
+            return null;
+        return dfFile.getUri();
     }
 }

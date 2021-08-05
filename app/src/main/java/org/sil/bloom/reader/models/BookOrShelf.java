@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.BloomReaderApplication;
 import org.sil.bloom.reader.IOUtilities;
+import org.sil.bloom.reader.SAFUtilities;
 
 import java.io.File;
 import java.util.Comparator;
@@ -21,7 +22,7 @@ import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 public class BookOrShelf {
     public static final String SHARED_PREFERENCES_TAG = "org.sil.bloom.reader.BookMetaJson";
     public static final String HAS_AUDIO = "hasAudio";
-    public final String path; // May actually be the toString() of a Uri (if it starts with content:)
+    public final String pathOrUri; // May actually be the toString() of a Uri (if it starts with content:)
     public final Uri uri;
     public final String name;
     public boolean highlighted = false;
@@ -36,34 +37,38 @@ public class BookOrShelf {
 
     private Set<String> bookshelves = new HashSet<String>();
 
-    public BookOrShelf(String path, String name) {
-        //this.id = id;
-        this.path = path;
-        this.name = name;
-        this.uri = null;
+    public BookOrShelf(String pathOrUri, String name, Uri uri) {
+        this.uri = uri;
+        this.pathOrUri = pathOrUri;
+        this.name = name == null ? BookOrShelf.getNameFromPath(pathOrUri) : name;
+    }
+
+    public BookOrShelf(String pathOrUri, String name) {
+        this(pathOrUri, name, SAFUtilities.tryGetUri(pathOrUri));
     }
 
     public BookOrShelf(Uri uri) {
-        this.uri = uri;
-        this.path = uri.getPath();
-        this.name = BookOrShelf.getNameFromPath(path);
+        this(uri.toString(), null, uri);
     }
 
-    public BookOrShelf(String path) {
-        this(path, BookOrShelf.getNameFromPath(path));
+    public BookOrShelf(String pathOrUri) {
+        this(pathOrUri, null, SAFUtilities.tryGetUri(pathOrUri));
     }
 
-    public static String getNameFromPath(String path) {
+    public static String getNameFromPath(String pathOrUri) {
+        Uri uri = SAFUtilities.tryGetUri(pathOrUri);
+        // The main reason for getPath() is to remove url encoding.
+        final String path = uri == null ? pathOrUri : uri.getPath();
         return new File(path).getName().replace(BOOK_FILE_EXTENSION,"").replace(BOOKSHELF_FILE_EXTENSION,"");
     }
 
     public boolean isShelf() {
-        return path.endsWith(BOOKSHELF_FILE_EXTENSION);
+        return pathOrUri.endsWith(BOOKSHELF_FILE_EXTENSION);
     }
 
     public long lastModified() {
         if (uri != null) return IOUtilities.lastModified(BloomReaderApplication.getBloomApplicationContext(), uri);
-        else return new File(path).lastModified();
+        else return new File(pathOrUri).lastModified();
     }
 
     private JSONObject getBookMeta(Context context) {
@@ -80,7 +85,7 @@ public class BookOrShelf {
 
             // BookMeta not found in cache - need to get it from file
             bookMeta = new JSONObject();
-            BloomFileReader reader = new BloomFileReader(context, path, uri);
+            BloomFileReader reader = new BloomFileReader(context, pathOrUri, uri);
             boolean hasAudio = reader.hasAudio();
             bookMeta.put(HAS_AUDIO, hasAudio);
             SharedPreferences.Editor valuesEditor = values.edit();
@@ -96,7 +101,7 @@ public class BookOrShelf {
 
     private String metaCacheKey() {
         // A combination of the filepath and modified timestamp on the file
-        return path + " - " + String.valueOf(lastModified());
+        return pathOrUri + " - " + String.valueOf(lastModified());
     }
 
     public boolean hasAudio(Context context) {
@@ -140,6 +145,6 @@ public class BookOrShelf {
     }
 
     private boolean isInOnDeviceBloomFolder() {
-            return path.startsWith(BookCollection.getLocalBooksDirectory().getAbsolutePath());
+            return pathOrUri.startsWith(BookCollection.getLocalBooksDirectory().getAbsolutePath());
     }
 }

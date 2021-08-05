@@ -3,11 +3,8 @@ package org.sil.bloom.reader.models;
 import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
-import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
-
-import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -75,22 +72,22 @@ public class BookCollection {
         return mFilteredBooksAndShelves.size();
     }
 
-    public BookOrShelf addBookIfNeeded(String path) {
-        BookOrShelf existingBook = getBookOrShelfByPath(path);
+    public BookOrShelf addBookIfNeeded(String pathOrUrl) {
+        BookOrShelf existingBook = getBookOrShelfByPath(pathOrUrl);
         if (existingBook != null)
             return existingBook;
-        return addBook(path, null);
+        return addBook(pathOrUrl, null);
     }
 
-    private BookOrShelf makeBookOrShelf(String path, TextFileContent metaFile) {
+    private BookOrShelf makeBookOrShelf(String pathOrUrl, TextFileContent metaFile) {
         BookOrShelf bookOrShelf;
-        if (path.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
-            bookOrShelf = BloomShelfFileReader.parseShelfFile(path);
+        if (pathOrUrl.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
+            bookOrShelf = BloomShelfFileReader.parseShelfFile(pathOrUrl);
             if (bookOrShelf.shelfId != null)
                 mShelfIds.add(bookOrShelf.shelfId);
         } else {
             // book.
-            bookOrShelf = new BookOrShelf(path);
+            bookOrShelf = new BookOrShelf(pathOrUrl);
         }
         BookCollection.setShelvesAndTitleOfBook(bookOrShelf, metaFile);
         return bookOrShelf;
@@ -117,8 +114,8 @@ public class BookCollection {
     // Callers of this add a single book. So far all of these want it to be visible
     // at once, even if it doesn't really belong in the current filter. So, the book is
     // unconditionally added to mFilteredBooksAndShelves, and it gets re-sorted at once.
-    private BookOrShelf addBook(String path, TextFileContent metaFile) {
-        BookOrShelf bookOrShelf = makeBookOrShelf(path, metaFile);
+    private BookOrShelf addBook(String pathOrUrl, TextFileContent metaFile) {
+        BookOrShelf bookOrShelf = makeBookOrShelf(pathOrUrl, metaFile);
         _booksAndShelves.add(bookOrShelf);
         // This process of copying the collection is probably unnecessary here,
         // but is done wherever it is modified for thread safety. This way,
@@ -145,7 +142,7 @@ public class BookCollection {
 
     public BookOrShelf getBookOrShelfByPath(String path) {
         for (BookOrShelf bookOrShelf: _booksAndShelves) {
-            if (bookOrShelf.path.equals(path))
+            if (bookOrShelf.pathOrUri.equals(path))
                 return bookOrShelf;
         }
         return null;
@@ -396,8 +393,8 @@ public class BookCollection {
     public synchronized void deleteFromDevice(BookOrShelf book) {
         if (book == null)
             return;
-        if (book.path != null) {
-            File file = new File(book.path);
+        if (book.pathOrUri != null) {
+            File file = new File(book.pathOrUri);
             if (file.exists()) {
                 file.delete();
             }
@@ -517,13 +514,13 @@ public class BookCollection {
         String json;
         try {
             if (bookOrShelf.isShelf()) {
-                json = IOUtilities.FileToString(new File(bookOrShelf.path));
+                json = IOUtilities.FileToString(new File(bookOrShelf.pathOrUri));
             }
             else {
                 if (metaFile != null && metaFile.Content != null && !metaFile.Content.isEmpty()) {
                     json = metaFile.Content;
                 } else {
-                    byte[] jsonBytes = IOUtilities.ExtractZipEntry(new File(bookOrShelf.path), "meta.json");
+                    byte[] jsonBytes = IOUtilities.ExtractZipEntry(new File(bookOrShelf.pathOrUri), "meta.json");
                     json = new String(jsonBytes, "UTF-8");
                 }
             }

@@ -34,16 +34,16 @@ public class SharingManager {
     }
 
     public void shareBook(Context context, BookOrShelf book){
-        File bookFile = book.inShareableDirectory() ? new File(book.path) : stageBook(context, book);
+        File bookFile = book.inShareableDirectory() ? new File(book.pathOrUri) : stageBook(context, book);
         if (bookFile == null) return;
         String dialogTitle = String.format(mActivity.getString(R.string.shareBook), book.name);
         shareFile(bookFile, "application/zip", dialogTitle);
     }
 
     private File stageBook(Context context, BookOrShelf book) {
-        String bookFileName = new File(book.path).getName();
+        String bookFileName = new File(book.pathOrUri).getName();
         String outPath = context.getCacheDir().getPath() + File.separator + bookFileName;
-        if (IOUtilities.copyFile(book.path, outPath)) {
+        if (IOUtilities.copyFile(book.pathOrUri, outPath)) {
             return new File(outPath);
         }
         return null;
@@ -95,7 +95,7 @@ public class SharingManager {
     public BundleTask shareShelf(List<BookOrShelf> booksAndShelves, final BundleTask.BundleTaskDoneListener taskDoneListener){
         File[] files = new File[booksAndShelves.size()];
         for (int i=0; i<booksAndShelves.size(); ++i)
-            files[i] = new File(booksAndShelves.get(i).path);
+            files[i] = new File(booksAndShelves.get(i).pathOrUri);
         return bundleAndShare(files, taskDoneListener);
     }
 

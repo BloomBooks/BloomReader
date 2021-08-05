@@ -2,8 +2,10 @@ package org.sil.bloom.reader;
 
 import android.content.Context;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.documentfile.provider.DocumentFile;
 
 import org.sil.bloom.reader.models.BookCollection;
 
@@ -32,7 +34,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     // If we import a bundle while the FileObserver is running, the user has already been notified
     // about these files, and we don't want another notification the next time onResume() is called.
     protected void resetFileObserver() {
-        mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile(BookCollection.getLocalBooksDirectory()).time;
+        mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile().time;
     }
 
     // We want to monitor for new and changed books. We ought to be able to get notifications
@@ -54,8 +56,6 @@ public abstract class BaseActivity extends AppCompatActivity {
     // There should be no contention for access to something.modified, because BloomReader never
     // accesses or locks it; all it does is check its modify time.
     private void createFileObserver() {
-        final String pathToWatch = BookCollection.getLocalBooksDirectory().getPath();
-        String [] mostRecent = new String[1];
         if (mHandler == null) {
             // Calling for the first time (on startup of this activity). Assume it's just read
             // the files and doesn't need a notification; so we want to initialize
@@ -63,22 +63,36 @@ public abstract class BaseActivity extends AppCompatActivity {
             // If we already have mHandler, we don't need a new one, and do NOT want to
             // update the modify time we already have, since we do want notifications
             // about any changes since last pause.
-            mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile(new File(pathToWatch)).time;
+            mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile().time;
             mHandler = new Handler();
         }
         mObserver = () -> {
             try {
-                // must match what is written in AndroidDeviceUsbConnection.SendFile
-                // Note that the file might not exist. By test, the value we get for
-                // lastModified in that case is such that if it is later created,
-                // we will interpret that as an update.
-                String markerFilePath = pathToWatch + "/" + "something.modified";
-                long markerModified = new File(markerFilePath).lastModified();
-                if (markerModified == mostRecentMarkerFileModifiedTime)
-                    return; // presume nothing changed
-                mostRecentMarkerFileModifiedTime = markerModified;
-                // Now look and see what actually changed (most recently)
-                notifyIfNewFileChanges(pathToWatch);
+                if (MainActivity.canUseGeneralStorageAccess()) {
+                    // must match what is written in AndroidDeviceUsbConnection.SendFile
+                    // Note that the file might not exist. By test, the value we get for
+                    // lastModified in that case is such that if it is later created,
+                    // we will interpret that as an update.
+                    String markerFilePath = BookCollection.getLocalBooksDirectory().getPath() + "/" + "something.modified";
+                    long markerModified = new File(markerFilePath).lastModified();
+                    if (markerModified == mostRecentMarkerFileModifiedTime)
+                        return; // presume nothing changed
+                    mostRecentMarkerFileModifiedTime = markerModified;
+                    // Now look and see what actually changed (most recently)
+                    notifyIfNewFileChanges();
+                } else if (SAFUtilities.hasPermissionToBloomDirectory(BloomReaderApplication.getBloomApplicationContext())){
+                    // look for it using SAF
+
+//                    String uriString = SAFUtilities.BloomDirectoryTreeUri.toString() + "%3Asomething.modified";
+//                    Uri uriMarkerFile = Uri.parse(uriString);
+                    Uri uriMarkerFile = SAFUtilities.fileUriFromDirectoryUri(
+                            BloomReaderApplication.getBloomApplicationContext(), SAFUtilities.BloomDirectoryTreeUri, "something.modified");
+                    long markerModified = IOUtilities.lastModified(BloomReaderApplication.getBloomApplicationContext(), uriMarkerFile);
+                    if (markerModified == mostRecentMarkerFileModifiedTime)
+                        return; // presume nothing changed
+                    mostRecentMarkerFileModifiedTime = markerModified;
+                    notifyIfNewFileChanges();
+                }
 
             } finally {
                 // We will run this task again a second later (unless stopObserving is called).
@@ -90,12 +104,18 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     // Look for new changes to files and send notification if there have been any.
-    protected void notifyIfNewFileChanges(final String pathToWatch) {
-        PathModifyTime newModifyData = getLatestModifiedTimeAndFile(new File(pathToWatch));
+    protected void notifyIfNewFileChanges() {
+        PathModifyTime newModifyData = getLatestModifiedTimeAndFile();
         if (newModifyData.time > mostRecentlyModifiedBloomFileTime) {
             mostRecentlyModifiedBloomFileTime = newModifyData.time;
             onNewOrUpdatedBook(newModifyData.path);
         }
+    }
+
+    private PathModifyTime getLatestModifiedTimeAndFile() {
+        return MainActivity.canUseGeneralStorageAccess() ?
+                getLatestModifiedTimeAndFile(BookCollection.getLocalBooksDirectory())
+                : getLatestModifiedTimeAndFile(SAFUtilities.BloomDirectoryTreeUri);
     }
 
     private static PathModifyTime getLatestModifiedTimeAndFile(File dir) {
@@ -125,6 +145,38 @@ public abstract class BaseActivity extends AppCompatActivity {
         //long elapsedTime = System.currentTimeMillis() - startTime;
         result.path = lastModFile;
         result.time = latestTime;
+        return result;
+    }
+
+    // This overload uses SAF
+    private static PathModifyTime getLatestModifiedTimeAndFile(Uri dir) {
+        //long startTime = System.currentTimeMillis();
+        PathModifyTime result = new PathModifyTime();
+        final String[] lastModFile = {null};
+        final long[] latestTime = {0};
+        final Context context = BloomReaderApplication.getBloomApplicationContext();
+        SAFUtilities.searchDirectoryForBooks(context, dir, new BookSearchListener() {
+            @Override
+            public void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+                long modified = IOUtilities.lastModified(context, bookOrShelfUri);
+                if (modified > latestTime[0]) {
+                    latestTime[0] = modified;
+                    lastModFile[0] = bookOrShelfUri.toString();
+                }
+            }
+
+            @Override
+            public void onNewBloomBundle(Uri bundleUri) {
+
+            }
+
+            @Override
+            public void onSearchComplete() {
+
+            }
+        });
+        result.path = lastModFile[0];
+        result.time = latestTime[0];
         return result;
     }
 

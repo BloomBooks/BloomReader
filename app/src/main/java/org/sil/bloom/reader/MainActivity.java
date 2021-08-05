@@ -473,21 +473,17 @@ public class MainActivity extends BaseActivity
 
     private void resumeMainActivity() {
         updateFilter();
-
-        //TODO - set up file observation if SAF has given us permission to Bloom dir?
-        if (haveLegacyStoragePermission(this)) {
-            // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
-            // book to our directory using MTP.
-            startObserving();
-            // And right now we will trigger the notification if anyone or anything has changed a
-            // book in our folder while we were paused.
-            String booksDir = BookCollection.getLocalBooksDirectory().getPath();
-            notifyIfNewFileChanges(booksDir);
-            String bookToHighlight = ((BloomReaderApplication) this.getApplication()).getBookToHighlight();
-            if (bookToHighlight != null) {
-                updateForNewBook(bookToHighlight);
-                ((BloomReaderApplication) this.getApplication()).setBookToHighlight(null);
-            }
+        // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
+        // book to our directory using MTP. Under Android 11 or later, we will only get them
+        // if the user has at some point selected "Receive books via USB" and granted permission.
+        startObserving();
+        // And right now we will trigger the notification if anyone or anything has changed a
+        // book in our folder while we were paused.
+        notifyIfNewFileChanges();
+        String bookToHighlight = ((BloomReaderApplication) this.getApplication()).getBookToHighlight();
+        if (bookToHighlight != null) {
+            updateForNewBook(bookToHighlight);
+            ((BloomReaderApplication) this.getApplication()).setBookToHighlight(null);
         }
 
         //Periodic cleanup
@@ -508,17 +504,17 @@ public class MainActivity extends BaseActivity
     }
 
     @Override
-    protected void onNewOrUpdatedBook(String filePath) {
-        final String filePathLocal = filePath;
-        runOnUiThread(() -> updateForNewBook(filePathLocal));
+    protected void onNewOrUpdatedBook(String filePathOrUrl) {
+        final String filePathOrUrlLocal = filePathOrUrl;
+        runOnUiThread(() -> updateForNewBook(filePathOrUrlLocal));
     }
 
     public static void skipNextNewFileSound() {
         sSkipNextNewFileSound = true;
     }
 
-    private void updateForNewBook(String filePath) {
-        BookOrShelf book = _bookCollection.addBookIfNeeded(filePath);
+    private void updateForNewBook(String filePathOrUrl) {
+        BookOrShelf book = _bookCollection.addBookIfNeeded(filePathOrUrl);
         refreshList(book);
         if (sSkipNextNewFileSound) {
             sSkipNextNewFileSound = false;
@@ -648,7 +644,7 @@ public class MainActivity extends BaseActivity
 
     @Override
     public void onBookClick(BookOrShelf bookOrShelf){
-        openBook(this, bookOrShelf.path);
+        openBook(this, bookOrShelf.pathOrUri);
     }
 
     @Override
@@ -965,11 +961,17 @@ public class MainActivity extends BaseActivity
     // (see android:preserveLegacyExternalStorage="true" in AndroidManifest.xml).
     // However, that would mean users with Android 11 could have different experiences
     // and even the same user would have different experiences if he uninstalled/reinstalled.
-    private boolean osAllowsGeneralStorageAccess() {
+    public static boolean osAllowsGeneralStorageAccess() {
         // Counter-intuitively, Build.VERSION.SDK_IN is the version of the Android system
         // we are running under, not the one we were built for. Q is Android 10, the last
         // version where the user could give us this permission.
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q;
+    }
+
+    public static boolean canUseGeneralStorageAccess() {
+        if (!osAllowsGeneralStorageAccess())
+            return false;
+        return haveLegacyStoragePermission(BloomReaderApplication.getBloomApplicationContext());
     }
 
     private final BookSearchListener mBookSearchListener = new BookSearchListener() {

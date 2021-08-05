@@ -232,4 +232,28 @@ public class SAFUtilities {
             return null;
         return dfFile.getUri();
     }
+
+    public static void copyUriToFile(Context context, Uri uri, File dest) {
+        try {
+            InputStream fs = context.getContentResolver().openInputStream(uri);
+            OutputStream os = new FileOutputStream(dest);
+            byte[] buf = new byte[4096];
+            int length;
+            while ((length = fs.read(buf)) > 0) os.write(buf, 0, length);
+            os.close();
+            fs.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteUri(Context context, Uri uri) {
+        try {
+            DocumentsContract.deleteDocument(context.getContentResolver(),uri);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -70,6 +70,7 @@ public class MainActivity extends BaseActivity
     private static final String ALREADY_OPENED_FILE_FROM_INTENT_KEY = "alreadyOpenedFileFromIntent";
 
     private boolean showMessageOnLocationPermissionGranted = false;
+    private Date createCopyBooksTime;
 
     private RecyclerView mBookRecyclerView;
     BookListAdapter mBookListAdapter;       // accessed by InitializeLibraryTask
@@ -84,11 +85,10 @@ public class MainActivity extends BaseActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (haveLegacyStoragePermission(this)) {
-            // We are either migrating from a previous version or running pre-Android-11.
-            // Migrate before we create the main activity, so it will see any migrated books.
-            migrateLegacyData();
-        }
+
+        // Before we create the main activity, so it will see any migrated books.
+        copyFromBooksDirectory();
+        createCopyBooksTime = new Date();
         createMainActivity(savedInstanceState);
         requestLocationAccess();
         requestLocationUpdates();
@@ -291,44 +291,96 @@ public class MainActivity extends BaseActivity
         }
     }
 
-    private void migrateLegacyData() {
+    // Copy books from the "Books" directory to our own if they are new.
+    // This is done when Bloom starts up and has two purposes.
+    // First, if this is the first time we've run the version of Bloom that uses
+    // a private directory instead of "Books", we need to migrate the books.
+    // This should only be the case if the user has upgraded, so we should have legacy access
+    // to the directory.
+    // Second, if a book has been sent to the Books directory over USB (or otherwise) while we
+    // were paused, we need to get it.
+    // Returns the path to the most recently updated book, or null if none was updated.
+    private String copyFromBooksDirectory() {
         File oldBloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
         File newBloomDir = BookCollection.getLocalBooksDirectory();
         boolean failure = false;
+        String[] mostRecentModifiedBook = {null};
+        long mostRecentCopiedBookModified = 0;
         try {
             if (!oldBloomDir.exists()) {
-                return; // nothing to migrate
+                return null; // nothing to copy
             }
             // It's slightly wasteful to do this if we already have. However, in the release build,
             // we delete the directory after copying it, so it will only happen once. Someone who
             // is messing with alpha or beta might like to see any new books they fetch with the
             // old release build.
             boolean preserveOldDirectory = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
-            File [] filesInOldBloomDir = oldBloomDir.listFiles();
-            if (filesInOldBloomDir == null)
-                return;
-            for (File f : filesInOldBloomDir) {
-                String fileName = f.getName();
-                if (fileName.equals(".thumbs")) {
-                    continue; // this is a directory, and the data can be rebuilt, so save time by not copying
+            if (canUseGeneralStorageAccess()) {
+                File[] filesInOldBloomDir = oldBloomDir.listFiles();
+                if (filesInOldBloomDir == null)
+                    return null;
+                for (File f : filesInOldBloomDir) {
+                    String fileName = f.getName();
+                    if (fileName.equals(".thumbs")) {
+                        continue; // this is a directory, and the data can be rebuilt, so save time by not copying
+                    }
+                    File dest = new File(newBloomDir, fileName);
+                    if (dest.exists()) {
+                        continue; // Don't re-copy, and especially don't overwrite a possibly newer version.
+                    }
+                    long modifyTime = f.lastModified();
+                    if (modifyTime > mostRecentlyModifiedBloomFileTime) {
+                        mostRecentlyModifiedBloomFileTime = modifyTime;
+                        mostRecentModifiedBook[0] = f.getAbsolutePath();
+                    }
+                    if (preserveOldDirectory) {
+                        IOUtilities.copyFile(f.getPath(), dest.getPath());
+                    } else {
+                        failure |= !f.renameTo(dest);
+                    }
                 }
-                File dest = new File(newBloomDir, fileName);
-                if (dest.exists()) {
-                    continue; // Don't re-copy, and especially don't overwrite a possibly newer version.
-                }
-                if (preserveOldDirectory) {
-                    IOUtilities.copyFile(f.getPath(), dest.getPath());
-                } else {
-                    failure |= !f.renameTo(dest);
-                }
-            }
-            if (!failure && !preserveOldDirectory) {
-                IOUtilities.deleteFileOrDirectory(oldBloomDir);
+                // Review: why were we doing this?? We still use this directory for USB transfers!
+//                if (!failure && !preserveOldDirectory) {
+//                    IOUtilities.deleteFileOrDirectory(oldBloomDir);
+//                }
+            } else if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
+                // try using SAF
+                final Context context = this; // inside the listener, 'this' is the listener
+                SAFUtilities.searchDirectoryForBooks(this, SAFUtilities.BloomDirectoryTreeUri, new BookSearchListener() {
+                    @Override
+                    public void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+                        String fileName = IOUtilities.getFileNameFromUri(context, bookOrShelfUri);
+                        File currentFile = new File(newBloomDir + "/" + fileName);
+                        final long modified = IOUtilities.lastModified(context, bookOrShelfUri);
+                        if (currentFile.exists() && currentFile.lastModified() >= modified)
+                            return; // already have this version of book, or an even newer one
+                        if (modified>mostRecentlyModifiedBloomFileTime) {
+                            mostRecentlyModifiedBloomFileTime = modified;
+                            mostRecentModifiedBook[0] = currentFile.getAbsolutePath();
+                        }
+                        SAFUtilities.copyUriToFile(context, bookOrShelfUri, currentFile);
+                        //if (!preserveOldDirectory) {
+                            SAFUtilities.deleteUri(context, bookOrShelfUri);
+                        //}
+                    }
+
+                    @Override
+                    public void onNewBloomBundle(Uri bundleUri) {
+
+                    }
+
+                    @Override
+                    public void onSearchComplete() {
+
+                    }
+                });
+
             }
         }
         catch (SecurityException e) {
             Log.e("migrateLegacyData", e.getMessage());
         }
+        return mostRecentModifiedBook[0];
     }
 
     private void createMainActivity(Bundle savedInstanceState) {
@@ -473,13 +525,22 @@ public class MainActivity extends BaseActivity
 
     private void resumeMainActivity() {
         updateFilter();
+        if (new Date().getTime() - createCopyBooksTime.getTime() > 5000) {
+            // If this resume immediately follows create, we don't need to do this again.
+            // Otherwise, look for new books since pause.
+            String oneNewFile = copyFromBooksDirectory();
+            if (oneNewFile != null) {
+                updateForNewBook(oneNewFile);
+            }
+        }
         // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
         // book to our directory using MTP. Under Android 11 or later, we will only get them
         // if the user has at some point selected "Receive books via USB" and granted permission.
         startObserving();
         // And right now we will trigger the notification if anyone or anything has changed a
         // book in our folder while we were paused.
-        notifyIfNewFileChanges();
+        //notifyIfNewFileChanges();
+        // import any new books that showed up in the USB transfer directory while we were paused
         String bookToHighlight = ((BloomReaderApplication) this.getApplication()).getBookToHighlight();
         if (bookToHighlight != null) {
             updateForNewBook(bookToHighlight);

@@ -1,2 +1,3 @@
-Swahili user interface.
+Activities can control their own navigation.
+Improved analytics.
 Various enhancements and fixes.

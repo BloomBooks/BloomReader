@@ -1,3 +1,7 @@
+2.4
+Activities can control their own navigation.
+Improved analytics.
+
 2.3
 Swahili user interface.
 

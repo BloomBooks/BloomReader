@@ -78,6 +78,8 @@
     <string name="grant_storage_permission">Grant Storage Permission</string>
     <string name="renaming_invalid_book">Renaming invalid book to %1$s</string>
     <string name="preparing_to_show_books">Preparing to show books…</string>
+    <string name="books_on_sd_card">Books on SD card (requires permission)</string>
+    <string name="please_click_use_this_folder">In the window that comes up next, please click the main button to give Bloom permission to read the books on your SD card.</string>
 
     <string name="share_location">Share location</string>
     <string name="request_location">We would like to record your city because the people who share these books for free like to know where their books are being read.</string>

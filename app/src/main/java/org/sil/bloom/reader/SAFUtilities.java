@@ -7,6 +7,7 @@ import android.content.UriPermission;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
@@ -20,6 +21,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,6 +72,40 @@ public class SAFUtilities {
             }
         }
         return null;
+    }
+
+    /**
+     * FileProvider does not support converting the absolute path from
+     * getExternalFilesDir() to a "content://" Uri. As "file://" Uri
+     * has been blocked since Android 7+, we need to build the Uri
+     * manually after discovering the external storage.
+     * Adapted from https://github1s.com/syncthing/syncthing-android/blob/HEAD/app/src/main/java/com/nutomic/syncthingandroid/util/FileUtils.java#L140-L179,
+     * Mozilla Public License 2.0.     */
+    public static android.net.Uri getExternalFilesDirUri(Context context) {
+        try {
+            File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
+            if (remoteStorageDir == null) return null; // no removable storage
+            File remoteBooksDir = new File(remoteStorageDir, "BloomExternal");
+            if (!remoteBooksDir.exists()) return null; // No BloomExternal directory
+            String absPath = remoteStorageDir.getAbsolutePath();
+            String[] segments = absPath.split("/");
+            if (segments.length < 3) {
+                Log.w(TAG, "Could not extract volumeId from external storage path '" + absPath + "'");
+                return null;
+            }
+            // Extract the volumeId, e.g. "abcd-efgh"
+            String volumeId = segments[2];
+            // This is a bit of magic adapted from the source above. I don't know how robust it will
+            // prove across Android versions, or even across devices. There does not seem to be
+            // any official way to do this, necessary though it seems to be if you are going to ask
+            // the user for permissions on a particular folder.
+            return Uri.parse(
+                    "content://com.android.externalstorage.documents/document/" +
+                            volumeId + "%3ABloomExternal");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null; // after catching exception.
     }
 
     public static Intent getDirectoryPermissionIntent(Uri initialDirectoryUri) {

@@ -241,14 +241,9 @@ public class BookCollection {
                         if (uri != null) {
                             newCount = SAFUtilities.countBooksIn(activity, uri);
                         } else {
-                            // Todo: should we ask for permission (to ask for permission) to access it?
-                            // Something like, "It looks like this device has bloom books on an SD Card.
-                            // Would you like to see those books? If so, Bloom Reader needs permission
-                            // to access that folder." Then if they touch "yes" we have to bring up the
-                            // permissions dialog.
-                            // Otherwise, we can only get at ExternalFiles if at some point they
-                            // asked us to import books from it (and we didn't, because ExternalFiles
-                            // is special).
+                            newCount = 1; // We will make one placeholder for ExternalFiles
+                            // (When it is clicked we ask for permission.)
+
                         }
                     }
                     count += newCount;
@@ -310,9 +305,21 @@ public class BookCollection {
         // We didn't find anything in directory, but this might be because it's a directory we only
         // have permission to access through SAF.
         Uri uri = SAFUtilities.getUriForFolder(activity, directory.getPath());
-        if (uri == null)
-            return;
         final ArrayList<BookOrShelf> books = new ArrayList<BookOrShelf>();
+        if (uri == null) {
+            // This behavior is specific to the BloomExternal folder, therefore, not as generic as
+            // "any folder we put in the list but can't get a uri for" above. So far, BloomExternal
+            // is the only possible such folder. That could change. But probably we'd have permission
+            // for any other folder, since we would have gotten it by asking the user.
+            String fakeShelfName = activity.getResources().getString(R.string.books_on_sd_card);
+            BookOrShelf fakeShelf = new BookOrShelf(fakeShelfName + IOUtilities.BOOKSHELF_FILE_EXTENSION);
+            fakeShelf.backgroundColor = "ffff00";
+            fakeShelf.specialBehavior = "loadExternalFiles";
+            books.add(fakeShelf);
+            addBooks(books);
+            return;
+        }
+
         BookSearchListener listener = new BookSearchListener() {
             @Override
             public void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {

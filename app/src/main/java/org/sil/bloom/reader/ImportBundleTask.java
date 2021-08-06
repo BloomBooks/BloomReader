@@ -67,7 +67,7 @@ public class ImportBundleTask extends AsyncTask<Uri, String, Void> {
             return;
 
         if (newBookPaths.size() > 0)
-            mainActivity.bloomBundleImported();
+            mainActivity.reloadBookList();
 
         if (importBundleErrorHandler.hasErrors()) {
             importBundleErrorHandler.toastErrors();

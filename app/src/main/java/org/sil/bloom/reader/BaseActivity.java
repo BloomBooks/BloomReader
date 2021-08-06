@@ -150,11 +150,15 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     // This overload uses SAF
     private static PathModifyTime getLatestModifiedTimeAndFile(Uri dir) {
-        //long startTime = System.currentTimeMillis();
         PathModifyTime result = new PathModifyTime();
+        final Context context = BloomReaderApplication.getBloomApplicationContext();
+        if (!SAFUtilities.hasPermissionToBloomDirectory(context))
+            return result;
+        //long startTime = System.currentTimeMillis();
+
         final String[] lastModFile = {null};
         final long[] latestTime = {0};
-        final Context context = BloomReaderApplication.getBloomApplicationContext();
+
         SAFUtilities.searchDirectoryForBooks(context, dir, new BookSearchListener() {
             @Override
             public void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {

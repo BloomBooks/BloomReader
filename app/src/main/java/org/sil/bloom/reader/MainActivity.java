@@ -2,6 +2,7 @@ package org.sil.bloom.reader;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
@@ -12,6 +13,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.text.SpannableString;
 import android.text.format.DateFormat;
 import android.text.method.LinkMovementMethod;
@@ -20,7 +22,9 @@ import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -508,8 +512,8 @@ public class MainActivity extends BaseActivity
         new ImportBundleTask(this).execute(bloomBundleUri);
     }
 
-    // Called by ImportBundleTask
-    public void bloomBundleImported() {
+    // Called by ImportBundleTask and when we get permission to BloomExternal
+    public void reloadBookList() {
         // Reinitialize completely to get the new state of things.
         _bookCollection.init(this, null);
         // Don't highlight the set of new books, just update the list displayed. (BL-8808)
@@ -759,6 +763,10 @@ public class MainActivity extends BaseActivity
             // Maybe we when fix the concurrency issues, this goes away, too.
             return;
         }
+        if (bookOrShelf.specialBehavior == "loadExternalFiles") {
+            AskUserForPermissionToReadBloomExternal();
+            return;
+        }
         if (bookOrShelf.uri == null && !new File(path).exists()) {
             // Possibly deleted - possibly on an sd card that got removed
             Toast.makeText(this, getString(R.string.missing_book, BookOrShelf.getNameFromPath(path)), Toast.LENGTH_LONG).show();
@@ -783,6 +791,45 @@ public class MainActivity extends BaseActivity
             intent.putExtra("brandingProjectName", bookOrShelf.brandingProjectName);
             context.startActivity(intent);
         }
+    }
+
+    private void AskUserForPermissionToReadBloomExternal() {
+        ImageView image = new ImageView(this);
+        image.setImageResource(R.drawable.please_click_use_this_folder);
+        AlertDialog.Builder builder =
+                new AlertDialog.Builder(this, R.style.AlertDialogTheme).
+                        setMessage(getString(R.string.please_click_use_this_folder)).
+                        setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        }).
+                        setOnDismissListener((new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialogInterface) {
+                                LaunchActivityForExternalFilesPermission();
+                            }
+                        })).
+                        setView(image);
+        final AlertDialog dlg = builder.create();
+        // In case the user doesn't understand and clicks the button in the image, go ahead and
+        // show the real one.
+        image.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                dlg.dismiss();
+                return false;
+            }
+        });
+        dlg.show();
+    }
+
+    private void LaunchActivityForExternalFilesPermission() {
+        Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(SAFUtilities.getExternalFilesDirUri(this));
+        // This apparently has no effect. If it ever does, we should plan to allow it to be localized.
+        permissionIntent.putExtra(DocumentsContract.EXTRA_PROMPT, "Allow Bloom to access books on SD card");
+        mGetExternalFilesDirectoryUri.launch(permissionIntent);
     }
 
     @Override
@@ -1135,6 +1182,24 @@ public class MainActivity extends BaseActivity
                         getContentResolver().takePersistableUriPermission(uri, takeFlags);
 
                         SAFUtilities.searchDirectoryForBooks(this, uri, mBookSearchListener);
+                    }
+                }
+            }
+    );
+
+    private final ActivityResultLauncher<Intent> mGetExternalFilesDirectoryUri = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    Intent data = result.getData();
+                    // The result data contains a URI for the document or directory that the user selected.
+                    if (data != null) {
+                        Uri uri = data.getData();
+
+                        // Persist our permission beyond device restart
+                        final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        getContentResolver().takePersistableUriPermission(uri, takeFlags);
+
+                        reloadBookList();
                     }
                 }
             }

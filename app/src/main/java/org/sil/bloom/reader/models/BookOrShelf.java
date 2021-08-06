@@ -35,6 +35,10 @@ public class BookOrShelf {
     public String title;
     private JSONObject bookMeta; // Lazy loaded - Use getBookMeta() to access
 
+    // This is set on certain shelves...so far only the one that stands for the external SD card
+    // when we don't have permission to access it...that behave specially when clicked.
+    public String specialBehavior = null;
+
     private Set<String> bookshelves = new HashSet<String>();
 
     public BookOrShelf(String pathOrUri, String name, Uri uri) {

@@ -336,8 +336,15 @@ public class MainActivity extends BaseActivity
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         checkForPendingReadBookAnalyticsEvent();
-        alreadyOpenedFileFromIntent = false;
-        processIntentData(intent);
+
+        // It is possible that the user has never given permissions (or revoked them).
+        // In that case, we just take them back to the main screen which asks him for permissions.
+        // Unfortunately, he will need to try to open the book from the file again, but I don't think it
+        // is worth trying to get more fancy (like remembering the intent until he gives permissions).
+        if (haveStoragePermission(this)) {
+            alreadyOpenedFileFromIntent = false;
+            processIntentData(intent);
+        }
     }
 
     private void createMainActivity(Bundle savedInstanceState) {

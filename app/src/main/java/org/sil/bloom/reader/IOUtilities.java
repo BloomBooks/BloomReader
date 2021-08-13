@@ -293,10 +293,10 @@ public class IOUtilities {
                     int realSize = (int) entry.getSize();
                     byte[] buffer = new byte[realSize];
                     if (realSize != 0) {
-                    // The Java ZipEntry code does not always return the full data content even when the buffer is large
-                    // enough for it.  Whether this is a bug or a feature, or just the way it is, depends on your point
-                    // of view I suppose.  So we have a loop here in case the initial read wasn't enough.
-                    int size = 0;
+                        // The Java ZipEntry code does not always return the full data content even when the buffer is large
+                        // enough for it.  Whether this is a bug or a feature, or just the way it is, depends on your point
+                        // of view I suppose.  So we have a loop here in case the initial read wasn't enough.
+                        int size = 0;
                         int moreReadSize = zis.read(buffer, size, realSize - size);
                         while (moreReadSize > 0) {
                                 size += moreReadSize;

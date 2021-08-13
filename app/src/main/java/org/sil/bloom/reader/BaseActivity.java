@@ -80,14 +80,11 @@ public abstract class BaseActivity extends AppCompatActivity {
                     mostRecentMarkerFileModifiedTime = markerModified;
                     // Now look and see what actually changed (most recently)
                     notifyIfNewFileChanges();
-                } else if (SAFUtilities.hasPermissionToBloomDirectory(BloomReaderApplication.getBloomApplicationContext())){
+                } else if (SAFUtilities.hasPermissionToBloomDirectory(this)){
                     // look for it using SAF
-
-//                    String uriString = SAFUtilities.BloomDirectoryTreeUri.toString() + "%3Asomething.modified";
-//                    Uri uriMarkerFile = Uri.parse(uriString);
                     Uri uriMarkerFile = SAFUtilities.fileUriFromDirectoryUri(
-                            BloomReaderApplication.getBloomApplicationContext(), SAFUtilities.BloomDirectoryTreeUri, "something.modified");
-                    long markerModified = IOUtilities.lastModified(BloomReaderApplication.getBloomApplicationContext(), uriMarkerFile);
+                            this, SAFUtilities.BloomDirectoryTreeUri, "something.modified");
+                    long markerModified = IOUtilities.lastModified(this, uriMarkerFile);
                     if (markerModified == mostRecentMarkerFileModifiedTime)
                         return; // presume nothing changed
                     mostRecentMarkerFileModifiedTime = markerModified;
@@ -152,7 +149,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     private static PathModifyTime getLatestModifiedTimeAndFile(Uri dir) {
         PathModifyTime result = new PathModifyTime();
         final Context context = BloomReaderApplication.getBloomApplicationContext();
-        if (!SAFUtilities.hasPermissionToBloomDirectory(context))
+        if (!SAFUtilities.hasPermission(context, dir))
             return result;
         //long startTime = System.currentTimeMillis();
 

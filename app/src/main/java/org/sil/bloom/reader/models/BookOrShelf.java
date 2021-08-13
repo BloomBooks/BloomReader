@@ -48,7 +48,7 @@ public class BookOrShelf {
     }
 
     public BookOrShelf(String pathOrUri, String name) {
-        this(pathOrUri, name, SAFUtilities.tryGetUri(pathOrUri));
+        this(pathOrUri, name, SAFUtilities.getContentUriIfItIsOne(pathOrUri));
     }
 
     public BookOrShelf(Uri uri) {
@@ -56,11 +56,11 @@ public class BookOrShelf {
     }
 
     public BookOrShelf(String pathOrUri) {
-        this(pathOrUri, null, SAFUtilities.tryGetUri(pathOrUri));
+        this(pathOrUri, null, SAFUtilities.getContentUriIfItIsOne(pathOrUri));
     }
 
     public static String getNameFromPath(String pathOrUri) {
-        Uri uri = SAFUtilities.tryGetUri(pathOrUri);
+        Uri uri = SAFUtilities.getContentUriIfItIsOne(pathOrUri);
         // The main reason for getPath() is to remove url encoding.
         final String path = uri == null ? pathOrUri : uri.getPath();
         return new File(path).getName().replace(BOOK_FILE_EXTENSION,"").replace(BOOKSHELF_FILE_EXTENSION,"");

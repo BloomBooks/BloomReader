@@ -255,11 +255,6 @@ public class BloomFileReader {
         }
     }
 
-    private void unzipBook(Uri uri, String toPath) throws IOException {
-        setupBookDirectory(toPath);
-
-    }
-
     private void setupBookDirectory(String path){
         bookDirectory = context.getDir(path, Context.MODE_PRIVATE);
         IOUtilities.emptyDirectory(bookDirectory);

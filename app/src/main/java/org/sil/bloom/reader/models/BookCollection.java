@@ -72,22 +72,22 @@ public class BookCollection {
         return mFilteredBooksAndShelves.size();
     }
 
-    public BookOrShelf addBookIfNeeded(String pathOrUrl) {
-        BookOrShelf existingBook = getBookOrShelfByPath(pathOrUrl);
+    public BookOrShelf addBookIfNeeded(String pathOrUri) {
+        BookOrShelf existingBook = getBookOrShelfByPath(pathOrUri);
         if (existingBook != null)
             return existingBook;
-        return addBook(pathOrUrl, null);
+        return addBook(pathOrUri, null);
     }
 
-    private BookOrShelf makeBookOrShelf(String pathOrUrl, TextFileContent metaFile) {
+    private BookOrShelf makeBookOrShelf(String pathOrUri, TextFileContent metaFile) {
         BookOrShelf bookOrShelf;
-        if (pathOrUrl.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
-            bookOrShelf = BloomShelfFileReader.parseShelfFile(pathOrUrl);
+        if (pathOrUri.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
+            bookOrShelf = BloomShelfFileReader.parseShelfFile(pathOrUri);
             if (bookOrShelf.shelfId != null)
                 mShelfIds.add(bookOrShelf.shelfId);
         } else {
             // book.
-            bookOrShelf = new BookOrShelf(pathOrUrl);
+            bookOrShelf = new BookOrShelf(pathOrUri);
         }
         BookCollection.setShelvesAndTitleOfBook(bookOrShelf, metaFile);
         return bookOrShelf;
@@ -237,7 +237,7 @@ public class BookCollection {
                         // unfortunately, instead of throwing or otherwise indicating that we don't
                         // have permission, listFiles just doesn't list any of them. So try it using
                         // SAF.
-                        Uri uri = SAFUtilities.getUriForFolder(activity, booksDir.getPath());
+                        Uri uri = SAFUtilities.getUriForFolderWithPermission(activity, booksDir.getPath());
                         if (uri != null) {
                             newCount = SAFUtilities.countBooksIn(activity, uri);
                         } else {
@@ -304,16 +304,16 @@ public class BookCollection {
     private void loadFromSAFDirectory(File directory, Activity activity) {
         // We didn't find anything in directory, but this might be because it's a directory we only
         // have permission to access through SAF.
-        Uri uri = SAFUtilities.getUriForFolder(activity, directory.getPath());
+        Uri uri = SAFUtilities.getUriForFolderWithPermission(activity, directory.getPath());
         final ArrayList<BookOrShelf> books = new ArrayList<BookOrShelf>();
         if (uri == null) {
             // This behavior is specific to the BloomExternal folder, therefore, not as generic as
             // "any folder we put in the list but can't get a uri for" above. So far, BloomExternal
             // is the only possible such folder. That could change. But probably we'd have permission
             // for any other folder, since we would have gotten it by asking the user.
-            String fakeShelfName = activity.getResources().getString(R.string.books_on_sd_card);
+            String fakeShelfName = activity.getResources().getString(R.string.show_books_on_sd_card);
             BookOrShelf fakeShelf = new BookOrShelf(fakeShelfName + IOUtilities.BOOKSHELF_FILE_EXTENSION);
-            fakeShelf.backgroundColor = "ffff00";
+            //fakeShelf.backgroundColor = "ffff00";
             fakeShelf.specialBehavior = "loadExternalFiles";
             books.add(fakeShelf);
             addBooks(books);

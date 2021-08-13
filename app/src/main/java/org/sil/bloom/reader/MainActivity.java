@@ -1,10 +1,12 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.PointF;
 import android.location.Location;
 import android.location.LocationListener;
@@ -74,7 +76,7 @@ public class MainActivity extends BaseActivity
     private static final String ALREADY_OPENED_FILE_FROM_INTENT_KEY = "alreadyOpenedFileFromIntent";
 
     private boolean showMessageOnLocationPermissionGranted = false;
-    private Date createCopyBooksTime;
+    private boolean hasPreviouslyResumed = false;
 
     private RecyclerView mBookRecyclerView;
     BookListAdapter mBookListAdapter;       // accessed by InitializeLibraryTask
@@ -92,7 +94,6 @@ public class MainActivity extends BaseActivity
 
         // Before we create the main activity, so it will see any migrated books.
         copyFromBooksDirectory();
-        createCopyBooksTime = new Date();
         createMainActivity(savedInstanceState);
         requestLocationAccess();
         requestLocationUpdates();
@@ -343,10 +344,6 @@ public class MainActivity extends BaseActivity
                         failure |= !f.renameTo(dest);
                     }
                 }
-                // Review: why were we doing this?? We still use this directory for USB transfers!
-//                if (!failure && !preserveOldDirectory) {
-//                    IOUtilities.deleteFileOrDirectory(oldBloomDir);
-//                }
             } else if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
                 // try using SAF
                 final Context context = this; // inside the listener, 'this' is the listener
@@ -354,15 +351,15 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
                         String fileName = IOUtilities.getFileNameFromUri(context, bookOrShelfUri);
-                        File currentFile = new File(newBloomDir + "/" + fileName);
-                        final long modified = IOUtilities.lastModified(context, bookOrShelfUri);
-                        if (currentFile.exists() && currentFile.lastModified() >= modified)
+                        File privateStorageFile = new File(newBloomDir + "/" + fileName);
+                        final long bloomDirectoryModifiedTime = IOUtilities.lastModified(context, bookOrShelfUri);
+                        if (privateStorageFile.exists() && privateStorageFile.lastModified() >= bloomDirectoryModifiedTime)
                             return; // already have this version of book, or an even newer one
-                        if (modified>mostRecentlyModifiedBloomFileTime) {
-                            mostRecentlyModifiedBloomFileTime = modified;
-                            mostRecentModifiedBook[0] = currentFile.getAbsolutePath();
+                        if (bloomDirectoryModifiedTime>mostRecentlyModifiedBloomFileTime) {
+                            mostRecentlyModifiedBloomFileTime = bloomDirectoryModifiedTime;
+                            mostRecentModifiedBook[0] = privateStorageFile.getAbsolutePath();
                         }
-                        SAFUtilities.copyUriToFile(context, bookOrShelfUri, currentFile);
+                        SAFUtilities.copyUriToFile(context, bookOrShelfUri, privateStorageFile);
                         //if (!preserveOldDirectory) {
                             SAFUtilities.deleteUri(context, bookOrShelfUri);
                         //}
@@ -529,9 +526,10 @@ public class MainActivity extends BaseActivity
 
     private void resumeMainActivity() {
         updateFilter();
-        if (new Date().getTime() - createCopyBooksTime.getTime() > 5000) {
+        if (!hasPreviouslyResumed) {
             // If this resume immediately follows create, we don't need to do this again.
             // Otherwise, look for new books since pause.
+            hasPreviouslyResumed = true;
             String oneNewFile = copyFromBooksDirectory();
             if (oneNewFile != null) {
                 updateForNewBook(oneNewFile);
@@ -569,17 +567,17 @@ public class MainActivity extends BaseActivity
     }
 
     @Override
-    protected void onNewOrUpdatedBook(String filePathOrUrl) {
-        final String filePathOrUrlLocal = filePathOrUrl;
-        runOnUiThread(() -> updateForNewBook(filePathOrUrlLocal));
+    protected void onNewOrUpdatedBook(String filePathOrUri) {
+        final String filePathOrUriLocal = filePathOrUri;
+        runOnUiThread(() -> updateForNewBook(filePathOrUriLocal));
     }
 
     public static void skipNextNewFileSound() {
         sSkipNextNewFileSound = true;
     }
 
-    private void updateForNewBook(String filePathOrUrl) {
-        BookOrShelf book = _bookCollection.addBookIfNeeded(filePathOrUrl);
+    private void updateForNewBook(String filePathOrUri) {
+        BookOrShelf book = _bookCollection.addBookIfNeeded(filePathOrUri);
         refreshList(book);
         if (sSkipNextNewFileSound) {
             sSkipNextNewFileSound = false;
@@ -795,9 +793,10 @@ public class MainActivity extends BaseActivity
 
     private void AskUserForPermissionToReadBloomExternal() {
         ImageView image = new ImageView(this);
-        image.setImageResource(R.drawable.please_click_use_this_folder);
+        image.setImageResource(R.drawable.ic_use_this_folder);
         AlertDialog.Builder builder =
                 new AlertDialog.Builder(this, R.style.AlertDialogTheme).
+                        setTitle(R.string.show_books_on_sd_card).
                         setMessage(getString(R.string.please_click_use_this_folder)).
                         setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
                             @Override
@@ -1169,6 +1168,7 @@ public class MainActivity extends BaseActivity
             }
     );
 
+    @SuppressLint("WrongConstant")
     private final ActivityResultLauncher<Intent> mGetDirectoryToSearchForBooks = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if (result.getResultCode() == RESULT_OK) {
@@ -1187,6 +1187,7 @@ public class MainActivity extends BaseActivity
             }
     );
 
+    @SuppressLint("WrongConstant")
     private final ActivityResultLauncher<Intent> mGetExternalFilesDirectoryUri = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if (result.getResultCode() == RESULT_OK) {

@@ -43,6 +43,10 @@ public class SetBookListItemViewExtrasTask extends AsyncTask<Void, Void, SetBook
     // Sets the proper thumbnail for shelves
     // and the fallback thumbnail for books
     private void setInitialImageView(){
+        if (bookOrShelf.specialBehavior == "loadExternalFiles") {
+            viewHolder.imageView.setImageResource(R.drawable.ic_sd_card);
+            return;
+        }
         if (bookOrShelf.isShelf()) {
             viewHolder.imageView.setImageResource(R.drawable.bookshelf);
             try {

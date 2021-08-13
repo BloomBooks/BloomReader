@@ -48,7 +48,7 @@ public class SAFUtilities {
 
     // Given a string that might be either a file path or the toString() of an SAF URI, return
     // the URI if that's what it is.
-    public static Uri tryGetUri(String pathOrUri) {
+    public static Uri getContentUriIfItIsOne(String pathOrUri) {
         if (pathOrUri.startsWith("content://"))
             return Uri.parse(pathOrUri);
         return null;
@@ -58,7 +58,9 @@ public class SAFUtilities {
         return hasPermission(context, BloomDirectoryTreeUri);
     }
 
-    public static Uri getUriForFolder(Context context, String folder) {
+    // If we already have a URI indicating we have permission to use the specified folder
+    // (through SAF), return that URI. If not, return null.
+    public static Uri getUriForFolderWithPermission(Context context, String folder) {
         // Typically, we are looking for something like /storage/1DE5-2C02/BloomExternal,
         // and if we have permission to access it, the URL will look like
         // content://com.android.externalstorage.documents/tree/1DE5-2C02%3ABloomExternal.

@@ -74,7 +74,7 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
         if (activity != null) {
             activity.runOnUiThread(() -> {
                 if (bookSearchListener != null)
-                    bookSearchListener.onNewBookOrShelf(bookOrShelfFile, Uri.fromFile(bookOrShelfFile));
+                    bookSearchListener.onFoundBook(bookOrShelfFile, Uri.fromFile(bookOrShelfFile));
             });
         }
     }
@@ -84,7 +84,7 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
         if (activity != null) {
             activity.runOnUiThread(() -> {
                 if (bookSearchListener != null)
-                    bookSearchListener.onNewBloomBundle(Uri.fromFile(bundleFile));
+                    bookSearchListener.onFoundBundle(Uri.fromFile(bundleFile));
             });
         }
     }

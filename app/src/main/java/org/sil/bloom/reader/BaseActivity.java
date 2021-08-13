@@ -1,11 +1,14 @@
 package org.sil.bloom.reader;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.documentfile.provider.DocumentFile;
+import androidx.core.content.ContextCompat;
 
 import org.sil.bloom.reader.models.BookCollection;
 
@@ -17,6 +20,34 @@ public abstract class BaseActivity extends AppCompatActivity {
     long mostRecentlyModifiedBloomFileTime;
     long mostRecentMarkerFileModifiedTime;
     private Handler mHandler;
+
+    // This is our "legacy" storage model which allowed us to gain
+    // general file system access by user permission.
+    // In Android 11, this became unavailable and we must use private storage
+    // or gain access via Storage Access Framework (SAF).
+    //
+    // We could have returned true here if running on Android 11 and
+    // the user still has legacy storage access because they did an upgrade
+    // (see android:preserveLegacyExternalStorage="true" in AndroidManifest.xml).
+    // However, that would mean users with Android 11 could have different experiences
+    // and even the same user would have different experiences if he uninstalled/reinstalled.
+    // In general, if we have the migrated permission, haveLegacyStoragePermission will return
+    // true, and we won't call this. If we don't have it, this is a good criterion for deciding
+    // whether to ask for it.
+    public static boolean osAllowsGeneralStorageAccess() {
+        // Counter-intuitively, Build.VERSION.SDK_IN is the version of the Android system
+        // we are running under, not the one we were built for. Q is Android 10, the last
+        // version where the user could give us this permission.
+        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q;
+    }
+
+    // This is true if we have the old-style permission, that is, the user has actually granted it.
+    // This MIGHT be true on Android 11, but only if Bloom was upgraded from an earlier version
+    // where the permission was already granted.
+    public static boolean haveLegacyStoragePermission(Context context) {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+    }
 
     abstract protected void onNewOrUpdatedBook(String fullPath);
 
@@ -68,7 +99,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
         mObserver = () -> {
             try {
-                if (MainActivity.canUseGeneralStorageAccess()) {
+                if (haveLegacyStoragePermission(this)) {
                     // must match what is written in AndroidDeviceUsbConnection.SendFile
                     // Note that the file might not exist. By test, the value we get for
                     // lastModified in that case is such that if it is later created,
@@ -110,7 +141,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     private PathModifyTime getLatestModifiedTimeAndFile() {
-        return MainActivity.canUseGeneralStorageAccess() ?
+        return haveLegacyStoragePermission(this) ?
                 getLatestModifiedTimeAndFile(BookCollection.getLocalBooksDirectory())
                 : getLatestModifiedTimeAndFile(SAFUtilities.BloomDirectoryTreeUri);
     }
@@ -158,7 +189,7 @@ public abstract class BaseActivity extends AppCompatActivity {
 
         SAFUtilities.searchDirectoryForBooks(context, dir, new BookSearchListener() {
             @Override
-            public void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+            public void onFoundBook(File bloomdFile, Uri bookOrShelfUri) {
                 long modified = IOUtilities.lastModified(context, bookOrShelfUri);
                 if (modified > latestTime[0]) {
                     latestTime[0] = modified;
@@ -167,7 +198,7 @@ public abstract class BaseActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onNewBloomBundle(Uri bundleUri) {
+            public void onFoundBundle(Uri bundleUri) {
 
             }
 

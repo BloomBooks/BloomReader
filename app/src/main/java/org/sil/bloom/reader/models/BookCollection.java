@@ -97,8 +97,7 @@ public class BookCollection {
         BookOrShelf bookOrShelf;
         String path = uri.getPath();
         if (path.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
-            // Todo: make an override that takes the uri
-            bookOrShelf = BloomShelfFileReader.parseShelfFile(path);
+            bookOrShelf = BloomShelfFileReader.parseShelfUri(BloomReaderApplication.getBloomApplicationContext(), uri);
             if (bookOrShelf.shelfId != null)
                 mShelfIds.add(bookOrShelf.shelfId);
         } else {
@@ -322,7 +321,7 @@ public class BookCollection {
 
         BookSearchListener listener = new BookSearchListener() {
             @Override
-            public void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+            public void onFoundBook(File bloomdFile, Uri bookOrShelfUri) {
                 // in this context it isn't really new, but oh well..
                 final String path = bookOrShelfUri.getPath();
                 if (!path.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
@@ -354,7 +353,7 @@ public class BookCollection {
             }
 
             @Override
-            public void onNewBloomBundle(Uri bundleUri) {
+            public void onFoundBundle(Uri bundleUri) {
 
             }
 
@@ -521,13 +520,17 @@ public class BookCollection {
         String json;
         try {
             if (bookOrShelf.isShelf()) {
-                json = IOUtilities.FileToString(new File(bookOrShelf.pathOrUri));
+                json = bookOrShelf.uri == null
+                        ? IOUtilities.FileToString(new File(bookOrShelf.pathOrUri))
+                        : IOUtilities.UriToString(BloomReaderApplication.getBloomApplicationContext(), bookOrShelf.uri);
             }
             else {
                 if (metaFile != null && metaFile.Content != null && !metaFile.Content.isEmpty()) {
                     json = metaFile.Content;
                 } else {
-                    byte[] jsonBytes = IOUtilities.ExtractZipEntry(new File(bookOrShelf.pathOrUri), "meta.json");
+                    byte[] jsonBytes = bookOrShelf.uri == null
+                            ? IOUtilities.ExtractZipEntry(new File(bookOrShelf.pathOrUri), "meta.json")
+                            : IOUtilities.ExtractZipEntry(BloomReaderApplication.getBloomApplicationContext(), bookOrShelf.uri, "meta.json");
                     json = new String(jsonBytes, "UTF-8");
                 }
             }

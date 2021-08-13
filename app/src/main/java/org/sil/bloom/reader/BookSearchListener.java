@@ -5,7 +5,9 @@ import android.net.Uri;
 import java.io.File;
 
 public interface BookSearchListener {
-    void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri);
-    void onNewBloomBundle(Uri bundleUri);
+    // called for each book in the place we're searching
+    void onFoundBook(File bloomdFile, Uri bookOrShelfUri);
+    // called for each bundle in the place we're searching
+    void onFoundBundle(Uri bundleUri);
     void onSearchComplete();
 }

@@ -1,5 +1,10 @@
 package org.sil.bloom.reader;
 
+import android.content.Context;
+import android.net.Uri;
+
+import androidx.annotation.NonNull;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,10 +15,21 @@ import java.util.Locale;
 
 public class BloomShelfFileReader {
     public static BookOrShelf parseShelfFile(String filepath) {
-        String backgroundColor = "ffffff"; // default white
-        String shelfName = BookOrShelf.getNameFromPath(filepath);
-        String shelfId = null;
         String json = IOUtilities.FileToString(new File(filepath));
+        String shelfName = BookOrShelf.getNameFromPath(filepath);
+        return parseShelfJson(filepath, null, json, shelfName);
+    }
+
+    public static BookOrShelf parseShelfUri(Context context, Uri uri) {
+        String json = IOUtilities.UriToString(context, uri);
+        String shelfName = BookOrShelf.getNameFromPath(uri.getPath());
+        return parseShelfJson(null, uri, json, shelfName);
+    }
+
+    @NonNull
+    private static BookOrShelf parseShelfJson(String filepath, Uri uri, String json, String shelfName) {
+        String backgroundColor = "ffffff"; // default white
+        String shelfId = null;
         try {
             JSONObject data = new JSONObject(json);
             // roughly in priority order, so if anything goes wrong with the json parsing,
@@ -37,7 +53,7 @@ public class BloomShelfFileReader {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        BookOrShelf shelf = new BookOrShelf(filepath, shelfName);
+        BookOrShelf shelf = uri == null ? new BookOrShelf(filepath, shelfName) : new BookOrShelf(uri, shelfName);
         shelf.backgroundColor = backgroundColor;
         shelf.shelfId = shelfId;
         return shelf;

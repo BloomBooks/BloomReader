@@ -55,6 +55,10 @@ public class BookOrShelf {
         this(uri.toString(), null, uri);
     }
 
+    public BookOrShelf(Uri uri, String name) {
+        this (uri.toString(), name, uri);
+    }
+
     public BookOrShelf(String pathOrUri) {
         this(pathOrUri, null, SAFUtilities.getContentUriIfItIsOne(pathOrUri));
     }

@@ -362,6 +362,33 @@ public class IOUtilities {
         return lastModified;
     }
 
+    public static byte[] ExtractZipEntry(Context context, Uri uri, String entryName) {
+        InputStream fs = null;
+        try {
+            fs = context.getContentResolver().openInputStream(uri);
+            ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fs));
+            ZipEntry ze;
+            while ((ze = zis.getNextEntry()) != null
+                    && !ze.getName().equals(entryName)) {
+            }
+            if (ze == null)
+                return new byte[0];
+            int size = (int) ze.getSize();
+            final byte[] output = new byte[size];
+            int offset = 0;
+            int count = 0;
+            while ((count = zis.read(output, offset, output.length - offset)) > 0) {
+                offset += count;
+            }
+            return output;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new byte[0];
+    }
+
     public static byte[] ExtractZipEntry(File input, String entryName) {
         try {
             ZipFile zip = new ZipFile(input);
@@ -474,6 +501,14 @@ public class IOUtilities {
     public static String FileToString(File file) {
         try {
             return InputStreamToString(new FileInputStream(file));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String UriToString(Context context, Uri uri) {
+        try {
+            return InputStreamToString(context.getContentResolver().openInputStream(uri));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -6,13 +6,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.PointF;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
@@ -243,11 +241,6 @@ public class MainActivity extends BaseActivity
         }
     }
 
-    public static boolean haveLegacyStoragePermission(Context context) {
-        return ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-    }
-
     public void requestLegacyStoragePermission(int requestCode) {
         String[] permissionsNeeded = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
         ActivityCompat.requestPermissions(this, permissionsNeeded, requestCode);
@@ -320,7 +313,7 @@ public class MainActivity extends BaseActivity
             // is messing with alpha or beta might like to see any new books they fetch with the
             // old release build.
             boolean preserveOldDirectory = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
-            if (canUseGeneralStorageAccess()) {
+            if (haveLegacyStoragePermission(this)) {
                 File[] filesInOldBloomDir = oldBloomDir.listFiles();
                 if (filesInOldBloomDir == null)
                     return null;
@@ -349,7 +342,7 @@ public class MainActivity extends BaseActivity
                 final Context context = this; // inside the listener, 'this' is the listener
                 SAFUtilities.searchDirectoryForBooks(this, SAFUtilities.BloomDirectoryTreeUri, new BookSearchListener() {
                     @Override
-                    public void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+                    public void onFoundBook(File bloomdFile, Uri bookOrShelfUri) {
                         String fileName = IOUtilities.getFileNameFromUri(context, bookOrShelfUri);
                         File privateStorageFile = new File(newBloomDir + "/" + fileName);
                         final long bloomDirectoryModifiedTime = IOUtilities.lastModified(context, bookOrShelfUri);
@@ -366,7 +359,7 @@ public class MainActivity extends BaseActivity
                     }
 
                     @Override
-                    public void onNewBloomBundle(Uri bundleUri) {
+                    public void onFoundBundle(Uri bundleUri) {
 
                     }
 
@@ -1058,32 +1051,9 @@ public class MainActivity extends BaseActivity
         searchForBloomBooksUsingSaf();
     }
 
-    // This is our "legacy" storage model which allowed us to gain
-    // general file system access by user permission.
-    // In Android 11, this became unavailable and we must use private storage
-    // or gain access via Storage Access Framework (SAF).
-    //
-    // We could have returned true here if running on Android 11 and
-    // the user still has legacy storage access because they did an upgrade
-    // (see android:preserveLegacyExternalStorage="true" in AndroidManifest.xml).
-    // However, that would mean users with Android 11 could have different experiences
-    // and even the same user would have different experiences if he uninstalled/reinstalled.
-    public static boolean osAllowsGeneralStorageAccess() {
-        // Counter-intuitively, Build.VERSION.SDK_IN is the version of the Android system
-        // we are running under, not the one we were built for. Q is Android 10, the last
-        // version where the user could give us this permission.
-        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q;
-    }
-
-    public static boolean canUseGeneralStorageAccess() {
-        if (!osAllowsGeneralStorageAccess())
-            return false;
-        return haveLegacyStoragePermission(BloomReaderApplication.getBloomApplicationContext());
-    }
-
     private final BookSearchListener mBookSearchListener = new BookSearchListener() {
         @Override
-        public void onNewBookOrShelf(File bookOrShelfFile, Uri bookOrShelfUri) {
+        public void onFoundBook(File bookOrShelfFile, Uri bookOrShelfUri) {
             String filePath = bookOrShelfFile.getPath();
             // Don't add books found in BloomExternal to Bloom!
             // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
@@ -1097,7 +1067,7 @@ public class MainActivity extends BaseActivity
         }
 
         @Override
-        public void onNewBloomBundle(Uri bundleUri) {
+        public void onFoundBundle(Uri bundleUri) {
             Log.d("BookSearch", "Found " + bundleUri.getPath());
             mFileSearchState.bundlesToAdd.add(bundleUri);
         }

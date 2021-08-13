@@ -7,11 +7,9 @@ import android.content.UriPermission;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.documentfile.provider.DocumentFile;
 
 import java.io.Closeable;
@@ -21,8 +19,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -115,7 +111,9 @@ public class SAFUtilities {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
 
         // Provide read access to files and sub-directories in the user-selected directory.
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        // We thought this was necessary at one point, but a comment in stack overflow
+        // indicated it was not useful, and things seem to work fine without it.
+        //intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         // Optionally, specify a URI for the directory that should be opened in
         // the system file picker when it loads.
@@ -175,12 +173,12 @@ public class SAFUtilities {
         final int[] count = {0};
         BookSearchListener listener = new BookSearchListener() {
             @Override
-            public void onNewBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+            public void onFoundBook(File bloomdFile, Uri bookOrShelfUri) {
                 count[0]++;
             }
 
             @Override
-            public void onNewBloomBundle(Uri bundleUri) {
+            public void onFoundBundle(Uri bundleUri) {
 
             }
 
@@ -229,12 +227,12 @@ public class SAFUtilities {
                         Uri uri = DocumentsContract.buildDocumentUriUsingTree(rootUri, docId);
                         if (name.endsWith(BLOOM_BUNDLE_FILE_EXTENSION) ||
                                 name.endsWith(BLOOM_BUNDLE_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
-                            bookSearchListener.onNewBloomBundle(uri);
+                            bookSearchListener.onFoundBundle(uri);
                         } else if (name.endsWith(BOOK_FILE_EXTENSION) ||
                                 name.endsWith(BOOK_FILE_EXTENSION + ENCODED_FILE_EXTENSION) ||
                                 name.endsWith(BOOKSHELF_FILE_EXTENSION) ||
                                 name.endsWith(BOOKSHELF_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
-                            bookSearchListener.onNewBookOrShelf(new File(uri.getPath()), uri);
+                            bookSearchListener.onFoundBook(new File(uri.getPath()), uri);
                         }
                     }
                 }

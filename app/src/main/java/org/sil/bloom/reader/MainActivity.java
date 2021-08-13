@@ -402,6 +402,11 @@ public class MainActivity extends BaseActivity
         if (!BuildConfig.DEBUG && !BuildConfig.FLAVOR.equals("alpha")) {
             navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
         }
+        // This menu is only useful if the OS allows general external storage access, or
+        // if we have it anyway (because BR was upgraded)
+        if (!osAllowsGeneralStorageAccess() && !haveLegacyStoragePermission(this)) {
+            navigationView.getMenu().removeItem(R.id.nav_search_for_bundles);
+        }
 
         mBookRecyclerView = findViewById(R.id.book_list2);
         SetupCollectionListView(mBookRecyclerView);
@@ -1039,16 +1044,14 @@ public class MainActivity extends BaseActivity
     }
 
     private void searchForBloomBooks() {
-        if (osAllowsGeneralStorageAccess()) {
-            if (haveLegacyStoragePermission(this)) {
-                searchForBloomBooks_preAndroid11();
-            } else {
-                requestLegacyStoragePermission(STORAGE_PERMISSION_SEARCH);
-            }
-            return;
+        if (haveLegacyStoragePermission(this)) {
+            searchForBloomBooks_preAndroid11();
+        } else {
+            requestLegacyStoragePermission(STORAGE_PERMISSION_SEARCH);
         }
-
-        searchForBloomBooksUsingSaf();
+        return;
+        // We decided this is not usable.
+        //searchForBloomBooksUsingSaf();
     }
 
     private final BookSearchListener mBookSearchListener = new BookSearchListener() {

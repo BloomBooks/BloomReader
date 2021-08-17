@@ -114,9 +114,8 @@ public class NewBookListenerService extends Service {
                 }
                 return;
             }
-            File localBookDirectory = BookCollection.getLocalBooksDirectory();
-            File bookFile = new File(localBookDirectory, title + IOUtilities.BOOK_FILE_EXTENSION);
-            boolean bookExists = bookFile.exists();
+            File bookFile = IOUtilities.getBookFileIfExists(title);
+            boolean bookExists = bookFile != null;
             // If the book doesn't exist it can't be up to date.
             if (bookExists && IsBookUpToDate(bookFile, title, newBookVersion)) {
                 // Enhance: possibly we might want to announce this again if the book has been off the air
@@ -264,10 +263,10 @@ public class NewBookListenerService extends Service {
 
     // Determine whether the book is up to date, based on comparing the version file embedded in it
     // with the one we got from the advertisement.
-    // A small file called version.txt is embedded in each .bloomd file to store the file version information
+    // A small file called version.txt is embedded in each .bloompub/.bloomd file to store the file version information
     // sent with each advertisement. This allows BloomReader to avoid repeatedly downloading
     // the same version of the same book. BloomReader does not interpret the version information,
-    // just compares what is in the  version.txt in the .bloomd file it has (if any) with what it
+    // just compares what is in the  version.txt in the .bloompub/.bloomd file it has (if any) with what it
     // got in the new advertisement.
     boolean IsBookUpToDate(File bookFile, String title, String newBookVersion) {
         // "version.txt" must match the name given in Bloom Desktop BookCompressor.CompressDirectory()

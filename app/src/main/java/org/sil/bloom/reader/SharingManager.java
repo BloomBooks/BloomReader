@@ -18,8 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
-
 /**
  * Created by rick on 10/2/17.
  * Much of it borrowed from the SharingManager for Scripture/ReadingAppBuilder
@@ -139,7 +137,7 @@ public class SharingManager {
         String[] cacheItems = context.getCacheDir().list();
         if (cacheItems == null) { return; }
         for (int i=0; i<cacheItems.length; ++i) {
-            if (cacheItems[i].endsWith(BOOK_FILE_EXTENSION)){
+            if (IOUtilities.isBloomPubFile(cacheItems[i])) {
                 File file = new File(context.getCacheDir() + File.separator + cacheItems[i]);
                 if (file.lastModified() < yesterday)
                     file.delete();

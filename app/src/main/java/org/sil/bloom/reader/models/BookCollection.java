@@ -181,7 +181,7 @@ public class BookCollection {
                 for (File booksDir : booksDirs) {
                     File[] files = booksDir.listFiles(new FilenameFilter() {
                         public boolean accept(File dir, String name) {
-                            return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
+                            return IOUtilities.isBloomPubFile(name) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
                         }
                     });
                     count += files != null ? files.length : 0;
@@ -202,12 +202,12 @@ public class BookCollection {
             for (int i = 0; i < files.length; i++) {
                 final String name = files[i].getName();
                 TextFileContent metaFile = new TextFileContent("meta.json");
-                if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
+                if (!IOUtilities.isBloomPubFile(name)
                         && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
                     continue; // not a book (nor a shelf)!
                 final String path = files[i].getAbsolutePath();
-                if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
-                        !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD, metaFile)) {
+                if (IOUtilities.isBloomPubFile(name) &&
+                        !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMPUB, metaFile)) {
                     activity.runOnUiThread(new Runnable() {
                         public void run() {
                             String markedName = name + "-BAD";
@@ -278,10 +278,18 @@ public class BookCollection {
     // is this coming from somewhere other than where we store books?
     // then move or copy it in
     public String ensureBookIsInCollection(Context context, Uri bookUri, String filename) throws ExtStorageUnavailableException {
+
+        // TODO
+        // Should we be trying to prevent, here and elsewhere, having the same book as .bloomd and .bloompub?
+        // In other words, is ABC.bloomd the same as ABC.bloompub in the same sense that ABC.bloomd and ABC.bloomd are the same?
+        // One option would be to change the extension when moving/copying files into the Bloom directory and
+        //  migrate existing ones and ones coming from BloomDesktop.
+        // But we still have to handle possible .bloomd's in BloomExternal.
+
         if (bookUri == null || bookUri.getPath() == null)
             return null; // Play console proves this is possible somehow
 
-        // Possible for this to happen if we load a .bloomd directly without loading the whole app first (BL-8218)
+        // Possible for this to happen if we load a .bloompub/.bloomd directly without loading the whole app first (BL-8218)
         if (mLocalBooksDirectory == null)
             mLocalBooksDirectory = getLocalBooksDirectory();
 
@@ -290,10 +298,8 @@ public class BookCollection {
 
         Log.d("BloomReader", "Copying book into Bloom directory");
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + filename;
-        if (filename.endsWith(IOUtilities.BOOK_FILE_EXTENSION + IOUtilities.ENCODED_FILE_EXTENSION)) {
-            destination = destination.substring(0, destination.length() - IOUtilities.ENCODED_FILE_EXTENSION.length());
-        }
-        boolean copied = IOUtilities.copyBloomdFile(context, bookUri, destination);
+        destination = IOUtilities.ensureFileNameHasNoEncodedExtension(destination);
+        boolean copied = IOUtilities.copyBloomPubFile(context, bookUri, destination);
         if(copied){
             destination = FixDuplicate(destination);
             // it's probably not in our list that we display yet, so make an entry there
@@ -324,8 +330,11 @@ public class BookCollection {
         if (lastSpace >= 0)
             similarBookName = similarBookName.substring(0,lastSpace);
 
+        // TODO handle both .bloomd and .bloompub.
+        // See question in ensureBookIsInCollection which may impact how we do it.
+
         // This is what we'd expect the original to be called if previously downloaded.
-        String possibleMatch = parent.getPath() + File.separator + similarBookName + IOUtilities.BOOK_FILE_EXTENSION;
+        String possibleMatch = parent.getPath() + File.separator + similarBookName + ".bloomd";
         final File similarBookFile = new File(possibleMatch);
         if (!similarBookFile.exists())
             return newBloomFile; // we don't have a book at the expected location. Maybe the book name really has parens! Or deleted previously.
@@ -378,7 +387,7 @@ public class BookCollection {
     }
 
     // Set the shelves if any that a book or shelf belongs to.
-    // Extracts the meta.json entry from the bloomd file, extracts the tags from that,
+    // Extracts the meta.json entry from the bloompub/bloomd file, extracts the tags from that,
     // finds any that start with "bookshelf:", and sets the balance of the tag as one of the
     // book's shelves.  The meta.json data may or may not have already been extracted.
     public static void setShelvesAndTitleOfBook(BookOrShelf bookOrShelf, TextFileContent metaFile) {
@@ -411,7 +420,7 @@ public class BookCollection {
             }
         } catch (Exception e) {
             // Not sure about just catching everything like this. But the worst that happens if
-            // a bloomd does not contain valid meta.json from which we can extract tags is that
+            // a bloompub/bloomd does not contain valid meta.json from which we can extract tags is that
             // the book shows up at the root instead of on a shelf, and that its title comes from
             // the filename, which is based on the title and usually correct.
             e.printStackTrace();

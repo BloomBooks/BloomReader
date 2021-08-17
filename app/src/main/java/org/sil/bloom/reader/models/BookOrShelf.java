@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sil.bloom.reader.BloomFileReader;
+import org.sil.bloom.reader.IOUtilities;
 
 import java.io.File;
 import java.util.Comparator;
@@ -13,7 +14,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
-import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 
 public class BookOrShelf {
     public static final String SHARED_PREFERENCES_TAG = "org.sil.bloom.reader.BookMetaJson";
@@ -43,7 +43,7 @@ public class BookOrShelf {
     }
 
     public static String getNameFromPath(String path) {
-        return new File(path).getName().replace(BOOK_FILE_EXTENSION,"").replace(BOOKSHELF_FILE_EXTENSION,"");
+        return IOUtilities.stripBookFileExtension(new File(path).getName()).replace(BOOKSHELF_FILE_EXTENSION,"");
     }
 
     public boolean isShelf() {

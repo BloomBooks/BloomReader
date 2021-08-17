@@ -172,7 +172,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
 
         for (File file : files) {
-            if (!file.isDirectory() && file.getName().endsWith(IOUtilities.BOOK_FILE_EXTENSION)) {
+            if (!file.isDirectory() && IOUtilities.isBloomPubFile(file.getName())) {
                 long modified = file.lastModified();
                 if (modified > latestTime) {
                     latestTime = modified;

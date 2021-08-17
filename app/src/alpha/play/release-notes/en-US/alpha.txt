@@ -1,3 +1,2 @@
-Activities can control their own navigation.
-Improved analytics.
+Handle .bloompub files.
 Various enhancements and fixes.

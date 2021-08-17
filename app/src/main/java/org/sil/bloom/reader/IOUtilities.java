@@ -19,6 +19,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.sil.bloom.reader.models.BookCollection;
+import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -43,12 +45,12 @@ import static org.sil.bloom.reader.models.BookCollection.getLocalBooksDirectory;
 
 
 public class IOUtilities {
-    public static final String BOOK_FILE_EXTENSION = ".bloomd";
+    public static final String[] BOOK_FILE_EXTENSIONS = {".bloompub", ".bloomd"};
     public static final String BOOKSHELF_FILE_EXTENSION = ".bloomshelf";
     public static final String BLOOM_BUNDLE_FILE_EXTENSION = ".bloombundle";
     public static final String CHECKED_FILES_TAG = "org.sil.bloom.reader.checkedfiles";
 
-    // Some file transfer mechanisms leave this appended to .bloomd (or .bloombundle)
+    // Some file transfer mechanisms leave this appended to .bloompub/.bloomd (or .bloombundle)
     public static final String ENCODED_FILE_EXTENSION = ".enc";
 
     private static final int BUFFER_SIZE = 8192;
@@ -63,6 +65,44 @@ public class IOUtilities {
     public static void emptyDirectory(File dir) {
         for (File child : dir.listFiles())
             deleteFileOrDirectory(child);
+    }
+
+    // Returns true if the file name's extension indicates this file
+    // is a bloomPUB (.bloompub or .bloomd)
+    public static boolean isBloomPubFile(String fileName, boolean includeEncoded) {
+        for (String bookFileExtension : BOOK_FILE_EXTENSIONS) {
+            if (fileName.endsWith(bookFileExtension))
+                return true;
+            if (includeEncoded && fileName.endsWith(bookFileExtension + ENCODED_FILE_EXTENSION))
+                return true;
+        }
+        return false;
+    }
+    public static boolean isBloomPubFile(String fileName) {
+        return isBloomPubFile(fileName, false);
+    }
+
+    public static String stripBookFileExtension(String fileName) {
+        for (String bookFileExtension : BOOK_FILE_EXTENSIONS)
+            fileName = fileName.replace(bookFileExtension, "");
+        return fileName;
+    }
+
+    public static File getBookFileIfExists(String title) throws ExtStorageUnavailableException {
+        File localBookDirectory = BookCollection.getLocalBooksDirectory();
+        for (String bookFileExtension : BOOK_FILE_EXTENSIONS) {
+            File file = new File(localBookDirectory, title + bookFileExtension);
+            if (file.exists())
+                return file;
+        }
+        return null;
+    }
+
+    public static String ensureFileNameHasNoEncodedExtension(String filename) {
+        if (isBloomPubFile(filename, true) && filename.endsWith(IOUtilities.ENCODED_FILE_EXTENSION)) {
+            filename = filename.substring(0, filename.length() - IOUtilities.ENCODED_FILE_EXTENSION.length());
+        }
+        return filename;
     }
 
     public static boolean isDirectoryEmpty(File dir) {
@@ -135,8 +175,9 @@ public class IOUtilities {
 
     // Possible types of zip files to check.  (This list could be expanded if desired.)
     public static final int CHECK_ZIP = 0;
-    public static final int CHECK_BLOOMD = 1;
-    @IntDef({CHECK_ZIP, CHECK_BLOOMD})  // more efficient than enum types at run time.
+    public static final int CHECK_BLOOMPUB = 1;
+
+    @IntDef({CHECK_ZIP, CHECK_BLOOMPUB})  // more efficient than enum types at run time.
     @Retention(RetentionPolicy.SOURCE)
     public @interface FileChecks {
     }
@@ -174,8 +215,8 @@ public class IOUtilities {
                 return true;
         }
         try {
-            // REVIEW very minimal check for .bloomd files: are there any filenames guaranteed to exist
-            // in any .bloomd file regardless of age?
+            // REVIEW very minimal check for .bloompub/.bloomd files: are there any filenames guaranteed to exist
+            // in any .bloompub/.bloomd file regardless of age?
             int countHtml = 0;
             int countCss = 0;
             final ZipFile zipFile = new ZipFile(input);
@@ -241,7 +282,7 @@ public class IOUtilities {
                 zipFile.close();
             }
             boolean retval;
-            if (checkType == IOUtilities.CHECK_BLOOMD)
+            if (checkType == IOUtilities.CHECK_BLOOMPUB)
                 retval = countHtml == 1 && countCss > 0;
             else
                 retval = true;
@@ -346,14 +387,14 @@ public class IOUtilities {
         }
     }
 
-    public static boolean copyBloomdFile(Context context, Uri bookUri, String toPath) {
+    public static boolean copyBloomPubFile(Context context, Uri bookUri, String toPath) {
         try {
             InputStream in = context.getContentResolver().openInputStream(bookUri);
             if (copyFile(in, toPath)) {
-                // Even if the copy succeeds, if the result is not a valid .bloomd file, delete it
+                // Even if the copy succeeds, if the result is not a valid .bloompub/.bloomd file, delete it
                 // and fail.
                 File newFile = new File(toPath);
-                if (!isValidZipFile(newFile, CHECK_BLOOMD)) {
+                if (!isValidZipFile(newFile, CHECK_BLOOMPUB)) {
                     newFile.delete();
                     return false;
                 }
@@ -417,7 +458,7 @@ public class IOUtilities {
         FilenameFilter filter = new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
-                return filename.endsWith(BOOK_FILE_EXTENSION)
+                return isBloomPubFile(filename)
                         || filename.endsWith(BOOKSHELF_FILE_EXTENSION);
             }
         };
@@ -498,7 +539,7 @@ public class IOUtilities {
 
     public static String getFilename(String path) {
         // Check for colon because files on SD card root have a path like
-        // 1234-ABCD:book.bloomd
+        // 1234-ABCD:book.bloompub
         int start = Math.max(path.lastIndexOf(File.separator),
                              path.lastIndexOf(':'))
                     + 1;

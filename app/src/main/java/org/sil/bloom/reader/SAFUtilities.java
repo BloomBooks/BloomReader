@@ -19,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,6 +55,11 @@ public class SAFUtilities {
         return hasPermission(context, BloomDirectoryTreeUri);
     }
 
+    public static boolean hasPermissionToBloomExternalDirectory(Context context) {
+        File remoteBooksDir = new File(IOUtilities.removablePublicStorageRoot(context), "BloomExternal");
+        return getUriForFolderWithPermission(context, remoteBooksDir.getPath()) != null;
+    }
+
     // If we already have a URI indicating we have permission to use the specified folder
     // (through SAF), return that URI. If not, return null.
     public static Uri getUriForFolderWithPermission(Context context, String folder) {
@@ -72,22 +78,51 @@ public class SAFUtilities {
         return null;
     }
 
+    // Get URIs of books, typically in BloomExternal, that we have been given individual
+    // permission for. If we have permission for the whole folder, return an empty list.
+    // In that case, the whole folder is going to be included, so adding any individual ones
+    // would be redundant and lead to duplicates.
+    public static List<Uri> getBooksWithIndividualPermissions(Context context) {
+
+        if (hasPermissionToBloomExternalDirectory(context)) return new ArrayList<Uri>();
+
+        return getUrisWithPermissions(context).stream()
+                .filter(uri -> uri.getPath().endsWith(".bloomd") || uri.getPath().endsWith(".bloompub"))
+                .collect(Collectors.toList());
+    }
+
     // Attempts to determine whether a file URI is on a removable SD card
     // Works on my emulated Nexus 6 running API 30; not sure how portable it is.
     public static boolean isUriOnSdCard(Context context, Uri uri) {
+        String volumeId = getIdOfSdCard(context);
+        if (volumeId == null) return false; // no removable storage, can't be on it
+
+        String lastSegment = uri.getLastPathSegment();
+        return lastSegment.startsWith(volumeId + ":");
+    }
+
+    // Attempts to determine whether a file URI is on a removable SD card
+    // Works on my emulated Nexus 6 running API 30; not sure how portable it is.
+    public static boolean isUriInBloomExternal(Context context, Uri uri) {
+        String volumeId = getIdOfSdCard(context);
+        if (volumeId == null) return false; // no removable storage, can't be on it
+
+        String lastSegment = uri.getLastPathSegment();
+        return lastSegment.startsWith(volumeId + ":BloomExternal/");
+    }
+
+    private static String getIdOfSdCard(Context context) {
         File removableStorageDir = IOUtilities.removablePublicStorageRoot(context);
-        if (removableStorageDir == null) return false; // no removable storage, can't be on it
+        if (removableStorageDir == null) return null;
         String absPath = removableStorageDir.getAbsolutePath();
         String[] segments = absPath.split("/");
         if (segments.length < 3) {
             Log.w(TAG, "Could not extract volumeId from external storage path '" + absPath + "'");
-            return false; // not looking like we expect removable storage to. What should we answer?
+            return null;
         }
         // Extract the volumeId, e.g. "abcd-efgh"
         String volumeId = segments[2];
-
-        String lastSegment = uri.getLastPathSegment();
-        return lastSegment.startsWith(volumeId + ":");
+        return volumeId;
     }
 
     /**

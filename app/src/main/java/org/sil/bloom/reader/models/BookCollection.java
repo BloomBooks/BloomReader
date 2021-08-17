@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 public class BookCollection {
     public static final String THUMBS_DIR = ".thumbs";
@@ -134,7 +135,7 @@ public class BookCollection {
         mFilteredBooksAndShelves = newList;
     }
 
-    private void addBooks(ArrayList<BookOrShelf> books) {
+    private void addBooks(List<BookOrShelf> books) {
         _booksAndShelves.addAll(books);
         updateFilteredList();
     }
@@ -218,11 +219,14 @@ public class BookCollection {
         return new File[]{localBooksDir};
     }
 
+    // Fill the collection with the books in these directories, plus any the user has selected
+    // individually from BloomExternal if that is not one of the directories.
     private void loadFromDirectories(File[] booksDirs, Activity activity) {
         mShelfIds.clear();
         _booksAndShelves.clear();
+        List<Uri> individualBooks = SAFUtilities.getBooksWithIndividualPermissions(activity);
         if (mInitializeTask != null) {
-            int count = 0;
+            int count = individualBooks.size();
             if (booksDirs != null && booksDirs.length > 0) {
                 for (File booksDir : booksDirs) {
                     int newCount = booksDir.listFiles(new FilenameFilter() {
@@ -254,6 +258,10 @@ public class BookCollection {
             for (File booksDir : booksDirs)
                 loadFromDirectory(booksDir, activity);
         }
+        List<BookOrShelf> books = individualBooks.stream()
+            .map(uri -> makeBookOrShelf(uri,null))
+            .collect(Collectors.toList());
+        addBooks(books);
     }
 
     private void loadFromDirectory(File directory, Activity activity) {
@@ -421,6 +429,15 @@ public class BookCollection {
 
         if (bookUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath()))
             return bookUri.getPath();
+
+        // If the book is in BloomExternal, we will neither copy nor move it, just read it directly
+        // from there. Calling code will already have made sure we persist permission to use the
+        // book so it will get added each time we start up.
+        if (SAFUtilities.isUriInBloomExternal(context, bookUri)) {
+            String bookPath = bookUri.toString();
+            addBookIfNeeded(bookPath);
+            return bookPath;
+        }
 
         Log.d("BloomReader", "Copying book into Bloom directory");
         String filename = IOUtilities.getFileNameFromUri(context, bookUri);

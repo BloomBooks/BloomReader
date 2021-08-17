@@ -917,12 +917,21 @@ public class MainActivity extends BaseActivity
                     if (data != null) {
                         Uri uri = data.getData();
 
-                        // Persist our permission beyond device restart
-                        // Todo: I think we only need to do this if we will NOT copy or move the book,
-                        // that is, if it's in the BloomExternal folder.
-                        // Test: do we need to take write permission if we plan to delete it?
-                        final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                        boolean inBloomExternal = SAFUtilities.isUriInBloomExternal(this, uri);
+
+                        if (inBloomExternal) {
+                            // Persist our permission beyond device restart, since we won't copy or move
+                            // the book. It's important that we do NOT add this URI to our list of
+                            // things we have permanent access to otherwise, as we will scan that list
+                            // at startup and add anything that seems to be a book to the collection.
+                            // That leads to duplicates, if we include a file we're going to copy into
+                            // our private collection.
+                            // Note, we don't need to PERSIST write permission, though for files we're
+                            // going to move right away, we do need to have it now. But that seems to
+                            // be automatic.
+                            final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                        }
                         TextFileContent metaFile = new TextFileContent("meta.json");
                         if (!IOUtilities.isValidZipUri(uri, IOUtilities.CHECK_BLOOMD, metaFile))
                         {

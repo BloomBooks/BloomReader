@@ -227,11 +227,27 @@ public class BloomReaderApplication extends Application {
         boolean testMode = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha");
         if(testMode)
             return true;
-        File bookDirectory = BookCollection.getLocalBooksDirectory();
+
+        // We're looking for a file called UseTestAnalytics in the old Bloom folder at the root of
+        // the device storage. We no longer have access to the files in this folder, unless the user
+        // has given it to us, but surprisingly we can still find out whether the file exists.
+        // This may be an accident that a future Android version will fix.
+        File oldBookDirectory = null;
+        File[] appFilesDirs = BloomReaderApplication.sApplicationContext.getExternalFilesDirs(null);
+        for (File appFilesDir : appFilesDirs) {
+            if (appFilesDir != null) {
+                oldBookDirectory = appFilesDir;
+                break;
+            }
+        }
+        if (oldBookDirectory == null)
+            return true; // situation bizarre, let's not do real analytics
+        oldBookDirectory = new File(IOUtilities.storageRootFromAppFilesDir(oldBookDirectory), "Bloom");
+
         // We'd really like to just ignore case, but no easy way to do it.
-        return new File(bookDirectory, "UseTestAnalytics").exists()
-                || new File(bookDirectory, "useTestAnalytics").exists()
-                || new File(bookDirectory, "usetestanalytics").exists();
+        return new File(oldBookDirectory, "UseTestAnalytics").exists()
+                || new File(oldBookDirectory, "useTestAnalytics").exists()
+                || new File(oldBookDirectory, "usetestanalytics").exists();
     }
 
 

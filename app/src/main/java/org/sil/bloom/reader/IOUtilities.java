@@ -620,7 +620,7 @@ public class IOUtilities {
         return Environment.isExternalStorageRemovable(dir);
     }
 
-    private static File storageRootFromAppFilesDir(File appFilesDir) {
+    public static File storageRootFromAppFilesDir(File appFilesDir) {
         // appStorageDir is a directory within the public storage with a path like
         // /path/to/public/storage/Android/data/org.sil.bloom.reader/files
 

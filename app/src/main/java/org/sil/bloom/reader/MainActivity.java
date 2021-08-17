@@ -484,6 +484,7 @@ public class MainActivity extends BaseActivity
         String newPath = _bookCollection.ensureBookIsInCollection(this, bookUri);
         if (newPath != null) {
             if (importingOneFile) {
+                mBookListAdapter.notifyDataSetChanged();
                 openBook(this, newPath);
                 new FileCleanupTask(this).execute(bookUri);
             }
@@ -883,6 +884,8 @@ public class MainActivity extends BaseActivity
             DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
         } else if (id == R.id.nav_search_for_bundles) {
             searchForBloomBooks();
+        } else if (id == R.id.nav_open_bloompub_file) {
+            openBloomPubFile();
         } else if (id == R.id.nav_test_location_analytics) {
             showLocationAnalyticsData();
         } else if (id == R.id.about_reader) {
@@ -897,6 +900,42 @@ public class MainActivity extends BaseActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    private void openBloomPubFile() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        mOpenBloomPubFileLauncher.launch(intent);
+    }
+
+    @SuppressLint("WrongConstant")
+    private final ActivityResultLauncher<Intent> mOpenBloomPubFileLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    Intent data = result.getData();
+                    // The result data contains a URI for the document.
+                    if (data != null) {
+                        Uri uri = data.getData();
+
+                        // Persist our permission beyond device restart
+                        // Todo: I think we only need to do this if we will NOT copy or move the book,
+                        // that is, if it's in the BloomExternal folder.
+                        // Test: do we need to take write permission if we plan to delete it?
+                        final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                        TextFileContent metaFile = new TextFileContent("meta.json");
+                        if (!IOUtilities.isValidZipUri(uri, IOUtilities.CHECK_BLOOMD, metaFile))
+                        {
+                            Toast toast = Toast.makeText(this, "This does not appear to be a bloom book. Try files ending with .bloompub or .bloomd.",
+                                    Toast.LENGTH_LONG);
+                            toast.show();
+                            return;
+                        }
+                        importBook(uri, true);
+                    }
+                }
+            }
+    );
 
     private void GetFromUsb() {
         if (osAllowsGeneralStorageAccess()) {

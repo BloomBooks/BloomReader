@@ -33,6 +33,11 @@
             android:title="@string/find_books_on_device"
             />
         <item
+            android:id="@+id/nav_open_bloompub_file"
+            android:icon="@drawable/bookshelf"
+            android:title="@string/open_bloompub_file"
+            />
+        <item
             android:id="@+id/nav_test_location_analytics"
             android:title="Check Location Analytics"
             />

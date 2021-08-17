@@ -4,11 +4,13 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.util.Log;
 
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
 
 /*
@@ -39,8 +41,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
 
     private void cleanUpUri(Uri uriToCleanUp) {
         try {
-            // If the URI is file:// we have direct access to the file,
-            // otherwise we have to search for it
+            // Can we remove this old approach?
             if (uriToCleanUp.getScheme().equals("file")) {
                 File searchFile = new File(uriToCleanUp.getPath());
                 if (isOnNonRemovableStorage(searchFile) && !isABookInOurLibrary(searchFile))
@@ -52,6 +53,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             if (context == null)
                 return;
 
+            // Review: can we remove these next two blocks?
             File nonRemovableStorageDir = IOUtilities.nonRemovablePublicStorageRoot(context);
             if (nonRemovableStorageDir == null)
                 return;
@@ -60,17 +62,24 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             if (fileNameFromUri == null || fileNameFromUri.isEmpty())
                 return;
 
-            //TODO we should be able to delete the file directly using the uri
-            // and the below doesn't work if you don't have legacy storage permission
+            if (SAFUtilities.isUriOnSdCard(context, uriToCleanUp))
+                return; // we never delete things on the SD card
 
-            // Returns null if the file is not found
-            File fileToDelete = legacyStorageSearchForFile(nonRemovableStorageDir, fileNameFromUri);
+            // Review: should we check for books in our private storage? As far as I can tell,
+            // the SAF file chooser does not allow us to choose one of them.
+            // However, could there be other paths to here that do include them, especially
+            // if we remove the file-url-only code above?
+            // Review: Should we check for books in the Bloom directory? By one theory these
+            // should not be deleted unless we're running a release build
 
-            if (fileToDelete != null)
-                fileToDelete.delete();
+            // Throws if not found (or no permission, etc.)
+            DocumentsContract.deleteDocument(context.getContentResolver(), uriToCleanUp);
         }
         catch (SecurityException e) {
             // SecurityException can be thrown by File.delete()
+            Log.e("BloomReader", e.getLocalizedMessage());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
             Log.e("BloomReader", e.getLocalizedMessage());
         }
     }

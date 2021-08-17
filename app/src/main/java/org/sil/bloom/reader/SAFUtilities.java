@@ -72,6 +72,24 @@ public class SAFUtilities {
         return null;
     }
 
+    // Attempts to determine whether a file URI is on a removable SD card
+    // Works on my emulated Nexus 6 running API 30; not sure how portable it is.
+    public static boolean isUriOnSdCard(Context context, Uri uri) {
+        File removableStorageDir = IOUtilities.removablePublicStorageRoot(context);
+        if (removableStorageDir == null) return false; // no removable storage, can't be on it
+        String absPath = removableStorageDir.getAbsolutePath();
+        String[] segments = absPath.split("/");
+        if (segments.length < 3) {
+            Log.w(TAG, "Could not extract volumeId from external storage path '" + absPath + "'");
+            return false; // not looking like we expect removable storage to. What should we answer?
+        }
+        // Extract the volumeId, e.g. "abcd-efgh"
+        String volumeId = segments[2];
+
+        String lastSegment = uri.getLastPathSegment();
+        return lastSegment.startsWith(volumeId + ":");
+    }
+
     /**
      * FileProvider does not support converting the absolute path from
      * getExternalFilesDir() to a "content://" Uri. As "file://" Uri

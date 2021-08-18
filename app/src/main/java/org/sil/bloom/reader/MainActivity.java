@@ -54,6 +54,7 @@ import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
@@ -293,6 +294,9 @@ public class MainActivity extends BaseActivity
             case STORAGE_PERMISSION_BLOOMEXTERNAL:
                 // This is permission to read to the BloomExternal directory on an SD card.
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    // It's useful for old BloomEditor versions that this folder should exist, so create
+                    // it any time we get permission that allows it.
+                    IOUtilities.createOldBloomBooksFolder(this);
                     reloadBookList();
                 } else {
                     AskUserForPermissionToReadBloomExternalUsingSAF();
@@ -321,10 +325,10 @@ public class MainActivity extends BaseActivity
                 return null; // nothing to copy
             }
             // It's slightly wasteful to do this if we already have. However, in the release build,
-            // we delete the directory after copying it, so it will only happen once. Someone who
+            // we move the files rather than copying, so it will only happen once. Someone who
             // is messing with alpha or beta might like to see any new books they fetch with the
             // old release build.
-            boolean preserveOldDirectory = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
+            boolean preserveFilesInOldDirectory = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
             if (haveLegacyStoragePermission(this)) {
                 File[] filesInOldBloomDir = oldBloomDir.listFiles();
                 if (filesInOldBloomDir == null)
@@ -333,6 +337,12 @@ public class MainActivity extends BaseActivity
                     String fileName = f.getName();
                     if (fileName.equals(".thumbs")) {
                         continue; // this is a directory, and the data can be rebuilt, so save time by not copying
+                    }
+                    if (fileName.toLowerCase(Locale.ROOT).equals("usetestanalytics")) {
+                        // We only care about the existence of this file, so we can look for it
+                        // in the old directory. And it's useful for the user to be able to find
+                        // the directory where he might need to put it.
+                        continue;
                     }
                     File dest = new File(newBloomDir, fileName);
                     if (dest.exists()) {
@@ -343,7 +353,7 @@ public class MainActivity extends BaseActivity
                         mostRecentlyModifiedBloomFileTime = modifyTime;
                         mostRecentModifiedBook[0] = f.getAbsolutePath();
                     }
-                    if (preserveOldDirectory) {
+                    if (preserveFilesInOldDirectory) {
                         IOUtilities.copyFile(f.getPath(), dest.getPath());
                     } else {
                         failure |= !f.renameTo(dest);
@@ -365,7 +375,7 @@ public class MainActivity extends BaseActivity
                             mostRecentModifiedBook[0] = privateStorageFile.getAbsolutePath();
                         }
                         SAFUtilities.copyUriToFile(context, bookOrShelfUri, privateStorageFile);
-                        //if (!preserveOldDirectory) {
+                        //if (!preserveFilesInOldDirectory) {
                             SAFUtilities.deleteUri(context, bookOrShelfUri);
                         //}
                     }

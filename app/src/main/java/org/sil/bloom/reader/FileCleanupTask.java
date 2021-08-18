@@ -51,16 +51,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
 
             Context context = contextRef.get();
             if (context == null)
-                return;
-
-            // Review: can we remove these next two blocks?
-            File nonRemovableStorageDir = IOUtilities.nonRemovablePublicStorageRoot(context);
-            if (nonRemovableStorageDir == null)
-                return;
-
-            String fileNameFromUri = IOUtilities.getFileNameFromUri(context, uriToCleanUp);
-            if (fileNameFromUri == null || fileNameFromUri.isEmpty())
-                return;
+                return; // we might not be able to get it if we are in the process of shutting down.
 
             if (SAFUtilities.isUriOnSdCard(context, uriToCleanUp))
                 return; // we never delete things on the SD card

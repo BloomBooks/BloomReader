@@ -78,8 +78,12 @@ public class SAFUtilities {
         return null;
     }
 
-    // Get URIs of books, typically in BloomExternal, that we have been given individual
-    // permission for. If we have permission for the whole folder, return an empty list.
+    // Get URIs of books that we have been given individual permission for.
+    // Currently these are always in BloomExternal, because, if the user chooses a book elsewhere,
+    // we copy or move it to our local books folder and do NOT persist the permission.
+    // (Note: if we change that, we may need to reconsider the early exit from this method in the
+    // case where we've gained permission for the whole BloomExternal folder.)
+    // If we have permission for the whole folder, return an empty list.
     // In that case, the whole folder is going to be included, so adding any individual ones
     // would be redundant and lead to duplicates.
     public static List<Uri> getBooksWithIndividualPermissions(Context context) {

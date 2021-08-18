@@ -229,11 +229,24 @@ public class BookCollection {
             int count = individualBooks.size();
             if (booksDirs != null && booksDirs.length > 0) {
                 for (File booksDir : booksDirs) {
-                    int newCount = booksDir.listFiles(new FilenameFilter() {
-                        public boolean accept(File dir, String name) {
-                            return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
-                        }
-                    }).length;
+                    int newCount = 0;
+                    try {
+                        newCount = booksDir.listFiles(new FilenameFilter() {
+                            public boolean accept(File dir, String name) {
+                                return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
+                            }
+                        }).length;
+                    } catch (SecurityException e) {
+                        // This is expected if we are on older Android and don't have external storage permission.
+                    }
+                    catch (NullPointerException e) {
+                        // For some reason this is what actually happens in some cases (e.g., Nexus 5X API 28 emulator)
+                        // when we don't have external storage permission
+                    }
+                    catch (Exception e) {
+                        // And maybe other devices and OS versions will throw something else again?
+                        e.printStackTrace();
+                    }
                     if (newCount == 0) {
                         // Maybe it is a folder, typically ExternalFiles, that the user has given us
                         // permission to access using SAF? That doesn't allow us to listFiles, and
@@ -267,45 +280,43 @@ public class BookCollection {
     private void loadFromDirectory(File directory, Activity activity) {
         File[] files = directory.listFiles();
         ArrayList<BookOrShelf> books = new ArrayList<BookOrShelf>();
-        if(files != null) {
-            if (files.length == 0) {
-                // length is spuriously zero if we don't have permission to access the folder,
-                // or even if we DO have permission, but it's a folder we can only access through
-                // SAF, like BloomExternal. So try again that way.
-                loadFromSAFDirectory(directory, activity);
-                return;
-            }
-            for (int i = 0; i < files.length; i++) {
-                final String name = files[i].getName();
-                TextFileContent metaFile = new TextFileContent("meta.json");
-                if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
-                        && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
-                    continue; // not a book (nor a shelf)!
-                final String path = files[i].getAbsolutePath();
-                if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
-                        !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD, metaFile)) {
-                    activity.runOnUiThread(new Runnable() {
-                        public void run() {
-                            String markedName = name + "-BAD";
-                            Log.w("BloomCollection", "Renaming invalid book file "+path+" to "+markedName);
-                            Context context = BloomReaderApplication.getBloomApplicationContext();
-                            String message = context.getString(R.string.renaming_invalid_book, markedName);
-                            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    new File(path).renameTo(new File(path+"-BAD"));
-                    if (mInitializeTask != null) {
-                        mInitializeTask.incrementBookProgress();
+        if (files == null || files.length == 0) {
+            // files may be null, or spuriously have length zero, if we don't have permission to access the folder,
+            // or even if we DO have permission, but it's a folder we can only access through
+            // SAF, like BloomExternal. So try again that way.
+            loadFromSAFDirectory(directory, activity);
+            return;
+        }
+        for (int i = 0; i < files.length; i++) {
+            final String name = files[i].getName();
+            TextFileContent metaFile = new TextFileContent("meta.json");
+            if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
+                    && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
+                continue; // not a book (nor a shelf)!
+            final String path = files[i].getAbsolutePath();
+            if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
+                    !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD, metaFile)) {
+                activity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        String markedName = name + "-BAD";
+                        Log.w("BloomCollection", "Renaming invalid book file " + path + " to " + markedName);
+                        Context context = BloomReaderApplication.getBloomApplicationContext();
+                        String message = context.getString(R.string.renaming_invalid_book, markedName);
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
                     }
-                    continue;
-                }
-                books.add(makeBookOrShelf(path, metaFile));
+                });
+                new File(path).renameTo(new File(path + "-BAD"));
                 if (mInitializeTask != null) {
                     mInitializeTask.incrementBookProgress();
                 }
+                continue;
             }
-            addBooks(books);
+            books.add(makeBookOrShelf(path, metaFile));
+            if (mInitializeTask != null) {
+                mInitializeTask.incrementBookProgress();
+            }
         }
+        addBooks(books);
     }
 
     private void loadFromSAFDirectory(File directory, Activity activity) {

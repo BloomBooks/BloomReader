@@ -279,11 +279,23 @@ public class MainActivity extends BaseActivity
                 }
                 break;
             case STORAGE_PERMISSION_SEARCH:
-                // The two requested are write and read
+                // The two requested are write and read. This specific request code is when we are requesting
+                // it in order to search.
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    // It's useful for old BloomEditor versions that this folder should exist, so create
+                    // it any time we get permission that allows it.
+                    IOUtilities.createOldBloomBooksFolder(this);
                     searchForBloomBooks_preAndroid11();
                 } else {
                     searchForBloomBooksUsingSaf();
+                }
+                break;
+            case STORAGE_PERMISSION_BLOOMEXTERNAL:
+                // This is permission to read to the BloomExternal directory on an SD card.
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    reloadBookList();
+                } else {
+                    AskUserForPermissionToReadBloomExternalUsingSAF();
                 }
                 break;
         }
@@ -791,6 +803,14 @@ public class MainActivity extends BaseActivity
     }
 
     private void AskUserForPermissionToReadBloomExternal() {
+        if (osAllowsGeneralStorageAccess()) {
+            requestLegacyStoragePermission(STORAGE_PERMISSION_BLOOMEXTERNAL);
+        } else {
+            AskUserForPermissionToReadBloomExternalUsingSAF();
+        }
+    }
+
+    private void AskUserForPermissionToReadBloomExternalUsingSAF() {
         ImageView image = new ImageView(this);
         image.setImageResource(R.drawable.ic_use_this_folder);
         AlertDialog.Builder builder =
@@ -864,6 +884,7 @@ public class MainActivity extends BaseActivity
     static final int LOCATION_PERMISSION = 1;
     static final int STORAGE_PERMISSION_USB = 2;
     static final int STORAGE_PERMISSION_SEARCH = 3;
+    static final int STORAGE_PERMISSION_BLOOMEXTERNAL = 4;
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -960,6 +981,8 @@ public class MainActivity extends BaseActivity
     }
 
     private void getFromUsbPreAndroid11() {
+        // Create the Bloom directory. Older versions of Bloom Editor expect this to exist.
+        IOUtilities.createOldBloomBooksFolder(this);
         final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
                 .setPositiveButton(android.R.string.ok, null)
                 .setTitle(getString(R.string.receive_books_over_usb))
@@ -976,15 +999,27 @@ public class MainActivity extends BaseActivity
             return;
         }
 
-        new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
+        ImageView image = new ImageView(this);
+        image.setImageResource(R.drawable.ic_use_this_folder);
+        AlertDialog dlg = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
                 .setTitle("Select Bloom directory")
                 .setMessage("To receive books via USB, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"")
                 .setPositiveButton(R.string.ok, (dialogInterface, i) -> {
                     Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(SAFUtilities.BloomDirectoryUri);
                     mGetDirectoryToSearchForBooks.launch(permissionIntent);
                 })
-                .create()
-                .show();
+                .setView(image)
+                .create();
+        // In case the user doesn't understand and clicks the button in the image, go ahead and
+        // show the real one.
+        image.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                dlg.dismiss();
+                return false;
+            }
+        });
+        dlg.show();
     }
 
     private void showLocationMessage() {

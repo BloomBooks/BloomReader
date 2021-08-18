@@ -362,6 +362,29 @@ public class IOUtilities {
         return lastModified;
     }
 
+    // Return a 'File' object representing the old Bloom directory where Bloom used to store book
+    // files when the OS allowed it.
+    public static File getOldBloomBooksFolder(Context context) {
+        File oldBookDirectory = null;
+        File[] appFilesDirs = context.getExternalFilesDirs(null);
+        for (File appFilesDir : appFilesDirs) {
+            if (appFilesDir != null) {
+                oldBookDirectory = appFilesDir;
+                break;
+            }
+        }
+        if (oldBookDirectory == null)
+            return null; // huh??
+        return new File(IOUtilities.storageRootFromAppFilesDir(oldBookDirectory), "Bloom");
+    }
+
+    public static void createOldBloomBooksFolder(Context context) {
+        if (!BaseActivity.haveLegacyStoragePermission(context)) return;
+        File oldBloomDirectory = getOldBloomBooksFolder(context);
+        if (oldBloomDirectory == null) return;
+        oldBloomDirectory.mkdirs();
+    }
+
     public static byte[] ExtractZipEntry(Context context, Uri uri, String entryName) {
         InputStream fs = null;
         try {

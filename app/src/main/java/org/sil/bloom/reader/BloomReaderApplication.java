@@ -232,17 +232,9 @@ public class BloomReaderApplication extends Application {
         // the device storage. We no longer have access to the files in this folder, unless the user
         // has given it to us, but surprisingly we can still find out whether the file exists.
         // This may be an accident that a future Android version will fix.
-        File oldBookDirectory = null;
-        File[] appFilesDirs = BloomReaderApplication.sApplicationContext.getExternalFilesDirs(null);
-        for (File appFilesDir : appFilesDirs) {
-            if (appFilesDir != null) {
-                oldBookDirectory = appFilesDir;
-                break;
-            }
-        }
+        File oldBookDirectory = IOUtilities.getOldBloomBooksFolder(BloomReaderApplication.sApplicationContext);
         if (oldBookDirectory == null)
             return true; // situation bizarre, let's not do real analytics
-        oldBookDirectory = new File(IOUtilities.storageRootFromAppFilesDir(oldBookDirectory), "Bloom");
 
         // We'd really like to just ignore case, but no easy way to do it.
         return new File(oldBookDirectory, "UseTestAnalytics").exists()

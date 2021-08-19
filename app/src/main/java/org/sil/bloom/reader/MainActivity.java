@@ -2,21 +2,25 @@ package org.sil.bloom.reader;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.text.SpannableString;
 import android.text.format.DateFormat;
 import android.text.method.LinkMovementMethod;
+import android.text.style.ForegroundColorSpan;
 import android.text.util.Linkify;
 import android.util.Log;
 import android.view.ActionMode;
@@ -47,6 +51,7 @@ import com.google.android.material.navigation.NavigationView;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
+import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
@@ -90,12 +95,30 @@ public class MainActivity extends BaseActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        checkForPendingReadBookAnalyticsEvent();
 
         // Before we create the main activity, so it will see any migrated books.
         copyFromBooksDirectory();
-        createMainActivity(savedInstanceState);
+            createMainActivity(savedInstanceState);
         requestLocationAccess();
         requestLocationUpdates();
+    }
+
+    // If we weren't able to send an analytics event the last time a user read a book
+    // (probably because the app or device was shut down), send it now.
+    // If changes are made here, check for needed changes in ReaderActivity.MakeFinalReport
+    private void checkForPendingReadBookAnalyticsEvent() {
+        Settings settings = Settings.load(this);
+        JSONObject progressReport = settings.getPendingProgressReport();
+        if (progressReport == null) {
+            return;
+        }
+
+        sendAnalytics(progressReport);
+
+        settings.setBookReadDuration(0);
+        settings.setPendingProgressReport(null);
+        settings.save(this);
     }
 
     // If we haven't already requested the user to do the necessary stuff so we can send
@@ -116,16 +139,16 @@ public class MainActivity extends BaseActivity
                         (dialog, which) -> dialog.dismiss());
                 alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.dont_allow),
                         (dialog, which) -> {
-                            wasDontAllowPressed[0] = true;
-                            dialog.dismiss();
+                                wasDontAllowPressed[0] = true;
+                                dialog.dismiss();
                         });
                 alertDialog.setOnDismissListener(dialog -> {
-                    // We want this to happen even if the user dismisses the dialog
-                    // by tapping outside it rather than by tapping OK.
-                    // But not if they actually tapped "don't allow"
-                    if (!wasDontAllowPressed[0]) {
-                        requestLocationPermission();
-                    }
+                        // We want this to happen even if the user dismisses the dialog
+                        // by tapping outside it rather than by tapping OK.
+                        // But not if they actually tapped "don't allow"
+                        if (!wasDontAllowPressed[0]) {
+                            requestLocationPermission();
+                        }
                 });
                 alertDialog.show();
             }
@@ -154,27 +177,27 @@ public class MainActivity extends BaseActivity
                 alertDialog.setMessage(getString(R.string.request_gps));
                 alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.ok),
                         (dialog, which) -> {
-                            doTurnOn[0] = true;
-                            dialog.dismiss();
-                            // It doesn't seem to work to requestTurnOnGps() here.
-                            // I think the problem is that the switch from the dialog
-                            // activity back to this caused by dismiss() beats the switch
-                            // to the system settings dialog.
+                                doTurnOn[0] = true;
+                                dialog.dismiss();
+                                // It doesn't seem to work to requestTurnOnGps() here.
+                                // I think the problem is that the switch from the dialog
+                                // activity back to this caused by dismiss() beats the switch
+                                // to the system settings dialog.
                         });
                 alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel),
                         (dialog, which) -> dialog.dismiss());
                 alertDialog.setOnDismissListener(dialog -> {
-                    // This gets set true if it was the OK button that dismissed the dialog.
-                    // There must be a better way to know that, but I'm sick of looking.
-                    if (doTurnOn[0]) {
-                        requestTurnOnGps();
-                    }
-                    Properties p = new Properties();
-                    p.putValue("granted", doTurnOn[0]);
+                        // This gets set true if it was the OK button that dismissed the dialog.
+                        // There must be a better way to know that, but I'm sick of looking.
+                        if (doTurnOn[0]) {
+                            requestTurnOnGps();
+                        }
+                        Properties p = new Properties();
+                        p.putValue("granted", doTurnOn[0]);
 
-                    Context context = BloomReaderApplication.getBloomApplicationContext();
-                    if (context != null)
-                        Analytics.with(context).track("requestGps", p);
+                        Context context = BloomReaderApplication.getBloomApplicationContext();
+                        if (context != null)
+                            Analytics.with(context).track("requestGps", p);
                 });
                 alertDialog.show();
             }
@@ -255,27 +278,27 @@ public class MainActivity extends BaseActivity
             return;
         switch(requestCode) {
             case LOCATION_PERMISSION:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (showMessageOnLocationPermissionGranted) {
-                        showMessageOnLocationPermissionGranted = false;
-                        showLocationMessage();
-                    }
-                    if (!isLocationEnabled(this)) {
-                        // They just gave us permission, so hopefully this isn't unexpected.
-                        // The pre-permission dialog does also indicate that this might be needed.
-                        requestTurnOnGps();
-                    }
-                    // Usually done when the activity is created, but if we didn't have permission
-                    // to do it then, we should now.
-                    requestLocationUpdates();
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (showMessageOnLocationPermissionGranted) {
+                    showMessageOnLocationPermissionGranted = false;
+                    showLocationMessage();
                 }
+                if (!isLocationEnabled(this)) {
+                    // They just gave us permission, so hopefully this isn't unexpected.
+                    // The pre-permission dialog does also indicate that this might be needed.
+                    requestTurnOnGps();
+                }
+                // Usually done when the activity is created, but if we didn't have permission
+                // to do it then, we should now.
+                requestLocationUpdates();
+            }
                 break;
             case STORAGE_PERMISSION_USB:
                 // This is permission to read/write to the `InternalStorage/Bloom` directory
                 // where the transfer via USB puts books.
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                     getFromUsbPreAndroid11();
-                } else {
+        } else {
                     getFromUsbWithSaf();
                 }
                 break;
@@ -287,9 +310,9 @@ public class MainActivity extends BaseActivity
                     // it any time we get permission that allows it.
                     IOUtilities.createOldBloomBooksFolder(this);
                     searchForBloomBooks_preAndroid11();
-                } else {
+            } else {
                     searchForBloomBooksUsingSaf();
-                }
+            }
                 break;
             case STORAGE_PERMISSION_BLOOMEXTERNAL:
                 // This is permission to read to the BloomExternal directory on an SD card.
@@ -300,7 +323,7 @@ public class MainActivity extends BaseActivity
                     reloadBookList();
                 } else {
                     AskUserForPermissionToReadBloomExternalUsingSAF();
-                }
+        }
                 break;
         }
     }
@@ -399,64 +422,122 @@ public class MainActivity extends BaseActivity
         return mostRecentModifiedBook[0];
     }
 
+    // This is called when BR is running and another app launches us by intent
+    // (like opening a .bloomd).
+    // It is called because we have set android:launchMode="singleTask" in AndroidManifest.xml.
+    // See more info there about why we have set things up this way.
+    // Note that if there is a ReaderActivity (or any other activity) running at the time,
+    // the OS destroys them before calling this.
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        checkForPendingReadBookAnalyticsEvent();
+        alreadyOpenedFileFromIntent = false;
+        processIntentData(intent);
+    }
+
     private void createMainActivity(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
         BloomReaderApplication.setupVersionUpdateInfo(this); // may use analytics, so must run after it is set up.
 
         _bookCollection = setupBookCollection();
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            setSupportActionBar(toolbar);
 
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
 
+            initializeNavigationDrawer(toolbar);
 
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-        configureActionBar(toggle);
-
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-        // This menu option should not be shown in production.
-        if (!BuildConfig.DEBUG && !BuildConfig.FLAVOR.equals("alpha")) {
-            navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
-        }
+            NavigationView navigationView = findViewById(R.id.nav_view);
+            navigationView.setNavigationItemSelectedListener(this);
+            // This menu option should not be shown in production.
+            if (!BuildConfig.DEBUG && !BuildConfig.FLAVOR.equals("alpha")) {
+                navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
+            }
         // This menu is only useful if the OS allows general external storage access, or
         // if we have it anyway (because BR was upgraded)
         if (!osAllowsGeneralStorageAccess() && !haveLegacyStoragePermission(this)) {
             navigationView.getMenu().removeItem(R.id.nav_search_for_bundles);
         }
 
-        mBookRecyclerView = findViewById(R.id.book_list2);
-        SetupCollectionListView(mBookRecyclerView);
+            mBookRecyclerView = findViewById(R.id.book_list2);
+            SetupCollectionListView(mBookRecyclerView);
 
-        // If we were started by some external process, we need to process any file
-        // we were given (a book or bundle)
-        if (savedInstanceState != null)
-            alreadyOpenedFileFromIntent = savedInstanceState.getBoolean(ALREADY_OPENED_FILE_FROM_INTENT_KEY, false);
-        processIntentData();
+            // If we were started by some external process, we need to process any file
+            // we were given (a book or bundle)
+            if (savedInstanceState != null)
+                alreadyOpenedFileFromIntent = savedInstanceState.getBoolean(ALREADY_OPENED_FILE_FROM_INTENT_KEY, false);
+            processIntentData(getIntent());
 
-        // Insert the build version and date into the appropriate control.
-        // We have to find it indirectly through the navView's header or it won't be found
-        // this early in the view construction.
+            // Insert the build version and date into the appropriate control.
+            // We have to find it indirectly through the navView's header or it won't be found
+            // this early in the view construction.
         TextView versionDate = navigationView.getHeaderView(0).findViewById(R.id.versionDate);
-        try {
-            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-            Date buildDate = new Date(BuildConfig.TIMESTAMP);
-            String date = DateFormat.format("dd MMM yyyy", buildDate).toString();
-            versionDate.setText(getVersionAndDateText(versionName, date));
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
+            try {
+                String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+                Date buildDate = new Date(BuildConfig.TIMESTAMP);
+                String date = DateFormat.format("dd MMM yyyy", buildDate).toString();
+                versionDate.setText(getVersionAndDateText(versionName, date));
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
 
 
         // Cleans up old-style thumbnails - could be removed someday after it's run on most devices with old-style thumbnails
         BookCollection.cleanUpOldThumbs(this);
 
-        resumeMainActivity();
+            resumeMainActivity();
+    }
+
+    private void initializeNavigationDrawer(final Toolbar toolbar) {
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+
+        final Context context = this;
+        final NavigationView navMenu = findViewById(R.id.nav_view);
+        final MenuItem analyticsStatusMenuItem = navMenu.getMenu().findItem(R.id.analytics_status);
+
+        // This has to be final, but we need a new one each time (can't execute same task twice),
+        // so we cheat by putting it in an array.
+        final EnsureStatsSentAsyncTask[] ensureStatsSentAsyncTask = new EnsureStatsSentAsyncTask[1];
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close){
+
+            // When the drawer is opened, we start a background process which will update the stats menu item
+            // if we can verify all analytics events have been sent.
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+
+                ensureStatsSentAsyncTask[0] = new EnsureStatsSentAsyncTask(context, new EnsureStatsSentAsyncTask.AsyncResponse() {
+                    @Override
+                    public void processComplete(boolean success) {
+                        // Not localizing failed message because we don't expect it to ever be shown.
+                        SpannableString s = new SpannableString(success ? "✓ " + getString(R.string.all_reading_stats_sent) : "Failed to check if stats were sent.");
+                        s.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.colorBloomRed)), 0, s.length(), 0);
+                        analyticsStatusMenuItem.setTitle(s);
+                    }
+                });
+                ensureStatsSentAsyncTask[0].execute();
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                if (ensureStatsSentAsyncTask[0] != null) {
+                    ensureStatsSentAsyncTask[0].cancel(false);
+                }
+
+                // Reset the message to the default initial state
+                SpannableString s = new SpannableString(getString(R.string.attempting_to_send_reading_stats));
+                s.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.colorDeemphasizeText)), 0, s.length(), 0);
+                analyticsStatusMenuItem.setTitle(s);
+
+                super.onDrawerClosed(drawerView);
+            }
+        };
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+        configureActionBar(toggle);
     }
 
     private String getVersionAndDateText(String versionName, String date) {
@@ -476,9 +557,7 @@ public class MainActivity extends BaseActivity
         return BloomReaderApplication.theOneBookCollection;
     }
 
-    private void processIntentData() {
-        // It's not necessary to split these two lines apart, but it sure makes debugging intents easier!
-        Intent intent = getIntent();
+    private void processIntentData(Intent intent) {
         Uri uri = intent.getData();
         if (uri == null || alreadyOpenedFileFromIntent)
             return;
@@ -516,12 +595,14 @@ public class MainActivity extends BaseActivity
         } else {
             Log.e("BookSearchFailedImport", bookUri.getPath());
             String filename = IOUtilities.getFileNameFromUri(this, bookUri);
+            if (!isFinishing()) {
             final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
                     .setPositiveButton(android.R.string.ok, null)
                     .setTitle(R.string.failed_book_import)
                     .setMessage(String.format(getString(R.string.failed_book_import2), filename))
                     .create();
             d.show();
+            }
             return false;
         }
     }
@@ -532,17 +613,17 @@ public class MainActivity extends BaseActivity
 
     // Called by ImportBundleTask and when we get permission to BloomExternal
     public void reloadBookList() {
-        // Reinitialize completely to get the new state of things.
-        _bookCollection.init(this, null);
-        // Don't highlight the set of new books, just update the list displayed. (BL-8808)
-        mBookListAdapter.notifyDataSetChanged();
-        resetFileObserver(); // Prevent duplicate notifications
+            // Reinitialize completely to get the new state of things.
+            _bookCollection.init(this, null);
+            // Don't highlight the set of new books, just update the list displayed. (BL-8808)
+            mBookListAdapter.notifyDataSetChanged();
+            resetFileObserver(); // Prevent duplicate notifications
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        resumeMainActivity();
+            resumeMainActivity();
     }
 
     private void resumeMainActivity() {
@@ -556,23 +637,29 @@ public class MainActivity extends BaseActivity
                 updateForNewBook(oneNewFile);
             }
         }
-        // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
+            // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
         // book to our directory using MTP. Under Android 11 or later, we will only get them
         // if the user has at some point selected "Receive books via USB" and granted permission.
-        startObserving();
-        // And right now we will trigger the notification if anyone or anything has changed a
-        // book in our folder while we were paused.
+            startObserving();
+            // And right now we will trigger the notification if anyone or anything has changed a
+            // book in our folder while we were paused.
         //notifyIfNewFileChanges();
         // import any new books that showed up in the USB transfer directory while we were paused
-        String bookToHighlight = ((BloomReaderApplication) this.getApplication()).getBookToHighlight();
-        if (bookToHighlight != null) {
-            updateForNewBook(bookToHighlight);
-            ((BloomReaderApplication) this.getApplication()).setBookToHighlight(null);
-        }
 
-        //Periodic cleanup
-        SharingManager.fileCleanup(this);
-    }
+            Application uncheckedApp = this.getApplication();
+            // Play console proves this can be false
+            if (uncheckedApp instanceof BloomReaderApplication) {
+                BloomReaderApplication brApp = (BloomReaderApplication) uncheckedApp;
+                String bookToHighlight = brApp.getBookToHighlight();
+            if (bookToHighlight != null) {
+                updateForNewBook(bookToHighlight);
+                    brApp.setBookToHighlight(null);
+                }
+            }
+
+            //Periodic cleanup
+            SharingManager.fileCleanup(this);
+        }
 
     // a hook to allow ShelfActivity to set a real filter.
     // We need to set it to nothing here for when we return to the main activity from a shelf.
@@ -591,7 +678,7 @@ public class MainActivity extends BaseActivity
     protected void onNewOrUpdatedBook(String filePathOrUri) {
         final String filePathOrUriLocal = filePathOrUri;
         runOnUiThread(() -> updateForNewBook(filePathOrUriLocal));
-    }
+            }
 
     public static void skipNextNewFileSound() {
         sSkipNextNewFileSound = true;
@@ -695,12 +782,12 @@ public class MainActivity extends BaseActivity
         new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(message)
                 .setTitle(R.string.deleteConfirmation)
                 .setPositiveButton(R.string.deleteConfirmButton, (dialog, i) -> {
-                    Log.i("BloomReader", "DeleteShelf " + shelf.toString());
-                    for(BookOrShelf b : booksAndShelves)
-                        _bookCollection.deleteFromDevice(b);
-                    mBookListAdapter.notifyDataSetChanged();
-                    closeContextualActionBar();
-                    dialog.dismiss();
+                        Log.i("BloomReader", "DeleteShelf " + shelf.toString());
+                        for(BookOrShelf b : booksAndShelves)
+                            _bookCollection.deleteFromDevice(b);
+                        mBookListAdapter.notifyDataSetChanged();
+                        closeContextualActionBar();
+                        dialog.dismiss();
                 })
                 .setNegativeButton(android.R.string.no, null)
                 .show();
@@ -710,11 +797,11 @@ public class MainActivity extends BaseActivity
         new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(getString(R.string.deleteExplanationBook, book.name))
                 .setTitle(getString(R.string.deleteConfirmation))
                 .setPositiveButton(getString(R.string.deleteConfirmButton), (dialog, which) -> {
-                    Log.i("BloomReader", "DeleteBook "+ book.toString());
-                    _bookCollection.deleteFromDevice(book);
-                    mBookListAdapter.notifyDataSetChanged();
-                    closeContextualActionBar();
-                    dialog.dismiss();
+                        Log.i("BloomReader", "DeleteBook "+ book.toString());
+                        _bookCollection.deleteFromDevice(book);
+                        mBookListAdapter.notifyDataSetChanged();
+                        closeContextualActionBar();
+                        dialog.dismiss();
                 })
                 .setNegativeButton(android.R.string.no, null)
                 .show();
@@ -750,15 +837,15 @@ public class MainActivity extends BaseActivity
             public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
                 int itemId = item.getItemId();
                 if (itemId == R.id.share) {
-                    shareBookOrShelf();
-                    mode.finish();
-                    return true;
+                        shareBookOrShelf();
+                        mode.finish();
+                        return true;
                 } else if (itemId == R.id.delete) {
-                    deleteBookOrShelf();
-                    return true;
+                        deleteBookOrShelf();
+                        return true;
                 }
-                return false;
-            }
+                        return false;
+                }
 
             @Override
             public void onDestroyActionMode(android.view.ActionMode mode) {
@@ -886,7 +973,7 @@ public class MainActivity extends BaseActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.delete) {
-            return true;
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -901,30 +988,30 @@ public class MainActivity extends BaseActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
         if (id == R.id.nav_get_wifi) {
-            Intent intent = new Intent(this, GetFromWiFiActivity.class);
+                Intent intent = new Intent(this, GetFromWiFiActivity.class);
             mGetBooksFromWiFi.launch(intent);
         } else if (id == R.id.nav_get_usb) {
             GetFromUsb();
         } else if (id == R.id.nav_share_app) {
-            ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
-            shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
+                ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
+                shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
         } else if (id == R.id.nav_share_books) {
-            ShareAllBooksDialogFragment shareBooksDialogFragment = new ShareAllBooksDialogFragment();
-            shareBooksDialogFragment.show(getSupportFragmentManager(), ShareAllBooksDialogFragment.SHARE_BOOKS_DIALOG_FRAGMENT_TAG);
+                ShareAllBooksDialogFragment shareBooksDialogFragment = new ShareAllBooksDialogFragment();
+                shareBooksDialogFragment.show(getSupportFragmentManager(), ShareAllBooksDialogFragment.SHARE_BOOKS_DIALOG_FRAGMENT_TAG);
         } else if (id == R.id.nav_release_notes) {
-            DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
+                DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
         } else if (id == R.id.nav_search_for_bundles) {
-            searchForBloomBooks();
+                searchForBloomBooks();
         } else if (id == R.id.nav_open_bloompub_file) {
             openBloomPubFile();
         } else if (id == R.id.nav_test_location_analytics) {
-            showLocationAnalyticsData();
+                showLocationAnalyticsData();
         } else if (id == R.id.about_reader) {
-            DisplaySimpleResource(getString(R.string.about_bloom_reader), R.raw.about_reader);
+                DisplaySimpleResource(getString(R.string.about_bloom_reader), R.raw.about_reader);
         } else if (id == R.id.about_bloom) {
-            DisplaySimpleResource(getString(R.string.about_bloom), R.raw.about_bloom);
+                DisplaySimpleResource(getString(R.string.about_bloom), R.raw.about_bloom);
         } else if (id == R.id.about_sil) {
-            DisplaySimpleResource(getString(R.string.about_sil), R.raw.about_sil);
+                DisplaySimpleResource(getString(R.string.about_sil), R.raw.about_sil);
         }
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -1134,54 +1221,54 @@ public class MainActivity extends BaseActivity
         Intent defaultBrowser = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER);
         defaultBrowser.setData(Uri.parse("https://bloomlibrary.org"));
         startActivity(defaultBrowser);
-    }
+        }
 
     private void searchForBloomBooks() {
         if (haveLegacyStoragePermission(this)) {
             searchForBloomBooks_preAndroid11();
         } else {
             requestLegacyStoragePermission(STORAGE_PERMISSION_SEARCH);
-        }
+            }
         return;
         // We decided this is not usable.
         //searchForBloomBooksUsingSaf();
-    }
-
-    private final BookSearchListener mBookSearchListener = new BookSearchListener() {
-        @Override
-        public void onFoundBook(File bookOrShelfFile, Uri bookOrShelfUri) {
-            String filePath = bookOrShelfFile.getPath();
-            // Don't add books found in BloomExternal to Bloom!
-            // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
-            if (filePath.contains("/BloomExternal/") || filePath.contains(":BloomExternal/"))
-                return;
-            if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
-                Log.d("BookSearch", "Found " + filePath);
-                if (importBook(bookOrShelfUri, false))
-                    mFileSearchState.bloomdsAdded.add(bookOrShelfUri);
-            }
         }
 
-        @Override
+    private final BookSearchListener mBookSearchListener = new BookSearchListener() {
+            @Override
+        public void onFoundBook(File bookOrShelfFile, Uri bookOrShelfUri) {
+                String filePath = bookOrShelfFile.getPath();
+                // Don't add books found in BloomExternal to Bloom!
+                // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
+            if (filePath.contains("/BloomExternal/") || filePath.contains(":BloomExternal/"))
+                    return;
+                if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
+                    Log.d("BookSearch", "Found " + filePath);
+                if (importBook(bookOrShelfUri, false))
+                    mFileSearchState.bloomdsAdded.add(bookOrShelfUri);
+                }
+            }
+
+            @Override
         public void onFoundBundle(Uri bundleUri) {
             Log.d("BookSearch", "Found " + bundleUri.getPath());
             mFileSearchState.bundlesToAdd.add(bundleUri);
-        }
+            }
 
-        @Override
-        public void onSearchComplete() {
-            findViewById(R.id.searching_text).setVisibility(View.GONE);
+            @Override
+            public void onSearchComplete() {
+                findViewById(R.id.searching_text).setVisibility(View.GONE);
             if (mFileSearchState.nothingAdded())
-                Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
-            else {
-                resetFileObserver();  // Prevents repeat notifications later
-                // Multiple AsyncTask's will execute sequentially
-                // https://developer.android.com/reference/android/os/AsyncTask#order-of-execution
+                    Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
+                else {
+                    resetFileObserver();  // Prevents repeat notifications later
+                    // Multiple AsyncTask's will execute sequentially
+                    // https://developer.android.com/reference/android/os/AsyncTask#order-of-execution
                 new ImportBundleTask(MainActivity.this).execute(mFileSearchState.bundlesToAddAsArray());
                 new FileCleanupTask(MainActivity.this).execute(mFileSearchState.bloomdsAddedAsArray());
+                }
             }
-        }
-    };
+        };
 
     // This function can't be made to work in Android 11+, due to the new scoped storage rules.
     // However, devices running 10 or less can still use this more straightforward method.

@@ -1,18 +1,27 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Log;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import com.segment.analytics.Properties;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.io.File;
+import java.util.Iterator;
 
 // A base abstract class which every activity should extend
 public abstract class BaseActivity extends AppCompatActivity {
@@ -47,6 +56,46 @@ public abstract class BaseActivity extends AppCompatActivity {
     public static boolean haveLegacyStoragePermission(Context context) {
         return ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    // Given a JSONObject, obtained by parsing a JSON string sent by BloomPlayer,
+    // send an analytics report. The data object is expected to contain fields
+    // "event" (the first argument to track), and "params", an arbitrary object
+    // each of whose fields will be used as a name-value pair in the Properties
+    // of the track event.
+    void sendAnalytics(JSONObject data) {
+        String event = null;
+        JSONObject params = null;
+        try {
+            event = data.getString("event");
+            params = data.getJSONObject("params");
+        } catch (JSONException e) {
+            Log.e("sendAnalytics", "analytics event missing event or params");
+            return;
+        }
+
+        Properties p = new Properties();
+        Iterator<String> keys = params.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            try {
+                p.putValue(key, params.get(key));
+            } catch (JSONException e) {
+                Log.e("sendAnalytics", "Very unexpectedly we can't get a value whose key we just retrieved");
+            }
+        }
+
+        // Location
+        LocationManager lm = null;
+        if (MainActivity.haveLocationPermission(this)) {
+            lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        }
+
+        // This should be roughly equivalent to
+        //Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track(event, p);
+        // However reports sent like that have sometimes gotten lost when sent as the activity
+        // is closing down. We hope that sending them from a distinct thread may help.
+        new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams(event, p, lm));
     }
 
     abstract protected void onNewOrUpdatedBook(String fullPath);

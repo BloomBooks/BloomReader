@@ -81,4 +81,6 @@
     <!-- Response button to the above request for permission to use location -->
     <string name="turn_on_location">Onyesha eneo</string>
     <string name="request_gps">Waandishi &amp; Wafafanuzi hupenda kujua ni wapi vitabu vyao vya bure husomwa. Lakini tunahitaji uwashe uwezo wa kifaa chako kutumia Huduma yake ya eneo ya GPS</string>
+    <string name="attempting_to_send_reading_stats">Attempting to send reading stats...</string>
+    <string name="all_reading_stats_sent">All reading stats sent.</string>
 </resources>

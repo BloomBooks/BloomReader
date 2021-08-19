@@ -32,6 +32,8 @@
             android:icon="@drawable/bookshelf"
             android:title="@string/find_books_on_device"
             />
+        <!-- Purposefully not localized for now because
+             it is only displayed for alpha -->
         <item
             android:id="@+id/nav_open_bloompub_file"
             android:icon="@drawable/bookshelf"
@@ -57,5 +59,11 @@
             android:title="@string/about_sil" />
     </group>
 
+    <group android:checkableBehavior="none" android:id="@+id/grp3" >
+        <item
+            android:id="@+id/analytics_status"
+            android:title="@string/attempting_to_send_reading_stats"
+            android:enabled="false"/>
+    </group>
 
 </menu>

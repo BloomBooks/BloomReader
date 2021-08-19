@@ -231,11 +231,12 @@ public class BookCollection {
                 for (File booksDir : booksDirs) {
                     int newCount = 0;
                     try {
-                        newCount = booksDir.listFiles(new FilenameFilter() {
+                        File[] files = booksDir.listFiles(new FilenameFilter() {
                             public boolean accept(File dir, String name) {
                                 return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
                             }
-                        }).length;
+                        });
+                        newCount = files != null ? files.length : 0;
                     } catch (SecurityException e) {
                         // This is expected if we are on older Android and don't have external storage permission.
                     }

@@ -1,6 +1,5 @@
 package org.sil.bloom.reader;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.location.LocationManager;
@@ -11,13 +10,11 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
-import com.segment.analytics.Properties;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.Iterator;
+import java.util.Date;
 
 // This is the main class that displays a Bloom book, using a WebView containing an instance of bloom-player.
 public class ReaderActivity extends BaseActivity {
@@ -31,9 +28,13 @@ public class ReaderActivity extends BaseActivity {
     WebAppInterface mAppInterface;
     String mDistribution;
 
+    private long mTimeStarted;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mTimeStarted = new Date().getTime();
 
         // Allows remote debugging of the WebView content using Chrome over a USB cable.
         // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -66,6 +67,7 @@ public class ReaderActivity extends BaseActivity {
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         // I don't think we need this yet but some interactive pages may want it.
         webSettings.setDomStorageEnabled(true);
+        webSettings.setDatabaseEnabled(true);
 
         // In case we don't want the default placeholder WebView shows before a video starts playing,
         // we can reinstate this.
@@ -101,7 +103,7 @@ public class ReaderActivity extends BaseActivity {
                 mDistribution = fileReader.getFileContent(".distribution");
                 if (mDistribution != null)
                     mDistribution = mDistribution.trim();
-            } catch (Exception e){
+            } catch (Exception e) {
                 Log.e("sendAnalytics", "Unable to check presence or contents of .distribution file", e);
             }
 
@@ -110,7 +112,7 @@ public class ReaderActivity extends BaseActivity {
             // shipped with this program, combined with a param pointing to the book we just
             // decompressed.
             final String url = "file:///android_asset/bloom-player/bloomplayer.htm?url=file:///"
-                    + bookHtmlFile.getAbsolutePath()+"&showBackButton=true&allowToggleAppBar=true&initiallyShowAppBar=false"
+                    + bookHtmlFile.getAbsolutePath() + "&showBackButton=true&allowToggleAppBar=true&initiallyShowAppBar=false"
                     + "&centerVertically=true&hideFullScreenButton=true&independent=false&host=bloomreader";
 
             // I'm not sure if this really a helpful setting or if we are actually just working around a bug in Android Webview...
@@ -128,17 +130,34 @@ public class ReaderActivity extends BaseActivity {
 
     @Override
     protected void onPause() {
+        Settings settings = Settings.load(this);
+        settings.setBookReadDuration(new Date().getTime() - mTimeStarted);
+        settings.setBookBeingRead(getIntent().getStringExtra("bookPath"));
+        settings.save(this);
+
+        updateReadDuration();
+
         postMessageToPlayer("{\"messageType\":\"control\", \"pause\":true}");
 
-        if (isFinishing()) {
-            MakeFinalReport();
-        }
+        // If you want to perform an action when isFinishing() == true,
+        // consider using onDestroy instead. There is at least one case
+        // where onDestroy happens even though onPause is never called
+        // with isFinishing() == true, namely when an intent launches
+        // a book directly and the ReaderActivity was already the top
+        // activity (but was paused).
+
         super.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        Settings settings = Settings.load(this);
+        String bookBeingRead = settings.getBookBeingRead();
+        if (bookBeingRead != null && bookBeingRead.equals(getIntent().getStringExtra("bookPath"))) {
+            mTimeStarted = new Date().getTime() - settings.getBookReadDuration();
+        }
 
         hideSystemUI(isNavBarShowing);
 
@@ -149,27 +168,54 @@ public class ReaderActivity extends BaseActivity {
     protected void onDestroy() {
         mBrowser.destroy();
         mBrowser = null;
+        MakeFinalReport();
         super.onDestroy();
     }
 
     // When a session is finishing, if we've received data to send as the final
     // analytics report
     // for this book (typically PagesRead), send it now.
+    // If changes are made here, check for needed changes in MainActivity.checkForPendingReadBookAnalyticsEvent
     private void MakeFinalReport() {
-        if (mBookProgressReport != null)
+        if (mBookProgressReport != null) {
+            addNonPlayerAnalyticsInfo(mBookProgressReport);
             sendAnalytics(mBookProgressReport);
+
+            // We just sent this report; clear it to ensure we don't send
+            // it again when the app starts.
+            Settings settings = Settings.load(this);
+            settings.setBookReadDuration(0);
+            settings.setPendingProgressReport(null);
+            settings.save(this);
+        }
+    }
+
+    // Fill in the readDuration param in the book progress report
+    // to reflect the current length of the time the user has been reading.
+    // BloomPlayer tracks duration itself, but we can't use it in BloomReader
+    // because the blur and focus events it uses do not happen in the Android WebView.
+    private void updateReadDuration() {
+        try {
+            if (mBookProgressReport == null)
+                return;
+            JSONObject params = (JSONObject) mBookProgressReport.get("params");
+            // Purposely make it an integer (whole seconds)
+            params.put("readDuration", String.valueOf((new Date().getTime() - mTimeStarted) / 1000));
+        } catch (JSONException je) {
+            je.printStackTrace();
+        }
     }
 
     private final int flagsForShowingNavBar =
             // We don't want the System to grab swipes from the edge
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            // Hide the status bar
-            | View.SYSTEM_UI_FLAG_FULLSCREEN;
+                    // Hide the status bar
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN;
 
     private final int flagsForHidingNavBar =
             flagsForShowingNavBar
-            // Hide the nav bar
-            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+                    // Hide the nav bar
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 
     private void hideSystemUI(final boolean showNavBar) {
         this.runOnUiThread(new Runnable() {
@@ -195,10 +241,16 @@ public class ReaderActivity extends BaseActivity {
                     finish();
                     break;
                 case "sendAnalytics":
+                    addNonPlayerAnalyticsInfo(data);
                     sendAnalytics(data);
                     break;
                 case "updateBookProgressReport":
                     mBookProgressReport = data;
+                    updateReadDuration();
+                    addNonPlayerAnalyticsInfo(mBookProgressReport);
+                    Settings settings = Settings.load(this);
+                    settings.setPendingProgressReport(mBookProgressReport);
+                    settings.save(this);
                     break;
                 case "reportBookProperties":
                     setDeviceOrientation(data);
@@ -220,54 +272,25 @@ public class ReaderActivity extends BaseActivity {
         }
     }
 
-    // Given a JSONObject, obtained by parsing a JSON string sent by BloomPlayer,
-    // send an analytics report. The data object is expected to contain fields
-    // "event" (the first argument to track), and "params", an arbitrary object
-    // each of whose fields will be used as a name-value pair in the Properties
-    // of the track event.
-    void sendAnalytics(JSONObject data) {
-        String event = null;
-        JSONObject params = null;
+    // Add any analytics info which should be in every event reported
+    // but which doesn't come from BloomPlayer.
+    private void addNonPlayerAnalyticsInfo(JSONObject data) {
+        JSONObject params;
         try {
-            event = data.getString("event");
             params = data.getJSONObject("params");
+            // Distribution
+            // We allow for the presence of a .distribution file in the .bloomPub (or .bloomd)
+            // which contains a string describing information about the source and distribution of the book.
+            // To start, the RISE II project will use it to show distribution from SD cards vs. web.
+            // In the future, we could allow sources to add up by modifying that file
+            // and appending to that string. So a book could have that file with
+            // "RISE2 SD Card, bluetooth, bluetooth". And you could have the web have a source like
+            // "bloomdesktop, bluetooth" and "bloomlibrary, bluetooth , bluetooth , bluetooth ".
+            if (mDistribution != null)
+                params.put("distributionSource", mDistribution);
         } catch (JSONException e) {
-            Log.e("sendAnalytics", "analytics event missing event or params");
-            return;
+            e.printStackTrace();
         }
-        Properties p = new Properties();
-        Iterator<String> keys = params.keys();
-        while (keys.hasNext()) {
-            String key = keys.next();
-            try {
-                p.putValue(key, params.get(key));
-            } catch (JSONException e) {
-                Log.e("sendAnalytics", "Very unexpectedly we can't get a value whose key we just retrieved");
-            }
-        }
-
-        // Location
-        LocationManager lm = null;
-        if(MainActivity.haveLocationPermission(this)) {
-            lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        }
-
-        // Distribution
-        // We allow for the presence of a .distribution file in the .bloomPub (or .bloomd)
-        // which contains a string describing information about the source and distribution of the book.
-        // To start, the RISE II project will use it to show distribution from SD cards vs. web.
-        // In the future, we could allow sources to add up by modifying that file
-        // and appending to that string. So a book could have that file with
-        // "RISE2 SD Card, bluetooth, bluetooth". And you could have the web have a source like
-        // "bloomdesktop, bluetooth" and "bloomlibrary, bluetooth , bluetooth , bluetooth ".
-        if (mDistribution != null)
-            p.put("distributionSource", mDistribution);
-
-        // This should be roughly equivalent to
-        //Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track(event, p);
-        // However reports sent like that have sometimes gotten lost when sent as the activity
-        // is closing down. We hope that sending them from a distinct thread may help.
-        new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams(event, p, lm ));
     }
 
     // Given a JSONObject, obtained by parsing a JSON string of book properties sent

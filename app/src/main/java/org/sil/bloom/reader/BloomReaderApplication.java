@@ -223,6 +223,10 @@ public class BloomReaderApplication extends Application {
         success.show();
     }
 
+    public static boolean shouldPreserveFilesInOldDirectory() {
+        return BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
+    }
+
     public static boolean InTestModeForAnalytics(){
         boolean testMode = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha");
         if(testMode)

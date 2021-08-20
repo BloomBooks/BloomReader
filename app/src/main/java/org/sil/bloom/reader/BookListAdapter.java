@@ -65,7 +65,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
             holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.new_book_highlight));
         else
             holder.linearLayout.setBackgroundColor(Color.WHITE);
-        if (holder.bookOrShelf.specialBehavior == "loadExternalFiles") {
+        if ("loadExternalFiles".equals(holder.bookOrShelf.specialBehavior) || "importOldBloomFolder".equals(holder.bookOrShelf.specialBehavior)) {
             // I'm not sure this is the best way to do this. Maybe we should use an entirely different layout?
             // I'm not getting the exact appearance JohnH put in the doc...the image he gave me seems to have
             // only two 'contacts' instead of three, and it's bigger than the mockup. It may also be higher than

@@ -7,13 +7,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.graphics.PointF;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
@@ -61,7 +59,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import static org.sil.bloom.reader.BloomReaderApplication.shouldPreserveFilesInOldDirectory;
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
+import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.ENCODED_FILE_EXTENSION;
 
@@ -294,12 +294,14 @@ public class MainActivity extends BaseActivity
             }
                 break;
             case STORAGE_PERMISSION_USB:
+            case STORAGE_PERMISSION_CHECK_OLD_BLOOM:
                 // This is permission to read/write to the `InternalStorage/Bloom` directory
                 // where the transfer via USB puts books.
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                    getFromUsbPreAndroid11();
-        } else {
-                    getFromUsbWithSaf();
+                    getFromBloomFolderPreAndroid11();
+                    reloadBookList(); // mainly to get rid of the "Check for lost books" button
+                } else {
+                    getFromBloomFolderWithSAF(requestCode == STORAGE_PERMISSION_USB);
                 }
                 break;
             case STORAGE_PERMISSION_SEARCH:
@@ -351,7 +353,7 @@ public class MainActivity extends BaseActivity
             // we move the files rather than copying, so it will only happen once. Someone who
             // is messing with alpha or beta might like to see any new books they fetch with the
             // old release build.
-            boolean preserveFilesInOldDirectory = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
+            boolean preserveFilesInOldDirectory = shouldPreserveFilesInOldDirectory();
             if (haveLegacyStoragePermission(this)) {
                 File[] filesInOldBloomDir = oldBloomDir.listFiles();
                 if (filesInOldBloomDir == null)
@@ -387,7 +389,7 @@ public class MainActivity extends BaseActivity
                 final Context context = this; // inside the listener, 'this' is the listener
                 SAFUtilities.searchDirectoryForBooks(this, SAFUtilities.BloomDirectoryTreeUri, new BookSearchListener() {
                     @Override
-                    public void onFoundBook(File bloomdFile, Uri bookOrShelfUri) {
+                    public void onFoundBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
                         String fileName = IOUtilities.getFileNameFromUri(context, bookOrShelfUri);
                         File privateStorageFile = new File(newBloomDir + "/" + fileName);
                         final long bloomDirectoryModifiedTime = IOUtilities.lastModified(context, bookOrShelfUri);
@@ -567,7 +569,7 @@ public class MainActivity extends BaseActivity
             return;
         if (nameOrPath.endsWith(BOOK_FILE_EXTENSION) ||
                 nameOrPath.endsWith(BOOK_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
-            importBook(uri, true);
+            importBookOrShelf(uri, true);
         } else if (nameOrPath.endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {
             importBloomBundle(uri);
         } else {
@@ -581,20 +583,24 @@ public class MainActivity extends BaseActivity
     // If we're importingOneFile (ie not doing a FileSearch of the device),
     // we'll go ahead and open the book and do file cleanup.
     // Return value indicates success.
-    private boolean importBook(Uri bookUri, boolean importingOneFile) {
-        String newPath = _bookCollection.ensureBookIsInCollection(this, bookUri);
+    private boolean importBookOrShelf(Uri bookOrShelfUri, boolean importingOneFile) {
+        String newPath = _bookCollection.ensureBookOrShelfIsInCollection(this, bookOrShelfUri);
         if (newPath != null) {
+            if (newPath.endsWith(BOOKSHELF_FILE_EXTENSION)) {
+                reloadBookList(); // a new shelf can totally reorganize things. Likely to be quite rare.
+                return true;
+            }
             if (importingOneFile) {
                 mBookListAdapter.notifyDataSetChanged();
                 openBook(this, newPath);
-                new FileCleanupTask(this).execute(bookUri);
+                new FileCleanupTask(this).execute(bookOrShelfUri);
             }
             else
                 updateForNewBook(newPath);
             return true;
         } else {
-            Log.e("BookSearchFailedImport", bookUri.getPath());
-            String filename = IOUtilities.getFileNameFromUri(this, bookUri);
+            Log.e("BookSearchFailedImport", bookOrShelfUri.getPath());
+            String filename = IOUtilities.getFileNameFromUri(this, bookOrShelfUri);
             if (!isFinishing()) {
             final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
                     .setPositiveButton(android.R.string.ok, null)
@@ -685,7 +691,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void updateForNewBook(String filePathOrUri) {
-        BookOrShelf book = _bookCollection.addBookIfNeeded(filePathOrUri);
+        BookOrShelf book = _bookCollection.addBookOrShelfIfNeeded(filePathOrUri);
         refreshList(book);
         if (sSkipNextNewFileSound) {
             sSkipNextNewFileSound = false;
@@ -869,8 +875,12 @@ public class MainActivity extends BaseActivity
             // Maybe we when fix the concurrency issues, this goes away, too.
             return;
         }
-        if (bookOrShelf.specialBehavior == "loadExternalFiles") {
+        if ("loadExternalFiles".equals(bookOrShelf.specialBehavior)) {
             AskUserForPermissionToReadBloomExternal();
+            return;
+        }
+        if ("importOldBloomFolder".equals(bookOrShelf.specialBehavior)) {
+            GetFromBloomFolder(false);
             return;
         }
         if (bookOrShelf.uri == null && !new File(path).exists()) {
@@ -982,6 +992,7 @@ public class MainActivity extends BaseActivity
     static final int STORAGE_PERMISSION_USB = 2;
     static final int STORAGE_PERMISSION_SEARCH = 3;
     static final int STORAGE_PERMISSION_BLOOMEXTERNAL = 4;
+    static final int STORAGE_PERMISSION_CHECK_OLD_BLOOM = 5;
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -991,7 +1002,7 @@ public class MainActivity extends BaseActivity
                 Intent intent = new Intent(this, GetFromWiFiActivity.class);
             mGetBooksFromWiFi.launch(intent);
         } else if (id == R.id.nav_get_usb) {
-            GetFromUsb();
+            GetFromBloomFolder(true);
         } else if (id == R.id.nav_share_app) {
                 ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
                 shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
@@ -1050,34 +1061,42 @@ public class MainActivity extends BaseActivity
                             final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             getContentResolver().takePersistableUriPermission(uri, takeFlags);
                         }
+                        if (uri.getPath().endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {
+                            importBloomBundle(uri);
+                            return;
+                        }
+
                         TextFileContent metaFile = new TextFileContent("meta.json");
-                        if (!IOUtilities.isValidZipUri(uri, IOUtilities.CHECK_BLOOMD, metaFile))
+                        boolean validFile = uri.getPath().endsWith(BOOKSHELF_FILE_EXTENSION)
+                                ? BloomShelfFileReader.isValidShelf(this, uri)
+                                : IOUtilities.isValidZipUri(uri, IOUtilities.CHECK_BLOOMD, metaFile);
+                        if (!validFile)
                         {
-                            Toast toast = Toast.makeText(this, "This does not appear to be a bloom book. Try files ending with .bloompub or .bloomd.",
+                            Toast toast = Toast.makeText(this, "This does not appear to be a bloom file. Try files ending with .bloompub, .bloomd, .bloomshelf, or .bloombundle.",
                                     Toast.LENGTH_LONG);
                             toast.show();
                             return;
                         }
-                        importBook(uri, true);
+                        importBookOrShelf(uri, true);
                     }
                 }
             }
     );
 
-    private void GetFromUsb() {
+    private void GetFromBloomFolder(boolean forUsb) {
         if (osAllowsGeneralStorageAccess()) {
             if (haveLegacyStoragePermission(this)) {
-                getFromUsbPreAndroid11();
+                getFromBloomFolderPreAndroid11();
             } else {
-                requestLegacyStoragePermission(STORAGE_PERMISSION_USB);
+                requestLegacyStoragePermission(forUsb ? STORAGE_PERMISSION_USB : STORAGE_PERMISSION_CHECK_OLD_BLOOM);
             }
             return;
         }
 
-        getFromUsbWithSaf();
+        getFromBloomFolderWithSAF(forUsb);
     }
 
-    private void getFromUsbPreAndroid11() {
+    private void getFromBloomFolderPreAndroid11() {
         // Create the Bloom directory. Older versions of Bloom Editor expect this to exist.
         IOUtilities.createOldBloomBooksFolder(this);
         final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
@@ -1088,7 +1107,7 @@ public class MainActivity extends BaseActivity
         d.show();
     }
 
-    private void getFromUsbWithSaf() {
+    private void getFromBloomFolderWithSAF(boolean forUsb) {
         mFileSearchState = new FileSearchState();
 
         if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
@@ -1099,12 +1118,21 @@ public class MainActivity extends BaseActivity
         ImageView image = new ImageView(this);
         image.setImageResource(R.drawable.ic_use_this_folder);
         AlertDialog dlg = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
-                .setTitle("Select Bloom directory")
-                .setMessage("To receive books via USB, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"")
-                .setPositiveButton(R.string.ok, (dialogInterface, i) -> {
-                    Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(SAFUtilities.BloomDirectoryUri);
-                    mGetDirectoryToSearchForBooks.launch(permissionIntent);
+                .setTitle(R.string.select_bloom_directory)
+                .setMessage(getString(forUsb ? R.string.request_bloom_permission_usb : R.string.request_bloom_permission_lost))
+                .setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
                 })
+                .setOnDismissListener((new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+                        Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(SAFUtilities.BloomDirectoryUri);
+                        mGetDirectoryToSearchForBooks.launch(permissionIntent);
+                    }
+                }))
                 .setView(image)
                 .create();
         // In case the user doesn't understand and clicks the button in the image, go ahead and
@@ -1228,15 +1256,15 @@ public class MainActivity extends BaseActivity
             searchForBloomBooks_preAndroid11();
         } else {
             requestLegacyStoragePermission(STORAGE_PERMISSION_SEARCH);
-            }
+        }
         return;
         // We decided this is not usable.
         //searchForBloomBooksUsingSaf();
-        }
+    }
 
     private final BookSearchListener mBookSearchListener = new BookSearchListener() {
             @Override
-        public void onFoundBook(File bookOrShelfFile, Uri bookOrShelfUri) {
+        public void onFoundBookOrShelf(File bookOrShelfFile, Uri bookOrShelfUri) {
                 String filePath = bookOrShelfFile.getPath();
                 // Don't add books found in BloomExternal to Bloom!
                 // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
@@ -1244,7 +1272,7 @@ public class MainActivity extends BaseActivity
                     return;
                 if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
                     Log.d("BookSearch", "Found " + filePath);
-                if (importBook(bookOrShelfUri, false))
+                if (importBookOrShelf(bookOrShelfUri, false))
                     mFileSearchState.bloomdsAdded.add(bookOrShelfUri);
                 }
             }
@@ -1258,14 +1286,14 @@ public class MainActivity extends BaseActivity
             @Override
             public void onSearchComplete() {
                 findViewById(R.id.searching_text).setVisibility(View.GONE);
-            if (mFileSearchState.nothingAdded())
+                if (mFileSearchState.nothingAdded())
                     Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
                 else {
                     resetFileObserver();  // Prevents repeat notifications later
                     // Multiple AsyncTask's will execute sequentially
                     // https://developer.android.com/reference/android/os/AsyncTask#order-of-execution
-                new ImportBundleTask(MainActivity.this).execute(mFileSearchState.bundlesToAddAsArray());
-                new FileCleanupTask(MainActivity.this).execute(mFileSearchState.bloomdsAddedAsArray());
+                    new ImportBundleTask(MainActivity.this).execute(mFileSearchState.bundlesToAddAsArray());
+                    new FileCleanupTask(MainActivity.this).execute(mFileSearchState.bloomdsAddedAsArray());
                 }
             }
         };
@@ -1311,7 +1339,7 @@ public class MainActivity extends BaseActivity
                     String[] newBooks = result.getData().getStringArrayExtra(NEW_BOOKS);
                     if (newBooks != null) {
                         for (String bookPath : newBooks) {
-                            _bookCollection.addBookIfNeeded(bookPath);
+                            _bookCollection.addBookOrShelfIfNeeded(bookPath);
                         }
                         if (newBooks.length > 0) {
                             onNewOrUpdatedBook(newBooks[newBooks.length - 1]);
@@ -1335,6 +1363,7 @@ public class MainActivity extends BaseActivity
                         getContentResolver().takePersistableUriPermission(uri, takeFlags);
 
                         SAFUtilities.searchDirectoryForBooks(this, uri, mBookSearchListener);
+                        reloadBookList(); // one reason is to get rid of "check for lost books" button
                     }
                 }
             }

@@ -238,7 +238,7 @@ public abstract class BaseActivity extends AppCompatActivity {
 
         SAFUtilities.searchDirectoryForBooks(context, dir, new BookSearchListener() {
             @Override
-            public void onFoundBook(File bloomdFile, Uri bookOrShelfUri) {
+            public void onFoundBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
                 long modified = IOUtilities.lastModified(context, bookOrShelfUri);
                 if (modified > latestTime[0]) {
                     latestTime[0] = modified;

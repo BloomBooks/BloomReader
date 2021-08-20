@@ -74,7 +74,7 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
         if (activity != null) {
             activity.runOnUiThread(() -> {
                 if (bookSearchListener != null)
-                    bookSearchListener.onFoundBook(bookOrShelfFile, Uri.fromFile(bookOrShelfFile));
+                    bookSearchListener.onFoundBookOrShelf(bookOrShelfFile, Uri.fromFile(bookOrShelfFile));
             });
         }
     }

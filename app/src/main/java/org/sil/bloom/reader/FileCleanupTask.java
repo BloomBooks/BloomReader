@@ -60,8 +60,11 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             // the SAF file chooser does not allow us to choose one of them.
             // However, could there be other paths to here that do include them, especially
             // if we remove the file-url-only code above?
-            // Review: Should we check for books in the Bloom directory? By one theory these
-            // should not be deleted unless we're running a release build
+            // Books in the Bloom directory should not be deleted unless we're running a release build
+            // (Once the SAF version reaches release we might remove this.)
+            if (BloomReaderApplication.shouldPreserveFilesInOldDirectory() && SAFUtilities.IsUriInOldBloomDirectory(context, uriToCleanUp)) {
+                return;
+            }
 
             // Throws if not found (or no permission, etc.)
             DocumentsContract.deleteDocument(context.getContentResolver(), uriToCleanUp);
@@ -69,7 +72,11 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         catch (SecurityException e) {
             // SecurityException can be thrown by File.delete()
             Log.e("BloomReader", e.getLocalizedMessage());
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
+            // Note: if thinking of cutting this back, note that in at least one case we attempted
+            // to clean up the same URI twice, and the second try failed not with any sensible
+            // exception but with IllegalArgumentException. So I decided if for any reason we can't
+            // clean up, just don't.
             e.printStackTrace();
             Log.e("BloomReader", e.getLocalizedMessage());
         }

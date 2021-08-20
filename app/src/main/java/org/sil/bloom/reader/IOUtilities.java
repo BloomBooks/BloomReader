@@ -502,14 +502,17 @@ public class IOUtilities {
         }
     }
 
-    public static boolean copyBloomdFile(Context context, Uri bookUri, String toPath) {
+    public static boolean copyBookOrShelfFile(Context context, Uri bookOrShelfUri, String toPath) {
         try {
-            InputStream in = context.getContentResolver().openInputStream(bookUri);
+            InputStream in = context.getContentResolver().openInputStream(bookOrShelfUri);
             if (copyFile(in, toPath)) {
-                // Even if the copy succeeds, if the result is not a valid .bloomd file, delete it
+                // Even if the copy succeeds, if the result is not a valid book or shelf file, delete it
                 // and fail.
                 File newFile = new File(toPath);
-                if (!isValidZipFile(newFile, CHECK_BLOOMD)) {
+                boolean validFile = toPath.endsWith(BOOKSHELF_FILE_EXTENSION)
+                    ? BloomShelfFileReader.isValidShelf(context, bookOrShelfUri)
+                        : isValidZipFile(newFile, CHECK_BLOOMD);
+                if (!validFile) {
                     newFile.delete();
                     return false;
                 }

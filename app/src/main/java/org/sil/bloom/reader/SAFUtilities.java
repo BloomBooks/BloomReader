@@ -51,6 +51,10 @@ public class SAFUtilities {
         return null;
     }
 
+    public static boolean IsUriInOldBloomDirectory(Context context, Uri uri) {
+        return uri.getPath().startsWith("/tree/primary:Bloom/");
+    }
+
     public static boolean hasPermissionToBloomDirectory(Context context) {
         return hasPermission(context, BloomDirectoryTreeUri);
     }
@@ -230,7 +234,7 @@ public class SAFUtilities {
         final int[] count = {0};
         BookSearchListener listener = new BookSearchListener() {
             @Override
-            public void onFoundBook(File bloomdFile, Uri bookOrShelfUri) {
+            public void onFoundBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
                 count[0]++;
             }
 
@@ -289,7 +293,7 @@ public class SAFUtilities {
                                 name.endsWith(BOOK_FILE_EXTENSION + ENCODED_FILE_EXTENSION) ||
                                 name.endsWith(BOOKSHELF_FILE_EXTENSION) ||
                                 name.endsWith(BOOKSHELF_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
-                            bookSearchListener.onFoundBook(new File(uri.getPath()), uri);
+                            bookSearchListener.onFoundBookOrShelf(new File(uri.getPath()), uri);
                         }
                     }
                 }

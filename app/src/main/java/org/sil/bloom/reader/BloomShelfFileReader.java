@@ -26,6 +26,20 @@ public class BloomShelfFileReader {
         return parseShelfJson(null, uri, json, shelfName);
     }
 
+    public static boolean isValidShelf(Context context, Uri uri) {
+        try {
+            String json = IOUtilities.UriToString(context, uri);
+            JSONObject data = new JSONObject(json);
+            data.getString("id");
+            data.getString("color");
+            data.getJSONArray("label");
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
     @NonNull
     private static BookOrShelf parseShelfJson(String filepath, Uri uri, String json, String shelfName) {
         String backgroundColor = "ffffff"; // default white

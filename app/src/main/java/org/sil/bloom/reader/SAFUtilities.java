@@ -52,7 +52,10 @@ public class SAFUtilities {
     }
 
     public static boolean IsUriInOldBloomDirectory(Context context, Uri uri) {
-        return uri.getPath().startsWith("/tree/primary:Bloom/");
+        // Nexus 5X running Android 8: I see paths like /document/primary:Bloom/horses.bloomd (path to old bloom folder: /storage/emulated/0/Bloom)
+        // Also on my Moto G Power running Android 11.
+        // Emulator running Android 11: I see paths like /tree/primary:Bloom/horses.bloomd
+        return uri.getPath().contains("/primary:Bloom/");
     }
 
     public static boolean hasPermissionToBloomDirectory(Context context) {

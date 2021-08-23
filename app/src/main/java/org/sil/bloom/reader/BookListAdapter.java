@@ -1,6 +1,7 @@
 package org.sil.bloom.reader;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
 import androidx.core.content.ContextCompat;
@@ -57,8 +58,16 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         AdjustItemAppearance(holder);
     }
 
+    ColorStateList originalColors;
 
     private void AdjustItemAppearance(ViewHolder holder){
+        // Somehow the adapter reuses text views whose color has been set previously
+        // Clean this up before we set any colors we actually want.
+        // The very first time we run, we capture the original colors to restore.
+        if (originalColors == null)
+            originalColors = holder.bookNameView.getTextColors();
+        else
+            holder.bookNameView.setTextColor(originalColors);
         if (holder.bookOrShelf == selectedItem)
             holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.colorAccent));
         else if (holder.bookOrShelf.highlighted)

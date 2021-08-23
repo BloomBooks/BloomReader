@@ -72,6 +72,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         catch (SecurityException e) {
             // SecurityException can be thrown by File.delete()
             Log.e("BloomReader", e.getLocalizedMessage());
+            assert false; // we want to look into this in debug builds
         } catch (Exception e) {
             // Note: if thinking of cutting this back, note that in at least one case we attempted
             // to clean up the same URI twice, and the second try failed not with any sensible
@@ -79,6 +80,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             // clean up, just don't.
             e.printStackTrace();
             Log.e("BloomReader", e.getLocalizedMessage());
+            assert false; // we want to look into this in debug builds
         }
     }
 

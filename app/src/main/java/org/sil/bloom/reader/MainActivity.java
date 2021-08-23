@@ -21,6 +21,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.text.util.Linkify;
 import android.util.Log;
+import android.util.Pair;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -298,8 +299,19 @@ public class MainActivity extends BaseActivity
                 // This is permission to read/write to the `InternalStorage/Bloom` directory
                 // where the transfer via USB puts books.
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                    getFromBloomFolderPreAndroid11();
-                    reloadBookList(); // mainly to get rid of the "Check for lost books" button
+                    // We only really want to create it if the user is wanting to do USB transfers
+                    // and might be using an old version of Bloom Editor. So it would make sense
+                    // to limit this to the STORAGE_PERMISSION_USB. However, the other case only
+                    // occurs when the folder already exists, so there's no danger of creating it
+                    // unnecessarily.
+                    IOUtilities.createOldBloomBooksFolder(this);
+                    // Now we have this permission, we can do the migration we'd have liked to do
+                    // at startup.
+                    copyFromBooksDirectory();
+                    if (requestCode == STORAGE_PERMISSION_USB) {
+                        reportReadyForUsb();
+                    }
+                    reloadBookList(); // To get rid of the "Check for lost books" button, and since we may have added many books
                 } else {
                     getFromBloomFolderWithSAF(requestCode == STORAGE_PERMISSION_USB);
                 }
@@ -400,9 +412,9 @@ public class MainActivity extends BaseActivity
                             mostRecentModifiedBook[0] = privateStorageFile.getAbsolutePath();
                         }
                         SAFUtilities.copyUriToFile(context, bookOrShelfUri, privateStorageFile);
-                        //if (!preserveFilesInOldDirectory) {
+                        if (!preserveFilesInOldDirectory) {
                             SAFUtilities.deleteUri(context, bookOrShelfUri);
-                        //}
+                        }
                     }
 
                     @Override
@@ -584,7 +596,10 @@ public class MainActivity extends BaseActivity
     // we'll go ahead and open the book and do file cleanup.
     // Return value indicates success.
     private boolean importBookOrShelf(Uri bookOrShelfUri, boolean importingOneFile) {
-        String newPath = _bookCollection.ensureBookOrShelfIsInCollection(this, bookOrShelfUri);
+        Pair<String, Boolean> p = _bookCollection.ensureBookOrShelfIsInCollection(this, bookOrShelfUri);
+        String newPath = p.first;
+        boolean isNewBook = p.second;
+        if (!isNewBook) return true; // We already had this book (or a newer version of it)
         if (newPath != null) {
             if (newPath.endsWith(BOOKSHELF_FILE_EXTENSION)) {
                 reloadBookList(); // a new shelf can totally reorganize things. Likely to be quite rare.
@@ -1084,21 +1099,31 @@ public class MainActivity extends BaseActivity
     );
 
     private void GetFromBloomFolder(boolean forUsb) {
+        if (haveLegacyStoragePermission(this)) {
+            // Make sure the Bloom directory exists. Older versions of Bloom Editor expect it.
+            IOUtilities.createOldBloomBooksFolder(this);
+            // call must be forUsb=true. We don't even show the button that results in calling this
+            // in the other case if we already have permission for the folder.
+            reportReadyForUsb();
+            return;
+        }
+        if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
+            // Again, call must be forUsb=true, or we wouldn't be called when we already have permission.
+            // Unfortunately, SAF permissions will not allow us to create the Bloom folder, so old
+            // BE versions are out of luck.
+            reportReadyForUsb();
+            return;
+        }
+        // At this point we know we don't already have any permission.
         if (osAllowsGeneralStorageAccess()) {
-            if (haveLegacyStoragePermission(this)) {
-                getFromBloomFolderPreAndroid11();
-            } else {
-                requestLegacyStoragePermission(forUsb ? STORAGE_PERMISSION_USB : STORAGE_PERMISSION_CHECK_OLD_BLOOM);
-            }
+            requestLegacyStoragePermission(forUsb ? STORAGE_PERMISSION_USB : STORAGE_PERMISSION_CHECK_OLD_BLOOM);
             return;
         }
 
         getFromBloomFolderWithSAF(forUsb);
     }
 
-    private void getFromBloomFolderPreAndroid11() {
-        // Create the Bloom directory. Older versions of Bloom Editor expect this to exist.
-        IOUtilities.createOldBloomBooksFolder(this);
+    private void reportReadyForUsb() {
         final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
                 .setPositiveButton(android.R.string.ok, null)
                 .setTitle(getString(R.string.receive_books_over_usb))
@@ -1110,10 +1135,11 @@ public class MainActivity extends BaseActivity
     private void getFromBloomFolderWithSAF(boolean forUsb) {
         mFileSearchState = new FileSearchState();
 
-        if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
-            SAFUtilities.searchDirectoryForBooks(this, SAFUtilities.BloomDirectoryTreeUri, mBookSearchListener);
-            return;
-        }
+        // Thought this was useful at one point, but currently we only call this if we do NOT already have permission.
+//        if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
+//            SAFUtilities.searchDirectoryForBooks(this, SAFUtilities.BloomDirectoryTreeUri, mBookSearchListener);
+//            return;
+//        }
 
         ImageView image = new ImageView(this);
         image.setImageResource(R.drawable.ic_use_this_folder);
@@ -1129,6 +1155,7 @@ public class MainActivity extends BaseActivity
                 .setOnDismissListener((new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
+                        mShouldReportReadyForUsbAfterSearching = forUsb;
                         Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(SAFUtilities.BloomDirectoryUri);
                         mGetDirectoryToSearchForBooks.launch(permissionIntent);
                     }
@@ -1324,6 +1351,7 @@ public class MainActivity extends BaseActivity
 //        Uri bloomExternalDir = Uri.parse("content://com.android.externalstorage.documents/document/primary%3ABloomExternal");
 //        Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(bloomExternalDir);
 
+        mShouldReportReadyForUsbAfterSearching = false;
         mGetDirectoryToSearchForBooks.launch(permissionIntent);
     }
 
@@ -1349,6 +1377,8 @@ public class MainActivity extends BaseActivity
             }
     );
 
+    boolean mShouldReportReadyForUsbAfterSearching;
+
     @SuppressLint("WrongConstant")
     private final ActivityResultLauncher<Intent> mGetDirectoryToSearchForBooks = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -1361,9 +1391,12 @@ public class MainActivity extends BaseActivity
                         // Persist our permission beyond device restart
                         final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                         getContentResolver().takePersistableUriPermission(uri, takeFlags);
-
-                        SAFUtilities.searchDirectoryForBooks(this, uri, mBookSearchListener);
+                        // We can do the data-migration we would have preferred to do at startup.
+                        copyFromBooksDirectory();
                         reloadBookList(); // one reason is to get rid of "check for lost books" button
+                        if (mShouldReportReadyForUsbAfterSearching) {
+                            reportReadyForUsb();
+                        }
                     }
                 }
             }

@@ -5,10 +5,12 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.sil.bloom.reader.BaseActivity;
 import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.BloomReaderApplication;
 import org.sil.bloom.reader.BloomShelfFileReader;
@@ -224,6 +226,7 @@ public class BookCollection {
     private boolean oldBloomDirectoryExistsButNoAccess(Context context) {
         File oldBloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
         if (!oldBloomDir.exists()) return false;
+        if (BaseActivity.haveLegacyStoragePermission(context)) return false; // we can access it with legacy permission.
         return !SAFUtilities.hasPermissionToBloomDirectory(context);
     }
 
@@ -445,8 +448,10 @@ public class BookCollection {
     }
 
     // is this coming from somewhere other than where we store books?
-    // then move or copy it in
-    public String ensureBookOrShelfIsInCollection(Context context, Uri bookOrShelfUri) {
+    // then move or copy it in.
+    // Returns the path to the book (or toString of URI if not copied to private storage),
+    // and a boolean indicating whether it was added.
+    public Pair<String, Boolean> ensureBookOrShelfIsInCollection(Context context, Uri bookOrShelfUri) {
         if (bookOrShelfUri == null || bookOrShelfUri.getPath() == null)
             return null; // Play console proves this is possible somehow
 
@@ -455,29 +460,38 @@ public class BookCollection {
             mLocalBooksDirectory = getLocalBooksDirectory();
 
         if (bookOrShelfUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath()))
-            return bookOrShelfUri.getPath();
+            return new Pair<>(bookOrShelfUri.getPath(), false);
 
         // If the book is in BloomExternal, we will neither copy nor move it, just read it directly
         // from there. Calling code will already have made sure we persist permission to use the
         // book so it will get added each time we start up.
         if (SAFUtilities.isUriInBloomExternal(context, bookOrShelfUri)) {
             String bookPath = bookOrShelfUri.toString();
-            addBookOrShelfIfNeeded(bookPath);
-            return bookPath;
+            BookOrShelf existingBook = getBookOrShelfByPath(bookPath);
+            if (existingBook != null) {
+                return new Pair<>(bookPath, false);
+            }
+            addBookOrShelf(bookPath, null);
+            return new Pair<>(bookPath, true);
         }
 
-        Log.d("BloomReader", "Copying book into Bloom directory");
+
         String filename = IOUtilities.getFileNameFromUri(context, bookOrShelfUri);
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + filename;
         if (filename.endsWith(IOUtilities.BOOK_FILE_EXTENSION + IOUtilities.ENCODED_FILE_EXTENSION)) {
             destination = destination.substring(0, destination.length() - IOUtilities.ENCODED_FILE_EXTENSION.length());
         }
+        File destFile = new File(destination);
+        if (destFile.exists() && destFile.lastModified() < IOUtilities.lastModified(context, bookOrShelfUri)) {
+            return new Pair<>(destination, false);
+        }
+        Log.d("BloomReader", "Copying book into Bloom directory");
         boolean copied = IOUtilities.copyBookOrShelfFile(context, bookOrShelfUri, destination);
         if (copied){
             destination = FixDuplicate(destination);
             // it's probably not in our list that we display yet, so make an entry there
             addBookOrShelfIfNeeded(destination);
-            return destination;
+            return new Pair<>(destination, true);
         } else{
             return null;
         }

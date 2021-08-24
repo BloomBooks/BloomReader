@@ -1,20 +1,24 @@
 package org.sil.bloom.reader;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.segment.analytics.Properties;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
 import java.util.Iterator;
@@ -25,6 +29,34 @@ public abstract class BaseActivity extends AppCompatActivity {
     long mostRecentlyModifiedBloomFileTime;
     long mostRecentMarkerFileModifiedTime;
     private Handler mHandler;
+
+    // This is our "legacy" storage model which allowed us to gain
+    // general file system access by user permission.
+    // In Android 11, this became unavailable and we must use private storage
+    // or gain access via Storage Access Framework (SAF).
+    //
+    // We could have returned true here if running on Android 11 and
+    // the user still has legacy storage access because they did an upgrade
+    // (see android:preserveLegacyExternalStorage="true" in AndroidManifest.xml).
+    // However, that would mean users with Android 11 could have different experiences
+    // and even the same user would have different experiences if he uninstalled/reinstalled.
+    // In general, if we have the migrated permission, haveLegacyStoragePermission will return
+    // true, and we won't call this. If we don't have it, this is a good criterion for deciding
+    // whether to ask for it.
+    public static boolean osAllowsGeneralStorageAccess() {
+        // Counter-intuitively, Build.VERSION.SDK_IN is the version of the Android system
+        // we are running under, not the one we were built for. Q is Android 10, the last
+        // version where the user could give us this permission.
+        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q;
+    }
+
+    // This is true if we have the old-style permission, that is, the user has actually granted it.
+    // This MIGHT be true on Android 11, but only if Bloom was upgraded from an earlier version
+    // where the permission was already granted.
+    public static boolean haveLegacyStoragePermission(Context context) {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+    }
 
     // Given a JSONObject, obtained by parsing a JSON string sent by BloomPlayer,
     // send an analytics report. The data object is expected to contain fields
@@ -69,7 +101,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     abstract protected void onNewOrUpdatedBook(String fullPath);
 
     // Call in onResume() if subclass wants notifications.
-    protected void startObserving() throws ExtStorageUnavailableException{
+    protected void startObserving(){
         createFileObserver();
     }
 
@@ -82,12 +114,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     // If we import a bundle while the FileObserver is running, the user has already been notified
     // about these files, and we don't want another notification the next time onResume() is called.
     protected void resetFileObserver() {
-        try {
-            mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile(BookCollection.getLocalBooksDirectory()).time;
-        }
-        catch (ExtStorageUnavailableException e) {
-            e.printStackTrace();
-        }
+        mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile().time;
     }
 
     // We want to monitor for new and changed books. We ought to be able to get notifications
@@ -108,9 +135,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     // notification.
     // There should be no contention for access to something.modified, because BloomReader never
     // accesses or locks it; all it does is check its modify time.
-    private void createFileObserver() throws ExtStorageUnavailableException {
-        final String pathToWatch = BookCollection.getLocalBooksDirectory().getPath();
-        String [] mostRecent = new String[1];
+    private void createFileObserver() {
         if (mHandler == null) {
             // Calling for the first time (on startup of this activity). Assume it's just read
             // the files and doesn't need a notification; so we want to initialize
@@ -118,29 +143,37 @@ public abstract class BaseActivity extends AppCompatActivity {
             // If we already have mHandler, we don't need a new one, and do NOT want to
             // update the modify time we already have, since we do want notifications
             // about any changes since last pause.
-            mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile(new File(pathToWatch)).time;
+            mostRecentlyModifiedBloomFileTime = getLatestModifiedTimeAndFile().time;
             mHandler = new Handler();
         }
-        mObserver = new Runnable() {
-            @Override
-            public void run() {
-                try {
+        mObserver = () -> {
+            try {
+                if (haveLegacyStoragePermission(this)) {
                     // must match what is written in AndroidDeviceUsbConnection.SendFile
                     // Note that the file might not exist. By test, the value we get for
                     // lastModified in that case is such that if it is later created,
                     // we will interpret that as an update.
-                    String markerFilePath = pathToWatch + "/" + "something.modified";
+                    String markerFilePath = BookCollection.getLocalBooksDirectory().getPath() + "/" + "something.modified";
                     long markerModified = new File(markerFilePath).lastModified();
                     if (markerModified == mostRecentMarkerFileModifiedTime)
                         return; // presume nothing changed
                     mostRecentMarkerFileModifiedTime = markerModified;
                     // Now look and see what actually changed (most recently)
-                    notifyIfNewFileChanges(pathToWatch);
-
-                } finally {
-                    // We will run this task again a second later (unless stopObserving is called).
-                    mHandler.postDelayed(mObserver, 1000);
+                    notifyIfNewFileChanges();
+                } else if (SAFUtilities.hasPermissionToBloomDirectory(this)){
+                    // look for it using SAF
+                    Uri uriMarkerFile = SAFUtilities.fileUriFromDirectoryUri(
+                            this, SAFUtilities.BloomDirectoryTreeUri, "something.modified");
+                    long markerModified = IOUtilities.lastModified(this, uriMarkerFile);
+                    if (markerModified == mostRecentMarkerFileModifiedTime)
+                        return; // presume nothing changed
+                    mostRecentMarkerFileModifiedTime = markerModified;
+                    notifyIfNewFileChanges();
                 }
+
+            } finally {
+                // We will run this task again a second later (unless stopObserving is called).
+                mHandler.postDelayed(mObserver, 1000);
             }
         };
         // Start the loop.
@@ -148,12 +181,18 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     // Look for new changes to files and send notification if there have been any.
-    protected void notifyIfNewFileChanges(final String pathToWatch) {
-        PathModifyTime newModifyData = getLatestModifiedTimeAndFile(new File(pathToWatch));
+    protected void notifyIfNewFileChanges() {
+        PathModifyTime newModifyData = getLatestModifiedTimeAndFile();
         if (newModifyData.time > mostRecentlyModifiedBloomFileTime) {
             mostRecentlyModifiedBloomFileTime = newModifyData.time;
             onNewOrUpdatedBook(newModifyData.path);
         }
+    }
+
+    private PathModifyTime getLatestModifiedTimeAndFile() {
+        return haveLegacyStoragePermission(this) ?
+                getLatestModifiedTimeAndFile(BookCollection.getLocalBooksDirectory())
+                : getLatestModifiedTimeAndFile(SAFUtilities.BloomDirectoryTreeUri);
     }
 
     private static PathModifyTime getLatestModifiedTimeAndFile(File dir) {
@@ -186,17 +225,48 @@ public abstract class BaseActivity extends AppCompatActivity {
         return result;
     }
 
+    // This overload uses SAF
+    private static PathModifyTime getLatestModifiedTimeAndFile(Uri dir) {
+        PathModifyTime result = new PathModifyTime();
+        final Context context = BloomReaderApplication.getBloomApplicationContext();
+        if (!SAFUtilities.hasPermission(context, dir))
+            return result;
+        //long startTime = System.currentTimeMillis();
+
+        final String[] lastModFile = {null};
+        final long[] latestTime = {0};
+
+        SAFUtilities.searchDirectoryForBooks(context, dir, new BookSearchListener() {
+            @Override
+            public void onFoundBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+                long modified = IOUtilities.lastModified(context, bookOrShelfUri);
+                if (modified > latestTime[0]) {
+                    latestTime[0] = modified;
+                    lastModFile[0] = bookOrShelfUri.toString();
+                }
+            }
+
+            @Override
+            public void onFoundBundle(Uri bundleUri) {
+
+            }
+
+            @Override
+            public void onSearchComplete() {
+
+            }
+        });
+        result.path = lastModFile[0];
+        result.time = latestTime[0];
+        return result;
+    }
+
     public static void playSoundFile(int id) {
         Context bloomApplicationContext = BloomReaderApplication.getBloomApplicationContext();
         if (bloomApplicationContext == null)
             return; // unlikely, but better to skip the sound than crash.
         final MediaPlayer mp = MediaPlayer.create(bloomApplicationContext, id);
-        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                mp.release();
-            }
-        });
+        mp.setOnCompletionListener(mediaPlayer -> mp.release());
         mp.start();
     }
 }

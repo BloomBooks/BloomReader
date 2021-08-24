@@ -1,11 +1,11 @@
 plugins {
     id 'com.android.application'
-    id 'com.github.triplet.play' version '2.7.2'
+    id 'com.github.triplet.play' version '2.8.0'
 }
 
 // This is the master definition of what version of Bloom Reader we are building
-def versionMajor = 2
-def versionMinor = 4
+def versionMajor = 3
+def versionMinor = 0
 def versionRelease = getVersionRelease()
 
 int getVersionRelease() {
@@ -29,17 +29,24 @@ android {
      * compile your app. This means your app can use the API features included in
      * this API level and lower.
      */
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId "org.sil.bloom.reader"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode versionMajor * 100000 + versionMinor * 1000 + versionRelease.toInteger()
         versionName "${versionMajor}.${versionMinor}.${versionRelease}"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         vectorDrawables.useSupportLibrary true
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
+    }
+    compileOptions {
+        // Flag to enable support for the new language APIs
+        coreLibraryDesugaringEnabled true
+        // Sets Java compatibility to Java 8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     signingConfigs {
@@ -117,11 +124,13 @@ repositories {
 }
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0'
-    implementation 'com.google.android.material:material:1.2.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'com.google.android.material:material:1.3.0'
     // Supports the WiFi module's 'server' used to receive books from Bloom desktop
     implementation  'cz.msebera.android:httpclient:4.5.8'
 
@@ -131,24 +140,20 @@ dependencies {
     // The IDE wants to upgrade this to version 20030203.0005500. Don't! It is from 2005.
     implementation  'commons-io:commons-io:2.6'
 
-    // Andrew tried this and had problems. I don't recall the details.
-    //implementation  'commons-io:commons-compress:1.15'
-
     // Needed (at least) for making tar archives to send multiple books.
+    // We tried commons-io:commons-compress but it didn't work for unknown/forgotten reasons
     implementation  'org.apache.commons:commons-compress:1.20'
 
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-
-    testImplementation  'junit:junit:4.13'
+    testImplementation  'junit:junit:4.13.2'
     testImplementation  'org.mockito:mockito-core:3.4.6'
     testImplementation  'org.json:json:20200518'  // make org.json classes available in unit tests
 
-    androidTestImplementation 'com.google.android.material:material:1.2.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test:rules:1.2.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.2.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-web:3.2.0'
+    androidTestImplementation 'com.google.android.material:material:1.3.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test:rules:1.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.3.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-web:3.3.0'
 }
 
 task copyBloomPlayerAssets(type: Copy, group: "Custom", description: "Copies bloom-player artifacts to required directory") {

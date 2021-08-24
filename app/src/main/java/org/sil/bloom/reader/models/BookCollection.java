@@ -5,13 +5,17 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.sil.bloom.reader.BaseActivity;
 import org.sil.bloom.reader.BloomFileReader;
 import org.sil.bloom.reader.BloomReaderApplication;
 import org.sil.bloom.reader.BloomShelfFileReader;
+import org.sil.bloom.reader.BookSearchListener;
+import org.sil.bloom.reader.SAFUtilities;
 import org.sil.bloom.reader.TextFileContent;
 import org.sil.bloom.reader.IOUtilities;
 import org.sil.bloom.reader.InitializeLibraryTask;
@@ -28,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 public class BookCollection {
     public static final String THUMBS_DIR = ".thumbs";
@@ -35,8 +40,8 @@ public class BookCollection {
 
     public static final String BOOKSHELF_PREFIX = "bookshelf:";
     // All the books and shelves loaded from the folder on 'disk'.
-    // CopyOnWriteArrayList allows thread-safe unsychronized access.
-    private List<BookOrShelf> _booksAndShelves = new CopyOnWriteArrayList<BookOrShelf>();
+    // CopyOnWriteArrayList allows thread-safe unsynchronized access.
+    private final List<BookOrShelf> _booksAndShelves = new CopyOnWriteArrayList<BookOrShelf>();
     // The books and folders we are currently displaying. As this is accessed from multiple
     // threads and is not thread-safe, all methods using it directly should be synchronized.
     // To minimise blocking threads, typically time-consuming modifications are performed
@@ -52,7 +57,7 @@ public class BookCollection {
     private String mFilter = null;
     // The set of shelf ids for the shelves we actually have. Books with none of these pass
     // the empty filter.
-    private Set<String> mShelfIds = new HashSet<String>();
+    private final Set<String> mShelfIds = new HashSet<String>();
 
     private InitializeLibraryTask mInitializeTask = null;
 
@@ -71,22 +76,37 @@ public class BookCollection {
         return mFilteredBooksAndShelves.size();
     }
 
-    public BookOrShelf addBookIfNeeded(String path) {
-        BookOrShelf existingBook = getBookOrShelfByPath(path);
+    public BookOrShelf addBookOrShelfIfNeeded(String pathOrUri) {
+        BookOrShelf existingBook = getBookOrShelfByPath(pathOrUri);
         if (existingBook != null)
             return existingBook;
-        return addBook(path, null);
+        return addBookOrShelf(pathOrUri, null);
     }
 
-    private BookOrShelf makeBookOrShelf(String path, TextFileContent metaFile) {
+    private BookOrShelf makeBookOrShelf(String pathOrUri, TextFileContent metaFile) {
         BookOrShelf bookOrShelf;
-        if (path.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
-            bookOrShelf = BloomShelfFileReader.parseShelfFile(path);
+        if (pathOrUri.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
+            bookOrShelf = BloomShelfFileReader.parseShelfFile(pathOrUri);
             if (bookOrShelf.shelfId != null)
                 mShelfIds.add(bookOrShelf.shelfId);
         } else {
             // book.
-            bookOrShelf = new BookOrShelf(path);
+            bookOrShelf = new BookOrShelf(pathOrUri);
+        }
+        BookCollection.setShelvesAndTitleOfBook(bookOrShelf, metaFile);
+        return bookOrShelf;
+    }
+
+    private BookOrShelf makeBookOrShelf(Uri uri, TextFileContent metaFile) {
+        BookOrShelf bookOrShelf;
+        String path = uri.getPath();
+        if (path.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION)) {
+            bookOrShelf = BloomShelfFileReader.parseShelfUri(BloomReaderApplication.getBloomApplicationContext(), uri);
+            if (bookOrShelf.shelfId != null)
+                mShelfIds.add(bookOrShelf.shelfId);
+        } else {
+            // book.
+            bookOrShelf = new BookOrShelf(uri);
         }
         BookCollection.setShelvesAndTitleOfBook(bookOrShelf, metaFile);
         return bookOrShelf;
@@ -97,8 +117,8 @@ public class BookCollection {
     // Callers of this add a single book. So far all of these want it to be visible
     // at once, even if it doesn't really belong in the current filter. So, the book is
     // unconditionally added to mFilteredBooksAndShelves, and it gets re-sorted at once.
-    private BookOrShelf addBook(String path, TextFileContent metaFile) {
-        BookOrShelf bookOrShelf = makeBookOrShelf(path, metaFile);
+    private BookOrShelf addBookOrShelf(String pathOrUrl, TextFileContent metaFile) {
+        BookOrShelf bookOrShelf = makeBookOrShelf(pathOrUrl, metaFile);
         _booksAndShelves.add(bookOrShelf);
         // This process of copying the collection is probably unnecessary here,
         // but is done wherever it is modified for thread safety. This way,
@@ -118,14 +138,14 @@ public class BookCollection {
         mFilteredBooksAndShelves = newList;
     }
 
-    private void addBooks(ArrayList<BookOrShelf> books) {
+    private void addBooks(List<BookOrShelf> books) {
         _booksAndShelves.addAll(books);
         updateFilteredList();
     }
 
     public BookOrShelf getBookOrShelfByPath(String path) {
         for (BookOrShelf bookOrShelf: _booksAndShelves) {
-            if (bookOrShelf.path.equals(path))
+            if (bookOrShelf.pathOrUri.equals(path))
                 return bookOrShelf;
         }
         return null;
@@ -144,7 +164,7 @@ public class BookCollection {
         return booksAndShelves;
     }
 
-    public void init(Activity activity, InitializeLibraryTask task) throws ExtStorageUnavailableException {
+    public void init(Activity activity, InitializeLibraryTask task) {
         Context context = activity.getApplicationContext();
         File[] booksDirs = getLocalAndRemovableBooksDirectories(context);
         mLocalBooksDirectory = booksDirs[0];
@@ -155,36 +175,106 @@ public class BookCollection {
         loadFromDirectories(booksDirs, activity);
     }
 
-    public static File getLocalBooksDirectory() throws ExtStorageUnavailableException {
-        if(!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
-            throw new ExtStorageUnavailableException();
-        File bloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
+    // This is currently the folder where Bloom stores all its data. A couple of things might make
+    // sense to move up to the root filesDir.
+    public static File getLocalBooksDirectory() {
+        File bloomDir = new File(BloomReaderApplication.getBloomApplicationContext().getFilesDir(), "books");
         bloomDir.mkdirs();
         return bloomDir;
     }
 
-    public static File[] getLocalAndRemovableBooksDirectories(Context context) throws ExtStorageUnavailableException {
+//    private static boolean isExternalStorageReadable() {
+//        return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED ||
+//                Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED_READ_ONLY;
+//    }
+
+    public static File[] getLocalAndRemovableBooksDirectories(Context context) {
         File localBooksDir = getLocalBooksDirectory();
+//        if (!isExternalStorageReadable()) {
+//            return new File[] {localBooksDir};
+//        }
+//        File[] externalStorageVolumes =
+//                ContextCompat.getExternalFilesDirs(context, null);
+//        if (externalStorageVolumes.length == 0) {
+//            return new File[] {localBooksDir};
+//        }
+//        // Enhance: possibly we should include any "books" directories on any
+//        // available external storage volumes.
+//        File primaryExternalStorage = externalStorageVolumes[0];
+//        File remoteBooksDir = new File(primaryExternalStorage, "books");
+//        try {
+//            // If possible create it. This is where we hope Bloom Desktop will be able to put books.
+//            // Its existence signals BD to put USB transfers here.
+//            remoteBooksDir.mkdirs();
+//            if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
+//                return new File[] {localBooksDir, remoteBooksDir};
+//        } catch (SecurityException e) {
+//            // if we're not allowed to access it or create it, just ignore it.
+//        }
+
+        // See if a BloomExternal on external storage exists. If so, include it.
+        // (If we don't have permission to really include it, we'll show a button the user can
+        // tap to see a request for permission.)
         File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
         File remoteBooksDir = new File(remoteStorageDir, "BloomExternal");
         if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
-            return new File[] {localBooksDir, remoteBooksDir};
-        return new File[] {localBooksDir};
+            return new File[]{localBooksDir, remoteBooksDir};
+
+        return new File[]{localBooksDir};
     }
 
+    private boolean oldBloomDirectoryExistsButNoAccess(Context context) {
+        File oldBloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
+        if (!oldBloomDir.exists()) return false;
+        if (BaseActivity.haveLegacyStoragePermission(context)) return false; // we can access it with legacy permission.
+        return !SAFUtilities.hasPermissionToBloomDirectory(context);
+    }
+
+    // Fill the collection with the books in these directories, plus any the user has selected
+    // individually from BloomExternal if that is not one of the directories.
     private void loadFromDirectories(File[] booksDirs, Activity activity) {
         mShelfIds.clear();
         _booksAndShelves.clear();
+        List<Uri> individualBooks = SAFUtilities.getBooksWithIndividualPermissions(activity);
         if (mInitializeTask != null) {
-            Integer count = 0;
+            int count = individualBooks.size() + (oldBloomDirectoryExistsButNoAccess(activity) ? 1 : 0);
             if (booksDirs != null && booksDirs.length > 0) {
                 for (File booksDir : booksDirs) {
-                    File[] files = booksDir.listFiles(new FilenameFilter() {
-                        public boolean accept(File dir, String name) {
-                            return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
+                    int newCount = 0;
+                    try {
+                        File[] files = booksDir.listFiles(new FilenameFilter() {
+                            public boolean accept(File dir, String name) {
+                                return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
+                            }
+                        });
+                        newCount = files != null ? files.length : 0;
+                    } catch (SecurityException e) {
+                        // This is expected if we are on older Android and don't have external storage permission.
+                    }
+                    catch (NullPointerException e) {
+                        // For some reason this is what actually happens in some cases (e.g., Nexus 5X API 28 emulator)
+                        // when we don't have external storage permission
+                    }
+                    catch (Exception e) {
+                        // And maybe other devices and OS versions will throw something else again?
+                        e.printStackTrace();
+                    }
+                    if (newCount == 0) {
+                        // Maybe it is a folder, typically ExternalFiles, that the user has given us
+                        // permission to access using SAF? That doesn't allow us to listFiles, and
+                        // unfortunately, instead of throwing or otherwise indicating that we don't
+                        // have permission, listFiles just doesn't list any of them. So try it using
+                        // SAF.
+                        Uri uri = SAFUtilities.getUriForFolderWithPermission(activity, booksDir.getPath());
+                        if (uri != null) {
+                            newCount = SAFUtilities.countBooksIn(activity, uri);
+                        } else {
+                            newCount = 1; // We will make one placeholder for ExternalFiles
+                            // (When it is clicked we ask for permission.)
+
                         }
-                    });
-                    count += files != null ? files.length : 0;
+                    }
+                    count += newCount;
                 }
             }
             mInitializeTask.setBookCount(count);
@@ -193,43 +283,125 @@ public class BookCollection {
             for (File booksDir : booksDirs)
                 loadFromDirectory(booksDir, activity);
         }
+        List<BookOrShelf> books = individualBooks.stream()
+            .map(uri -> makeBookOrShelf(uri,null))
+            .collect(Collectors.toList());
+        if (oldBloomDirectoryExistsButNoAccess(activity)) {
+            // Make a fake shelf for requesting access to it.
+            String fakeShelfName = activity.getResources().getString(R.string.show_books_in_old_bloom_folder);
+            BookOrShelf fakeShelf = new BookOrShelf(fakeShelfName + IOUtilities.BOOKSHELF_FILE_EXTENSION);
+            fakeShelf.specialBehavior = "importOldBloomFolder";
+            books.add(fakeShelf);
+        }
+        addBooks(books);
     }
 
     private void loadFromDirectory(File directory, Activity activity) {
         File[] files = directory.listFiles();
         ArrayList<BookOrShelf> books = new ArrayList<BookOrShelf>();
-        if(files != null) {
-            for (int i = 0; i < files.length; i++) {
-                final String name = files[i].getName();
+        if (files == null || files.length == 0) {
+            // files may be null, or spuriously have length zero, if we don't have permission to access the folder,
+            // or even if we DO have permission, but it's a folder we can only access through
+            // SAF, like BloomExternal. So try again that way.
+            loadFromSAFDirectory(directory, activity);
+            return;
+        }
+        for (int i = 0; i < files.length; i++) {
+            final String name = files[i].getName();
+            TextFileContent metaFile = new TextFileContent("meta.json");
+            if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
+                    && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
+                continue; // not a book (nor a shelf)!
+            final String path = files[i].getAbsolutePath();
+            if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
+                    !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD, metaFile)) {
+                activity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        String markedName = name + "-BAD";
+                        Log.w("BloomCollection", "Renaming invalid book file " + path + " to " + markedName);
+                        Context context = BloomReaderApplication.getBloomApplicationContext();
+                        String message = context.getString(R.string.renaming_invalid_book, markedName);
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                    }
+                });
+                new File(path).renameTo(new File(path + "-BAD"));
+                if (mInitializeTask != null) {
+                    mInitializeTask.incrementBookProgress();
+                }
+                continue;
+            }
+            books.add(makeBookOrShelf(path, metaFile));
+            if (mInitializeTask != null) {
+                mInitializeTask.incrementBookProgress();
+            }
+        }
+        addBooks(books);
+    }
+
+    private void loadFromSAFDirectory(File directory, Activity activity) {
+        // We didn't find anything in directory, but this might be because it's a directory we only
+        // have permission to access through SAF.
+        Uri uri = SAFUtilities.getUriForFolderWithPermission(activity, directory.getPath());
+        final ArrayList<BookOrShelf> books = new ArrayList<BookOrShelf>();
+        if (uri == null) {
+            // This behavior is specific to the BloomExternal folder, therefore, not as generic as
+            // "any folder we put in the list but can't get a uri for" above. So far, BloomExternal
+            // is the only possible such folder. That could change. But probably we'd have permission
+            // for any other folder, since we would have gotten it by asking the user.
+            String fakeShelfName = activity.getResources().getString(R.string.show_books_on_sd_card);
+            BookOrShelf fakeShelf = new BookOrShelf(fakeShelfName + IOUtilities.BOOKSHELF_FILE_EXTENSION);
+            //fakeShelf.backgroundColor = "ffff00";
+            fakeShelf.specialBehavior = "loadExternalFiles";
+            books.add(fakeShelf);
+            addBooks(books);
+            return;
+        }
+
+        BookSearchListener listener = new BookSearchListener() {
+            @Override
+            public void onFoundBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+                // in this context it isn't really new, but oh well..
+                final String path = bookOrShelfUri.getPath();
+                if (!path.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
+                        && !path.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
+                    return; // not a book (nor a shelf)!
                 TextFileContent metaFile = new TextFileContent("meta.json");
-                if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
-                        && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
-                    continue; // not a book (nor a shelf)!
-                final String path = files[i].getAbsolutePath();
-                if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
-                        !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD, metaFile)) {
-                    activity.runOnUiThread(new Runnable() {
-                        public void run() {
-                            String markedName = name + "-BAD";
-                            Log.w("BloomCollection", "Renaming invalid book file "+path+" to "+markedName);
-                            Context context = BloomReaderApplication.getBloomApplicationContext();
-                            String message = context.getString(R.string.renaming_invalid_book, markedName);
-                            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    new File(path).renameTo(new File(path+"-BAD"));
+                if (path.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
+                        !IOUtilities.isValidZipUri(bookOrShelfUri, IOUtilities.CHECK_BLOOMD, metaFile)) {
+                    // Todo: can we find a way to hide the bad file??
+//                    activity.runOnUiThread(new Runnable() {
+//                        public void run() {
+//                            String markedName = name + "-BAD";
+//                            Log.w("BloomCollection", "Renaming invalid book file "+path+" to "+markedName);
+//                            Context context = BloomReaderApplication.getBloomApplicationContext();
+//                            String message = context.getString(R.string.renaming_invalid_book, markedName);
+//                            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+//                        }
+//                    });
+//                    new File(path).renameTo(new File(path+"-BAD"));
                     if (mInitializeTask != null) {
                         mInitializeTask.incrementBookProgress();
                     }
-                    continue;
+                    return;
                 }
-                books.add(makeBookOrShelf(path, metaFile));
+                books.add(makeBookOrShelf(bookOrShelfUri, metaFile));
                 if (mInitializeTask != null) {
                     mInitializeTask.incrementBookProgress();
                 }
             }
-            addBooks(books);
-        }
+
+            @Override
+            public void onFoundBundle(Uri bundleUri) {
+
+            }
+
+            @Override
+            public void onSearchComplete() {
+
+            }
+        };
+        SAFUtilities.searchDirectoryForBooks(activity, uri, listener);
+        addBooks(books);
     }
 
     private void updateFilteredList() {
@@ -265,8 +437,8 @@ public class BookCollection {
     public synchronized void deleteFromDevice(BookOrShelf book) {
         if (book == null)
             return;
-        if (book.path != null) {
-            File file = new File(book.path);
+        if (book.pathOrUri != null) {
+            File file = new File(book.pathOrUri);
             if (file.exists()) {
                 file.delete();
             }
@@ -276,29 +448,50 @@ public class BookCollection {
     }
 
     // is this coming from somewhere other than where we store books?
-    // then move or copy it in
-    public String ensureBookIsInCollection(Context context, Uri bookUri, String filename) throws ExtStorageUnavailableException {
-        if (bookUri == null || bookUri.getPath() == null)
+    // then move or copy it in.
+    // Returns the path to the book (or toString of URI if not copied to private storage),
+    // and a boolean indicating whether it was added.
+    public Pair<String, Boolean> ensureBookOrShelfIsInCollection(Context context, Uri bookOrShelfUri) {
+        if (bookOrShelfUri == null || bookOrShelfUri.getPath() == null)
             return null; // Play console proves this is possible somehow
 
         // Possible for this to happen if we load a .bloomd directly without loading the whole app first (BL-8218)
         if (mLocalBooksDirectory == null)
             mLocalBooksDirectory = getLocalBooksDirectory();
 
-        if (bookUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath()))
-            return bookUri.getPath();
+        if (bookOrShelfUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath()))
+            return new Pair<>(bookOrShelfUri.getPath(), false);
 
-        Log.d("BloomReader", "Copying book into Bloom directory");
+        // If the book is in BloomExternal, we will neither copy nor move it, just read it directly
+        // from there. Calling code will already have made sure we persist permission to use the
+        // book so it will get added each time we start up.
+        if (SAFUtilities.isUriInBloomExternal(context, bookOrShelfUri)) {
+            String bookPath = bookOrShelfUri.toString();
+            BookOrShelf existingBook = getBookOrShelfByPath(bookPath);
+            if (existingBook != null) {
+                return new Pair<>(bookPath, false);
+            }
+            addBookOrShelf(bookPath, null);
+            return new Pair<>(bookPath, true);
+        }
+
+
+        String filename = IOUtilities.getFileNameFromUri(context, bookOrShelfUri);
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + filename;
         if (filename.endsWith(IOUtilities.BOOK_FILE_EXTENSION + IOUtilities.ENCODED_FILE_EXTENSION)) {
             destination = destination.substring(0, destination.length() - IOUtilities.ENCODED_FILE_EXTENSION.length());
         }
-        boolean copied = IOUtilities.copyBloomdFile(context, bookUri, destination);
-        if(copied){
+        File destFile = new File(destination);
+        if (destFile.exists() && destFile.lastModified() < IOUtilities.lastModified(context, bookOrShelfUri)) {
+            return new Pair<>(destination, false);
+        }
+        Log.d("BloomReader", "Copying book into Bloom directory");
+        boolean copied = IOUtilities.copyBookOrShelfFile(context, bookOrShelfUri, destination);
+        if (copied){
             destination = FixDuplicate(destination);
             // it's probably not in our list that we display yet, so make an entry there
-            addBookIfNeeded(destination);
-            return destination;
+            addBookOrShelfIfNeeded(destination);
+            return new Pair<>(destination, true);
         } else{
             return null;
         }
@@ -385,13 +578,17 @@ public class BookCollection {
         String json;
         try {
             if (bookOrShelf.isShelf()) {
-                json = IOUtilities.FileToString(new File(bookOrShelf.path));
+                json = bookOrShelf.uri == null
+                        ? IOUtilities.FileToString(new File(bookOrShelf.pathOrUri))
+                        : IOUtilities.UriToString(BloomReaderApplication.getBloomApplicationContext(), bookOrShelf.uri);
             }
             else {
                 if (metaFile != null && metaFile.Content != null && !metaFile.Content.isEmpty()) {
                     json = metaFile.Content;
                 } else {
-                    byte[] jsonBytes = IOUtilities.ExtractZipEntry(new File(bookOrShelf.path), "meta.json");
+                    byte[] jsonBytes = bookOrShelf.uri == null
+                            ? IOUtilities.ExtractZipEntry(new File(bookOrShelf.pathOrUri), "meta.json")
+                            : IOUtilities.ExtractZipEntry(BloomReaderApplication.getBloomApplicationContext(), bookOrShelf.uri, "meta.json");
                     json = new String(jsonBytes, "UTF-8");
                 }
             }
@@ -429,23 +626,23 @@ public class BookCollection {
             String thumbPath = thumbsDirectory.getPath() + File.separator + book.name;
             File thumb = new File(thumbPath);
             if (thumb.exists()) {
-                if (thumb.lastModified() < new File(book.path).lastModified()) {
+                if (thumb.lastModified() < book.lastModified()) {
                     thumb.delete();
-                    return new BloomFileReader(context, book.path).getThumbnail(thumbsDirectory);
+                    return new BloomFileReader(context, book).getThumbnail(thumbsDirectory);
                 }
                 return Uri.fromFile(thumb);
             }
 
             File noThumb = new File(thumbsDirectory.getPath() + File.separator + NO_THUMBS_DIR + File.separator + book.name);
             if (noThumb.exists()){
-                if (noThumb.lastModified() < new File(book.path).lastModified()) {
+                if (noThumb.lastModified() < book.lastModified()) {
                     noThumb.delete();
-                    return new BloomFileReader(context, book.path).getThumbnail(thumbsDirectory);
+                    return new BloomFileReader(context, book).getThumbnail(thumbsDirectory);
                 }
                 return null;
             }
 
-            return new BloomFileReader(context, book.path).getThumbnail(thumbsDirectory);
+            return new BloomFileReader(context, book).getThumbnail(thumbsDirectory);
         }
         catch (IOException e){
             Log.e("BookCollection", "IOException getting thumbnail: " + e.getMessage());

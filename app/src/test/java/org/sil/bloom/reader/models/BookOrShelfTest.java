@@ -40,17 +40,17 @@ public class BookOrShelfTest {
         );
         Collections.sort(books, BookOrShelf.AlphanumComparator);
         assertThat(books.get(0).name, is("a"));
-        assertThat(books.get(0).path, is("y"));
+        assertThat(books.get(0).pathOrUri, is("y"));
         assertThat(books.get(1).name, is("a"));
-        assertThat(books.get(1).path, is("z"));
+        assertThat(books.get(1).pathOrUri, is("z"));
         assertThat(books.get(2).name, is("a"));
-        assertThat(books.get(2).path, nullValue());
+        assertThat(books.get(2).pathOrUri, nullValue());
         assertThat(books.get(3).name, is("b"));
-        assertThat(books.get(3).path, is("y"));
+        assertThat(books.get(3).pathOrUri, is("y"));
         assertThat(books.get(4).name, is("b"));
-        assertThat(books.get(4).path, nullValue());
+        assertThat(books.get(4).pathOrUri, nullValue());
         assertThat(books.get(5).name, nullValue());
-        assertThat(books.get(5).path, is("z"));
+        assertThat(books.get(5).pathOrUri, is("z"));
         assertThat(books.get(6), nullValue());
     }
 

@@ -2,6 +2,8 @@ package org.sil.bloom.reader;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -84,11 +86,13 @@ public class ReaderActivity extends BaseActivity {
 
         try {
             final String path = getIntent().getStringExtra("bookPath");
+            final String uriString = getIntent().getStringExtra("bookUri");
+            final Uri uri = uriString == null ? null : Uri.parse(uriString);
 
             // enhance: possibly this should happen asynchronously, in a Loader like the
             // original.
             // enhance: possibly show and hide the wait view.
-            final BloomFileReader fileReader = new BloomFileReader(getApplicationContext(), path);
+            final BloomFileReader fileReader = new BloomFileReader(getApplicationContext(), path, uri);
             final File bookHtmlFile = fileReader.getHtmlFile();
             String bookFolder = new File(bookHtmlFile.getCanonicalPath()).getParent();
             mBrowser.setWebViewClient(new ReaderWebViewClient("file://" + bookFolder));
@@ -325,8 +329,8 @@ public class ReaderActivity extends BaseActivity {
     }
 
     @Override
-    protected void onNewOrUpdatedBook(String fullPath) {
-        ((BloomReaderApplication) this.getApplication()).setBookToHighlight(fullPath);
+    protected void onNewOrUpdatedBook(String pathOrUri) {
+        ((BloomReaderApplication) this.getApplication()).setBookToHighlight(pathOrUri);
         Intent intent = new Intent(this, MainActivity.class);
         // Clears the history so now the back button doesn't take from the main activity
         // back to here.

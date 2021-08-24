@@ -10,8 +10,8 @@ import java.io.File;
  */
 
 public class BundleTask extends AsyncTask<File, Void, File> {
-    private String bundlePath;
-    private BundleTaskDoneListener taskDoneListener;
+    private final String bundlePath;
+    private final BundleTaskDoneListener taskDoneListener;
 
     public BundleTask(String bundlePath, BundleTaskDoneListener taskDoneListener) {
         this.bundlePath = bundlePath;

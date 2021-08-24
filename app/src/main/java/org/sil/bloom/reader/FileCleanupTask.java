@@ -3,14 +3,15 @@ package org.sil.bloom.reader;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.util.Log;
 
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.lang.ref.WeakReference;
 
 /*
     Used to clean up a bloombundle or bloomd file after importing the contents into
@@ -22,11 +23,13 @@ import java.io.File;
  */
 
 public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
-    private Context context;
+
+    private final WeakReference<Context> contextRef;
     private File bloomDirectory; // We don't want to remove bloomd's from here
 
     public FileCleanupTask(Context context) {
-        this.context = context;
+        // See https://stackoverflow.com/questions/44309241/warning-this-asynctask-class-should-be-static-or-leaks-might-occur/46166223#46166223
+        this.contextRef = new WeakReference<>(context);
     }
 
     @Override
@@ -38,45 +41,76 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
 
     private void cleanUpUri(Uri uriToCleanUp) {
         try {
-            // If the URI is file:// we have direct access to the file,
-            // otherwise we have to search for it
+            Context context = contextRef.get();
+            if (context == null)
+                return; // we might not be able to get it if we are in the process of shutting down.
+
+            // File URIs don't work with various SAF functions, especially ones involving .query
+            // So we need basically two complete implementations of this.
             if (uriToCleanUp.getScheme().equals("file")) {
                 File searchFile = new File(uriToCleanUp.getPath());
-                if (isOnNonRemovableStorage(searchFile) && !isABookInOurLibrary(searchFile))
+                if (okToDelete(searchFile))
                     searchFile.delete();
                 return;
             }
 
-            File nonRemovableStorageDir = IOUtilities.nonRemovablePublicStorageRoot(context);
-            if (nonRemovableStorageDir == null)
+            if (SAFUtilities.isUriOnSdCard(context, uriToCleanUp))
+                return; // we never delete things on the SD card
+
+            // Review: should we check for books in our private storage? As far as I can tell,
+            // the SAF file chooser does not allow us to choose one of them.
+            // However, could there be other paths to here that do include them, especially
+            // if we remove the file-url-only code above?
+            // Books in the Bloom directory should not be deleted unless we're running a release build
+            // (Once the SAF version reaches release we might remove this.)
+            if (BloomReaderApplication.shouldPreserveFilesInOldDirectory() && SAFUtilities.IsUriInOldBloomDirectory(context, uriToCleanUp)) {
                 return;
+            }
 
-            String fileNameFromUri = fileNameFromUri(uriToCleanUp);
-            if (fileNameFromUri == null || fileNameFromUri.isEmpty())
-                return;
-
-            // Returns null if the file is not found
-            File fileToDelete = searchForFile(nonRemovableStorageDir, fileNameFromUri);
-
-            if (fileToDelete != null)
-                fileToDelete.delete();
+            // Throws if not found (or no permission, etc.)
+            DocumentsContract.deleteDocument(context.getContentResolver(), uriToCleanUp);
         }
-        catch (ExtStorageUnavailableException|SecurityException e) {
+        catch (SecurityException e) {
             // SecurityException can be thrown by File.delete()
             Log.e("BloomReader", e.getLocalizedMessage());
+            assert false; // we want to look into this in debug builds
+        } catch (Exception e) {
+            // Note: if thinking of cutting this back, note that in at least one case we attempted
+            // to clean up the same URI twice, and the second try failed not with any sensible
+            // exception but with IllegalArgumentException. So I decided if for any reason we can't
+            // clean up, just don't.
+            e.printStackTrace();
+            Log.e("BloomReader", e.getLocalizedMessage());
+            assert false; // we want to look into this in debug builds
         }
     }
 
     private boolean isOnNonRemovableStorage(File file) {
-        if (Build.VERSION.SDK_INT >= 21)
-            return !Environment.isExternalStorageRemovable(file);
-
-        // True if default storage is non-removable and the file is in that directory
-        return (!Environment.isExternalStorageRemovable() &&
-                file.getPath().startsWith(Environment.getExternalStorageDirectory().getPath()));
+        return !Environment.isExternalStorageRemovable(file);
     }
 
-    private boolean isABookInOurLibrary(File file) throws ExtStorageUnavailableException {
+    private boolean okToDelete(File file) {
+        // We don't delete files on removable drives, such drives may well be used to install books
+        // on multiple devices. The point of deleting is to conserve space on built-in storage,
+        // which is usually at a premium.
+        if (!isOnNonRemovableStorage(file))
+            return false;
+        // If by any chance we're being asked about a book in our private books folder, we don't want
+        // to clean that up!
+        if (isABookInOurLibrary(file))
+            return false;
+        // Don't clean up things in the Bloom directory until all channels of Bloom stop using it
+        // as their live storage.
+        if (BloomReaderApplication.shouldPreserveFilesInOldDirectory() && isABookInOldBloomDirectory(file))
+            return false;
+        return true;
+    }
+
+    private boolean isABookInOldBloomDirectory(File file) {
+        return file.getPath().startsWith(IOUtilities.getOldBloomBooksFolder(contextRef.get()).getPath());
+    }
+
+    private boolean isABookInOurLibrary(File file) {
         // The library does not include bloombundles
         if (file.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
             return false;
@@ -84,7 +118,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return file.getPath().startsWith(getBloomDirectory().getPath());
     }
 
-    private boolean shouldSearchThisDirectory(File dir, String fileName) throws ExtStorageUnavailableException {
+    private boolean shouldSearchThisDirectory(File dir, String fileName) {
         // We don't want to find the bloomd's in our library
         // Bundles are fair game everywhere
         if (fileName.endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
@@ -93,13 +127,13 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         return !dir.equals(getBloomDirectory());
     }
 
-    private File getBloomDirectory() throws ExtStorageUnavailableException {
+    private File getBloomDirectory() {
         if (bloomDirectory == null)
             bloomDirectory = BookCollection.getLocalBooksDirectory();
         return bloomDirectory;
     }
 
-    private File searchForFile(File dir, String fileName) throws ExtStorageUnavailableException {
+    private File legacyStorageSearchForFile(File dir, String fileName) {
         if (dir == null)
             return null;
 
@@ -111,40 +145,11 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             if (f.isFile() && f.getName().equals(fileName))
                 return f;
             if (f.isDirectory() && shouldSearchThisDirectory(f, fileName)) {
-                File fileToDelete = searchForFile(f, fileName);
+                File fileToDelete = legacyStorageSearchForFile(f, fileName);
                 if (fileToDelete != null)
                     return fileToDelete;
             }
         }
         return null;
-    }
-
-    private String fileNameFromUri(Uri contentURI) {
-
-        String fileName = "";
-        try {
-            String fileNameOrPath = IOUtilities.getFileNameOrPathFromUri(context, contentURI);
-            if (fileNameOrPath != null && !fileNameOrPath.isEmpty())
-                fileName = IOUtilities.getFilename(fileNameOrPath);
-        } catch (Exception e) {
-            fileName = "";
-        }
-        if (!fileName.isEmpty())
-            return fileName;
-
-        // From here to the end was the original code, but it seems to have stopped working in Android 10.
-        // Prefer the method above, but fallback to this.
-        // I admit that the ideal would be to test that the code above works and get rid of the below.
-        // But I have 0% confidence that I could properly test all the right combinations of Android
-        // versions and uri variations. So, I felt the safest thing was to leave this fallback in place.
-        // expected path is something like /document/primary:MyBook.bloomd
-        String path = contentURI.getPath();
-        int separatorIndex = Math.max(
-                path.lastIndexOf(File.separator),
-                path.lastIndexOf(':')
-        );
-        if (separatorIndex < 0)
-            return path;
-        return path.substring(separatorIndex + 1);
     }
 }

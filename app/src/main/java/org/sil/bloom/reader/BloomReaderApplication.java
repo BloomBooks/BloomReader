@@ -18,7 +18,6 @@ import com.segment.analytics.Properties;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,17 +47,7 @@ public class BloomReaderApplication extends Application {
     public void onCreate() {
         super.onCreate();
         sApplicationContext = getApplicationContext();
-        if (MainActivity.haveStoragePermission(this))
-            setupAnalytics(this);
-        else
-            stillNeedToSetupAnalytics = true;
-    }
-
-    public static void setupAnalyticsIfNeeded(Context context) {
-        if (stillNeedToSetupAnalytics) {
-            stillNeedToSetupAnalytics = false;
-            setupAnalytics(context);
-        }
+        setupAnalytics(this);
     }
 
     private static void setupAnalytics(Context context) {
@@ -216,11 +205,6 @@ public class BloomReaderApplication extends Application {
             reportDeviceIdParseSuccess(project, device);
             return true;
         }
-        catch (ExtStorageUnavailableException e){
-            Log.e("Analytics", "Unable to check for deviceId file because external storage is unavailable.");
-            // No toast here, because we could end up here with regular users not even trying to load a device id.
-            return false;
-        }
         catch (JSONException e){
             Log.e("Analytics", "Error processing deviceId file json.");
             Log.e("Analytics", e.getMessage());
@@ -239,21 +223,27 @@ public class BloomReaderApplication extends Application {
         success.show();
     }
 
+    public static boolean shouldPreserveFilesInOldDirectory() {
+        return BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
+    }
+
     public static boolean InTestModeForAnalytics(){
         boolean testMode = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha");
         if(testMode)
             return true;
-        try{
-            File bookDirectory = BookCollection.getLocalBooksDirectory();
-            // We'd really like to just ignore case, but no easy way to do it.
-            return new File(bookDirectory, "UseTestAnalytics").exists()
-                    || new File(bookDirectory, "useTestAnalytics").exists()
-                    || new File(bookDirectory, "usetestanalytics").exists();
-        }
-        catch (ExtStorageUnavailableException e){
-            Log.e("BloomReader/FileIO", e.getStackTrace().toString());
-            return false;
-        }
+
+        // We're looking for a file called UseTestAnalytics in the old Bloom folder at the root of
+        // the device storage. We no longer have access to the files in this folder, unless the user
+        // has given it to us, but surprisingly we can still find out whether the file exists.
+        // This may be an accident that a future Android version will fix.
+        File oldBookDirectory = IOUtilities.getOldBloomBooksFolder(BloomReaderApplication.sApplicationContext);
+        if (oldBookDirectory == null)
+            return true; // situation bizarre, let's not do real analytics
+
+        // We'd really like to just ignore case, but no easy way to do it.
+        return new File(oldBookDirectory, "UseTestAnalytics").exists()
+                || new File(oldBookDirectory, "useTestAnalytics").exists()
+                || new File(oldBookDirectory, "usetestanalytics").exists();
     }
 
 

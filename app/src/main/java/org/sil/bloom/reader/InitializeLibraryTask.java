@@ -9,8 +9,6 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
-
 import java.lang.ref.WeakReference;
 import java.util.Date;
 import java.util.Timer;
@@ -22,7 +20,6 @@ import java.util.TimerTask;
 // with a progress bar at the bottom that shows progress working through the list of books.
 // See https://issues.bloomlibrary.org/youtrack/issue/BL-7432.
 public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
-    private ExtStorageUnavailableException mExceptionCaught = null;
     private final WeakReference<MainActivity> mainActivityRef;
     private final long mBeginningTime = new Date().getTime();
     private Timer mTimer;
@@ -33,18 +30,13 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
     }
     // Initialize the  maximum value for the progress bar to better reflect reality.  It still
     // may not be perfect.  It seems safest to do this on the UI thread.
-    public void setBookCount(final Integer count) {
+    public void setBookCount(final int count) {
         // get a reference to the activity if it is still there
         final MainActivity mainActivity = mainActivityRef.get();
         if (mainActivity == null || mainActivity.isFinishing())
             return;
 
-        mainActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mainActivity.mLoadingProgressBar.setMax(count);
-            }
-        });
+        mainActivity.runOnUiThread(() -> mainActivity.mLoadingProgressBar.setMax(count));
     }
     // Advance the progress bar for one book being processed.
     public void incrementBookProgress() {
@@ -53,17 +45,12 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     protected Void doInBackground(Void... v) {
-        try {
-            // get a reference to the activity if it is still there
-            final MainActivity mainActivity = mainActivityRef.get();
-            if (mainActivity == null || mainActivity.isFinishing())
-                return null;
+        // get a reference to the activity if it is still there
+        final MainActivity mainActivity = mainActivityRef.get();
+        if (mainActivity == null || mainActivity.isFinishing())
+            return null;
 
-            BloomReaderApplication.theOneBookCollection.init(mainActivity, this);
-        }
-        catch (ExtStorageUnavailableException e) {
-            mExceptionCaught = e;
-        }
+        BloomReaderApplication.theOneBookCollection.init(mainActivity, this);
         return null;
     }
     @Override
@@ -91,10 +78,6 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
         }
         // Ensure all the books are displayed at the end of loading.
         mainActivity.mBookListAdapter.notifyDataSetChanged();
-
-        if (mExceptionCaught != null) {
-            mainActivity.externalStorageUnavailable(mExceptionCaught);
-        }
     }
 
     static private void addProgressViews(MainActivity main)
@@ -172,13 +155,10 @@ public class InitializeLibraryTask extends AsyncTask<Void, Void, Void> {
         public void run() {
             mTimer.cancel(); //Terminate the timer thread
 
-            // Run the remove method on the UI thread
-            if (mMain != null)
-                mMain.runOnUiThread(new Runnable() {
-                public void run() {
-                    removeProgressViews(mMain);
-                }
-            });
+            if (mMain != null) {
+                // Run the remove method on the UI thread
+                mMain.runOnUiThread(() -> removeProgressViews(mMain));
+            }
         }
     }
 }

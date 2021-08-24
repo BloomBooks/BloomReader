@@ -6,10 +6,10 @@ import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import androidx.annotation.IntDef;
 
+import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.widget.Toast;
@@ -19,6 +19,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
+import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -256,6 +257,163 @@ public class IOUtilities {
         }
     }
 
+    // The same test, but here we only have available a URI.
+    public static boolean isValidZipUri(Uri input, @FileChecks int checkType, TextFileContent desiredFile) {
+        String key = input.toString();
+        Context context = getBloomApplicationContext();
+        if (sCheckedFiles == null) {
+            if (context != null) {
+                sCheckedFiles = context.getSharedPreferences(CHECKED_FILES_TAG, 0);
+            }
+        }
+        if (sCheckedFiles != null) {
+            long timestamp = sCheckedFiles.getLong(key, 0L);
+            if (timestamp == lastModified(context, input) && timestamp != 0L)
+                return true;
+        }
+        try {
+            // REVIEW very minimal check for .bloomd files: are there any filenames guaranteed to exist
+            // in any .bloomd file regardless of age?
+            int countHtml = 0;
+            int countCss = 0;
+            InputStream fs = context.getContentResolver().openInputStream(input);
+            ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fs));
+            try {
+                ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    if (entry.isDirectory())
+                        continue;
+                    String entryName = entry.getName().toLowerCase(Locale.ROOT);
+                    // For validation purposes we're only interested in html files in the root directory.
+                    // Activities, for example, may legitimately have their own.
+                    if ((entryName.endsWith(".htm") || entryName.endsWith(".html")) && entryName.indexOf("/") < 0)
+                        ++countHtml;
+                    else if (entryName.endsWith(".css"))
+                        ++countCss;
+                    int realSize = (int) entry.getSize();
+                    byte[] buffer = new byte[realSize];
+                    if (realSize != 0) {
+                        // The Java ZipEntry code does not always return the full data content even when the buffer is large
+                        // enough for it.  Whether this is a bug or a feature, or just the way it is, depends on your point
+                        // of view I suppose.  So we have a loop here in case the initial read wasn't enough.
+                        int size = 0;
+                        int moreReadSize = zis.read(buffer, size, realSize - size);
+                        while (moreReadSize > 0) {
+                                size += moreReadSize;
+                                moreReadSize = zis.read(buffer, size, realSize - size);
+                        } ;
+                        if (size != realSize) {
+                            // It would probably throw before getting here, but just in case, write
+                            // out some debugging information and return false.
+                            int compressedSize = (int) entry.getCompressedSize();
+                            int method = entry.getMethod();
+                            String type = "UNKNOWN (" + method + ")";
+                            switch (entry.getMethod()) {
+                                case ZipEntry.STORED:
+                                    type = "STORED";
+                                    break;
+                                case ZipEntry.DEFLATED:
+                                    type = "DEFLATED";
+                                    break;
+                            }
+                            Log.e("IOUtilities", "Unzip size read " + size + " != size expected " + realSize +
+                                    " for " + entry.getName() + " in " + BookOrShelf.getNameFromPath(input.getPath()) + ", compressed size = " + compressedSize + ", storage method = " + type);
+                            return false;
+                        }
+                    }
+                    if (desiredFile != null && entryName.equals(desiredFile.getFilename())) {
+                        // save the desired file content so we won't have to unzip again
+                        desiredFile.Content = new String(buffer, desiredFile.getEncoding());
+                    }
+                }
+            } finally {
+                zis.close();
+                fs.close();
+            }
+            boolean retval;
+            if (checkType == IOUtilities.CHECK_BLOOMD)
+                retval = countHtml == 1 && countCss > 0;
+            else
+                retval = true;
+            if (retval && sCheckedFiles != null) {
+                SharedPreferences.Editor editor = sCheckedFiles.edit();
+                editor.putLong(key, lastModified(context, input));
+                editor.apply();
+            }
+            return retval;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static long lastModified(Context context, Uri uri) {
+        if (uri.getScheme().equals("file")) {
+            return new File(uri.getPath()).lastModified(); // returns zero if anything goes wrong.
+        }
+        if (uri.getScheme().equals("content")) {
+            // SAF type URIs.
+            final Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst())
+                    return cursor.getLong(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
+            } finally {
+                if (cursor != null) cursor.close();
+            }
+        }
+        assert false; // some scheme we know nothing about.
+        return 0;
+    }
+
+    // Return a 'File' object representing the old Bloom directory where Bloom used to store book
+    // files when the OS allowed it.
+    public static File getOldBloomBooksFolder(Context context) {
+        File oldBookDirectory = null;
+        File[] appFilesDirs = context.getExternalFilesDirs(null);
+        for (File appFilesDir : appFilesDirs) {
+            if (appFilesDir != null) {
+                oldBookDirectory = appFilesDir;
+                break;
+            }
+        }
+        if (oldBookDirectory == null)
+            return null; // huh??
+        return new File(IOUtilities.storageRootFromAppFilesDir(oldBookDirectory), "Bloom");
+    }
+
+    public static void createOldBloomBooksFolder(Context context) {
+        if (!BaseActivity.haveLegacyStoragePermission(context)) return;
+        File oldBloomDirectory = getOldBloomBooksFolder(context);
+        if (oldBloomDirectory == null) return;
+        oldBloomDirectory.mkdirs();
+    }
+
+    public static byte[] ExtractZipEntry(Context context, Uri uri, String entryName) {
+        InputStream fs = null;
+        try {
+            fs = context.getContentResolver().openInputStream(uri);
+            ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fs));
+            ZipEntry ze;
+            while ((ze = zis.getNextEntry()) != null
+                    && !ze.getName().equals(entryName)) {
+            }
+            if (ze == null)
+                return new byte[0];
+            int size = (int) ze.getSize();
+            final byte[] output = new byte[size];
+            int offset = 0;
+            int count = 0;
+            while ((count = zis.read(output, offset, output.length - offset)) > 0) {
+                offset += count;
+            }
+            return output;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new byte[0];
+    }
+
     public static byte[] ExtractZipEntry(File input, String entryName) {
         try {
             ZipFile zip = new ZipFile(input);
@@ -346,14 +504,17 @@ public class IOUtilities {
         }
     }
 
-    public static boolean copyBloomdFile(Context context, Uri bookUri, String toPath) {
+    public static boolean copyBookOrShelfFile(Context context, Uri bookOrShelfUri, String toPath) {
         try {
-            InputStream in = context.getContentResolver().openInputStream(bookUri);
+            InputStream in = context.getContentResolver().openInputStream(bookOrShelfUri);
             if (copyFile(in, toPath)) {
-                // Even if the copy succeeds, if the result is not a valid .bloomd file, delete it
+                // Even if the copy succeeds, if the result is not a valid book or shelf file, delete it
                 // and fail.
                 File newFile = new File(toPath);
-                if (!isValidZipFile(newFile, CHECK_BLOOMD)) {
+                boolean validFile = toPath.endsWith(BOOKSHELF_FILE_EXTENSION)
+                    ? BloomShelfFileReader.isValidShelf(context, bookOrShelfUri)
+                        : isValidZipFile(newFile, CHECK_BLOOMD);
+                if (!validFile) {
                     newFile.delete();
                     return false;
                 }
@@ -368,6 +529,14 @@ public class IOUtilities {
     public static String FileToString(File file) {
         try {
             return InputStreamToString(new FileInputStream(file));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String UriToString(Context context, Uri uri) {
+        try {
+            return InputStreamToString(context.getContentResolver().openInputStream(uri));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -400,6 +569,11 @@ public class IOUtilities {
     }
 
     public static void tar(File[] files, String destinationPath) throws IOException {
+        File destination = new File(destinationPath);
+        File destDirectory = destination.getParentFile();
+        if (!destDirectory.exists())
+            destDirectory.mkdirs();
+
         TarArchiveOutputStream tarOutput = new TarArchiveOutputStream(new FileOutputStream(destinationPath));
         tarOutput.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
         for(File file : files) {
@@ -414,13 +588,9 @@ public class IOUtilities {
     }
 
     public static void makeBloomBundle(String destinationPath) throws IOException {
-        FilenameFilter filter = new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String filename) {
-                return filename.endsWith(BOOK_FILE_EXTENSION)
-                        || filename.endsWith(BOOKSHELF_FILE_EXTENSION);
-            }
-        };
+
+        FilenameFilter filter = (dir, filename) ->
+                filename.endsWith(BOOK_FILE_EXTENSION) || filename.endsWith(BOOKSHELF_FILE_EXTENSION);
         tar(getLocalBooksDirectory().getAbsolutePath(), filter, destinationPath);
         //zip(getLocalBooksDirectory().getAbsolutePath(), filter, destinationPath);
     }
@@ -475,17 +645,10 @@ public class IOUtilities {
     }
 
     private static boolean isRemovable(File dir) {
-        if (Build.VERSION.SDK_INT >= 21)
-            return Environment.isExternalStorageRemovable(dir);
-
-        boolean defaultStorageRemovable = Environment.isExternalStorageRemovable();
-        if (dir.getPath().startsWith(Environment.getExternalStorageDirectory().getPath()))
-            return defaultStorageRemovable;
-        else
-            return !defaultStorageRemovable;
+        return Environment.isExternalStorageRemovable(dir);
     }
 
-    private static File storageRootFromAppFilesDir(File appFilesDir) {
+    public static File storageRootFromAppFilesDir(File appFilesDir) {
         // appStorageDir is a directory within the public storage with a path like
         // /path/to/public/storage/Android/data/org.sil.bloom.reader/files
 
@@ -496,7 +659,7 @@ public class IOUtilities {
         return null;
     }
 
-    public static String getFilename(String path) {
+    static String getFilename(String path) {
         // Check for colon because files on SD card root have a path like
         // 1234-ABCD:book.bloomd
         int start = Math.max(path.lastIndexOf(File.separator),
@@ -505,7 +668,20 @@ public class IOUtilities {
         return path.substring(start);
     }
 
-    static String getFileNameOrPathFromUri(Context context, Uri uri) {
+    public static String getFileNameFromUri(Context context, Uri uri) {
+        String fileName = null;
+        try {
+            String fileNameOrPath = IOUtilities.getFileNameOrPathFromUri(context, uri);
+            if (fileNameOrPath != null && !fileNameOrPath.isEmpty())
+                fileName = IOUtilities.getFilename(fileNameOrPath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return fileName;
+    }
+
+    public static String getFileNameOrPathFromUri(Context context, Uri uri) {
         String nameOrPath = uri.getPath();
         // Content URI's do not use the actual filename in the "path"
         if (uri.getScheme().equals("content")) {

@@ -105,6 +105,16 @@ public class AlphanumComparator implements Comparator<BookOrShelf> {
         if (one == null && two == null) {
             return 0;
         }
+        if (one.specialBehavior != null ^ two.specialBehavior != null) {
+            // One is special and one isn't. Make the one with special behavior come first.
+            // Note: if both are special (or neither is, sort by name. I don't think it's useful
+            // to sort BY the specialBehavior, even if we eventually have more than one, since
+            // the user doesn't see that.
+            // (Currently, we only have one...the special folder for getting permission on
+            // BloomExternal. It's not obvious that other special behaviors will want to be moved
+            // to the top of the list, if we ever have any...have to deal with that when it happens.
+            return one.specialBehavior == null ? 1 : -1;
+        }
         if (one.name == null ^ two.name == null) {
             return (one.name == null) ? 1 : -1;
         }
@@ -115,8 +125,8 @@ public class AlphanumComparator implements Comparator<BookOrShelf> {
             if (nameCompare != 0)
                 return nameCompare;
         }
-        String p1 = one.path;
-        String p2 = two.path;
+        String p1 = one.pathOrUri;
+        String p2 = two.pathOrUri;
         if (p1 == null ^ p2 == null) {
             return (p1 == null) ? 1 : -1;
         }

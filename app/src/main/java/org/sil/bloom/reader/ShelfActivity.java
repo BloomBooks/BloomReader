@@ -12,7 +12,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 /**
  * Created by Thomson on 10/20/2017.
@@ -108,7 +107,7 @@ public class ShelfActivity extends MainActivity {
     }
 
     @Override
-    protected BookCollection setupBookCollection() throws ExtStorageUnavailableException {
+    protected BookCollection setupBookCollection() {
         if (BloomReaderApplication.theOneBookCollection == null) {
             // Presume the OS threw away and re-created the BloomReaderApplication while we
             // weren't looking. We need to do the full job of making one.

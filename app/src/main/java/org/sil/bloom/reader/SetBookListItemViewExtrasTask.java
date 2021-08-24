@@ -9,6 +9,8 @@ import org.sil.bloom.reader.models.BookCollection;
 import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.BookListAdapter.ViewHolder;
 
+import java.util.Objects;
+
 /**
  * Used by the BookListAdapter to perform potentially slow operations associated with rendering
  * a BookOrShelf on a BookList on a background thread
@@ -43,6 +45,15 @@ public class SetBookListItemViewExtrasTask extends AsyncTask<Void, Void, SetBook
     // Sets the proper thumbnail for shelves
     // and the fallback thumbnail for books
     private void setInitialImageView(){
+        if ("loadExternalFiles".equals(bookOrShelf.specialBehavior)) {
+            viewHolder.imageView.setImageResource(R.drawable.ic_sd_card);
+            return;
+        }
+        if ("importOldBloomFolder".equals(bookOrShelf.specialBehavior)) {
+            // Enhance: add some suitable icon
+            //viewHolder.imageView.setImageResource(R.drawable.ic_sd_card);
+            return;
+        }
         if (bookOrShelf.isShelf()) {
             viewHolder.imageView.setImageResource(R.drawable.bookshelf);
             try {

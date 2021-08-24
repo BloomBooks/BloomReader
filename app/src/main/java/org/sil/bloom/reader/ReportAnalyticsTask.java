@@ -11,7 +11,6 @@ import android.util.Log;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
-import java.security.Security;
 import java.util.List;
 
 // This task supports reporting analytics on a background thread. We are doing this not so much
@@ -91,7 +90,7 @@ public class ReportAnalyticsTask extends AsyncTask<ReportAnalyticsTaskParams, Vo
             props.putValue("locationSource", bestLocation.getProvider());
             props.putValue("locationAgeDays", locationAgeDays(bestLocation));
             props.putValue("locationAccuracy", bestLocation.getAccuracy());
-        };
+        }
         return bestLocation;
     }
 

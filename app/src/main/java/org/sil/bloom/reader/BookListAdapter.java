@@ -1,10 +1,13 @@
 package org.sil.bloom.reader;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.content.res.Resources;
 import android.graphics.Color;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,17 +55,74 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         String title = TextUtils.isEmpty(holder.bookOrShelf.title) ? holder.bookOrShelf.name : holder.bookOrShelf.title;
         holder.bookNameView.setText(title);
         new SetBookListItemViewExtrasTask(holder).setExtras(); // Sets the thumbnail and speaker icon
-        setBackgroundColor(holder);
+        AdjustItemAppearance(holder);
     }
 
+    ColorStateList originalColors;
 
-    private void setBackgroundColor(ViewHolder holder){
+    private void AdjustItemAppearance(ViewHolder holder){
+        // Somehow the adapter reuses text views whose color has been set previously
+        // Clean this up before we set any colors we actually want.
+        // The very first time we run, we capture the original colors to restore.
+        if (originalColors == null)
+            originalColors = holder.bookNameView.getTextColors();
+        else
+            holder.bookNameView.setTextColor(originalColors);
         if (holder.bookOrShelf == selectedItem)
             holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.colorAccent));
         else if (holder.bookOrShelf.highlighted)
             holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.new_book_highlight));
         else
             holder.linearLayout.setBackgroundColor(Color.WHITE);
+        if ("loadExternalFiles".equals(holder.bookOrShelf.specialBehavior) || "importOldBloomFolder".equals(holder.bookOrShelf.specialBehavior)) {
+            // I'm not sure this is the best way to do this. Maybe we should use an entirely different layout?
+            // I'm not getting the exact appearance JohnH put in the doc...the image he gave me seems to have
+            // only two 'contacts' instead of three, and it's bigger than the mockup. It may also be higher than
+            // he wants; not sure of the implications of making this smaller than the others. But it may
+            // be close enough?
+            final Resources resources = holder.getContext().getResources();
+            // Converts 'dp' measurements into actual pixels
+            int hMargin = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    16,
+                    resources.getDisplayMetrics()
+            );
+            int topMargin = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    4,
+                    resources.getDisplayMetrics()
+            );
+
+            // Make a red border and make the text red.
+            holder.linearLayout.setBackground(resources.getDrawable(R.drawable.red_border));
+            holder.bookNameView.setTextColor(resources.getColor(R.color.colorBloomRed));
+
+            // put some margin on the outermost layout so the border isn't hard up against the sides of the device
+            // or the top of the window, but aligned with other books and shelves.
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.linearLayout.getLayoutParams();
+            params.setMargins(hMargin, topMargin, hMargin,0);
+            holder.linearLayout.setLayoutParams(params);
+
+            // Useful in debugging, to show the space in which the image is centered.
+            //holder.imageView.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.new_book_highlight));
+
+            // Remove the left/start margin. The margin it normally has is applied above to the outer layout to
+            // move the border in.
+            LinearLayout.LayoutParams params1 = (LinearLayout.LayoutParams) holder.imageView.getLayoutParams();
+            params1.setMargins(0, 0, 0,0);
+            params1.setMarginStart(0);
+            holder.imageView.setLayoutParams(params1);
+
+            // Increase the top margin of the book name view to center-align it.
+            int textTopMargin = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    20,
+                    resources.getDisplayMetrics()
+            );
+            params = (ViewGroup.MarginLayoutParams) holder.bookNameView.getLayoutParams();
+            params.setMargins(0, textTopMargin, 0,0);
+            holder.bookNameView.setLayoutParams(params);
+        }
     }
 
     @Override
@@ -117,7 +177,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     public int highlightItem(BookOrShelf bookOrShelf){
         List<String> paths = new ArrayList<>(1);
-        paths.add(bookOrShelf.path);
+        paths.add(bookOrShelf.pathOrUri);
         return highlightItems(paths);
     }
 
@@ -130,7 +190,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         for (int i=0; i<bookCollection.size(); ++i){
             BookOrShelf bookOrShelf = bookCollection.get(i);
             for(String path : paths){
-                if (path.equals(bookOrShelf.path)) {
+                if (path.equals(bookOrShelf.pathOrUri)) {
                     bookOrShelf.highlighted = true;
                     if (firstHighlighted == -1)
                         firstHighlighted = i;

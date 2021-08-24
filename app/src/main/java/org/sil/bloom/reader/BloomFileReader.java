@@ -9,20 +9,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sil.bloom.reader.models.BookCollection;
+import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.File;
 import java.io.IOException;
 
 public class BloomFileReader {
 
-    private Context context;
+    private final Context context;
     private String bloomFilePath;
     private Uri bookUri;
     private File bookDirectory;
     private JSONObject metaProperties;
 
     private static final String CURRENT_BOOK_FOLDER = "currentbook";
-    private static final String VALIDATE_BOOK_FILE_FOLDER = "validating";
     private static final String THUMBNAIL_NAME_1 = "thumbnail.png";
     private static final String THUMBNAIL_NAME_2 = "thumbnail.jpg";
     private static final String META_JSON_FILE = "meta.json";
@@ -30,13 +30,21 @@ public class BloomFileReader {
     private static final String AUDIO_FOLDER = "/audio/";
 
     public BloomFileReader(Context context, String bloomFilePath){
-        this.context = context;
-        this.bloomFilePath = bloomFilePath;
+        this(context, bloomFilePath, null);
     }
 
     public BloomFileReader(Context context, Uri uri){
+        this(context, null, uri);
+    }
+
+    public BloomFileReader(Context context, String bloomFilePath, Uri uri){
         this.context = context;
         this.bookUri = uri;
+        this.bloomFilePath = bloomFilePath;
+    }
+
+    public BloomFileReader(Context context, BookOrShelf book) {
+        this(context, book.pathOrUri, book.uri);
     }
 
     public File getHtmlFile() throws IOException{
@@ -94,10 +102,7 @@ public class BloomFileReader {
             // We must not unzip into the current book folder as that would interfere with the
             // current book (a race condition).
             if (this.bookDirectory == null) {
-                // simplified compared to the usual initialize() method. Does not handle the
-                // possibility of having a url instead of a path. As far as I can tell, that option
-                // is currently unused, certainly by the one caller of hasAudio.
-                unzipBook(bloomFilePath, "tempAudioPath");
+                unzipBook("tempAudioPath");
             }
             final File bookHtmlFile = this.getHtmlFile();
             html = IOUtilities.FileToString(bookHtmlFile);
@@ -115,25 +120,26 @@ public class BloomFileReader {
         return html != null && html.contains(BOOK_AUDIO_MATCH) && audioFilesExist;
     }
 
-    public Uri getThumbnail(File thumbsDirectory) throws IOException{
+    public Uri getThumbnail(File thumbsDirectory) throws IOException {
         Uri thumbUri = null;
         // This function is called in a background thread for books that are not the current one
         // being opened. It must not race for the same directory.
-        unzipBook(bloomFilePath, "tempBookPath");
-        String bookName = (new File(bloomFilePath)).getName().replace(IOUtilities.BOOK_FILE_EXTENSION, "");
+        unzipBook("tempBookPath");
+        String path = bloomFilePath == null ? bookUri.getPath() :bloomFilePath; // uri version is not a valid file path, but works for this.
+        String bookName = (new File(path)).getName().replace(IOUtilities.BOOK_FILE_EXTENSION, "");
         File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_1);
         if (!thumb.exists())
             thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_2);
-        if(thumb.exists()){
+        if (thumb.exists()) {
             String toPath = thumbsDirectory.getPath() + File.separator + bookName;
-            if(IOUtilities.copyFile(thumb.getPath(), toPath));
+            if (IOUtilities.copyFile(thumb.getPath(), toPath))
                 thumbUri = Uri.fromFile(new File(toPath));
-        }
-        else{
+        } else {
             String noThumbPath = thumbsDirectory + File.separator + BookCollection.NO_THUMBS_DIR + File.separator + bookName;
             (new File(noThumbPath)).createNewFile();
         }
         closeFile();
+
         return thumbUri;
     }
 
@@ -206,16 +212,16 @@ public class BloomFileReader {
     private void initialize() throws IOException{
         if (bookDirectory != null)
             return; // already initialized.
-        if(bloomFilePath == null) {
-            unzipBook(bookUri, CURRENT_BOOK_FOLDER);
-            return;
+        if(bloomFilePath != null) {
+            File bloomFile = new File(bloomFilePath);
+            if (bloomFile.isDirectory()) {
+                // not sure how this happens, but apparently it's possible
+                // that bloomFilePath is pointing to an already-unzipped directory.
+                bookDirectory = bloomFile;
+                return;
+            }
         }
-        File bloomFile = new File(bloomFilePath);
-        if(bloomFile.isDirectory()){
-            bookDirectory = bloomFile;
-            return;
-        }
-        unzipBook(bloomFilePath, CURRENT_BOOK_FOLDER);
+        unzipBook(CURRENT_BOOK_FOLDER);
     }
 
     private File findHtmlFile() throws IOException {
@@ -240,14 +246,13 @@ public class BloomFileReader {
         IOUtilities.emptyDirectory(toEmpty);
     }
 
-    private void unzipBook(String fromPath, String toPath) throws IOException {
+    private void unzipBook(String toPath) throws IOException {
         setupBookDirectory(toPath);
-        IOUtilities.unzip(new File(fromPath), bookDirectory);
-    }
-
-    private void unzipBook(Uri uri, String toPath) throws IOException {
-        setupBookDirectory(toPath);
-        IOUtilities.unzip(context, uri, bookDirectory);
+        if (bookUri == null) {
+            IOUtilities.unzip(new File(bloomFilePath), bookDirectory);
+        } else {
+            IOUtilities.unzip(context, bookUri, bookDirectory);
+        }
     }
 
     private void setupBookDirectory(String path){

@@ -35,8 +35,8 @@ public class BookOrShelfTest {
                 null,
                 new BookOrShelf("y", "b"),
                 new BookOrShelf("y", "a"),
-                new BookOrShelf(null, "b"),
-                new BookOrShelf(null, "a")
+                new BookOrShelf((String)null, "b"),
+                new BookOrShelf((String)null, "a")
         );
         Collections.sort(books, BookOrShelf.AlphanumComparator);
         assertThat(books.get(0).name, is("a"));
@@ -49,7 +49,7 @@ public class BookOrShelfTest {
         assertThat(books.get(3).pathOrUri, is("y"));
         assertThat(books.get(4).name, is("b"));
         assertThat(books.get(4).pathOrUri, nullValue());
-        assertThat(books.get(5).name, nullValue());
+        assertThat(books.get(5).name, is("z"));
         assertThat(books.get(5).pathOrUri, is("z"));
         assertThat(books.get(6), nullValue());
     }

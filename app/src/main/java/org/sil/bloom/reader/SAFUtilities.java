@@ -31,8 +31,14 @@ import static org.sil.bloom.reader.IOUtilities.ENCODED_FILE_EXTENSION;
 
 public class SAFUtilities {
     private static final String TAG = "SAFUtilities";
-    public static final  Uri BloomDirectoryUri = Uri.parse("content://com.android.externalstorage.documents/document/primary%3ABloom");
-    public static final  Uri BloomDirectoryTreeUri = Uri.parse("content://com.android.externalstorage.documents/tree/primary%3ABloom");
+
+    // These are not constants for the sake of unit tests which don't have access to Uri.parse()
+    public static Uri getBloomDirectoryUri() {
+        return Uri.parse("content://com.android.externalstorage.documents/document/primary%3ABloom");
+    }
+    public static Uri getBloomDirectoryTreeUri() {
+        return Uri.parse("content://com.android.externalstorage.documents/tree/primary%3ABloom");
+    }
 
     public static List<Uri> getUrisWithPermissions(Context context) {
         ContentResolver contentResolver = context.getContentResolver();
@@ -46,7 +52,7 @@ public class SAFUtilities {
     // Given a string that might be either a file path or the toString() of an SAF URI, return
     // the URI if that's what it is.
     public static Uri getContentUriIfItIsOne(String pathOrUri) {
-        if (pathOrUri.startsWith("content://"))
+        if (pathOrUri != null && pathOrUri.startsWith("content://"))
             return Uri.parse(pathOrUri);
         return null;
     }
@@ -59,7 +65,7 @@ public class SAFUtilities {
     }
 
     public static boolean hasPermissionToBloomDirectory(Context context) {
-        return hasPermission(context, BloomDirectoryTreeUri);
+        return hasPermission(context, getBloomDirectoryTreeUri());
     }
 
     public static boolean hasPermissionToBloomExternalDirectory(Context context) {

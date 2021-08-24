@@ -399,7 +399,7 @@ public class MainActivity extends BaseActivity
             } else if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
                 // try using SAF
                 final Context context = this; // inside the listener, 'this' is the listener
-                SAFUtilities.searchDirectoryForBooks(this, SAFUtilities.BloomDirectoryTreeUri, new BookSearchListener() {
+                SAFUtilities.searchDirectoryForBooks(this, SAFUtilities.getBloomDirectoryTreeUri(), new BookSearchListener() {
                     @Override
                     public void onFoundBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
                         String fileName = IOUtilities.getFileNameFromUri(context, bookOrShelfUri);
@@ -1163,7 +1163,7 @@ public class MainActivity extends BaseActivity
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
                         mShouldReportReadyForUsbAfterSearching = forUsb;
-                        Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(SAFUtilities.BloomDirectoryUri);
+                        Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(SAFUtilities.getBloomDirectoryUri());
                         mGetDirectoryToSearchForBooks.launch(permissionIntent);
                     }
                 }))

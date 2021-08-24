@@ -163,7 +163,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                 } else if (SAFUtilities.hasPermissionToBloomDirectory(this)){
                     // look for it using SAF
                     Uri uriMarkerFile = SAFUtilities.fileUriFromDirectoryUri(
-                            this, SAFUtilities.BloomDirectoryTreeUri, "something.modified");
+                            this, SAFUtilities.getBloomDirectoryTreeUri(), "something.modified");
                     long markerModified = IOUtilities.lastModified(this, uriMarkerFile);
                     if (markerModified == mostRecentMarkerFileModifiedTime)
                         return; // presume nothing changed
@@ -192,7 +192,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     private PathModifyTime getLatestModifiedTimeAndFile() {
         return haveLegacyStoragePermission(this) ?
                 getLatestModifiedTimeAndFile(BookCollection.getLocalBooksDirectory())
-                : getLatestModifiedTimeAndFile(SAFUtilities.BloomDirectoryTreeUri);
+                : getLatestModifiedTimeAndFile(SAFUtilities.getBloomDirectoryTreeUri());
     }
 
     private static PathModifyTime getLatestModifiedTimeAndFile(File dir) {

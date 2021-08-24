@@ -347,19 +347,21 @@ public class IOUtilities {
     }
 
     public static long lastModified(Context context, Uri uri) {
-        long lastModified = 0;
-        final Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
-        try
-        {
-            if (cursor.moveToFirst())
-                lastModified = cursor.getLong(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
+        if (uri.getScheme().equals("file")) {
+            return new File(uri.getPath()).lastModified(); // returns zero if anything goes wrong.
         }
-        finally
-        {
-            cursor.close();
+        if (uri.getScheme().equals("content")) {
+            // SAF type URIs.
+            final Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst())
+                    return cursor.getLong(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
+            } finally {
+                if (cursor != null) cursor.close();
+            }
         }
-
-        return lastModified;
+        assert false; // some scheme we know nothing about.
+        return 0;
     }
 
     // Return a 'File' object representing the old Bloom directory where Bloom used to store book

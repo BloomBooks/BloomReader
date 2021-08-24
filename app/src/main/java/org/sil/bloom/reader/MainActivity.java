@@ -705,6 +705,13 @@ public class MainActivity extends BaseActivity
         sSkipNextNewFileSound = true;
     }
 
+    public static void playNewBookSound() {
+        // Used when we've been skipping a series of sounds and play once at the end.
+        // So forget about skipping the next one.
+        sSkipNextNewFileSound = false;
+        playSoundFile(R.raw.bookarrival);
+    }
+
     private void updateForNewBook(String filePathOrUri) {
         BookOrShelf book = _bookCollection.addBookOrShelfIfNeeded(filePathOrUri);
         refreshList(book);
@@ -712,7 +719,7 @@ public class MainActivity extends BaseActivity
             sSkipNextNewFileSound = false;
         }
         else {
-            playSoundFile(R.raw.bookarrival);
+            playNewBookSound();
         }
         Toast.makeText(MainActivity.this, book.name + " added or updated", Toast.LENGTH_SHORT).show();
     }
@@ -1290,40 +1297,43 @@ public class MainActivity extends BaseActivity
     }
 
     private final BookSearchListener mBookSearchListener = new BookSearchListener() {
-            @Override
+
+        @Override
         public void onFoundBookOrShelf(File bookOrShelfFile, Uri bookOrShelfUri) {
-                String filePath = bookOrShelfFile.getPath();
-                // Don't add books found in BloomExternal to Bloom!
-                // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
+            String filePath = bookOrShelfFile.getPath();
+            // Don't add books found in BloomExternal to Bloom!
+            // See https://issues.bloomlibrary.org/youtrack/issue/BL-7128.
             if (filePath.contains("/BloomExternal/") || filePath.contains(":BloomExternal/"))
-                    return;
-                if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
-                    Log.d("BookSearch", "Found " + filePath);
+                return;
+            if (_bookCollection.getBookOrShelfByPath(filePath) == null) {
+                Log.d("BookSearch", "Found " + filePath);
+                MainActivity.skipNextNewFileSound();
                 if (importBookOrShelf(bookOrShelfUri, false))
                     mFileSearchState.bloomdsAdded.add(bookOrShelfUri);
-                }
             }
+        }
 
-            @Override
+        @Override
         public void onFoundBundle(Uri bundleUri) {
             Log.d("BookSearch", "Found " + bundleUri.getPath());
             mFileSearchState.bundlesToAdd.add(bundleUri);
-            }
+        }
 
-            @Override
-            public void onSearchComplete() {
-                findViewById(R.id.searching_text).setVisibility(View.GONE);
-                if (mFileSearchState.nothingAdded())
-                    Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
-                else {
-                    resetFileObserver();  // Prevents repeat notifications later
-                    // Multiple AsyncTask's will execute sequentially
-                    // https://developer.android.com/reference/android/os/AsyncTask#order-of-execution
-                    new ImportBundleTask(MainActivity.this).execute(mFileSearchState.bundlesToAddAsArray());
-                    new FileCleanupTask(MainActivity.this).execute(mFileSearchState.bloomdsAddedAsArray());
-                }
+        @Override
+        public void onSearchComplete() {
+            findViewById(R.id.searching_text).setVisibility(View.GONE);
+            if (mFileSearchState.nothingAdded())
+                Toast.makeText(MainActivity.this, R.string.no_books_added, Toast.LENGTH_SHORT).show();
+            else {
+                resetFileObserver();  // Prevents repeat notifications later
+                // Multiple AsyncTask's will execute sequentially
+                // https://developer.android.com/reference/android/os/AsyncTask#order-of-execution
+                new ImportBundleTask(MainActivity.this).execute(mFileSearchState.bundlesToAddAsArray());
+                new FileCleanupTask(MainActivity.this).execute(mFileSearchState.bloomdsAddedAsArray());
+                MainActivity.playNewBookSound(); // just once! Also clears the skip next flag.
             }
-        };
+        }
+    };
 
     // This function can't be made to work in Android 11+, due to the new scoped storage rules.
     // However, devices running 10 or less can still use this more straightforward method.

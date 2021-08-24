@@ -41,17 +41,18 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
 
     private void cleanUpUri(Uri uriToCleanUp) {
         try {
-            // Can we remove this old approach?
-            if (uriToCleanUp.getScheme().equals("file")) {
-                File searchFile = new File(uriToCleanUp.getPath());
-                if (isOnNonRemovableStorage(searchFile) && !isABookInOurLibrary(searchFile))
-                    searchFile.delete();
-                return;
-            }
-
             Context context = contextRef.get();
             if (context == null)
                 return; // we might not be able to get it if we are in the process of shutting down.
+
+            // File URIs don't work with various SAF functions, especially ones involving .query
+            // So we need basically two complete implementations of this.
+            if (uriToCleanUp.getScheme().equals("file")) {
+                File searchFile = new File(uriToCleanUp.getPath());
+                if (okToDelete(searchFile))
+                    searchFile.delete();
+                return;
+            }
 
             if (SAFUtilities.isUriOnSdCard(context, uriToCleanUp))
                 return; // we never delete things on the SD card
@@ -86,6 +87,27 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
 
     private boolean isOnNonRemovableStorage(File file) {
         return !Environment.isExternalStorageRemovable(file);
+    }
+
+    private boolean okToDelete(File file) {
+        // We don't delete files on removable drives, such drives may well be used to install books
+        // on multiple devices. The point of deleting is to conserve space on built-in storage,
+        // which is usually at a premium.
+        if (!isOnNonRemovableStorage(file))
+            return false;
+        // If by any chance we're being asked about a book in our private books folder, we don't want
+        // to clean that up!
+        if (isABookInOurLibrary(file))
+            return false;
+        // Don't clean up things in the Bloom directory until all channels of Bloom stop using it
+        // as their live storage.
+        if (BloomReaderApplication.shouldPreserveFilesInOldDirectory() && isABookInOldBloomDirectory(file))
+            return false;
+        return true;
+    }
+
+    private boolean isABookInOldBloomDirectory(File file) {
+        return file.getPath().startsWith(IOUtilities.getOldBloomBooksFolder(contextRef.get()).getPath());
     }
 
     private boolean isABookInOurLibrary(File file) {

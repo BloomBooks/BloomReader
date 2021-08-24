@@ -260,6 +260,7 @@ public class SAFUtilities {
 //        for (UriPermission perm:contentResolver.getPersistedUriPermissions()) {
 //            Log.d(TAG, perm.getUri().toString());
 //        }
+        assert rootUri.getScheme().equals("content"); // SAF URIs only
 
         Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, DocumentsContract.getTreeDocumentId(rootUri));
 

@@ -190,6 +190,10 @@ public class BookCollection {
             mInitializeTask.setBookCount(count);
         }
         if (booksDirs != null && booksDirs.length > 0) {
+            // Fix any duplicate .bloomd/.bloompub pairs in our main directory.
+            for (File f:booksDirs[0].listFiles()) {
+                fixBloomd(f.getAbsolutePath());
+            }
             for (File booksDir : booksDirs)
                 loadFromDirectory(booksDir, activity);
         }
@@ -278,14 +282,6 @@ public class BookCollection {
     // is this coming from somewhere other than where we store books?
     // then move or copy it in
     public String ensureBookIsInCollection(Context context, Uri bookUri, String filename) throws ExtStorageUnavailableException {
-
-        // TODO
-        // Should we be trying to prevent, here and elsewhere, having the same book as .bloomd and .bloompub?
-        // In other words, is ABC.bloomd the same as ABC.bloompub in the same sense that ABC.bloomd and ABC.bloomd are the same?
-        // One option would be to change the extension when moving/copying files into the Bloom directory and
-        //  migrate existing ones and ones coming from BloomDesktop.
-        // But we still have to handle possible .bloomd's in BloomExternal.
-
         if (bookUri == null || bookUri.getPath() == null)
             return null; // Play console proves this is possible somehow
 
@@ -293,7 +289,8 @@ public class BookCollection {
         if (mLocalBooksDirectory == null)
             mLocalBooksDirectory = getLocalBooksDirectory();
 
-        if (bookUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath()))
+        // We need the extra slash so that e.g. books in "Bloom - Copy" are not treated as already in Bloom.
+        if (bookUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath() + "/"))
             return bookUri.getPath();
 
         Log.d("BloomReader", "Copying book into Bloom directory");
@@ -301,6 +298,7 @@ public class BookCollection {
         destination = IOUtilities.ensureFileNameHasNoEncodedExtension(destination);
         boolean copied = IOUtilities.copyBloomPubFile(context, bookUri, destination);
         if(copied){
+            destination = fixBloomd(destination);
             destination = FixDuplicate(destination);
             // it's probably not in our list that we display yet, so make an entry there
             addBookIfNeeded(destination);
@@ -330,11 +328,10 @@ public class BookCollection {
         if (lastSpace >= 0)
             similarBookName = similarBookName.substring(0,lastSpace);
 
-        // TODO handle both .bloomd and .bloompub.
-        // See question in ensureBookIsInCollection which may impact how we do it.
-
         // This is what we'd expect the original to be called if previously downloaded.
-        String possibleMatch = parent.getPath() + File.separator + similarBookName + ".bloomd";
+        // (We don't think we need to handle .bloomd files here. Both the incoming path and
+        // the ones aleady in the Bloom directory should already be .bloompub.)
+        String possibleMatch = parent.getPath() + File.separator + similarBookName + ".bloompub";
         final File similarBookFile = new File(possibleMatch);
         if (!similarBookFile.exists())
             return newBloomFile; // we don't have a book at the expected location. Maybe the book name really has parens! Or deleted previously.
@@ -370,6 +367,28 @@ public class BookCollection {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // If the path passed ends in the obsolete .bloomd, rename it to .bloompub.
+    // If that results in a conflict, delete the older file and keep the newer one with the
+    // correct name.
+    // Return the (possibly corrected) name.
+    public static String fixBloomd(String currentPath) {
+        if (!currentPath.endsWith(".bloomd")) return currentPath;
+        File currentFile = new File(currentPath);
+        if (!currentFile.exists()) return currentPath; // paranoia
+        String newPath = currentPath.substring(0, currentPath.length() - "bloomd".length()) + "bloompub";
+        File newFile = new File(newPath);
+        if (newFile.exists()) {
+            if (newFile.lastModified() > currentFile.lastModified()) {
+                // we'll keep the existing 'new' file
+                currentFile.delete();
+                return newPath;
+            }
+            newFile.delete();
+        }
+        currentFile.renameTo(newFile);
+        return newPath;
     }
 
     // Tests whether a book passes the current 'filter'.

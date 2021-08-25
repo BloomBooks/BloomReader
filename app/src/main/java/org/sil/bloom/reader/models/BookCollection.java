@@ -60,6 +60,7 @@ public class BookCollection {
     }
 
     public BookOrShelf addBookIfNeeded(String path) {
+        path = fixBloomd(path);
         BookOrShelf existingBook = getBookOrShelfByPath(path);
         if (existingBook != null)
             return existingBook;
@@ -248,8 +249,8 @@ public class BookCollection {
     public static String fixBloomd(String currentPath) {
         if (!currentPath.endsWith(".bloomd")) return currentPath;
         File currentFile = new File(currentPath);
-        if (!currentFile.exists()) return currentPath; // paranoia
         String newPath = currentPath.substring(0, currentPath.length() - "bloomd".length()) + "bloompub";
+        if (!currentFile.exists()) return newPath; // may have already been fixed in a previous call
         File newFile = new File(newPath);
         if (newFile.exists()) {
             if (newFile.lastModified() > currentFile.lastModified()) {

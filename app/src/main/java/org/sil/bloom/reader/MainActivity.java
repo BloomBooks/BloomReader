@@ -306,6 +306,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void updateForNewBook(String filePath) {
+        filePath = BookCollection.fixBloomd(filePath);
         BookOrShelf book = _bookCollection.addBookIfNeeded(filePath);
         refreshList(book);
         if (sSkipNextNewFileSound) {

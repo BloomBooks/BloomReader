@@ -142,8 +142,14 @@ public class BookCollection {
     private void loadFromDirectories(File[] booksDirs) {
         mShelfIds.clear();
         _booksAndShelves.clear();
-        for (File booksDir : booksDirs)
-            loadFromDirectory(booksDir);
+        if (booksDirs != null && booksDirs.length > 0) {
+            // Fix any duplicate .bloomd/.bloompub pairs in our main directory.
+            for (File f:booksDirs[0].listFiles()) {
+                fixBloomd(f.getAbsolutePath());
+            }
+            for (File booksDir : booksDirs)
+                loadFromDirectory(booksDir, activity);
+        }
     }
 
     private void loadFromDirectory(File directory) {
@@ -226,12 +232,35 @@ public class BookCollection {
         destination = IOUtilities.ensureFileNameHasNoEncodedExtension(destination);
         boolean copied = IOUtilities.copyBloomPubFile(context, bookUri, destination);
         if(copied){
+            destination = fixBloomd(destination);
             // it's probably not in our list that we display yet, so make an entry there
             addBookIfNeeded(destination);
             return destination;
         } else{
             return null;
         }
+    }
+
+    // If the path passed ends in the obsolete .bloomd, rename it to .bloompub.
+    // If that results in a conflict, delete the older file and keep the newer one with the
+    // correct name.
+    // Return the (possibly corrected) name.
+    public static String fixBloomd(String currentPath) {
+        if (!currentPath.endsWith(".bloomd")) return currentPath;
+        File currentFile = new File(currentPath);
+        if (!currentFile.exists()) return currentPath; // paranoia
+        String newPath = currentPath.substring(0, currentPath.length() - "bloomd".length()) + "bloompub";
+        File newFile = new File(newPath);
+        if (newFile.exists()) {
+            if (newFile.lastModified() > currentFile.lastModified()) {
+                // we'll keep the existing 'new' file
+                currentFile.delete();
+                return newPath;
+            }
+            newFile.delete();
+        }
+        currentFile.renameTo(newFile);
+        return newPath;
     }
 
     // Tests whether a book passes the current 'filter'.

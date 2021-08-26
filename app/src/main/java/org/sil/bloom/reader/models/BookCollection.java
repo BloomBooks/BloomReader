@@ -151,11 +151,11 @@ public class BookCollection {
         if(files != null) {
             for (int i = 0; i < files.length; i++) {
                 final String name = files[i].getName();
-                if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
+                if (!IOUtilities.isBloomPubFile(name)
                         && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
                     continue; // not a book (nor a shelf)!
                 final String path = files[i].getAbsolutePath();
-                if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
+                if (IOUtilities.isBloomPubFile(name) &&
                         !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD)) {
                     String markedName = name + "-BAD";
                     Log.w("BloomCollection", "Renaming invalid book file "+path+" to "+markedName);
@@ -223,10 +223,8 @@ public class BookCollection {
 
         Log.d("BloomReader", "Copying book into Bloom directory");
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + filename;
-        if (filename.endsWith(IOUtilities.BOOK_FILE_EXTENSION + IOUtilities.ENCODED_FILE_EXTENSION)) {
-            destination = destination.substring(0, destination.length() - IOUtilities.ENCODED_FILE_EXTENSION.length());
-        }
-        boolean copied = IOUtilities.copyBloomdFile(context, bookUri, destination);
+        destination = IOUtilities.ensureFileNameHasNoEncodedExtension(destination);
+        boolean copied = IOUtilities.copyBloomPubFile(context, bookUri, destination);
         if(copied){
             // it's probably not in our list that we display yet, so make an entry there
             addBookIfNeeded(destination);
@@ -251,7 +249,7 @@ public class BookCollection {
     }
 
     // Set the shelves if any that a book or shelf belongs to.
-    // Extracts the meta.json entry from the bloomd file, extracts the tags from that,
+    // Extracts the meta.json entry from the bloompub/bloomd file, extracts the tags from that,
     // finds any that start with "bookshelf:", and sets the balance of the tag as one of the
     // book's shelves.
     public static void setShelvesOfBook(BookOrShelf bookOrShelf) {
@@ -277,7 +275,7 @@ public class BookCollection {
             }
         } catch (Exception e) {
             // Not sure about just catching everything like this. But the worst that happens if
-            // a bloomd does not contain valid meta.json from which we can extract tags is that
+            // a bloompub/bloomd does not contain valid meta.json from which we can extract tags is that
             // the book shows up at the root instead of on a shelf.
             e.printStackTrace();
         }

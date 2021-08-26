@@ -13,7 +13,7 @@ import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 import java.io.File;
 
 /*
-    Used to clean up a bloombundle or bloomd file after importing the contents into
+    Used to clean up a bloombundle or bloompub/bloomd file after importing the contents into
     the Bloom directory.
 
     We only want to do this if the file is in non-removable storage.
@@ -23,7 +23,7 @@ import java.io.File;
 
 public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
     private Context context;
-    private File bloomDirectory; // We don't want to remove bloomd's from here
+    private File bloomDirectory; // We don't want to remove bloompub's/bloomd's from here
 
     public FileCleanupTask(Context context) {
         this.context = context;
@@ -81,7 +81,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
     }
 
     private boolean shouldSearchThisDirectory(File dir, Uri uriToCleanUp) throws ExtStorageUnavailableException {
-        // We don't want to find the bloomd's in our library
+        // We don't want to find the bloompub's/bloomd's in our library
         // Bundles are fair game everywhere
         if (uriToCleanUp.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
             return true;
@@ -120,7 +120,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
     }
 
     private String fileNameFromUri(Uri uri) {
-        // expected path is something like /document/primary:MyBook.bloomd
+        // expected path is something like /document/primary:MyBook.bloompub
         String path = uri.getPath();
         int separatorIndex = Math.max(
                                 path.lastIndexOf(File.separator),

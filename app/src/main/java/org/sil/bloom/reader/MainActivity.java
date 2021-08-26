@@ -44,9 +44,6 @@ import java.util.Date;
 import java.util.List;
 
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
-import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
-import static org.sil.bloom.reader.IOUtilities.ENCODED_FILE_EXTENSION;
-
 
 public class MainActivity extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener, BookListAdapter.BookClickListener{
@@ -191,8 +188,7 @@ public class MainActivity extends BaseActivity
         }
         if (nameOrPath == null) // reported as crash on Play console
             return;
-        if (nameOrPath.endsWith(BOOK_FILE_EXTENSION) ||
-                nameOrPath.endsWith(BOOK_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
+        if (IOUtilities.isBloomPubFile(nameOrPath, true)) {
             importBook(uri, IOUtilities.getFilename(nameOrPath), true);
         } else if (nameOrPath.endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {
             importBloomBundle(uri);

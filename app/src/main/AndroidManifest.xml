@@ -85,26 +85,38 @@
                     See https://stackoverflow.com/questions/3400072/pathpattern-to-match-file-extension-does-not-work-if-a-period-exists-elsewhere-i/8599921
                     Also work around a file transfer bug that appends ".enc" to the end of the filename.
                 -->
+                <data android:pathPattern=".*\\.bloompub" />
+                <data android:pathPattern=".*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\.bloomd" />
                 <data android:pathPattern=".*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\.bloombundle" />
                 <data android:pathPattern=".*\\.bloombundle.enc" />
+                <data android:pathPattern=".*\\..*\\.bloompub" />
+                <data android:pathPattern=".*\\..*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\.bloombundle" />
                 <data android:pathPattern=".*\\..*\\.bloombundle.enc" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloompub" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloombundle" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloombundle.enc" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloompub" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle.enc" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloompub" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle.enc" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloompub" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
@@ -133,26 +145,38 @@
                     See https://stackoverflow.com/questions/3400072/pathpattern-to-match-file-extension-does-not-work-if-a-period-exists-elsewhere-i/8599921
                     Also work around a file transfer bug that appends ".enc" to the end of the filename.
                 -->
+                <data android:pathPattern=".*\\.bloompub" />
+                <data android:pathPattern=".*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\.bloomd" />
                 <data android:pathPattern=".*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\.bloombundle" />
                 <data android:pathPattern=".*\\.bloombundle.enc" />
+                <data android:pathPattern=".*\\..*\\.bloompub" />
+                <data android:pathPattern=".*\\..*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\.bloombundle" />
                 <data android:pathPattern=".*\\..*\\.bloombundle.enc" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloompub" />
+                <data android:pathPattern=".*\\..*\\..*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloombundle" />
                 <data android:pathPattern=".*\\..*\\..*\\.bloombundle.enc" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloompub" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.bloombundle.enc" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloompub" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.bloombundle.enc" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloompub" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloompub.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloomd.enc" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
@@ -178,6 +202,8 @@
                      their need in opening from email. -->
                 <data android:mimeType="application/vnd.bloom" />
                 <data android:mimeType="application/bloom" />
+                <data android:mimeType="application/vnd.bloompub" />
+                <data android:mimeType="application/bloompub" />
                 <data android:mimeType="application/vnd.bloomd" />
                 <data android:mimeType="application/bloomd" />
                 <data android:mimeType="application/vnd.bloombundle" />
@@ -191,7 +217,7 @@
                 <!-- I'm also adding application/zip in the anticipation that it will help with WhatsApp.
                      (And it seems it may have... May 2019.) -->
                 <data android:mimeType="application/zip" />
-                <!-- This makes Drive able to open .bloomd files on my Android 6 phone... May 2019 -->
+                <!-- This makes Drive able to open .bloompub/.bloomd files on my Android 6 phone... May 2019 -->
                 <data android:mimeType="application/x-zip" />
             </intent-filter>
             <!--
@@ -203,12 +229,12 @@
                 other 3 filters all use both 'file' and 'content' scheme, but I don't want to put
                 'file' in this filter to keep from catching more than we absolutely have to.
 
-                The Samsung "My Files" app can establish a connection between .bloomd files and
-                Bloom Reader if the .bloomd file is on the device before Bloom Reader is installed.
+                The Samsung "My Files" app can establish a connection between .bloompub/.bloomd files and
+                Bloom Reader if the .bloompub/.bloomd file is on the device before Bloom Reader is installed.
                 Clicking on the file, then choosing "Search" from the popup warning dialog and
                 installing Bloom Reader establishes the connection.  This connection appears to
                 persist if Bloom Reader is then uninstalled and reinstalled.
-                I don't know if it can establish a connection to both .bloomd and .bloombundle
+                I don't know if it can establish a connection to both .bloompub/.bloomd and .bloombundle
                 files, but possibly uninstalling it after getting the connection to one would allow
                 the user to reinstall and get a connection to the other without losing the first.
             -->

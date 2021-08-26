@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Handles requests with urls like http://[ipaddress]:5914/putfile?path=bookTitle.bloomd
+ * Handles requests with urls like http://[ipaddress]:5914/putfile?path=bookTitle.bloompub
  * to write a file containing the data transmitted to a file in the local Bloom directory.
  * This is configured as a request handler in SyncServer.
  * Slightly adapted from a similar file in HearThis Android

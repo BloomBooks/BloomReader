@@ -170,14 +170,18 @@ To update the sample book, *The Moon and the Cap*:
 - Open an English collection in the latest version of Bloom. Vernacular and National language should be English.
 - Set xMatter to Device.
 - Create a book using the sample shell.
-- Set the layout to Device16x9Portrait (this step is, theoretically, not necessary because Bloom Reader should display the correct layout, anyway, but it is probably a good idea).
-- Publish -> Android -> Save Bloom Reader File
-- Change the file extension from `.bloomd` to `.zip` and open the `.zip` archive.
+- Set the layout to Device16x9Portrait.
+- Publish -> Bloom Reader
+  - Make sure all languages are selected.
+    - Unfortunately, this currently means the Tibetan quiz is blank. Not sure what to do about that...
+  - Save Bloom Reader File
+- Open the .bloompub which is just a .zip archive.
+  - Depending on your zip software, you may need to change the file extension from `.bloompub` to `.zip` to do so.
 - Pull the `meta.json` file out of the archive and edit it to include the following line:
 
     `"brandingProjectName":"Sample-Book",` making sure there is not another line with the same `brandingProjectName` "key".
-- Put the modified `meta.json` file back in the `.zip` archive and change the archive's extension back to `.bloomd`.
-- Save to {BloomReader}/app/src/main/assets/sample books/The Moon and the Cap.bloomd
+- Put the modified `meta.json` file back in the `.zip` archive and change the archive's extension back to `.bloompub`.
+- Save to {BloomReader}/app/src/main/assets/sample books/The Moon and the Cap.bloompub
 
 ## Contributions
 We welcome contributions, particularly if we pre-agree on UX.

@@ -347,6 +347,7 @@ public class IOUtilities {
     }
 
     public static long lastModified(Context context, Uri uri) {
+        if (uri == null) return 0; // sometimes we make a URI for a file that might not exist, like something.modified.
         if (uri.getScheme().equals("file")) {
             return new File(uri.getPath()).lastModified(); // returns zero if anything goes wrong.
         }

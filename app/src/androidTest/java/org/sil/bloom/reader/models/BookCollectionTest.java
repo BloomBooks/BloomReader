@@ -21,15 +21,16 @@ public class BookCollectionTest {
     // in the regular unit test environment, and setShelvesAndTitleOfBook uses it.
     @Test
     public void setBookFilters_bookOnTwoShelves_addsThem() throws Exception {
-        // suggested for a file in test assets using a subclass of InstrumentationTestCase. But that is deprecated.
-        //InputStream testInput = getInstrumentation().getTargetContext().getResources().getAssets().open("testmeta.bloompub");
-        // Looks for a file in a parallel directory.
-        // Since this file is app\src\androidTest\java\org\sil\bloom\reader\models\BookCollectionTest.java,
-        // the file it looks for is app\src\androidTest\resources\org\sil\bloom\reader\models\testmeta.bloompub
-        // That is a version-controlled test data file (described further below).
-        InputStream testInput = getClass().getResourceAsStream("testmeta.bloompub");
-        String [] suffixesToTest = {"bloompub", "bloomd"};
+        String [] suffixesToTest = {".bloompub", ".bloomd"};
         for (String suffix : suffixesToTest){
+            // suggested for a file in test assets using a subclass of InstrumentationTestCase. But that is deprecated.
+            //InputStream testInput = getInstrumentation().getTargetContext().getResources().getAssets().open("testmeta.bloompub");
+            // Looks for a file in a parallel directory.
+            // Since this file is app\src\androidTest\java\org\sil\bloom\reader\models\BookCollectionTest.java,
+            // the file it looks for is app\src\androidTest\resources\org\sil\bloom\reader\models\testmeta.bloompub
+            // That is a version-controlled test data file (described further below).
+            InputStream testInput = getClass().getResourceAsStream("testmeta.bloompub");
+
             // Botheration! We're not allowed to know the path to one of our assets.
             // Copy it to a temp file.
             File file = File.createTempFile("some book", suffix);

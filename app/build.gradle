@@ -121,6 +121,11 @@ android {
 
     lintOptions {
         warning "MissingTranslation"
+
+        // As a general rule, we definitely don't want to treat this as a warning.
+        // But in Aug 2021, we are just trying to get a hotfix out to version 1
+        // which allows users to open .bloompub files. BL-10036
+        warning "GradleCompatible"
     }
 }
 

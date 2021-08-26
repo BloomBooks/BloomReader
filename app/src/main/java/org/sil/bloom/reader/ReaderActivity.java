@@ -285,7 +285,7 @@ public class ReaderActivity extends BaseActivity {
                     // and thus whether it is a multimedia book.
                     // once motion was figured from htmlNoSpaces.contains("data-initialrect=");
                     // but the new approach below reflects whether the author chose for the book to show
-                    // motion when publishing it to bloomd.
+                    // motion when publishing it to bloompub/bloomd.
                     hasMotion = getBooleanFeature("fullscreenpicture", false, true);
                     mIsMultiMediaBook = sAutoAdvance.matcher(html).find() ||
                             isTalkingBook ||
@@ -639,7 +639,7 @@ public class ReaderActivity extends BaseActivity {
         try {
             String filenameWithExtension = new File(path).getName();
             // this mBookName is used by subsequent analytics reports
-            mBookName = filenameWithExtension.substring(0, filenameWithExtension.length() - IOUtilities.BOOK_FILE_EXTENSION.length());
+            mBookName = IOUtilities.stripBookFileExtension(filenameWithExtension);
             Properties p = new Properties();
             p.putValue("title", mBookName);
             p.putValue("totalNumberedPages", mNumberedPageCount);

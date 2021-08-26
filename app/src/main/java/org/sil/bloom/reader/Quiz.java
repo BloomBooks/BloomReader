@@ -14,7 +14,7 @@ import java.util.List;
 
 /*
     Represents a series of comprehension questions derived from a questions.json included in the
-    bloomd file.
+    bloompub/bloomd file.
  */
 
 public class Quiz {

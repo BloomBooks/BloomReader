@@ -21,15 +21,16 @@ public class BookCollectionTest {
     // in the regular unit test environment, and setShelvesOfBook uses it.
     @Test
     public void setBookFilters_bookOnTwoShelves_addsThem() throws Exception {
-        // suggested for a file in test assets using a subclass of InstrumentationTestCase. But that is deprecated.
-        //InputStream testInput = getInstrumentation().getTargetContext().getResources().getAssets().open("testmeta.bloompub");
-        // Looks for a file in a parallel directory.
-        // Since this file is app\src\androidTest\java\org\sil\bloom\reader\models\BookCollectionTest.java,
-        // the file it looks for is app\src\androidTest\resources\org\sil\bloom\reader\models\testmeta.bloompub
-        // That is a version-controlled test data file (described further below).
-        InputStream testInput = getClass().getResourceAsStream("testmeta.bloompub");
-        String [] suffixesToTest = {"bloompub", "bloomd"};
+        String [] suffixesToTest = {".bloompub", ".bloomd"};
         for (String suffix : suffixesToTest){
+            // suggested for a file in test assets using a subclass of InstrumentationTestCase. But that is deprecated.
+            //InputStream testInput = getInstrumentation().getTargetContext().getResources().getAssets().open("testmeta.bloompub");
+            // Looks for a file in a parallel directory.
+            // Since this file is app\src\androidTest\java\org\sil\bloom\reader\models\BookCollectionTest.java,
+            // the file it looks for is app\src\androidTest\resources\org\sil\bloom\reader\models\testmeta.bloompub
+            // That is a version-controlled test data file (described further below).
+            InputStream testInput = getClass().getResourceAsStream("testmeta.bloompub");
+
             // Botheration! We're not allowed to know the path to one of our assets.
             // Copy it to a temp file.
             File file = File.createTempFile("some book", suffix);
@@ -46,7 +47,7 @@ public class BookCollectionTest {
             // so now file is a temp zip file containing meta.json containing
             // "tags":["Animals", "bloomshelf:Level 2", "bloomshelf:rise/PNG"]
             BookOrShelf book = new BookOrShelf(file.getPath());
-            BookCollection.setShelvesAndTitleOfBook(book);
+            BookCollection.setShelvesOfBook(book);
             assertThat(book.isBookInShelf("Level 2"), is(true));
             assertThat(book.isBookInShelf("rise/PNG"), is(true));
             assertThat(book.isBookInShelf("Animals"), is(false));

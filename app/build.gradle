@@ -5,7 +5,7 @@ plugins {
 
 // This is the master definition of what version of Bloom Reader we are building
 def versionMajor = 1
-def versionMinor = 3
+def versionMinor = 4
 def versionRelease = getVersionRelease()
 
 int getVersionRelease() {

@@ -149,7 +149,7 @@ public class BookCollection {
                 fixBloomd(f.getAbsolutePath());
             }
             for (File booksDir : booksDirs)
-                loadFromDirectory(booksDir, activity);
+                loadFromDirectory(booksDir);
         }
     }
 
@@ -163,7 +163,7 @@ public class BookCollection {
                     continue; // not a book (nor a shelf)!
                 final String path = files[i].getAbsolutePath();
                 if (IOUtilities.isBloomPubFile(name) &&
-                        !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD)) {
+                        !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMPUB)) {
                     String markedName = name + "-BAD";
                     Log.w("BloomCollection", "Renaming invalid book file "+path+" to "+markedName);
                     Context context = BloomReaderApplication.getBloomApplicationContext();

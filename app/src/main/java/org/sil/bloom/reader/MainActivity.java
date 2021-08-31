@@ -1121,6 +1121,11 @@ public class MainActivity extends BaseActivity
             reportReadyForUsb();
             return;
         }
+        File oldBloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
+        if (!oldBloomDir.exists()) {
+            Toast.makeText(this, getString(R.string.please_send_book), Toast.LENGTH_LONG).show();
+            return;
+        }
         // At this point we know we don't already have any permission.
         if (osAllowsGeneralStorageAccess()) {
             requestLegacyStoragePermission(forUsb ? STORAGE_PERMISSION_USB : STORAGE_PERMISSION_CHECK_OLD_BLOOM);

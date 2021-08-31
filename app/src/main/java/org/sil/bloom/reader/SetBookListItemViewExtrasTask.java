@@ -1,8 +1,12 @@
 package org.sil.bloom.reader;
 
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.util.TypedValue;
+import android.view.ViewGroup;
+
 import androidx.annotation.NonNull;
 
 import org.sil.bloom.reader.models.BookCollection;
@@ -47,11 +51,20 @@ public class SetBookListItemViewExtrasTask extends AsyncTask<Void, Void, SetBook
     private void setInitialImageView(){
         if ("loadExternalFiles".equals(bookOrShelf.specialBehavior)) {
             viewHolder.imageView.setImageResource(R.drawable.ic_sd_card);
+            final Resources resources = viewHolder.getContext().getResources();
+            // Converts 'dp' measurements into actual pixels
+            int newPadding = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    12,
+                    resources.getDisplayMetrics()
+            );
+            viewHolder.imageView.setPadding(newPadding, newPadding, newPadding, newPadding);
             return;
         }
         if ("importOldBloomFolder".equals(bookOrShelf.specialBehavior)) {
             // Enhance: add some suitable icon
             //viewHolder.imageView.setImageResource(R.drawable.ic_sd_card);
+            viewHolder.imageView.setImageDrawable(null);
             return;
         }
         if (bookOrShelf.isShelf()) {

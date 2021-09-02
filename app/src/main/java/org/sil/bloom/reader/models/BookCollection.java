@@ -23,6 +23,7 @@ import org.sil.bloom.reader.R;
 import org.sil.bloom.reader.ThumbnailCleanup;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -242,8 +243,9 @@ public class BookCollection {
                 for (File booksDir : booksDirs) {
                     int newCount = 0;
                     try {
-                        File[] files = booksDir.listFiles(new FilenameFilter() {
-                            public boolean accept(File dir, String name) {
+                        File[] files = IOUtilities.listFilesRecursively(booksDir,new FileFilter() {
+                            public boolean accept(File file) {
+                                String name = file.getName();
                                 return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
                             }
                         });
@@ -297,7 +299,7 @@ public class BookCollection {
     }
 
     private void loadFromDirectory(File directory, Activity activity) {
-        File[] files = directory.listFiles();
+        File[] files = IOUtilities.listFilesRecursively(directory, null);
         ArrayList<BookOrShelf> books = new ArrayList<BookOrShelf>();
         if (files == null || files.length == 0) {
             // files may be null, or spuriously have length zero, if we don't have permission to access the folder,

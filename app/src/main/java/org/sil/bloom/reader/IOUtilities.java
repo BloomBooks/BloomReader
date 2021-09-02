@@ -23,6 +23,7 @@ import org.sil.bloom.reader.models.BookOrShelf;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -33,6 +34,7 @@ import java.io.OutputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -643,6 +645,38 @@ public class IOUtilities {
             }
         }
         return null;
+    }
+
+    public static int countFilesRecursively(File root, FileFilter filter) {
+        return listFilesRecursively(root, filter, null);
+    }
+
+    public static File[] listFilesRecursively(File root, FileFilter filter) {
+        ArrayList<File> accumulator = new ArrayList<>();
+        int count = listFilesRecursively(root, filter, accumulator);
+        return accumulator.toArray(new File[count]);
+    }
+
+    public static int listFilesRecursively(File root, FileFilter filter, ArrayList<File> result) {
+        final int[] count = new int[] {0};
+        root.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                if (file.isDirectory()) {
+                    count[0] += listFilesRecursively(file, filter, result);
+                }
+                if (filter == null || filter.accept(file)) {
+                    count[0]++;
+                    if (result != null) {
+                        result.add(file);
+                    }
+                }
+                // We're not using the result of listFiles, so no need for it to build up an array,
+                // whether the file passed or not.
+                return false;
+            }
+        });
+        return count[0];
     }
 
     private static boolean isRemovable(File dir) {

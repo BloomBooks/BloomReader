@@ -444,7 +444,17 @@ public class IOUtilities {
         TarArchiveOutputStream tarOutput = new TarArchiveOutputStream(new FileOutputStream(destinationPath));
         tarOutput.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
         for(File file : files) {
-            TarArchiveEntry entry = new TarArchiveEntry(file, file.getName());
+            String bookFileName = file.getName();
+            // Here we don't want to rename bloom shelves. And eventually we will take this out.
+            // But currently older bloom readers won't handle bloombundles containing bloompubs.
+            if (bookFileName.endsWith(".bloompub")) {
+                int index = bookFileName.lastIndexOf(".");
+                if (index >= 0) {
+                    bookFileName = bookFileName.substring(0, index);
+                }
+                bookFileName += ".bloomd";
+            }
+            TarArchiveEntry entry = new TarArchiveEntry(file, bookFileName);
             tarOutput.putArchiveEntry(entry);
             FileInputStream in = new FileInputStream(file);
             IOUtils.copy(in, tarOutput);

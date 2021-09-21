@@ -72,6 +72,7 @@
     <!-- Used both as a menu option and as the title of the resulting dialog-->
     <string name="receive_books_over_usb">Receive books via USB</string>
     <string name="ready_to_receive_usb">Bloom Reader is ready to receive books via USB cable from the Bloom Editor program</string>
+    <string name="please_send_book">Please send a book from Bloom Editor and then choose this command again</string>
 
     <string name="bloomReaderUrl" translatable="false"><u>bloomlibrary.org</u></string>
 

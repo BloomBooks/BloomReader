@@ -309,10 +309,11 @@ public class BookCollection {
             }
         });
         ArrayList<BookOrShelf> books = new ArrayList<BookOrShelf>();
-        if (files == null || files.length == 0) {
+        if (files == null || files.length == 0 && !BaseActivity.haveLegacyStoragePermission(activity)) {
             // files may be null, or spuriously have length zero, if we don't have permission to access the folder,
             // or even if we DO have permission, but it's a folder we can only access through
-            // SAF, like BloomExternal. So try again that way.
+            // SAF, like BloomExternal. So try again that way, if we get an empty list when we're
+            // without legacy storage permission. Of course, if we do have that, the result should be correct.
             loadFromSAFDirectory(directory, activity);
             return;
         }

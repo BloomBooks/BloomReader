@@ -299,7 +299,15 @@ public class BookCollection {
     }
 
     private void loadFromDirectory(File directory, Activity activity) {
-        File[] files = IOUtilities.listFilesRecursively(directory, null);
+        File[] files = IOUtilities.listFilesRecursively(directory, new FileFilter() {
+            // Even when we DON'T HAVE PERMISSION to access files in the directory, we can see its
+            // subdirectories!! But if we find no files, we're going to presume we have no permissions,
+            // so we don't want to count directories here.
+            @Override
+            public boolean accept(File file) {
+                return !file.isDirectory();
+            }
+        });
         ArrayList<BookOrShelf> books = new ArrayList<BookOrShelf>();
         if (files == null || files.length == 0) {
             // files may be null, or spuriously have length zero, if we don't have permission to access the folder,

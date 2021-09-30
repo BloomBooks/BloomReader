@@ -63,7 +63,6 @@ import java.util.Locale;
 import static org.sil.bloom.reader.BloomReaderApplication.shouldPreserveFilesInOldDirectory;
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
-import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.ENCODED_FILE_EXTENSION;
 
 
@@ -206,8 +205,7 @@ public class MainActivity extends BaseActivity
                                 e.printStackTrace();
                             }
                         }
-                    }
-                });
+                    });
                 alertDialog.show();
             }
         }
@@ -410,7 +408,7 @@ public class MainActivity extends BaseActivity
                 SAFUtilities.searchDirectoryForBooks(this, SAFUtilities.getBloomDirectoryTreeUri(), new BookSearchListener() {
                     @Override
                     public void onFoundBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
-                        String fileName = IOUtilities.getFileNameFromUri(context, bookOrShelfUri);
+                        String fileName = BookCollection.fixBloomd(IOUtilities.getFileNameFromUri(context, bookOrShelfUri));
                         File privateStorageFile = new File(newBloomDir + "/" + fileName);
                         final long bloomDirectoryModifiedTime = IOUtilities.lastModified(context, bookOrShelfUri);
                         if (privateStorageFile.exists() && privateStorageFile.lastModified() >= bloomDirectoryModifiedTime)
@@ -1099,7 +1097,7 @@ public class MainActivity extends BaseActivity
                         TextFileContent metaFile = new TextFileContent("meta.json");
                         boolean validFile = uri.getPath().endsWith(BOOKSHELF_FILE_EXTENSION)
                                 ? BloomShelfFileReader.isValidShelf(this, uri)
-                                : IOUtilities.isValidZipUri(uri, IOUtilities.CHECK_BLOOMD, metaFile);
+                                : IOUtilities.isValidZipUri(uri, IOUtilities.CHECK_BLOOMPUB, metaFile);
                         if (!validFile)
                         {
                             Toast toast = Toast.makeText(this, "This does not appear to be a bloom file. Try files ending with .bloompub, .bloomd, .bloomshelf, or .bloombundle.",

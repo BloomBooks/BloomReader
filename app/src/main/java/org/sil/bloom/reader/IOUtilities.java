@@ -21,10 +21,10 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
 import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.models.BookCollection;
-import org.sil.bloom.reader.models.ExtStorageUnavailableException;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -96,7 +96,7 @@ public class IOUtilities {
         return fileName;
     }
 
-    public static File getBookFileIfExists(String title) throws ExtStorageUnavailableException {
+    public static File getBookFileIfExists(String title) {
         File localBookDirectory = BookCollection.getLocalBooksDirectory();
         for (String bookFileExtension : BOOK_FILE_EXTENSIONS) {
             File file = new File(localBookDirectory, title + bookFileExtension);
@@ -320,8 +320,8 @@ public class IOUtilities {
                 return true;
         }
         try {
-            // REVIEW very minimal check for .bloomd files: are there any filenames guaranteed to exist
-            // in any .bloomd file regardless of age?
+            // REVIEW very minimal check for .bloompub files: are there any filenames guaranteed to exist
+            // in any .bloompub file regardless of age?
             int countHtml = 0;
             int countCss = 0;
             InputStream fs = context.getContentResolver().openInputStream(input);
@@ -379,7 +379,7 @@ public class IOUtilities {
                 fs.close();
             }
             boolean retval;
-            if (checkType == IOUtilities.CHECK_BLOOMD)
+            if (checkType == IOUtilities.CHECK_BLOOMPUB)
                 retval = countHtml == 1 && countCss > 0;
             else
                 retval = true;

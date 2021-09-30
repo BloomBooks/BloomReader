@@ -34,7 +34,7 @@ public class SharingManager {
     public void shareBook(Context context, BookOrShelf book){
         // The second condition is temporary. See comment in stageBook. For now, almost all
         // books (except perhaps in BloomExternal) will get staged.
-        File bookFile = book.inShareableDirectory() && book.path.endsWith(".bloomd")
+        File bookFile = book.inShareableDirectory() && book.pathOrUri.endsWith(".bloomd")
                 ? new File(book.pathOrUri)
                 : stageBook(context, book);
         if (bookFile == null) return;

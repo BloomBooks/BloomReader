@@ -66,8 +66,6 @@ public class BookOrShelf {
         Uri uri = SAFUtilities.getContentUriIfItIsOne(pathOrUri);
         // The main reason for getPath() is to remove url encoding.
         final String path = uri == null ? pathOrUri : uri.getPath();
-        return new File(path).getName().replace(BOOK_FILE_EXTENSION,"").replace(BOOKSHELF_FILE_EXTENSION,"");
-    public static String getNameFromPath(String path) {
         return IOUtilities.stripBookFileExtension(new File(path).getName()).replace(BOOKSHELF_FILE_EXTENSION,"");
     }
 

@@ -325,12 +325,11 @@ public class BookCollection {
         for (int i = 0; i < files.length; i++) {
             final String name = files[i].getName();
             TextFileContent metaFile = new TextFileContent("meta.json");
-            if (!name.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
-                    && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
+            if (!IOUtilities.isBloomPubFile(name))
                 continue; // not a book (nor a shelf)!
             final String path = files[i].getAbsolutePath();
-            if (name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
-                    !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMD, metaFile)) {
+            if (IOUtilities.isBloomPubFile(name) &&
+                    !IOUtilities.isValidZipFile(new File(path), IOUtilities.CHECK_BLOOMPUB, metaFile)) {
                 activity.runOnUiThread(new Runnable() {
                     public void run() {
                         String markedName = name + "-BAD";
@@ -375,15 +374,15 @@ public class BookCollection {
 
         BookSearchListener listener = new BookSearchListener() {
             @Override
-            public void onFoundBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+            public void onFoundBookOrShelf(File bloomPubFile, Uri bookOrShelfUri) {
                 // in this context it isn't really new, but oh well..
                 final String path = bookOrShelfUri.getPath();
-                if (!path.endsWith(IOUtilities.BOOK_FILE_EXTENSION)
+                if (!IOUtilities.isBloomPubFile(path)
                         && !path.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
                     return; // not a book (nor a shelf)!
                 TextFileContent metaFile = new TextFileContent("meta.json");
                 if (IOUtilities.isBloomPubFile(path) &&
-                        !IOUtilities.isValidZipUri(bookOrShelfUri, IOUtilities.CHECK_BLOOMD, metaFile)) {
+                        !IOUtilities.isValidZipUri(bookOrShelfUri, IOUtilities.CHECK_BLOOMPUB, metaFile)) {
                     // Todo: can we find a way to hide the bad file??
 //                    activity.runOnUiThread(new Runnable() {
 //                        public void run() {

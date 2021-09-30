@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
-import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.ENCODED_FILE_EXTENSION;
 
 public class SAFUtilities {
@@ -243,7 +242,7 @@ public class SAFUtilities {
         final int[] count = {0};
         BookSearchListener listener = new BookSearchListener() {
             @Override
-            public void onFoundBookOrShelf(File bloomdFile, Uri bookOrShelfUri) {
+            public void onFoundBookOrShelf(File bloomPubFile, Uri bookOrShelfUri) {
                 count[0]++;
             }
 
@@ -299,8 +298,7 @@ public class SAFUtilities {
                         if (name.endsWith(BLOOM_BUNDLE_FILE_EXTENSION) ||
                                 name.endsWith(BLOOM_BUNDLE_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
                             bookSearchListener.onFoundBundle(uri);
-                        } else if (name.endsWith(BOOK_FILE_EXTENSION) ||
-                                name.endsWith(BOOK_FILE_EXTENSION + ENCODED_FILE_EXTENSION) ||
+                        } else if (IOUtilities.isBloomPubFile(name, true) ||
                                 name.endsWith(BOOKSHELF_FILE_EXTENSION) ||
                                 name.endsWith(BOOKSHELF_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
                             bookSearchListener.onFoundBookOrShelf(new File(uri.getPath()), uri);

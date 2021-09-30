@@ -63,8 +63,14 @@ public class IOUtilities {
     }
 
     public static void emptyDirectory(File dir) {
-        for (File child : dir.listFiles())
-            deleteFileOrDirectory(child);
+        if (dir == null)
+            return;
+
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File child : files)
+                deleteFileOrDirectory(child);
+        }
     }
 
     // Returns true if the file name's extension indicates this file

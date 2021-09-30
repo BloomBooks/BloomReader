@@ -205,8 +205,15 @@ public class MainActivity extends BaseActivity
                         p.putValue("granted", doTurnOn[0]);
 
                         Context context = BloomReaderApplication.getBloomApplicationContext();
-                        if (context != null)
-                            Analytics.with(context).track("requestGps", p);
+                        if (context != null) {
+                            try {
+                                Analytics.with(context).track("requestGps", p);
+                            } catch (Exception e) {
+                                // Play console shows us that we can get here without a writeKey having been
+                                // set which then crashes the app.
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 });
                 alertDialog.show();

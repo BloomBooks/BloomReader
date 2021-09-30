@@ -4,3 +4,5 @@ Supports newer versions of Android (11+):
 New "Open BoomPUB file" command lets you choose a single file to open.
 Can function without permission to access all files.
 Book collection is no longer shared with Alpha and Release versions.
+Handle .bloompub files.
+Various enhancements and fixes.

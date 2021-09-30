@@ -78,6 +78,7 @@ public class BookCollection {
     }
 
     public BookOrShelf addBookOrShelfIfNeeded(String pathOrUri) {
+ 		pathOrUri = fixBloomd(pathOrUri);
         BookOrShelf existingBook = getBookOrShelfByPath(pathOrUri);
         if (existingBook != null)
             return existingBook;
@@ -246,7 +247,7 @@ public class BookCollection {
                         File[] files = IOUtilities.listFilesRecursively(booksDir,new FileFilter() {
                             public boolean accept(File file) {
                                 String name = file.getName();
-                                return name.endsWith(IOUtilities.BOOK_FILE_EXTENSION) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
+                                return  IOUtilities.isBloomPubFile(name) || name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION);
                             }
                         });
                         newCount = files != null ? files.length : 0;
@@ -282,6 +283,10 @@ public class BookCollection {
             mInitializeTask.setBookCount(count);
         }
         if (booksDirs != null && booksDirs.length > 0) {
+            // Fix any duplicate .bloomd/.bloompub pairs in our main directory.
+            for (File f:booksDirs[0].listFiles()) {
+                fixBloomd(f.getAbsolutePath());
+            }
             for (File booksDir : booksDirs)
                 loadFromDirectory(booksDir, activity);
         }
@@ -377,7 +382,7 @@ public class BookCollection {
                         && !path.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
                     return; // not a book (nor a shelf)!
                 TextFileContent metaFile = new TextFileContent("meta.json");
-                if (path.endsWith(IOUtilities.BOOK_FILE_EXTENSION) &&
+                if (IOUtilities.isBloomPubFile(path) &&
                         !IOUtilities.isValidZipUri(bookOrShelfUri, IOUtilities.CHECK_BLOOMD, metaFile)) {
                     // Todo: can we find a way to hide the bad file??
 //                    activity.runOnUiThread(new Runnable() {
@@ -466,11 +471,12 @@ public class BookCollection {
         if (bookOrShelfUri == null || bookOrShelfUri.getPath() == null)
             return null; // Play console proves this is possible somehow
 
-        // Possible for this to happen if we load a .bloomd directly without loading the whole app first (BL-8218)
+        // Possible for this to happen if we load a .bloompub/.bloomd directly without loading the whole app first (BL-8218)
         if (mLocalBooksDirectory == null)
             mLocalBooksDirectory = getLocalBooksDirectory();
 
-        if (bookOrShelfUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath()))
+        // We need the extra slash so that e.g. books in "Bloom - Copy" are not treated as already in Bloom.
+        if (bookOrShelfUri.getPath().contains(mLocalBooksDirectory.getAbsolutePath() + "/"))
             return new Pair<>(bookOrShelfUri.getPath(), false);
 
         // If the book is in BloomExternal, we will neither copy nor move it, just read it directly
@@ -489,9 +495,7 @@ public class BookCollection {
 
         String filename = IOUtilities.getFileNameFromUri(context, bookOrShelfUri);
         String destination = mLocalBooksDirectory.getAbsolutePath() + File.separator + filename;
-        if (filename.endsWith(IOUtilities.BOOK_FILE_EXTENSION + IOUtilities.ENCODED_FILE_EXTENSION)) {
-            destination = destination.substring(0, destination.length() - IOUtilities.ENCODED_FILE_EXTENSION.length());
-        }
+        destination = IOUtilities.ensureFileNameHasNoEncodedExtension(destination);
         File destFile = new File(destination);
         if (destFile.exists() && destFile.lastModified() < IOUtilities.lastModified(context, bookOrShelfUri)) {
             return new Pair<>(destination, false);
@@ -499,6 +503,7 @@ public class BookCollection {
         Log.d("BloomReader", "Copying book into Bloom directory");
         boolean copied = IOUtilities.copyBookOrShelfFile(context, bookOrShelfUri, destination);
         if (copied){
+			destination = fixBloomd(destination);
             destination = FixDuplicate(destination);
             // it's probably not in our list that we display yet, so make an entry there
             addBookOrShelfIfNeeded(destination);
@@ -529,7 +534,9 @@ public class BookCollection {
             similarBookName = similarBookName.substring(0,lastSpace);
 
         // This is what we'd expect the original to be called if previously downloaded.
-        String possibleMatch = parent.getPath() + File.separator + similarBookName + IOUtilities.BOOK_FILE_EXTENSION;
+        // (We don't think we need to handle .bloomd files here. Both the incoming path and
+        // the ones aleady in the Bloom directory should already be .bloompub.)
+        String possibleMatch = parent.getPath() + File.separator + similarBookName + ".bloompub";
         final File similarBookFile = new File(possibleMatch);
         if (!similarBookFile.exists())
             return newBloomFile; // we don't have a book at the expected location. Maybe the book name really has parens! Or deleted previously.
@@ -567,6 +574,28 @@ public class BookCollection {
         }
     }
 
+    // If the path passed ends in the obsolete .bloomd, rename it to .bloompub.
+    // If that results in a conflict, delete the older file and keep the newer one with the
+    // correct name.
+    // Return the (possibly corrected) name.
+    public static String fixBloomd(String currentPath) {
+        if (!currentPath.endsWith(".bloomd")) return currentPath;
+        File currentFile = new File(currentPath);
+        String newPath = currentPath.substring(0, currentPath.length() - "bloomd".length()) + "bloompub";
+        if (!currentFile.exists()) return newPath; // may have already been fixed in a previous call
+        File newFile = new File(newPath);
+        if (newFile.exists()) {
+            if (newFile.lastModified() > currentFile.lastModified()) {
+                // we'll keep the existing 'new' file
+                currentFile.delete();
+                return newPath;
+            }
+            newFile.delete();
+        }
+        currentFile.renameTo(newFile);
+        return newPath;
+    }
+
     // Tests whether a book passes the current 'filter'.
     // A null (or empty) filter, used by the main activity, contains books that are not on any
     // (existing) shelf. A non-empty filter, which is expected to be the ID of a shelf, contains books
@@ -582,7 +611,7 @@ public class BookCollection {
     }
 
     // Set the shelves if any that a book or shelf belongs to.
-    // Extracts the meta.json entry from the bloomd file, extracts the tags from that,
+    // Extracts the meta.json entry from the bloompub/bloomd file, extracts the tags from that,
     // finds any that start with "bookshelf:", and sets the balance of the tag as one of the
     // book's shelves.  The meta.json data may or may not have already been extracted.
     public static void setShelvesAndTitleOfBook(BookOrShelf bookOrShelf, TextFileContent metaFile) {
@@ -619,7 +648,7 @@ public class BookCollection {
             }
         } catch (Exception e) {
             // Not sure about just catching everything like this. But the worst that happens if
-            // a bloomd does not contain valid meta.json from which we can extract tags is that
+            // a bloompub/bloomd does not contain valid meta.json from which we can extract tags is that
             // the book shows up at the root instead of on a shelf, and that its title comes from
             // the filename, which is based on the title and usually correct.
             e.printStackTrace();

@@ -5,6 +5,9 @@ Supports newer versions of Android (11+):
 New "Open BoomPUB file" command lets you choose a single file to open.
 Can function without permission to access all files.
 
+2.5
+Handle .bloompub files.
+
 2.4
 Activities can control their own navigation.
 Improved analytics.

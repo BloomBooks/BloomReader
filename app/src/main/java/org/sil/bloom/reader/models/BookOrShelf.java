@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
-import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 
 public class BookOrShelf {
     public static final String SHARED_PREFERENCES_TAG = "org.sil.bloom.reader.BookMetaJson";
@@ -68,6 +67,8 @@ public class BookOrShelf {
         // The main reason for getPath() is to remove url encoding.
         final String path = uri == null ? pathOrUri : uri.getPath();
         return new File(path).getName().replace(BOOK_FILE_EXTENSION,"").replace(BOOKSHELF_FILE_EXTENSION,"");
+    public static String getNameFromPath(String path) {
+        return IOUtilities.stripBookFileExtension(new File(path).getName()).replace(BOOKSHELF_FILE_EXTENSION,"");
     }
 
     public boolean isShelf() {

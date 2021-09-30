@@ -197,8 +197,16 @@ public class MainActivity extends BaseActivity
                         p.putValue("granted", doTurnOn[0]);
 
                         Context context = BloomReaderApplication.getBloomApplicationContext();
-                        if (context != null)
-                            Analytics.with(context).track("requestGps", p);
+                        if (context != null) {
+                            try {
+                                Analytics.with(context).track("requestGps", p);
+                            } catch (Exception e) {
+                                // Play console shows us that we can get here without a writeKey having been
+                                // set which then crashes the app.
+                                e.printStackTrace();
+                            }
+                        }
+                    }
                 });
                 alertDialog.show();
             }
@@ -437,7 +445,7 @@ public class MainActivity extends BaseActivity
     }
 
     // This is called when BR is running and another app launches us by intent
-    // (like opening a .bloomd).
+    // (like opening a .bloompub/.bloomd).
     // It is called because we have set android:launchMode="singleTask" in AndroidManifest.xml.
     // See more info there about why we have set things up this way.
     // Note that if there is a ReaderActivity (or any other activity) running at the time,
@@ -579,8 +587,7 @@ public class MainActivity extends BaseActivity
         String nameOrPath = IOUtilities.getFileNameOrPathFromUri(this, uri);
         if (nameOrPath == null) // reported as crash on Play console
             return;
-        if (nameOrPath.endsWith(BOOK_FILE_EXTENSION) ||
-                nameOrPath.endsWith(BOOK_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
+        if (IOUtilities.isBloomPubFile(nameOrPath, true)) {
             importBookOrShelf(uri, true);
         } else if (nameOrPath.endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {
             importBloomBundle(uri);
@@ -713,6 +720,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void updateForNewBook(String filePathOrUri) {
+		filePathOrUri = BookCollection.fixBloomd(filePathOrUri);
         BookOrShelf book = _bookCollection.addBookOrShelfIfNeeded(filePathOrUri);
         refreshList(book);
         if (sSkipNextNewFileSound) {

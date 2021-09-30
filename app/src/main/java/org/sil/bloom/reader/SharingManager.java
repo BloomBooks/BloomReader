@@ -18,8 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
-
 /**
  * Created by rick on 10/2/17.
  * Much of it borrowed from the SharingManager for Scripture/ReadingAppBuilder
@@ -34,7 +32,11 @@ public class SharingManager {
     }
 
     public void shareBook(Context context, BookOrShelf book){
-        File bookFile = book.inShareableDirectory() ? new File(book.pathOrUri) : stageBook(context, book);
+        // The second condition is temporary. See comment in stageBook. For now, almost all
+        // books (except perhaps in BloomExternal) will get staged.
+        File bookFile = book.inShareableDirectory() && book.path.endsWith(".bloomd")
+                ? new File(book.pathOrUri)
+                : stageBook(context, book);
         if (bookFile == null) return;
         String dialogTitle = String.format(mActivity.getString(R.string.shareBook), book.name);
         shareFile(bookFile, "application/zip", dialogTitle);
@@ -42,6 +44,16 @@ public class SharingManager {
 
     private File stageBook(Context context, BookOrShelf book) {
         String bookFileName = new File(book.pathOrUri).getName();
+        // This is temporary. The destination may be an old version of BloomReader that only
+        // understands .bloomd. When we think most users have a version of
+        // BloomReader that understands .bloompub files, we will start sharing them directly.
+        if (!bookFileName.endsWith(".bloomd")) {
+            int index = bookFileName.lastIndexOf(".");
+            if (index >= 0) {
+                bookFileName = bookFileName.substring(0, index);
+            }
+            bookFileName += ".bloomd";
+        }
         String outPath = context.getCacheDir().getPath() + File.separator + bookFileName;
         if (IOUtilities.copyFile(book.pathOrUri, outPath)) {
             return new File(outPath);
@@ -136,7 +148,7 @@ public class SharingManager {
         String[] cacheItems = context.getCacheDir().list();
         if (cacheItems == null) { return; }
         for (String cacheItem : cacheItems) {
-            if (cacheItem.endsWith(BOOK_FILE_EXTENSION)) {
+            if (IOUtilities.isBloomPubFile(cacheItem)) {
                 File file = new File(context.getCacheDir() + File.separator + cacheItem);
                 if (file.lastModified() < yesterday)
                     file.delete();

@@ -8,7 +8,6 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
-import static org.sil.bloom.reader.IOUtilities.BOOK_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.ENCODED_FILE_EXTENSION;
 
@@ -57,8 +56,7 @@ public class BookFinderTask extends AsyncTask<Void, Void, Void> {
                     if (f.getName().endsWith(BLOOM_BUNDLE_FILE_EXTENSION) ||
                             f.getName().endsWith(BLOOM_BUNDLE_FILE_EXTENSION + ENCODED_FILE_EXTENSION))
                         foundNewBundle(f);
-                    else if (f.getName().endsWith(BOOK_FILE_EXTENSION) ||
-                             f.getName().endsWith(BOOK_FILE_EXTENSION + ENCODED_FILE_EXTENSION) ||
+                    else if (IOUtilities.isBloomPubFile(f.getName(), true) ||
                              f.getName().endsWith(BOOKSHELF_FILE_EXTENSION))
                         foundNewBookOrShelf(f);
                 }

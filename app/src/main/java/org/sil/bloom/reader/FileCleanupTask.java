@@ -14,7 +14,7 @@ import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
 
 /*
-    Used to clean up a bloombundle or bloomd file after importing the contents into
+    Used to clean up a bloombundle or bloompub/bloomd file after importing the contents into
     the Bloom directory.
 
     We only want to do this if the file is in non-removable storage.
@@ -25,7 +25,7 @@ import java.lang.ref.WeakReference;
 public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
 
     private final WeakReference<Context> contextRef;
-    private File bloomDirectory; // We don't want to remove bloomd's from here
+    private File bloomDirectory; // We don't want to remove bloompub's/bloomd's from here
 
     public FileCleanupTask(Context context) {
         // See https://stackoverflow.com/questions/44309241/warning-this-asynctask-class-should-be-static-or-leaks-might-occur/46166223#46166223
@@ -119,7 +119,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
     }
 
     private boolean shouldSearchThisDirectory(File dir, String fileName) {
-        // We don't want to find the bloomd's in our library
+        // We don't want to find the bloompub's/bloomd's in our library
         // Bundles are fair game everywhere
         if (fileName.endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
             return true;

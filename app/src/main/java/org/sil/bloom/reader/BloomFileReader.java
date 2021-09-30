@@ -126,7 +126,7 @@ public class BloomFileReader {
         // being opened. It must not race for the same directory.
         unzipBook("tempBookPath");
         String path = bloomFilePath == null ? bookUri.getPath() :bloomFilePath; // uri version is not a valid file path, but works for this.
-        String bookName = (new File(path)).getName().replace(IOUtilities.BOOK_FILE_EXTENSION, "");
+        String bookName = IOUtilities.stripBookFileExtension((new File(path)).getName());
         File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_1);
         if (!thumb.exists())
             thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_2);
@@ -198,7 +198,7 @@ public class BloomFileReader {
         return metaProperties;
     }
 
-    // Typically, this reader was constructed with a bloomFilePath pointing to a .bloomd file.
+    // Typically, this reader was constructed with a bloomFilePath pointing to a .bloompub file.
     // Unzip this file into the folder indicated by the path argument, and set bookDirectory
     // to that directory. (On subsequent calls, the zip should already have been expanded,
     // and bookDirectory set, so the method will do nothing. It's therefore cheap to call this
@@ -226,16 +226,16 @@ public class BloomFileReader {
 
     private File findHtmlFile() throws IOException {
         // so, we're calling this because we could not find "index.htm".
-        // Next, look for an htm file that matches the name of the .bloomd/.bloompub
-        String nameFromZipFile = bookDirectory.getName().replace(IOUtilities.BOOK_FILE_EXTENSION, "");
+        // Next, look for an htm file that matches the name of the .bloompub/.bloomd
+        String nameFromZipFile = IOUtilities.stripBookFileExtension(bookDirectory.getName());
         File htmlFile = new File(bookDirectory + File.separator + nameFromZipFile + ".htm");
         if (!htmlFile.exists()) {
-            // Maybe the .bloomd file was renamed. So now just take the first htm file that
+            // Maybe the .bloompub/.bloomd file was renamed. So now just take the first htm file that
             // is in there
             // and hope it is the right one.
             htmlFile = IOUtilities.findFirstWithExtension(bookDirectory, ".htm");
             if (htmlFile == null)
-                throw new IOException("No HTML file found inside .bloomd zip file.");
+                throw new IOException("No HTML file found inside bloomPUB zip file.");
         }
         return htmlFile;
     }

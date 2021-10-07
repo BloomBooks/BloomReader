@@ -190,8 +190,31 @@ public class BookCollection {
 //                Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED_READ_ONLY;
 //    }
 
+    // Return a path to our Books folder on the SD card, or null if there isn't one.
+    // Note that this is channel dependent. In Device File Explorer, the folder will be in the
+    // SD card device (see storage/<some 8-letter code>/Android/data/org.sil.bloom.reader...
+    // Running BR once will create this folder, whose name is specific to your channel...
+    // for example, org.sil.bloom.reader.alpha.debug, and under it, the files directory, which is
+    // the bit of the SD card you can access without permission. Inside that, Bloom looks to see
+    // whether a Books folder exists, and if so, returns it.
+    private static File privateSdCardBooksDir(Context context) {
+        // It is tempting here to simply pass "Books" as the argument to getExternalFiles, rather
+        // than getting the root folder and then appending /Books. However, getExternalFiles("Books")
+        // will create the Books folder if it doesn't already exist. Our goal is to find out whether
+        // it already exists.
+        File[] sdCardPrivateDirs = context.getExternalFilesDirs("");
+        if (sdCardPrivateDirs.length > 1) {
+            File booksDir = new File(sdCardPrivateDirs[1].getPath() + "/Books");
+            if (booksDir.exists())
+                return booksDir;
+        }
+        return null;
+    }
+
     public static File[] getLocalAndRemovableBooksDirectories(Context context) {
+        ArrayList<File> dirs = new ArrayList<>();
         File localBooksDir = getLocalBooksDirectory();
+        dirs.add(localBooksDir);
 //        if (!isExternalStorageReadable()) {
 //            return new File[] {localBooksDir};
 //        }
@@ -214,15 +237,29 @@ public class BookCollection {
 //            // if we're not allowed to access it or create it, just ignore it.
 //        }
 
-        // See if a BloomExternal on external storage exists. If so, include it.
-        // (If we don't have permission to really include it, we'll show a button the user can
-        // tap to see a request for permission.)
-        File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
-        File remoteBooksDir = new File(remoteStorageDir, "BloomExternal");
-        if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
-            return new File[]{localBooksDir, remoteBooksDir};
+        // There is one area of the SD card that this app is allowed to access
+        // without asking the user for permission. In a release build it is the
+        // directory which, when the card is mounted elsewhere, has the path
+        // Android/data/org.sil.bloom.reader/files. If we find a books directory there,
+        // we will use it, and not look for BloomExternal, which (if it exists)
+        // is expected to be a duplicate.
+        File privateSdCardBooksDir = privateSdCardBooksDir(context);
+        if (privateSdCardBooksDir != null) {
+            dirs.add(privateSdCardBooksDir);
+        } else {
+            // We'd like to try Android/data/org.sil.bloom.reader/files/Books, where privateSdCardBooksDir
+            // would be if this were a release build. Android (at least 11+) won't let us, won't even
+            // let the user give us permission, won't even let us know it exists. So the only other
+            // thing that makes sense is to look for the BloomExternal directory. This was originally
+            // designed for all BR channels to access after getting external storage permission, but
+            // now also serves as a fall-back for non-release channels.
+            File remoteStorageDir = IOUtilities.removablePublicStorageRoot(context);
+            File remoteBooksDir = new File(remoteStorageDir, "BloomExternal");
+            if (remoteBooksDir.exists() && !remoteBooksDir.equals(localBooksDir))
+                dirs.add(remoteBooksDir);
+        }
 
-        return new File[]{localBooksDir};
+        return dirs.toArray(new File[dirs.size()]);
     }
 
     private boolean oldBloomDirectoryExistsButNoAccess(Context context) {

@@ -362,7 +362,8 @@ public class BookCollection {
         for (int i = 0; i < files.length; i++) {
             final String name = files[i].getName();
             TextFileContent metaFile = new TextFileContent("meta.json");
-            if (!IOUtilities.isBloomPubFile(name))
+            if (!IOUtilities.isBloomPubFile(name)
+                    && !name.endsWith(IOUtilities.BOOKSHELF_FILE_EXTENSION))
                 continue; // not a book (nor a shelf)!
             final String path = files[i].getAbsolutePath();
             if (IOUtilities.isBloomPubFile(name) &&

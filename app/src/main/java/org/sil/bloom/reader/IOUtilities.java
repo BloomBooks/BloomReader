@@ -401,12 +401,12 @@ public class IOUtilities {
         }
         if (uri.getScheme().equals("content")) {
             // SAF type URIs.
-            final Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
-            try {
+            try (Cursor cursor = context.getContentResolver().query(uri, null, null, null, null)) {
                 if (cursor != null && cursor.moveToFirst())
                     return cursor.getLong(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED));
-            } finally {
-                if (cursor != null) cursor.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return 0;
             }
         }
         assert false; // some scheme we know nothing about.

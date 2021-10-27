@@ -602,9 +602,15 @@ public class MainActivity extends BaseActivity
     // Return value indicates success.
     private boolean importBookOrShelf(Uri bookOrShelfUri, boolean importingOneFile) {
         Pair<String, Boolean> p = _bookCollection.ensureBookOrShelfIsInCollection(this, bookOrShelfUri);
-        String newPath = p.first;
-        boolean isNewBook = p.second;
-        if (!isNewBook) return true; // We already had this book (or a newer version of it)
+        String newPath = null;
+
+        if (p != null) {
+            boolean isNewBook = p.second;
+            if (!isNewBook) return true; // We already had this book (or a newer version of it)
+
+            newPath = p.first;
+        }
+
         if (newPath != null) {
             if (newPath.endsWith(BOOKSHELF_FILE_EXTENSION)) {
                 reloadBookList(); // a new shelf can totally reorganize things. Likely to be quite rare.

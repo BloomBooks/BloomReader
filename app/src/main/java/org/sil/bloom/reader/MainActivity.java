@@ -98,8 +98,8 @@ public class MainActivity extends BaseActivity
         checkForPendingReadBookAnalyticsEvent();
 
         // Before we create the main activity, so it will see any migrated books.
-        copyFromBooksDirectory();
-            createMainActivity(savedInstanceState);
+        moveOrCopyFromTopLevelBloomDirectory();
+        createMainActivity(savedInstanceState);
         requestLocationAccess();
         requestLocationUpdates();
     }
@@ -313,7 +313,7 @@ public class MainActivity extends BaseActivity
                     IOUtilities.createOldBloomBooksFolder(this);
                     // Now we have this permission, we can do the migration we'd have liked to do
                     // at startup.
-                    copyFromBooksDirectory();
+                    moveOrCopyFromTopLevelBloomDirectory();
                     if (requestCode == STORAGE_PERMISSION_USB) {
                         reportReadyForUsb();
                     }
@@ -347,21 +347,19 @@ public class MainActivity extends BaseActivity
         }
     }
 
-    // Copy books from the "Books" directory to our own if they are new.
+    // Move (or copy) books from the "Bloom" directory to our own if they are new.
     // This is done when Bloom starts up and has two purposes.
     // First, if this is the first time we've run the version of Bloom that uses
-    // a private directory instead of "Books", we need to migrate the books.
+    // a private directory instead of "Bloom", we need to migrate the books.
     // This should only be the case if the user has upgraded, so we should have legacy access
     // to the directory.
-    // Second, if a book has been sent to the Books directory over USB (or otherwise) while we
+    // Second, if a book has been sent to the "Bloom" directory over USB (or otherwise) while we
     // were paused, we need to get it.
     // Returns the path to the most recently updated book, or null if none was updated.
-    private String copyFromBooksDirectory() {
+    private String moveOrCopyFromTopLevelBloomDirectory() {
         File oldBloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
         File newBloomDir = BookCollection.getLocalBooksDirectory();
-        boolean failure = false;
         String[] mostRecentModifiedBook = {null};
-        long mostRecentCopiedBookModified = 0;
         try {
             if (!oldBloomDir.exists()) {
                 return null; // nothing to copy
@@ -398,7 +396,7 @@ public class MainActivity extends BaseActivity
                     if (preserveFilesInOldDirectory) {
                         IOUtilities.copyFile(f.getPath(), dest.getPath());
                     } else {
-                        failure |= !f.renameTo(dest);
+                        f.renameTo(dest);
                     }
                 }
             } else if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
@@ -658,7 +656,7 @@ public class MainActivity extends BaseActivity
             // If this resume immediately follows create, we don't need to do this again.
             // Otherwise, look for new books since pause.
             hasPreviouslyResumed = true;
-            String oneNewFile = copyFromBooksDirectory();
+            String oneNewFile = moveOrCopyFromTopLevelBloomDirectory();
             if (oneNewFile != null) {
                 updateForNewBook(oneNewFile);
             }
@@ -1400,7 +1398,7 @@ public class MainActivity extends BaseActivity
                         final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                         getContentResolver().takePersistableUriPermission(uri, takeFlags);
                         // We can do the data-migration we would have preferred to do at startup.
-                        copyFromBooksDirectory();
+                        moveOrCopyFromTopLevelBloomDirectory();
                         reloadBookList(); // one reason is to get rid of "check for lost books" button
                         if (mShouldReportReadyForUsbAfterSearching) {
                             reportReadyForUsb();

@@ -54,7 +54,14 @@ public abstract class BaseActivity extends AppCompatActivity {
     // This MIGHT be true on Android 11, but only if Bloom was upgraded from an earlier version
     // where the permission was already granted.
     public static boolean haveLegacyStoragePermission(Context context) {
-        return ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+        // Counter-intuitively, Build.VERSION.SDK_IN is the version of the Android system
+        // we are running under, not the one we were built for.
+        // Once we tested on 12 in release, we realized the checkSelfPermission calls were returning true
+        // for an upgraded phone even though we didn't actually have write permission to move files.
+        // So we added the check for Android version <=11 to make things behave the way we expected
+        // (that version 12+ will never claim to have any legacy permission).
+        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.R &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 

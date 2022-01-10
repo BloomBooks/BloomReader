@@ -329,7 +329,6 @@ public class MainActivity extends BaseActivity
                     // It's useful for old BloomEditor versions that this folder should exist, so create
                     // it any time we get permission that allows it.
                     IOUtilities.createOldBloomBooksFolder(this);
-                    searchForBloomBooks_preAndroid11();
             } else {
                     searchForBloomBooksUsingSaf();
             }
@@ -475,11 +474,6 @@ public class MainActivity extends BaseActivity
             if (!BuildConfig.DEBUG && !BuildConfig.FLAVOR.equals("alpha")) {
                 navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
             }
-        // This menu is only useful if the OS allows general external storage access, or
-        // if we have it anyway (because BR was upgraded)
-        if (!osAllowsGeneralStorageAccess() && !haveLegacyStoragePermission(this)) {
-            navigationView.getMenu().removeItem(R.id.nav_search_for_bundles);
-        }
 
             mBookRecyclerView = findViewById(R.id.book_list2);
             SetupCollectionListView(mBookRecyclerView);
@@ -1045,8 +1039,6 @@ public class MainActivity extends BaseActivity
                 shareBooksDialogFragment.show(getSupportFragmentManager(), ShareAllBooksDialogFragment.SHARE_BOOKS_DIALOG_FRAGMENT_TAG);
         } else if (id == R.id.nav_release_notes) {
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
-        } else if (id == R.id.nav_search_for_bundles) {
-                searchForBloomBooks();
         } else if (id == R.id.nav_open_bloompub_file) {
             openBloomPubFile();
         } else if (id == R.id.nav_test_location_analytics) {
@@ -1301,17 +1293,6 @@ public class MainActivity extends BaseActivity
         defaultBrowser.setData(Uri.parse("https://bloomlibrary.org"));
         startActivity(defaultBrowser);
         }
-
-    private void searchForBloomBooks() {
-        if (haveLegacyStoragePermission(this)) {
-            searchForBloomBooks_preAndroid11();
-        } else {
-            requestLegacyStoragePermission(STORAGE_PERMISSION_SEARCH);
-        }
-        return;
-        // We decided this is not usable.
-        //searchForBloomBooksUsingSaf();
-    }
 
     private final BookSearchListener mBookSearchListener = new BookSearchListener() {
 

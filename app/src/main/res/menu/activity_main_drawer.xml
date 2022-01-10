@@ -27,11 +27,6 @@
             android:id="@+id/nav_share_app"
             android:icon="@drawable/ic_share"
             android:title="@string/share_app" />
-        <item
-            android:id="@+id/nav_search_for_bundles"
-            android:icon="@drawable/bookshelf"
-            android:title="@string/find_books_on_device"
-            />
         <!-- Purposefully not localized for now because
              it is only displayed for alpha -->
         <item

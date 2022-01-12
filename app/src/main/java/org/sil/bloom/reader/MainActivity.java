@@ -1032,9 +1032,6 @@ public class MainActivity extends BaseActivity
         } else if (id == R.id.nav_share_app) {
                 ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
                 shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
-        } else if (id == R.id.nav_share_books) {
-                ShareAllBooksDialogFragment shareBooksDialogFragment = new ShareAllBooksDialogFragment();
-                shareBooksDialogFragment.show(getSupportFragmentManager(), ShareAllBooksDialogFragment.SHARE_BOOKS_DIALOG_FRAGMENT_TAG);
         } else if (id == R.id.nav_release_notes) {
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
         } else if (id == R.id.nav_open_bloompub_file) {

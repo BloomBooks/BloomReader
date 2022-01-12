@@ -203,7 +203,7 @@ public class BookCollection {
         // will create the Books folder if it doesn't already exist. Our goal is to find out whether
         // it already exists.
         File[] sdCardPrivateDirs = context.getExternalFilesDirs("");
-        if (sdCardPrivateDirs.length > 1) {
+        if (sdCardPrivateDirs.length > 1 && sdCardPrivateDirs[1] != null) {
             File booksDir = new File(sdCardPrivateDirs[1].getPath() + "/Books");
             if (booksDir.exists())
                 return booksDir;

@@ -393,10 +393,31 @@ public class MainActivity extends BaseActivity
                         mostRecentlyModifiedBloomFileTime = modifyTime;
                         mostRecentModifiedBook[0] = f.getAbsolutePath();
                     }
-                    if (preserveFilesInOldDirectory) {
-                        IOUtilities.copyFile(f.getPath(), dest.getPath());
-                    } else {
-                        f.renameTo(dest);
+
+                    // Originally we did a copy when preserveFilesInOldDirectory == true
+                    // and a renameTo when preserveFilesInOldDirectory == false.
+                    // But it turned out that in some cases, renameTo was failing where delete was succeeding.
+                    // By copying and then deleting, we get the books copied regardless of whether we
+                    // successfully delete. And we make the two code paths more similar
+                    // regardless of the preserveFilesInOldDirectory setting. See BL-10863.
+                    boolean fileCopied = false;
+                    try {
+                        fileCopied = IOUtilities.copyFile(f.getPath(), dest.getPath());
+                        if (!fileCopied) {
+                            Log.e("moveOrCopyFromBloomDir", "Failed to copy file " + f.toString());
+                        }
+                    } catch (Exception e) {
+                        Log.e("moveOrCopyFromBloomDir", e.getMessage());
+                    }
+                    if (fileCopied && !preserveFilesInOldDirectory) {
+                        try {
+                            boolean fileDeleted = f.delete();
+                            if (!fileDeleted) {
+                                Log.e("moveOrCopyFromBloomDir", "Failed to delete file " + f.toString());
+                            }
+                        } catch (Exception e) {
+                            Log.e("moveOrCopyFromBloomDir", e.getMessage());
+                        }
                     }
                 }
             } else if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
@@ -422,19 +443,16 @@ public class MainActivity extends BaseActivity
 
                     @Override
                     public void onFoundBundle(Uri bundleUri) {
-
                     }
 
                     @Override
                     public void onSearchComplete() {
-
                     }
                 });
-
             }
         }
         catch (SecurityException e) {
-            Log.e("migrateLegacyData", e.getMessage());
+            Log.e("moveOrCopyFromBloomDir", e.getMessage());
         }
         return mostRecentModifiedBook[0];
     }

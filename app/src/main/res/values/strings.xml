@@ -96,4 +96,7 @@
     <string name="request_gps">Authors &amp; Illustrators like to know where their free books are being read. But we need you to turn on your device\'s ability to use its GPS Location Service</string>
     <string name="attempting_to_send_reading_stats">Attempting to send reading stats...</string>
     <string name="all_reading_stats_sent">All reading stats sent.</string>
+
+    <string name="find_lost_books">Find lost books</string>
+    <string name="no_lost_books_found">No lost books found.</string>
 </resources>

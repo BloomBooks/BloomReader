@@ -318,7 +318,7 @@ public class MainActivity extends BaseActivity
                     }
                     reloadBookList(); // To get rid of the "Check for lost books" button, and since we may have added many books
                 } else {
-                    getFromBloomFolderWithSAF(requestCode == STORAGE_PERMISSION_USB);
+                    getFromBloomFolderWithSAF(requestCode == STORAGE_PERMISSION_USB ? ActionAfterSearch.ReportReadyForUsbTransfer : ActionAfterSearch.Nothing);
                 }
                 break;
             case STORAGE_PERMISSION_SEARCH:
@@ -356,6 +356,9 @@ public class MainActivity extends BaseActivity
     // were paused, we need to get it.
     // Returns the path to the most recently updated book, or null if none was updated.
     private String moveOrCopyFromTopLevelBloomDirectory() {
+        return moveOrCopyFromTopLevelBloomDirectory(false);
+    }
+    private String moveOrCopyFromTopLevelBloomDirectory(boolean dontUseLegacyPermission) {
         File oldBloomDir = Environment.getExternalStoragePublicDirectory("Bloom");
         File newBloomDir = BookCollection.getLocalBooksDirectory();
         String[] mostRecentModifiedBook = {null};
@@ -368,7 +371,7 @@ public class MainActivity extends BaseActivity
             // is messing with alpha or beta might like to see any new books they fetch with the
             // old release build.
             boolean preserveFilesInOldDirectory = shouldPreserveFilesInOldDirectory();
-            if (haveLegacyStoragePermission(this)) {
+            if (!dontUseLegacyPermission && haveLegacyStoragePermission(this)) {
                 File[] filesInOldBloomDir = oldBloomDir.listFiles();
                 if (filesInOldBloomDir == null)
                     return null;
@@ -1027,6 +1030,12 @@ public class MainActivity extends BaseActivity
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
         } else if (id == R.id.nav_open_bloompub_file) {
             openBloomPubFile();
+        } else if (id == R.id.nav_find_lost_books) {
+            if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
+                completeSAFMoveOrCopyWithPermission();
+            } else {
+                getFromBloomFolderWithSAF(ActionAfterSearch.ReportIfNoBooksCopied);
+            }
         } else if (id == R.id.nav_test_location_analytics) {
                 showLocationAnalyticsData();
         } else if (id == R.id.about_reader) {
@@ -1122,7 +1131,7 @@ public class MainActivity extends BaseActivity
             return;
         }
 
-        getFromBloomFolderWithSAF(forUsb);
+        getFromBloomFolderWithSAF(forUsb ? ActionAfterSearch.ReportReadyForUsbTransfer : ActionAfterSearch.Nothing);
     }
 
     private void reportReadyForUsb() {
@@ -1134,7 +1143,14 @@ public class MainActivity extends BaseActivity
         d.show();
     }
 
-    private void getFromBloomFolderWithSAF(boolean forUsb) {
+    private enum ActionAfterSearch {
+        ReportReadyForUsbTransfer,
+        ReportIfNoBooksCopied,
+        Nothing
+    }
+
+    private void getFromBloomFolderWithSAF(ActionAfterSearch actionAfterSearch) {
+        boolean forUsb = actionAfterSearch == ActionAfterSearch.ReportReadyForUsbTransfer;
         mFileSearchState = new FileSearchState();
 
         // Thought this was useful at one point, but currently we only call this if we do NOT already have permission.
@@ -1157,7 +1173,7 @@ public class MainActivity extends BaseActivity
                 .setOnDismissListener((new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
-                        mShouldReportReadyForUsbAfterSearching = forUsb;
+                        mActionAfterSearching = actionAfterSearch;
                         Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(SAFUtilities.getBloomDirectoryUri());
                         mGetDirectoryToSearchForBooks.launch(permissionIntent);
                     }
@@ -1345,7 +1361,7 @@ public class MainActivity extends BaseActivity
 //        Uri bloomExternalDir = Uri.parse("content://com.android.externalstorage.documents/document/primary%3ABloomExternal");
 //        Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(bloomExternalDir);
 
-        mShouldReportReadyForUsbAfterSearching = false;
+        mActionAfterSearching = ActionAfterSearch.Nothing;
         mGetDirectoryToSearchForBooks.launch(permissionIntent);
     }
 
@@ -1371,7 +1387,7 @@ public class MainActivity extends BaseActivity
             }
     );
 
-    boolean mShouldReportReadyForUsbAfterSearching;
+    ActionAfterSearch mActionAfterSearching;
 
     @SuppressLint("WrongConstant")
     private final ActivityResultLauncher<Intent> mGetDirectoryToSearchForBooks = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -1385,16 +1401,28 @@ public class MainActivity extends BaseActivity
                         // Persist our permission beyond device restart
                         final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                         getContentResolver().takePersistableUriPermission(uri, takeFlags);
-                        // We can do the data-migration we would have preferred to do at startup.
-                        moveOrCopyFromTopLevelBloomDirectory();
-                        reloadBookList(); // one reason is to get rid of "check for lost books" button
-                        if (mShouldReportReadyForUsbAfterSearching) {
-                            reportReadyForUsb();
-                        }
+
+                        completeSAFMoveOrCopyWithPermission();
                     }
                 }
             }
     );
+
+    private void completeSAFMoveOrCopyWithPermission() {
+        // We can do the data-migration we would have preferred to do at startup.
+        String lastModifiedNewBook = moveOrCopyFromTopLevelBloomDirectory(true);
+        reloadBookList(); // one reason is to get rid of "check for lost books" button
+        if (mActionAfterSearching == ActionAfterSearch.ReportReadyForUsbTransfer) {
+            reportReadyForUsb();
+        } else if (mActionAfterSearching == ActionAfterSearch.ReportIfNoBooksCopied) {
+            if (lastModifiedNewBook == null) {
+                Toast.makeText(MainActivity.this, getString(R.string.no_lost_books_found), Toast.LENGTH_SHORT).show();
+            }
+        }
+        if (lastModifiedNewBook != null) {
+            highlightAndScrollTo(_bookCollection.getBookOrShelfByPath(lastModifiedNewBook));
+        }
+    }
 
     @SuppressLint("WrongConstant")
     private final ActivityResultLauncher<Intent> mGetExternalFilesDirectoryUri = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),

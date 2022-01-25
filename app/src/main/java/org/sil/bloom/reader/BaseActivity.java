@@ -1,7 +1,6 @@
 package org.sil.bloom.reader;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
@@ -105,6 +104,41 @@ public abstract class BaseActivity extends AppCompatActivity {
         new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams(event, p, lm));
     }
 
+    protected void moveBookFileToLocalFolderLegacy(boolean preserveFilesInOldDirectory, File bookFileToMove, File dest) {
+        // Originally we did a copy when preserveFilesInOldDirectory == true
+        // and a renameTo when preserveFilesInOldDirectory == false.
+        // But it turned out that in some cases, renameTo was failing where delete was succeeding.
+        // By copying and then deleting, we get the books copied regardless of whether we
+        // successfully delete. And we make the two code paths more similar
+        // regardless of the preserveFilesInOldDirectory setting. See BL-10863.
+        boolean fileCopied = false;
+        try {
+            fileCopied = IOUtilities.copyFile(bookFileToMove.getPath(), dest.getPath());
+            if (!fileCopied) {
+                Log.e("moveOrCopyFromBloomDir", "Failed to copy file " + bookFileToMove.toString());
+            }
+        } catch (Exception e) {
+            Log.e("moveOrCopyFromBloomDir", e.getMessage());
+        }
+        if (fileCopied && !preserveFilesInOldDirectory) {
+            try {
+                boolean fileDeleted = bookFileToMove.delete();
+                if (!fileDeleted) {
+                    Log.e("moveOrCopyFromBloomDir", "Failed to delete file " + bookFileToMove.toString());
+                }
+            } catch (Exception e) {
+                Log.e("moveOrCopyFromBloomDir", e.getMessage());
+            }
+        }
+    }
+
+    protected void moveBookFileToLocalFolderSAF(boolean preserveFilesInOldDirectory, Uri bookOrShelfUri, File privateStorageFile) {
+        SAFUtilities.copyUriToFile(this, bookOrShelfUri, privateStorageFile);
+        if (!preserveFilesInOldDirectory) {
+            SAFUtilities.deleteUri(this, bookOrShelfUri);
+        }
+    }
+
     abstract protected void onNewOrUpdatedBook(String fullPath);
 
     // Call in onResume() if subclass wants notifications.
@@ -160,13 +194,13 @@ public abstract class BaseActivity extends AppCompatActivity {
                     // Note that the file might not exist. By test, the value we get for
                     // lastModified in that case is such that if it is later created,
                     // we will interpret that as an update.
-                    String markerFilePath = BookCollection.getLocalBooksDirectory().getPath() + "/" + "something.modified";
+                    String markerFilePath = BookCollection.getBloomDirectory().getPath() + "/" + "something.modified";
                     long markerModified = new File(markerFilePath).lastModified();
                     if (markerModified == mostRecentMarkerFileModifiedTime)
                         return; // presume nothing changed
                     mostRecentMarkerFileModifiedTime = markerModified;
                     // Now look and see what actually changed (most recently)
-                    notifyIfNewFileChanges();
+                    handleNewFileChanges();
                 } else if (SAFUtilities.hasPermissionToBloomDirectory(this)){
                     // look for it using SAF
                     Uri uriMarkerFile = SAFUtilities.fileUriFromDirectoryUri(
@@ -175,7 +209,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                     if (markerModified == mostRecentMarkerFileModifiedTime)
                         return; // presume nothing changed
                     mostRecentMarkerFileModifiedTime = markerModified;
-                    notifyIfNewFileChanges();
+                    handleNewFileChanges();
                 }
 
             } finally {
@@ -187,18 +221,45 @@ public abstract class BaseActivity extends AppCompatActivity {
         mHandler.postDelayed(mObserver, 1000);
     }
 
-    // Look for new changes to files and send notification if there have been any.
-    protected void notifyIfNewFileChanges() {
+    // Look for new changes to files in the Bloom directory and add/update the newest file to
+    // our private book collection.
+    // Specifically, it looks at the something.modified file to determine if there are changes.
+    protected void handleNewFileChanges() {
         PathModifyTime newModifyData = getLatestModifiedTimeAndFile();
         if (newModifyData.time > mostRecentlyModifiedBloomFileTime) {
             mostRecentlyModifiedBloomFileTime = newModifyData.time;
-            onNewOrUpdatedBook(newModifyData.path);
+
+            // The file is in the Bloom directory. Move it to private book collection.
+            File privateStorageFile;
+            if (haveLegacyStoragePermission(this)) {
+                File newFile = new File(newModifyData.path);
+                privateStorageFile = new File(BookCollection.getLocalBooksDirectory(), newFile.getName());
+                moveBookFileToLocalFolderLegacy(
+                        // In this case, the file is being added in the context of a specific
+                        // channel of Bloom Reader. So there's no reason to keep it around for other channels.
+                        false,
+                        newFile,
+                        privateStorageFile);
+            } else {
+                // Must have SAF permission to the directory or we wouldn't be able
+                // to determine there is something new/updated.
+                String fileName = BookCollection.fixBloomd(IOUtilities.getFileNameFromUri(this, newModifyData.uri));
+                privateStorageFile = new File(BookCollection.getLocalBooksDirectory(), fileName);
+                moveBookFileToLocalFolderSAF(
+                        // In this case, the file is being added in the context of a specific
+                        // channel of Bloom Reader. So there's no reason to keep it around for other channels.
+                        false,
+                        newModifyData.uri,
+                        privateStorageFile);
+            }
+
+            onNewOrUpdatedBook(privateStorageFile.getAbsolutePath());
         }
     }
 
     private PathModifyTime getLatestModifiedTimeAndFile() {
         return haveLegacyStoragePermission(this) ?
-                getLatestModifiedTimeAndFile(BookCollection.getLocalBooksDirectory())
+                getLatestModifiedTimeAndFile(BookCollection.getBloomDirectory())
                 : getLatestModifiedTimeAndFile(SAFUtilities.getBloomDirectoryTreeUri());
     }
 
@@ -240,7 +301,7 @@ public abstract class BaseActivity extends AppCompatActivity {
             return result;
         //long startTime = System.currentTimeMillis();
 
-        final String[] lastModFile = {null};
+        final Uri[] lastModFile = {null};
         final long[] latestTime = {0};
 
         SAFUtilities.searchDirectoryForBooks(context, dir, new BookSearchListener() {
@@ -249,7 +310,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                 long modified = IOUtilities.lastModified(context, bookOrShelfUri);
                 if (modified > latestTime[0]) {
                     latestTime[0] = modified;
-                    lastModFile[0] = bookOrShelfUri.toString();
+                    lastModFile[0] = bookOrShelfUri;
                 }
             }
 
@@ -263,7 +324,7 @@ public abstract class BaseActivity extends AppCompatActivity {
 
             }
         });
-        result.path = lastModFile[0];
+        result.uri = lastModFile[0];
         result.time = latestTime[0];
         return result;
     }
@@ -278,7 +339,9 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 }
 
+// We set path or uri, depending on whether we are using legacy storage or SAF
 class PathModifyTime {
     public String path;
+    public Uri uri;
     public long time;
 }

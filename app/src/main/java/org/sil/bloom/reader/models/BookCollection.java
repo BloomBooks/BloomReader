@@ -25,7 +25,6 @@ import org.sil.bloom.reader.ThumbnailCleanup;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -183,6 +182,10 @@ public class BookCollection {
         File bloomDir = new File(BloomReaderApplication.getBloomApplicationContext().getFilesDir(), "books");
         bloomDir.mkdirs();
         return bloomDir;
+    }
+
+    public static File getBloomDirectory() {
+        return Environment.getExternalStoragePublicDirectory("Bloom");
     }
 
 //    private static boolean isExternalStorageReadable() {
@@ -729,8 +732,8 @@ public class BookCollection {
     }
 
     private static File getThumbsDirectory() throws IOException {
-        String bloomDirectoryPath = getLocalBooksDirectory().getPath();
-        String thumbsDirectoryPath = bloomDirectoryPath + File.separator + THUMBS_DIR;
+        String booksDirectoryPath = getLocalBooksDirectory().getPath();
+        String thumbsDirectoryPath = booksDirectoryPath + File.separator + THUMBS_DIR;
         File thumbsDirectory = new File(thumbsDirectoryPath);
         if(!thumbsDirectory.exists()){
             thumbsDirectory.mkdir();

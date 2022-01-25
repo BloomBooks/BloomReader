@@ -10,7 +10,6 @@ import android.util.Log;
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
 
 /*
@@ -115,7 +114,7 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         if (file.getPath().endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
             return false;
 
-        return file.getPath().startsWith(getBloomDirectory().getPath());
+        return file.getPath().startsWith(getBooksDirectory().getPath());
     }
 
     private boolean shouldSearchThisDirectory(File dir, String fileName) {
@@ -124,10 +123,10 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
         if (fileName.endsWith(IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION))
             return true;
 
-        return !dir.equals(getBloomDirectory());
+        return !dir.equals(getBooksDirectory());
     }
 
-    private File getBloomDirectory() {
+    private File getBooksDirectory() {
         if (bloomDirectory == null)
             bloomDirectory = BookCollection.getLocalBooksDirectory();
         return bloomDirectory;

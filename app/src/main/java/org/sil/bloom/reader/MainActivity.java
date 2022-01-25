@@ -63,7 +63,6 @@ import java.util.Locale;
 import static org.sil.bloom.reader.BloomReaderApplication.shouldPreserveFilesInOldDirectory;
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
-import static org.sil.bloom.reader.IOUtilities.ENCODED_FILE_EXTENSION;
 
 
 public class MainActivity extends BaseActivity
@@ -285,20 +284,20 @@ public class MainActivity extends BaseActivity
             return;
         switch(requestCode) {
             case LOCATION_PERMISSION:
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (showMessageOnLocationPermissionGranted) {
-                    showMessageOnLocationPermissionGranted = false;
-                    showLocationMessage();
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (showMessageOnLocationPermissionGranted) {
+                        showMessageOnLocationPermissionGranted = false;
+                        showLocationMessage();
+                    }
+                    if (!isLocationEnabled(this)) {
+                        // They just gave us permission, so hopefully this isn't unexpected.
+                        // The pre-permission dialog does also indicate that this might be needed.
+                        requestTurnOnGps();
+                    }
+                    // Usually done when the activity is created, but if we didn't have permission
+                    // to do it then, we should now.
+                    requestLocationUpdates();
                 }
-                if (!isLocationEnabled(this)) {
-                    // They just gave us permission, so hopefully this isn't unexpected.
-                    // The pre-permission dialog does also indicate that this might be needed.
-                    requestTurnOnGps();
-                }
-                // Usually done when the activity is created, but if we didn't have permission
-                // to do it then, we should now.
-                requestLocationUpdates();
-            }
                 break;
             case STORAGE_PERMISSION_USB:
             case STORAGE_PERMISSION_CHECK_OLD_BLOOM:
@@ -329,9 +328,9 @@ public class MainActivity extends BaseActivity
                     // It's useful for old BloomEditor versions that this folder should exist, so create
                     // it any time we get permission that allows it.
                     IOUtilities.createOldBloomBooksFolder(this);
-            } else {
+                } else {
                     searchForBloomBooksUsingSaf();
-            }
+                }
                 break;
             case STORAGE_PERMISSION_BLOOMEXTERNAL:
                 // This is permission to read to the BloomExternal directory on an SD card.
@@ -342,7 +341,7 @@ public class MainActivity extends BaseActivity
                     reloadBookList();
                 } else {
                     AskUserForPermissionToReadBloomExternalUsingSAF();
-        }
+                }
                 break;
         }
     }
@@ -391,34 +390,10 @@ public class MainActivity extends BaseActivity
                     long modifyTime = f.lastModified();
                     if (modifyTime > mostRecentlyModifiedBloomFileTime) {
                         mostRecentlyModifiedBloomFileTime = modifyTime;
-                        mostRecentModifiedBook[0] = f.getAbsolutePath();
+                        mostRecentModifiedBook[0] = dest.getAbsolutePath();
                     }
 
-                    // Originally we did a copy when preserveFilesInOldDirectory == true
-                    // and a renameTo when preserveFilesInOldDirectory == false.
-                    // But it turned out that in some cases, renameTo was failing where delete was succeeding.
-                    // By copying and then deleting, we get the books copied regardless of whether we
-                    // successfully delete. And we make the two code paths more similar
-                    // regardless of the preserveFilesInOldDirectory setting. See BL-10863.
-                    boolean fileCopied = false;
-                    try {
-                        fileCopied = IOUtilities.copyFile(f.getPath(), dest.getPath());
-                        if (!fileCopied) {
-                            Log.e("moveOrCopyFromBloomDir", "Failed to copy file " + f.toString());
-                        }
-                    } catch (Exception e) {
-                        Log.e("moveOrCopyFromBloomDir", e.getMessage());
-                    }
-                    if (fileCopied && !preserveFilesInOldDirectory) {
-                        try {
-                            boolean fileDeleted = f.delete();
-                            if (!fileDeleted) {
-                                Log.e("moveOrCopyFromBloomDir", "Failed to delete file " + f.toString());
-                            }
-                        } catch (Exception e) {
-                            Log.e("moveOrCopyFromBloomDir", e.getMessage());
-                        }
-                    }
+                    moveBookFileToLocalFolderLegacy(preserveFilesInOldDirectory, f, dest);
                 }
             } else if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
                 // try using SAF
@@ -435,10 +410,7 @@ public class MainActivity extends BaseActivity
                             mostRecentlyModifiedBloomFileTime = bloomDirectoryModifiedTime;
                             mostRecentModifiedBook[0] = privateStorageFile.getAbsolutePath();
                         }
-                        SAFUtilities.copyUriToFile(context, bookOrShelfUri, privateStorageFile);
-                        if (!preserveFilesInOldDirectory) {
-                            SAFUtilities.deleteUri(context, bookOrShelfUri);
-                        }
+                        moveBookFileToLocalFolderSAF(preserveFilesInOldDirectory, bookOrShelfUri, privateStorageFile);
                     }
 
                     @Override
@@ -670,38 +642,39 @@ public class MainActivity extends BaseActivity
 
     private void resumeMainActivity() {
         updateFilter();
+        // If this resume immediately follows create, we don't need to do this again.
+        // Otherwise, look for new books since pause.
         if (!hasPreviouslyResumed) {
-            // If this resume immediately follows create, we don't need to do this again.
-            // Otherwise, look for new books since pause.
             hasPreviouslyResumed = true;
+        } else {
             String oneNewFile = moveOrCopyFromTopLevelBloomDirectory();
             if (oneNewFile != null) {
                 updateForNewBook(oneNewFile);
             }
         }
-            // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
+        // we will get notification through onNewOrUpdatedBook if Bloom pushes a new or updated
         // book to our directory using MTP. Under Android 11 or later, we will only get them
         // if the user has at some point selected "Receive books via USB" and granted permission.
-            startObserving();
-            // And right now we will trigger the notification if anyone or anything has changed a
-            // book in our folder while we were paused.
+        startObserving();
+        // And right now we will trigger the notification if anyone or anything has changed a
+        // book in our folder while we were paused.
         //notifyIfNewFileChanges();
         // import any new books that showed up in the USB transfer directory while we were paused
 
-            Application uncheckedApp = this.getApplication();
-            // Play console proves this can be false
-            if (uncheckedApp instanceof BloomReaderApplication) {
-                BloomReaderApplication brApp = (BloomReaderApplication) uncheckedApp;
-                String bookToHighlight = brApp.getBookToHighlight();
+        Application uncheckedApp = this.getApplication();
+        // Play console proves this can be false
+        if (uncheckedApp instanceof BloomReaderApplication) {
+            BloomReaderApplication brApp = (BloomReaderApplication) uncheckedApp;
+            String bookToHighlight = brApp.getBookToHighlight();
             if (bookToHighlight != null) {
                 updateForNewBook(bookToHighlight);
-                    brApp.setBookToHighlight(null);
-                }
+                brApp.setBookToHighlight(null);
             }
-
-            //Periodic cleanup
-            SharingManager.fileCleanup(this);
         }
+
+        //Periodic cleanup
+        SharingManager.fileCleanup(this);
+    }
 
     // a hook to allow ShelfActivity to set a real filter.
     // We need to set it to nothing here for when we return to the main activity from a shelf.
@@ -720,7 +693,7 @@ public class MainActivity extends BaseActivity
     protected void onNewOrUpdatedBook(String filePathOrUri) {
         final String filePathOrUriLocal = filePathOrUri;
         runOnUiThread(() -> updateForNewBook(filePathOrUriLocal));
-            }
+    }
 
     public static void skipNextNewFileSound() {
         sSkipNextNewFileSound = true;
@@ -736,7 +709,7 @@ public class MainActivity extends BaseActivity
     private void updateForNewBook(String filePathOrUri) {
 		filePathOrUri = BookCollection.fixBloomd(filePathOrUri);
         BookOrShelf book = _bookCollection.addBookOrShelfIfNeeded(filePathOrUri);
-        refreshList(book);
+        highlightAndScrollTo(book);
         if (sSkipNextNewFileSound) {
             sSkipNextNewFileSound = false;
         }
@@ -746,7 +719,7 @@ public class MainActivity extends BaseActivity
         Toast.makeText(MainActivity.this, book.name + " added or updated", Toast.LENGTH_SHORT).show();
     }
 
-    private void refreshList(BookOrShelf book) {
+    private void highlightAndScrollTo(BookOrShelf book) {
         if (book == null || mBookListAdapter == null)
             return;
 

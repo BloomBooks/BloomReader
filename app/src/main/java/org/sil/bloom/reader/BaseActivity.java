@@ -194,7 +194,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                     // Note that the file might not exist. By test, the value we get for
                     // lastModified in that case is such that if it is later created,
                     // we will interpret that as an update.
-                    String markerFilePath = BookCollection.getBloomDirectory().getPath() + "/" + "something.modified";
+                    String markerFilePath = BookCollection.getBloomDirectory().getPath() + "/" + BloomReaderApplication.SOMETHING_MODIFIED_FILE_NAME;
                     long markerModified = new File(markerFilePath).lastModified();
                     if (markerModified == mostRecentMarkerFileModifiedTime)
                         return; // presume nothing changed
@@ -204,7 +204,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                 } else if (SAFUtilities.hasPermissionToBloomDirectory(this)){
                     // look for it using SAF
                     Uri uriMarkerFile = SAFUtilities.fileUriFromDirectoryUri(
-                            this, SAFUtilities.getBloomDirectoryTreeUri(), "something.modified");
+                            this, SAFUtilities.getBloomDirectoryTreeUri(), BloomReaderApplication.SOMETHING_MODIFIED_FILE_NAME);
                     long markerModified = IOUtilities.lastModified(this, uriMarkerFile);
                     if (markerModified == mostRecentMarkerFileModifiedTime)
                         return; // presume nothing changed

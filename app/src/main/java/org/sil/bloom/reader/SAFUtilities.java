@@ -12,12 +12,14 @@ import android.util.Log;
 
 import androidx.documentfile.provider.DocumentFile;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -361,5 +363,21 @@ public class SAFUtilities {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public static String getUriContents(Context context, Uri uri) {
+        try {
+            InputStream inputStream = context.getContentResolver().openInputStream(uri);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuffer sb = new StringBuffer();
+            String tempStr;
+            while ((tempStr = reader.readLine()) != null) {
+                sb.append(tempStr);
+            }
+            return sb.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

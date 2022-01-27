@@ -56,6 +56,7 @@ import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -346,6 +347,20 @@ public class MainActivity extends BaseActivity
         }
     }
 
+    private String[] mLowerCasedFileNamesToLeaveInBloomDirectory = new String[] {
+            // We only care about the existence of this file, so we can look for it
+            // in the old directory. And it's useful for the user to be able to find
+            // the directory where he might need to put it.
+            "usetestanalytics",
+            // Used by some projects to tie analytics to a specific device.
+            // We can't tell these projects to put the file in the local storage, so
+            // they have to put it in the Bloom directory.
+            // See more information in BloomReaderApplication.parseDeviceIdFile().
+            BloomReaderApplication.DEVICE_ID_FILE_NAME.toLowerCase(Locale.ROOT),
+            // This is only currently used by the USB transfer which uses the Bloom directory.
+            BloomReaderApplication.SOMETHING_MODIFIED_FILE_NAME
+    };
+
     // Move (or copy) books from the "Bloom" directory to our own if they are new.
     // This is done when Bloom starts up and has two purposes.
     // First, if this is the first time we've run the version of Bloom that uses
@@ -378,12 +393,11 @@ public class MainActivity extends BaseActivity
                 for (File f : filesInOldBloomDir) {
                     String fileName = f.getName();
                     if (fileName.equals(".thumbs")) {
+                        // REVIEW: this means we have to keep finding it and skipping it; would probably be better to delete it.
                         continue; // this is a directory, and the data can be rebuilt, so save time by not copying
                     }
-                    if (fileName.toLowerCase(Locale.ROOT).equals("usetestanalytics")) {
-                        // We only care about the existence of this file, so we can look for it
-                        // in the old directory. And it's useful for the user to be able to find
-                        // the directory where he might need to put it.
+                    if (Arrays.stream(mLowerCasedFileNamesToLeaveInBloomDirectory)
+                            .anyMatch(fileName.toLowerCase(Locale.ROOT)::equals)) {
                         continue;
                     }
                     File dest = new File(newBloomDir, fileName);

@@ -32,7 +32,8 @@ public class BloomReaderApplication extends Application {
     public static final String LAST_RUN_BUILD_CODE = "lastRunBuildCode";
     public static final String ANALYTICS_DEVICE_PROJECT = "analyticsDeviceGroup";
     public static final String ANALYTICS_DEVICE_ID = "analyticsDeviceId";
-    public static final String DEVICE_ID_FILE = "deviceId.json";
+    public static final String DEVICE_ID_FILE_NAME = "deviceId.json";
+    public static final String SOMETHING_MODIFIED_FILE_NAME = "something.modified";
 
     private String bookToHighlight;
     private static Context sApplicationContext;
@@ -169,7 +170,7 @@ public class BloomReaderApplication extends Application {
     private static void identifyDevice(){
         SharedPreferences values = getBloomApplicationContext().getSharedPreferences(SHARED_PREFERENCES_TAG, 0);
         if(values.getString(ANALYTICS_DEVICE_ID, null) == null){
-            boolean deviceIdFromFile = parseDeviceIdFile();
+            boolean deviceIdFromFile = processDeviceIdFile();
             if(!deviceIdFromFile)
                 return;
         }
@@ -186,13 +187,12 @@ public class BloomReaderApplication extends Application {
         }
     }
 
-    private static boolean parseDeviceIdFile(){
-        try{
-            String filename = BookCollection.getLocalBooksDirectory().getPath() + File.separator + DEVICE_ID_FILE;
-            File deviceIdFile = new File(filename);
-            if(!deviceIdFile.exists())
+    private static boolean processDeviceIdFile() {
+        try {
+            String jsonString = getJsonFromDeviceIdFile();
+            if (jsonString == null)
                 return false;
-            String jsonString = IOUtilities.FileToString(deviceIdFile);
+
             JSONObject json = new JSONObject(jsonString);
             String project = json.getString("project");
             String device = json.getString("device");
@@ -204,17 +204,40 @@ public class BloomReaderApplication extends Application {
             valuesEditor.apply();
             reportDeviceIdParseSuccess(project, device);
             return true;
-        }
-        catch (JSONException e){
+        } catch (Exception e) {
             Log.e("Analytics", "Error processing deviceId file json.");
             Log.e("Analytics", e.getMessage());
             e.printStackTrace();
 
-            Toast failToast = Toast.makeText(getBloomApplicationContext(), "Unable to load device metadata. JSON formatting error.", Toast.LENGTH_LONG);
-            failToast.show();
+            if (e instanceof JSONException) {
+                Toast failToast = Toast.makeText(getBloomApplicationContext(), "Unable to load device metadata. JSON formatting error.", Toast.LENGTH_LONG);
+                failToast.show();
+            }
 
             return false;
         }
+    }
+
+    private static String getJsonFromDeviceIdFile() {
+        Context context = getBloomApplicationContext();
+        if (BaseActivity.haveLegacyStoragePermission(context)) {
+            File deviceIdFile = new File(BookCollection.getBloomDirectory(), DEVICE_ID_FILE_NAME);
+            if (deviceIdFile.exists())
+                return IOUtilities.FileToString(deviceIdFile);
+        } else if (SAFUtilities.hasPermissionToBloomDirectory(context)) {
+            Uri deviceIdFileUri = SAFUtilities.fileUriFromDirectoryUri(
+                    context, SAFUtilities.getBloomDirectoryTreeUri(), DEVICE_ID_FILE_NAME);
+            return SAFUtilities.getUriContents(context, deviceIdFileUri);
+        }
+
+        // We don't generally expect to find this file in our local books directory,
+        // but the first few releases of BR v3 moved the file there from the Bloom directory.
+        // So we want to ensure any devices which did that still get the correct analytics.
+        File deviceIdFile = new File(BookCollection.getLocalBooksDirectory(), DEVICE_ID_FILE_NAME);
+        if (deviceIdFile.exists())
+            return IOUtilities.FileToString(deviceIdFile);
+
+        return null;
     }
 
     private static void reportDeviceIdParseSuccess(String project, String device){
@@ -227,23 +250,30 @@ public class BloomReaderApplication extends Application {
         return BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
     }
 
-    public static boolean InTestModeForAnalytics(){
+    public static boolean InTestModeForAnalytics() {
         boolean testMode = BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha");
-        if(testMode)
+        if (testMode)
             return true;
 
-        // We're looking for a file called UseTestAnalytics in the old Bloom folder at the root of
-        // the device storage. We no longer have access to the files in this folder, unless the user
-        // has given it to us, but surprisingly we can still find out whether the file exists.
-        // This may be an accident that a future Android version will fix.
-        File oldBookDirectory = IOUtilities.getOldBloomBooksFolder(BloomReaderApplication.sApplicationContext);
-        if (oldBookDirectory == null)
-            return true; // situation bizarre, let's not do real analytics
+        try {
+            // We're looking for a file called UseTestAnalytics in the old Bloom folder at the root of
+            // the device storage. We no longer have access to the files in this folder, unless the user
+            // has given it to us, but surprisingly we can still find out whether the file exists.
+            // This may be an accident that a future Android version will fix.
+            File oldBookDirectory = IOUtilities.getOldBloomBooksFolder(BloomReaderApplication.sApplicationContext);
+            if (oldBookDirectory == null) {
+                return false; // bizarre situation, but let's not lose any real data
+            }
 
-        // We'd really like to just ignore case, but no easy way to do it.
-        return new File(oldBookDirectory, "UseTestAnalytics").exists()
-                || new File(oldBookDirectory, "useTestAnalytics").exists()
-                || new File(oldBookDirectory, "usetestanalytics").exists();
+            // We'd really like to just ignore case, but no easy way to do it.
+            return new File(oldBookDirectory, "UseTestAnalytics").exists()
+                    || new File(oldBookDirectory, "useTestAnalytics").exists()
+                    || new File(oldBookDirectory, "usetestanalytics").exists();
+        } catch (Exception e) {
+            // Doesn't seem worth crashing the app just to see if we shouldn't send analytics.
+            e.printStackTrace();
+            return false;
+        }
     }
 
 

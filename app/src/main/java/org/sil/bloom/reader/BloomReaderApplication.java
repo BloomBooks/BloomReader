@@ -9,6 +9,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.Toast;
 
 import com.segment.analytics.Analytics;
@@ -126,7 +127,7 @@ public class BloomReaderApplication extends Application {
         Analytics.setSingletonInstance(analytics);
 
         // Check for deviceId json file and use its contents to identify this device
-        identifyDevice();
+        setUpDeviceIdentityForAnalytics();
     }
 
     static boolean firstRunAfterInstallOrUpdate = false;
@@ -167,15 +168,13 @@ public class BloomReaderApplication extends Application {
         }
     }
 
-    private static void identifyDevice(){
-        SharedPreferences values = getBloomApplicationContext().getSharedPreferences(SHARED_PREFERENCES_TAG, 0);
-        if(values.getString(ANALYTICS_DEVICE_ID, null) == null){
-            boolean deviceIdFromFile = processDeviceIdFile();
-            if(!deviceIdFromFile)
-                return;
-        }
-        String project = values.getString(ANALYTICS_DEVICE_PROJECT, "");
-        String device = values.getString(ANALYTICS_DEVICE_ID, "");
+    public static void setUpDeviceIdentityForAnalytics(){
+        Pair<String, String> projectAndDevice = getProjectAndDeviceIds();
+        if (projectAndDevice == null)
+            return;
+
+        String project = projectAndDevice.first;
+        String device = projectAndDevice.second;
 
         // The value used with identify() needs to be globally unique. Just in case somebody
         // might reuse a deviceId in a different project, we concatenate them.
@@ -185,6 +184,19 @@ public class BloomReaderApplication extends Application {
             Analytics.with(context).identify(deviceId);
             Analytics.with(context).group(project);
         }
+    }
+
+    public static Pair<String, String> getProjectAndDeviceIds() {
+        SharedPreferences values = getBloomApplicationContext().getSharedPreferences(SHARED_PREFERENCES_TAG, 0);
+        if(values.getString(ANALYTICS_DEVICE_ID, null) == null){
+            boolean deviceIdFromFile = processDeviceIdFile();
+            if(!deviceIdFromFile)
+                return null;
+        }
+        String project = values.getString(ANALYTICS_DEVICE_PROJECT, "");
+        String device = values.getString(ANALYTICS_DEVICE_ID, "");
+
+        return new Pair<>(project, device);
     }
 
     private static boolean processDeviceIdFile() {

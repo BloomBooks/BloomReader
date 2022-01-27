@@ -61,6 +61,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import static org.sil.bloom.reader.BloomReaderApplication.DEVICE_ID_FILE_NAME;
 import static org.sil.bloom.reader.BloomReaderApplication.shouldPreserveFilesInOldDirectory;
 import static org.sil.bloom.reader.IOUtilities.BLOOM_BUNDLE_FILE_EXTENSION;
 import static org.sil.bloom.reader.IOUtilities.BOOKSHELF_FILE_EXTENSION;
@@ -102,6 +103,18 @@ public class MainActivity extends BaseActivity
         createMainActivity(savedInstanceState);
         requestLocationAccess();
         requestLocationUpdates();
+
+        requestPermissionToReadDeviceIdJsonIfNeeded();
+    }
+
+    private void requestPermissionToReadDeviceIdJsonIfNeeded() {
+        if (!haveLegacyStoragePermission(this) &&
+                !SAFUtilities.hasPermissionToBloomDirectory(this)) {
+            File deviceIdFile = new File(BookCollection.getBloomDirectory(), DEVICE_ID_FILE_NAME);
+            if (deviceIdFile.exists()) {
+                GetFromBloomFolder(KindOfPermissionRequest.DeviceIdInfo);
+            }
+        }
     }
 
     // If we weren't able to send an analytics event the last time a user read a book
@@ -302,6 +315,7 @@ public class MainActivity extends BaseActivity
                 break;
             case STORAGE_PERMISSION_USB:
             case STORAGE_PERMISSION_CHECK_OLD_BLOOM:
+            case STORAGE_PERMISSION_DEVICE_ID:
                 // This is permission to read/write to the `InternalStorage/Bloom` directory
                 // where the transfer via USB puts books.
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
@@ -318,8 +332,15 @@ public class MainActivity extends BaseActivity
                         reportReadyForUsb();
                     }
                     reloadBookList(); // To get rid of the "Check for lost books" button, and since we may have added many books
+
+                    // Now that we have permission to deviceId.json if it exists,
+                    // we can try the setup again.
+                    BloomReaderApplication.setUpDeviceIdentityForAnalytics();
                 } else {
-                    getFromBloomFolderWithSAF(requestCode == STORAGE_PERMISSION_USB ? ActionAfterSearch.ReportReadyForUsbTransfer : ActionAfterSearch.Nothing);
+                    getFromBloomFolderWithSAF(
+                            requestCode == STORAGE_PERMISSION_USB ? KindOfPermissionRequest.Usb :
+                                    requestCode == STORAGE_PERMISSION_DEVICE_ID ? KindOfPermissionRequest.DeviceIdInfo :
+                                            KindOfPermissionRequest.LostBooksWithoutReport);
                 }
                 break;
             case STORAGE_PERMISSION_SEARCH:
@@ -356,7 +377,7 @@ public class MainActivity extends BaseActivity
             // We can't tell these projects to put the file in the local storage, so
             // they have to put it in the Bloom directory.
             // See more information in BloomReaderApplication.parseDeviceIdFile().
-            BloomReaderApplication.DEVICE_ID_FILE_NAME.toLowerCase(Locale.ROOT),
+            DEVICE_ID_FILE_NAME.toLowerCase(Locale.ROOT),
             // This is only currently used by the USB transfer which uses the Bloom directory.
             BloomReaderApplication.SOMETHING_MODIFIED_FILE_NAME
     };
@@ -527,6 +548,16 @@ public class MainActivity extends BaseActivity
             @Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
+
+                final MenuItem analyticsDeviceIdInfoMenuItem = navMenu.getMenu().findItem(R.id.analytics_device_id_info);
+                Pair<String, String> projectAndDevice = BloomReaderApplication.getProjectAndDeviceIds();
+                if (projectAndDevice != null) {
+                    String projectId = projectAndDevice.first;
+                    String deviceId = projectAndDevice.second;
+                    SpannableString s = new SpannableString("Stats ID: " + deviceId + " (" + projectId + ")");
+                    s.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.colorDeemphasizeText)), 0, s.length(), 0);
+                    analyticsDeviceIdInfoMenuItem.setTitle(s);
+                }
 
                 ensureStatsSentAsyncTask[0] = new EnsureStatsSentAsyncTask(context, new EnsureStatsSentAsyncTask.AsyncResponse() {
                     @Override
@@ -914,7 +945,7 @@ public class MainActivity extends BaseActivity
             return;
         }
         if ("importOldBloomFolder".equals(bookOrShelf.specialBehavior)) {
-            GetFromBloomFolder(false);
+            GetFromBloomFolder(KindOfPermissionRequest.LostBooksWithoutReport);
             return;
         }
         if (bookOrShelf.uri == null && !new File(path).exists()) {
@@ -1027,6 +1058,7 @@ public class MainActivity extends BaseActivity
     static final int STORAGE_PERMISSION_SEARCH = 3;
     static final int STORAGE_PERMISSION_BLOOMEXTERNAL = 4;
     static final int STORAGE_PERMISSION_CHECK_OLD_BLOOM = 5;
+    static final int STORAGE_PERMISSION_DEVICE_ID = 6;
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -1036,7 +1068,7 @@ public class MainActivity extends BaseActivity
                 Intent intent = new Intent(this, GetFromWiFiActivity.class);
             mGetBooksFromWiFi.launch(intent);
         } else if (id == R.id.nav_get_usb) {
-            GetFromBloomFolder(true);
+            GetFromBloomFolder(KindOfPermissionRequest.Usb);
         } else if (id == R.id.nav_share_app) {
                 ShareDialogFragment shareDialogFragment = new ShareDialogFragment();
                 shareDialogFragment.show(getFragmentManager(), ShareDialogFragment.SHARE_DIALOG_FRAGMENT_TAG);
@@ -1048,7 +1080,7 @@ public class MainActivity extends BaseActivity
             if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
                 completeSAFMoveOrCopyWithPermission();
             } else {
-                getFromBloomFolderWithSAF(ActionAfterSearch.ReportIfNoBooksCopied);
+                getFromBloomFolderWithSAF(KindOfPermissionRequest.LostBooksWithReport);
             }
         } else if (id == R.id.nav_test_location_analytics) {
                 showLocationAnalyticsData();
@@ -1118,7 +1150,7 @@ public class MainActivity extends BaseActivity
             }
     );
 
-    private void GetFromBloomFolder(boolean forUsb) {
+    private void GetFromBloomFolder(KindOfPermissionRequest kindOfPermissionRequest) {
         if (haveLegacyStoragePermission(this)) {
             // Make sure the Bloom directory exists. Older versions of Bloom Editor expect it.
             IOUtilities.createOldBloomBooksFolder(this);
@@ -1141,11 +1173,14 @@ public class MainActivity extends BaseActivity
         }
         // At this point we know we don't already have any permission.
         if (osAllowsGeneralStorageAccess()) {
-            requestLegacyStoragePermission(forUsb ? STORAGE_PERMISSION_USB : STORAGE_PERMISSION_CHECK_OLD_BLOOM);
+            requestLegacyStoragePermission(
+                    kindOfPermissionRequest == KindOfPermissionRequest.Usb ? STORAGE_PERMISSION_USB :
+                            kindOfPermissionRequest == KindOfPermissionRequest.DeviceIdInfo ? STORAGE_PERMISSION_DEVICE_ID :
+                                    STORAGE_PERMISSION_CHECK_OLD_BLOOM);
             return;
         }
 
-        getFromBloomFolderWithSAF(forUsb ? ActionAfterSearch.ReportReadyForUsbTransfer : ActionAfterSearch.Nothing);
+        getFromBloomFolderWithSAF(kindOfPermissionRequest);
     }
 
     private void reportReadyForUsb() {
@@ -1157,14 +1192,14 @@ public class MainActivity extends BaseActivity
         d.show();
     }
 
-    private enum ActionAfterSearch {
-        ReportReadyForUsbTransfer,
-        ReportIfNoBooksCopied,
-        Nothing
+    private enum KindOfPermissionRequest {
+        Usb,
+        LostBooksWithReport,
+        LostBooksWithoutReport,
+        DeviceIdInfo,
     }
 
-    private void getFromBloomFolderWithSAF(ActionAfterSearch actionAfterSearch) {
-        boolean forUsb = actionAfterSearch == ActionAfterSearch.ReportReadyForUsbTransfer;
+    private void getFromBloomFolderWithSAF(KindOfPermissionRequest kindOfPermissionRequest) {
         mFileSearchState = new FileSearchState();
 
         // Thought this was useful at one point, but currently we only call this if we do NOT already have permission.
@@ -1172,12 +1207,24 @@ public class MainActivity extends BaseActivity
 //            SAFUtilities.searchDirectoryForBooks(this, SAFUtilities.BloomDirectoryTreeUri, mBookSearchListener);
 //            return;
 //        }
+        int messageId;
+        switch (kindOfPermissionRequest) {
+            case Usb:
+                messageId = R.string.request_bloom_permission_usb;
+                break;
+            case DeviceIdInfo:
+                messageId = R.string.request_bloom_permission_device_stats;
+                break;
+            default:
+                messageId = R.string.request_bloom_permission_lost;
+                break;
+        }
 
         ImageView image = new ImageView(this);
         image.setImageResource(R.drawable.ic_use_this_folder);
         AlertDialog dlg = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)
                 .setTitle(R.string.select_bloom_directory)
-                .setMessage(getString(forUsb ? R.string.request_bloom_permission_usb : R.string.request_bloom_permission_lost))
+                .setMessage(getString(messageId))
                 .setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -1187,7 +1234,7 @@ public class MainActivity extends BaseActivity
                 .setOnDismissListener((new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
-                        mActionAfterSearching = actionAfterSearch;
+                        mKindOfPermissionRequest = kindOfPermissionRequest;
                         Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(SAFUtilities.getBloomDirectoryUri());
                         mGetDirectoryToSearchForBooks.launch(permissionIntent);
                     }
@@ -1375,7 +1422,7 @@ public class MainActivity extends BaseActivity
 //        Uri bloomExternalDir = Uri.parse("content://com.android.externalstorage.documents/document/primary%3ABloomExternal");
 //        Intent permissionIntent = SAFUtilities.getDirectoryPermissionIntent(bloomExternalDir);
 
-        mActionAfterSearching = ActionAfterSearch.Nothing;
+        mKindOfPermissionRequest = KindOfPermissionRequest.LostBooksWithoutReport;
         mGetDirectoryToSearchForBooks.launch(permissionIntent);
     }
 
@@ -1401,7 +1448,7 @@ public class MainActivity extends BaseActivity
             }
     );
 
-    ActionAfterSearch mActionAfterSearching;
+    KindOfPermissionRequest mKindOfPermissionRequest;
 
     @SuppressLint("WrongConstant")
     private final ActivityResultLauncher<Intent> mGetDirectoryToSearchForBooks = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -1417,6 +1464,10 @@ public class MainActivity extends BaseActivity
                         getContentResolver().takePersistableUriPermission(uri, takeFlags);
 
                         completeSAFMoveOrCopyWithPermission();
+
+                        // Now that we (hopefully) have permission to deviceId.json if it exists,
+                        // we can try the setup again.
+                        BloomReaderApplication.setUpDeviceIdentityForAnalytics();
                     }
                 }
             }
@@ -1426,9 +1477,9 @@ public class MainActivity extends BaseActivity
         // We can do the data-migration we would have preferred to do at startup.
         String lastModifiedNewBook = moveOrCopyFromTopLevelBloomDirectory(true);
         reloadBookList(); // one reason is to get rid of "check for lost books" button
-        if (mActionAfterSearching == ActionAfterSearch.ReportReadyForUsbTransfer) {
+        if (mKindOfPermissionRequest == KindOfPermissionRequest.Usb) {
             reportReadyForUsb();
-        } else if (mActionAfterSearching == ActionAfterSearch.ReportIfNoBooksCopied) {
+        } else if (mKindOfPermissionRequest == KindOfPermissionRequest.LostBooksWithReport) {
             if (lastModifiedNewBook == null) {
                 Toast.makeText(MainActivity.this, getString(R.string.no_lost_books_found), Toast.LENGTH_SHORT).show();
             }

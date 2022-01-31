@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/insideView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="4dp"
+    android:paddingLeft="4dp"
+    android:paddingRight="4dp"
+    android:paddingTop="4dp" >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_centerInParent="true">
+
+        <TextView
+            android:id="@+id/txtEnterDeviceInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="30dp"
+            android:text="Enter project and device ID to record stats specific to this device"
+            android:textColor="@color/colorPrimary"
+            android:gravity="center"
+            tools:ignore="HardcodedText" />
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="project"
+            android:id="@+id/project"
+            android:inputType="text"
+            android:importantForAutofill="no"
+            tools:ignore="HardcodedText" />
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="device ID"
+            android:id="@+id/deviceId"
+            android:inputType="text"
+            android:importantForAutofill="no"
+            tools:ignore="HardcodedText" />
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save"
+            android:background="@color/colorBloomRed"
+            android:textColor="#fff"
+            android:id="@+id/btnSave"
+            tools:ignore="HardcodedText" />
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel"
+            android:background="#fff"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:id="@+id/btnCancel"
+            android:textColor="@color/colorBloomRed"/>
+    </LinearLayout>
+</RelativeLayout>

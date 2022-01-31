@@ -209,12 +209,7 @@ public class BloomReaderApplication extends Application {
             String project = json.getString("project");
             String device = json.getString("device");
 
-            SharedPreferences values = getBloomApplicationContext().getSharedPreferences(SHARED_PREFERENCES_TAG, 0);
-            SharedPreferences.Editor valuesEditor = values.edit();
-            valuesEditor.putString(ANALYTICS_DEVICE_PROJECT, project);
-            valuesEditor.putString(ANALYTICS_DEVICE_ID, device);
-            valuesEditor.apply();
-            reportDeviceIdParseSuccess(project, device);
+            storeDeviceInfoValues(project, device);
             return true;
         } catch (Exception e) {
             Log.e("Analytics", "Error processing deviceId file json.");
@@ -228,6 +223,15 @@ public class BloomReaderApplication extends Application {
 
             return false;
         }
+    }
+
+    public static void storeDeviceInfoValues(String project, String deviceId) {
+        SharedPreferences values = getBloomApplicationContext().getSharedPreferences(SHARED_PREFERENCES_TAG, 0);
+        SharedPreferences.Editor valuesEditor = values.edit();
+        valuesEditor.putString(ANALYTICS_DEVICE_PROJECT, project);
+        valuesEditor.putString(ANALYTICS_DEVICE_ID, deviceId);
+        valuesEditor.apply();
+        reportDeviceIdParseSuccess(project, deviceId);
     }
 
     private static String getJsonFromDeviceIdFile() {

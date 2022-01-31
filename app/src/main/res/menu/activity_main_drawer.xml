@@ -58,15 +58,13 @@
     <group android:checkableBehavior="none" android:id="@+id/grp3" >
         <item
             android:id="@+id/analytics_status"
-            android:title="@string/attempting_to_send_reading_stats"
-            android:enabled="false"/>
+            android:title="@string/attempting_to_send_reading_stats"/>
         <!-- This needs to be the last item so we don't leave
         an unexpected blank. Otherwise, it needs to be coded
         to be added/removed as needed. -->
         <item
             android:id="@+id/analytics_device_id_info"
             android:title=""
-            android:enabled="false"
             />
     </group>
 

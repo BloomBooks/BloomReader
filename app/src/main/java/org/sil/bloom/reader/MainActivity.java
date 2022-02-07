@@ -487,47 +487,47 @@ public class MainActivity extends BaseActivity
 
         _bookCollection = setupBookCollection();
 
-            Toolbar toolbar = findViewById(R.id.toolbar);
-            setSupportActionBar(toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-            initializeNavigationDrawer(toolbar);
+        initializeNavigationDrawer(toolbar);
 
-            NavigationView navigationView = findViewById(R.id.nav_view);
-            navigationView.setNavigationItemSelectedListener(this);
-            // This menu option should not be shown in production.
-            if (!BuildConfig.DEBUG && !BuildConfig.FLAVOR.equals("alpha")) {
-                navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
-            }
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+        // This menu option should not be shown in production.
+        if (!BuildConfig.DEBUG && !BuildConfig.FLAVOR.equals("alpha")) {
+            navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
+        }
 
-            mBookRecyclerView = findViewById(R.id.book_list2);
-            SetupCollectionListView(mBookRecyclerView);
+        mBookRecyclerView = findViewById(R.id.book_list2);
+        SetupCollectionListView(mBookRecyclerView);
 
-            // If we were started by some external process, we need to process any file
-            // we were given (a book or bundle)
-            if (savedInstanceState != null)
-                alreadyOpenedFileFromIntent = savedInstanceState.getBoolean(ALREADY_OPENED_FILE_FROM_INTENT_KEY, false);
-            processIntentData(getIntent());
+        // If we were started by some external process, we need to process any file
+        // we were given (a book or bundle)
+        if (savedInstanceState != null)
+            alreadyOpenedFileFromIntent = savedInstanceState.getBoolean(ALREADY_OPENED_FILE_FROM_INTENT_KEY, false);
+        processIntentData(getIntent());
 
-            // Insert the build version and date into the appropriate control.
-            // We have to find it indirectly through the navView's header or it won't be found
-            // this early in the view construction.
+        // Insert the build version and date into the appropriate control.
+        // We have to find it indirectly through the navView's header or it won't be found
+        // this early in the view construction.
         TextView versionDate = navigationView.getHeaderView(0).findViewById(R.id.versionDate);
-            try {
-                String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-                Date buildDate = new Date(BuildConfig.TIMESTAMP);
-                String date = DateFormat.format("dd MMM yyyy", buildDate).toString();
-                versionDate.setText(getVersionAndDateText(versionName, date));
-            } catch (PackageManager.NameNotFoundException e) {
-                e.printStackTrace();
-            }
+        try {
+            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            Date buildDate = new Date(BuildConfig.TIMESTAMP);
+            String date = DateFormat.format("dd MMM yyyy", buildDate).toString();
+            versionDate.setText(getVersionAndDateText(versionName, date));
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
 
 
         // Cleans up old-style thumbnails - could be removed someday after it's run on most devices with old-style thumbnails
         BookCollection.cleanUpOldThumbs(this);
 
-            resumeMainActivity();
+        resumeMainActivity();
     }
 
     private void initializeNavigationDrawer(final Toolbar toolbar) {
@@ -581,6 +581,8 @@ public class MainActivity extends BaseActivity
                 SpannableString s = new SpannableString(getString(R.string.attempting_to_send_reading_stats));
                 s.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.colorDeemphasizeText)), 0, s.length(), 0);
                 analyticsStatusMenuItem.setTitle(s);
+
+                mChangeDeviceIdForStatsClickCounter = 0;
 
                 super.onDrawerClosed(drawerView);
             }
@@ -1060,6 +1062,8 @@ public class MainActivity extends BaseActivity
     static final int STORAGE_PERMISSION_CHECK_OLD_BLOOM = 5;
     static final int STORAGE_PERMISSION_DEVICE_ID = 6;
 
+    private int mChangeDeviceIdForStatsClickCounter = 0;
+
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
@@ -1090,11 +1094,31 @@ public class MainActivity extends BaseActivity
                 DisplaySimpleResource(getString(R.string.about_bloom), R.raw.about_bloom);
         } else if (id == R.id.about_sil) {
                 DisplaySimpleResource(getString(R.string.about_sil), R.raw.about_sil);
+        } else if (id == R.id.analytics_device_id_info || id == R.id.analytics_status) {
+            if (!processDeviceIdInfoClick()) {
+                // If we haven't handled the click (because the secret behavior of three clicks hasn't been achieved),
+                // return without closing the drawer so the user has the opportunity to tap again.
+                // I was hoping that returning false would give less indication to the user
+                // that was something was happening when the item was tapped the first two times,
+                // but in practice, it doesn't seem to make any difference.
+                return false;
+            }
         }
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    // Returns true if the click was handled
+    // i.e. if the user clicked 3 times.
+    private boolean processDeviceIdInfoClick() {
+        if (++mChangeDeviceIdForStatsClickCounter >= 3) {
+            AnalyticsDeviceInfoEntryDialogFragment analyticsDeviceInfoEntryDialogFragment = new AnalyticsDeviceInfoEntryDialogFragment();
+            analyticsDeviceInfoEntryDialogFragment.show(getFragmentManager(), AnalyticsDeviceInfoEntryDialogFragment.ANALYTICS_DEVICE_INFO_ENTRY_DIALOG_FRAGMENT_TAG);
+            return true;
+        }
+        return false;
     }
 
     private void openBloomPubFile() {

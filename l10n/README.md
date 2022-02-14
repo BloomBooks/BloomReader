@@ -13,6 +13,13 @@ We use Crowdin for localization. Bloom Reader's `strings.xml` is included in the
 
 Warning: with the current project settings in Crowdin, you will download all translated strings, even unapproved ones. Therefore, this process will add unapproved strings.
 
+## Add/Update/Remove English strings in Crowdin
+
+1. Make sure you on the `master` branch.
+2. After modifications have been made to `{BR root}/app/src/main/res/values/strings.xml`, upload it using Crowdin plugin (see below).
+
+Warning: This will also delete strings from Crowdin if the strings are not in the file.
+
 ## Crowdin plugin
 
 The easiest way to upload new strings and download translations is through the [JetBrains plugin for Android Studio](https://plugins.jetbrains.com/plugin/9463-crowdin). You will need to add the `crowdin.properties` file at the root of this repo. The file should have the following format:

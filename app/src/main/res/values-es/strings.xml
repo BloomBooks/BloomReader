@@ -81,6 +81,6 @@
     <!-- Response button to the above request for permission to use location -->
     <string name="turn_on_location">Activar ubicación</string>
     <string name="request_gps">A los autores e ilustradores les gusta saber dónde se leen sus libros gratuitos. Pero necesitamos que usted active el servicio de localización GPS en su dispositivo.</string>
-    <string name="attempting_to_send_reading_stats">Attempting to send reading stats...</string>
-    <string name="all_reading_stats_sent">All reading stats sent.</string>
+    <string name="attempting_to_send_reading_stats">Intentando enviar estadísticas de lectura...</string>
+    <string name="all_reading_stats_sent">Se enviaron todas las estadísticas de lectura.</string>
 </resources>

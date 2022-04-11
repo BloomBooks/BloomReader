@@ -98,15 +98,6 @@ public class ReaderActivity extends BaseActivity {
             mBrowser.setWebViewClient(new ReaderWebViewClient("file://" + bookFolder));
             mBrowser.setWebChromeClient(new ReaderWebChromeClient(this));
 
-            // Optional .distribution file used for analytics
-            try {
-                mDistribution = fileReader.getFileContent(".distribution");
-                if (mDistribution != null)
-                    mDistribution = mDistribution.trim();
-            } catch (Exception e) {
-                Log.e("sendAnalytics", "Unable to check presence or contents of .distribution file", e);
-            }
-
             // The url determines the content of the WebView, which is the bloomplayer.htm
             // file
             // shipped with this program, combined with a param pointing to the book we just
@@ -275,22 +266,14 @@ public class ReaderActivity extends BaseActivity {
     // Add any analytics info which should be in every event reported
     // but which doesn't come from BloomPlayer.
     private void addNonPlayerAnalyticsInfo(JSONObject data) {
-        JSONObject params;
-        try {
-            params = data.getJSONObject("params");
-            // Distribution
-            // We allow for the presence of a .distribution file in the .bloomPub (or .bloomd)
-            // which contains a string describing information about the source and distribution of the book.
-            // To start, the RISE II project will use it to show distribution from SD cards vs. web.
-            // In the future, we could allow sources to add up by modifying that file
-            // and appending to that string. So a book could have that file with
-            // "RISE2 SD Card, bluetooth, bluetooth". And you could have the web have a source like
-            // "bloomdesktop, bluetooth" and "bloomlibrary, bluetooth , bluetooth , bluetooth ".
-            if (mDistribution != null)
-                params.put("distributionSource", mDistribution);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        // currently nothing to do.
+        //        JSONObject params;
+        //        try {
+        //            params = data.getJSONObject("params");
+        //            // Add some more data to params
+        //        } catch (JSONException e) {
+        //            e.printStackTrace();
+        //        }
     }
 
     // Given a JSONObject, obtained by parsing a JSON string of book properties sent

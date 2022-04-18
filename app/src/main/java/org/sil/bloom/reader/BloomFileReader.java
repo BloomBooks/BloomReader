@@ -21,6 +21,7 @@ public class BloomFileReader {
     private Uri bookUri;
     private File bookDirectory;
     private JSONObject metaProperties;
+    private ZipFileOrUri fileOrUri;
 
     private static final String CURRENT_BOOK_FOLDER = "currentbook";
     private static final String THUMBNAIL_NAME_1 = "thumbnail.png";
@@ -47,11 +48,17 @@ public class BloomFileReader {
         this(context, book.pathOrUri, book.uri);
     }
 
+    // If there is a file by the specified name in the book folder, return it.
+    // If there is an entry by the specified name in the zip file, extract and return it.
+    // Otherwise return null.
+    public File tryGetFile(String name) {
+        return fileOrUri.tryGetFile(name);
+    }
+
     public File getHtmlFile() throws IOException{
         initialize();
-        String name = bookDirectory + File.separator + "index.htm";
-        File index = new File(name);
-        if (index.exists()) {
+        File index = fileOrUri.tryGetFile("index.htm");
+        if (index != null) {
             return index;
         }
         // Handle various legacy places the file might be by renaming it.
@@ -59,18 +66,15 @@ public class BloomFileReader {
         // what the root file of a directory will be, this avoids any complications
         // with passing special characters to bloom-player in a URL.
         File currentFile = findHtmlFile();
-        if (currentFile.renameTo(index))
-            return index;
-        else
-            return currentFile; // pathological, but should work in most cases.
+        return currentFile; // pathological, but should work in most cases.
     }
 
     @Nullable // If no font file matches the give name
     public File getFontFile(String fontFileName) {
         try {
             initialize();
-            File fontFile = new File(bookDirectory + File.separator + fontFileName);
-            return fontFile.exists() ? fontFile : null;
+            File fontFile = fileOrUri.tryGetFile(fontFileName);
+            return fontFile;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -86,8 +90,10 @@ public class BloomFileReader {
             e.printStackTrace();
             return null;
         }
-        File file = new File(bookDirectory + File.separator + name);
-        if (!file.exists())
+        // If this method was commonly used, it might be worth getting the content
+        // without writing out an unzipped file. But according to AS, it's not used at all.
+        File file = fileOrUri.tryGetFile(name);
+        if (file == null)
             return null;
         return IOUtilities.FileToString(file);
     }
@@ -102,16 +108,11 @@ public class BloomFileReader {
             // We must not unzip into the current book folder as that would interfere with the
             // current book (a race condition).
             if (this.bookDirectory == null) {
-                unzipBook("tempAudioPath");
+                prepareFileOrUriForBook("tempAudioPath");
             }
             final File bookHtmlFile = this.getHtmlFile();
             html = IOUtilities.FileToString(bookHtmlFile);
-            bookDirectory = bookHtmlFile.getParentFile();
-            final String audioDirectoryPath = bookDirectory + AUDIO_FOLDER;
-            File audioDir = new File(audioDirectoryPath);
-            if (audioDir.exists()) {
-                audioFilesExist = !IOUtilities.isDirectoryEmpty(audioDir);
-            }
+            audioFilesExist = fileOrUri.findFirstMatching(name -> name.startsWith("audio/")) != null;
         } catch (IOException ex) {
             return false; // we're just trying to put audio icons on thumbnails
         } finally {
@@ -124,13 +125,13 @@ public class BloomFileReader {
         Uri thumbUri = null;
         // This function is called in a background thread for books that are not the current one
         // being opened. It must not race for the same directory.
-        unzipBook("tempBookPath");
+        prepareFileOrUriForBook("tempBookPath");
         String path = bloomFilePath == null ? bookUri.getPath() :bloomFilePath; // uri version is not a valid file path, but works for this.
         String bookName = IOUtilities.stripBookFileExtension((new File(path)).getName());
-        File thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_1);
-        if (!thumb.exists())
-            thumb = new File(bookDirectory.getPath() + File.separator + THUMBNAIL_NAME_2);
-        if (thumb.exists()) {
+        File thumb = fileOrUri.tryGetFile(THUMBNAIL_NAME_1);
+        if (thumb == null)
+            thumb = fileOrUri.tryGetFile(THUMBNAIL_NAME_2);
+        if (thumb != null) {
             String toPath = thumbsDirectory.getPath() + File.separator + bookName;
             if (IOUtilities.copyFile(thumb.getPath(), toPath))
                 thumbUri = Uri.fromFile(new File(toPath));
@@ -185,8 +186,8 @@ public class BloomFileReader {
     private JSONObject getMetaProperties(){
         if(metaProperties == null) {
             try {
-                File metaFile = new File(bookDirectory + File.separator + META_JSON_FILE);
-                if (!metaFile.exists())
+                File metaFile = fileOrUri.tryGetFile(META_JSON_FILE);
+                if (metaFile == null)
                     throw new IOException(META_JSON_FILE + " not found");
                 metaProperties = new JSONObject(IOUtilities.FileToString(metaFile));
             } catch (JSONException | IOException e) {
@@ -221,21 +222,22 @@ public class BloomFileReader {
                 return;
             }
         }
-        unzipBook(CURRENT_BOOK_FOLDER);
+        prepareFileOrUriForBook(CURRENT_BOOK_FOLDER);
     }
 
     private File findHtmlFile() throws IOException {
         // so, we're calling this because we could not find "index.htm".
         // Next, look for an htm file that matches the name of the .bloompub/.bloomd
-        String nameFromZipFile = IOUtilities.stripBookFileExtension(bookDirectory.getName());
-        File htmlFile = new File(bookDirectory + File.separator + nameFromZipFile + ".htm");
-        if (!htmlFile.exists()) {
-            // Maybe the .bloompub/.bloomd file was renamed. So now just take the first htm file that
-            // is in there
-            // and hope it is the right one.
-            htmlFile = IOUtilities.findFirstWithExtension(bookDirectory, ".htm");
-            if (htmlFile == null)
-                throw new IOException("No HTML file found inside bloomPUB zip file.");
+        String nameFromZipFile = IOUtilities.stripBookFileExtension(bookDirectory.getName()) + ".htm";
+        File htmlFile = fileOrUri.tryGetFile(nameFromZipFile);
+        if (htmlFile != null) {
+            return htmlFile;
+        }
+        // Maybe the .bloompub/.bloomd file was renamed. So now just take the first htm file that
+        // is in there and hope it is the right one.
+        htmlFile = fileOrUri.findFirstWithExtension(".htm", "index.htm");
+        if (htmlFile == null) {
+            throw new IOException("No HTML file found inside bloomPUB zip file.");
         }
         return htmlFile;
     }
@@ -244,14 +246,17 @@ public class BloomFileReader {
         File toEmpty = bookDirectory;
         bookDirectory = null;
         IOUtilities.emptyDirectory(toEmpty);
+        fileOrUri.close();
     }
 
-    private void unzipBook(String toPath) throws IOException {
+    // The book will be progressively unzipped into toPath as fileOrUri is asked for them
+    // (or all at once if we only have a URI).
+    private void prepareFileOrUriForBook(String toPath) throws IOException {
         setupBookDirectory(toPath);
         if (bookUri == null) {
-            IOUtilities.unzip(new File(bloomFilePath), bookDirectory);
+            fileOrUri = new ZipFileOrUri(new File(bloomFilePath), bookDirectory.getPath());
         } else {
-            IOUtilities.unzip(context, bookUri, bookDirectory);
+            fileOrUri = new ZipFileOrUri(bookUri, context, bookDirectory.getPath());
         }
     }
 

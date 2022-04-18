@@ -37,6 +37,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -599,11 +601,17 @@ public class IOUtilities {
         }
     }
 
+    // We want it to end with this extension and be a top-level file in the directory.
     public static File findFirstWithExtension(File directory, final String extension){
+        return findFirstMatching(directory, name -> name.endsWith(extension) && name.indexOf("/") < 0);
+    }
+
+    // Return first file whose name (relative to directory) satisfies the condition.
+    public static File findFirstMatching(File directory, Predicate<String> condition){
         File[] paths = directory.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File file, String name) {
-                return name.endsWith(extension);
+                return condition.test(name);
             }
         });
 

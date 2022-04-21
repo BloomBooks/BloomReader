@@ -9,6 +9,8 @@ import android.webkit.WebViewClient;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashMap;
 
 // This class improves security. Our WebView is, at the level of its basic settings, allowed
@@ -19,8 +21,18 @@ import java.util.HashMap;
 public class ReaderWebViewClient extends WebViewClient {
 
     String mAllowedPathPrefix;
-    public ReaderWebViewClient(String allowedPathPrefix) {
-        mAllowedPathPrefix = allowedPathPrefix;
+    BloomFileReader mFileReader;
+    int mLengthOfCanonicalPrefix;
+    public ReaderWebViewClient(String bookFolderPath, BloomFileReader fileReader) {
+        // Our basic strategy is to extract files to a directory and give bloom-player
+        // a file:// url to the root html directory in that folder. So any valid urls
+        // will start with file:// plus the path to the folder.
+        mAllowedPathPrefix = "file://" + bookFolderPath;
+        mFileReader = fileReader;
+        // To get a key for fileReader.tryGetFile, we need to take the canonical path
+        // of the file requested and strip off the bit indicated by allowedPathPrefix.
+        // (plus one more slash).
+        mLengthOfCanonicalPrefix = bookFolderPath.length() + 1;
     }
 
     @Nullable
@@ -39,14 +51,27 @@ public class ReaderWebViewClient extends WebViewClient {
     private boolean urlIsAllowed(String url) {
         if (!url.startsWith("file://"))
             return false;
-        String path = url.substring("file://".length());
+        String path = null;
+        try {
+            path = URLDecoder.decode(url.substring("file://".length()), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace(); // absolutely stupid compiler requirement, of course UTF-8 is supported!
+        }
         try {
             String canonicalPath = new File(path).getCanonicalPath();
             String canonicalUrl = "file://" + canonicalPath;
-            if (canonicalUrl.startsWith(mAllowedPathPrefix))
+            if (canonicalUrl.startsWith(mAllowedPathPrefix)) {
+                // Make sure the file we want has been unzipped.
+                String keyInZip = canonicalPath.substring(mLengthOfCanonicalPrefix);
+                int index = keyInZip.indexOf("?");
+                if (index >= 0) {
+                    keyInZip = keyInZip.substring(0,index);
+                }
+                mFileReader.tryGetFile(keyInZip);
                 return true;
+            }
             // I think this only happens before Android 21 (Lollipop); in later androids,
-            // the apps own assets are automatically OK.
+            // the app's own assets are automatically OK.
             return canonicalUrl.startsWith("file:///android_asset/bloom-player/");
         } catch (IOException e) {
             return false;

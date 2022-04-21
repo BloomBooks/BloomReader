@@ -37,6 +37,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -521,25 +523,35 @@ public class IOUtilities {
     }
 
     public static boolean copyFile(InputStream fromStream, String toPath) {
-        int totalRead = 0;
+
+        File output = new File(toPath);
         try {
-            new File(toPath).createNewFile(); //this does nothing if if already exists
-            OutputStream out = new FileOutputStream(toPath);
-            byte[] buffer = new byte[BUFFER_SIZE];
-            int read;
-            while ((read = fromStream.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
-                totalRead += read;
-            }
-            fromStream.close();
-            out.flush();
-            out.close();
+            readFileFromInput(fromStream, output);
             return true;
         } catch (Exception e) {
-            Log.e("IOUtilities", "Copied "+totalRead+" bytes to "+toPath+" before failing ("+e.getMessage()+")");
-            e.printStackTrace();
-            new File(toPath).delete();  // A partial file causes problems (BL-6970), so delete what we copied.
+            output.delete();  // A partial file causes problems (BL-6970), so delete what we copied.
             return false;
+        }
+    }
+    public static void readFileFromInput(InputStream fromStream, File output) throws IOException {
+        int totalRead = 0;
+        try {
+        output.getParentFile().mkdirs(); // can't find a clear answer on whether createNewFile will do this
+        output.createNewFile(); //this does nothing if if already exists
+        OutputStream out = new FileOutputStream(output);
+        byte[] buffer = new byte[BUFFER_SIZE];
+        int read;
+        while ((read = fromStream.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+            totalRead += read;
+        }
+        fromStream.close();
+        out.flush();
+        out.close();
+        } catch (Exception e) {
+            Log.e("IOUtilities", "Copied "+totalRead+" bytes to "+output.getPath()+" before failing ("+e.getMessage()+")");
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -599,11 +611,17 @@ public class IOUtilities {
         }
     }
 
+    // We want it to end with this extension and be a top-level file in the directory.
     public static File findFirstWithExtension(File directory, final String extension){
+        return findFirstMatching(directory, name -> name.endsWith(extension) && name.indexOf("/") < 0);
+    }
+
+    // Return first file whose name (relative to directory) satisfies the condition.
+    public static File findFirstMatching(File directory, Predicate<String> condition){
         File[] paths = directory.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File file, String name) {
-                return name.endsWith(extension);
+                return condition.test(name);
             }
         });
 

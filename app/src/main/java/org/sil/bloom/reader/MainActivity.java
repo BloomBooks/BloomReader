@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -60,6 +61,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import static org.sil.bloom.reader.BloomReaderApplication.DEVICE_ID_FILE_NAME;
 import static org.sil.bloom.reader.BloomReaderApplication.shouldPreserveFilesInOldDirectory;
@@ -105,6 +107,21 @@ public class MainActivity extends BaseActivity
         requestLocationUpdates();
 
         requestPermissionToReadDeviceIdJsonIfNeeded();
+    }
+
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        // This happens at startup, rather like onCreate, but later. However, putting the following code in
+        // onCreate() produces crashes on some devices. I think it is because 'this' is not
+        // sufficiently initialized to pass to the WebView constructor. A stack overflow article
+        // suggested putting it in this method instead, and it seems to fix the problem.
+        if (!ReaderActivity.haveCurrentWebView(new WebView(this))) {
+            Intent intent = new Intent(this, NeedNewerWebViewActivity.class);
+            startActivity(intent);
+            // We'll continue and start up regularly, but the message will show again
+            // if the user tries to open the book.
+        }
     }
 
     private void requestPermissionToReadDeviceIdJsonIfNeeded() {

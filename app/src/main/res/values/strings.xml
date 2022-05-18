@@ -36,6 +36,8 @@
     <string name="failed_book_import2">Bloom Reader was not able to read the book "%1$s".</string>
     <string name="external_storage_unavailable">Unable to access file storage. Is the SD card missing?</string>
 
+    <string name="need_newer_webview">In order to use this app, you will need to update the <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System WebView</a> from the Google Play Store.</string>
+
     <string name="share_app_link"><u>Share the link to get Bloom Reader on Google Play</u></string>
     <string name="share_app_with_friend">Share this Bloom Reader app with a friend!</string>
     <string name="share_books_with_friend">Share all your books with a friend who already has Bloom Reader installed.</string>

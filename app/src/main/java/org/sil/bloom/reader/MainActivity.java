@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -60,6 +61,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import static org.sil.bloom.reader.BloomReaderApplication.DEVICE_ID_FILE_NAME;
 import static org.sil.bloom.reader.BloomReaderApplication.shouldPreserveFilesInOldDirectory;
@@ -96,6 +98,12 @@ public class MainActivity extends BaseActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (!ReaderActivity.haveCurrentWebView(new WebView(this))) {
+             Intent intent = new Intent(this, NeedNewerWebViewActivity.class);
+             startActivity(intent);
+             // We'll continue and start up regularly, but the message will show again
+            // if the user tries to open the book.
+        }
         checkForPendingReadBookAnalyticsEvent();
 
         // Before we create the main activity, so it will see any migrated books.

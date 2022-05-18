@@ -30,6 +30,23 @@ public class ReaderActivity extends BaseActivity {
 
     private long mTimeStarted;
 
+    public static boolean haveCurrentWebView(WebView browser) {
+        String agent = browser.getSettings().getUserAgentString();
+
+        // We're looking for something like
+        // Mozilla/5.0 (Linux; Android 11; moto g(8) power Build/RPES31.Q4U-47-35-12; wv)...
+        // If we don't find the wv at the end of the Mozilla section, we need a newer WebView.
+        // Unfortunately, while I've found doc that says to look for this "wv" as characteristic
+        // of Lollipop+ WebView, I haven't found instructions on exactly how to search for it.
+        // Maybe a weaker search...simply for "wv"...is better? Perhaps the wv won't follow a semi-colon
+        // and precede a parenthesis in some future version? Maybe it should be stronger...
+        // try to check that it's  whole word in the Mozilla section? Not very easy to do, as
+        // device names like g(8) complicate picking out the Mozilla section. Could there be an
+        // old device whose name happens to contain "wv"? This seems like a reasonable compromise
+        // subject to testing.
+        return agent.indexOf("; wv)") >= 0;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,6 +60,14 @@ public class ReaderActivity extends BaseActivity {
 
         setContentView(R.layout.activity_reader);
         mBrowser = this.findViewById(R.id.bloom_player);
+
+        if (!haveCurrentWebView(mBrowser)) {
+            Intent intent = new Intent(this, NeedNewerWebViewActivity.class);
+            startActivity(intent);
+            // We'll continue normally, but if the user chooses 'back' he will be in the
+            // screen with "Loading Bloom Player..."
+        }
+
         mBrowser.clearCache(false); // BL-7567 fixes "cross-pollination" of images
         mAppInterface = new WebAppInterface(this);
         // See the class comment on WebAppInterface for how this allows Javascript in

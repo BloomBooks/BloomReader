@@ -2,42 +2,29 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.sil.bloom.reader"
     android:installLocation="auto">
-
-    <!-- Normal Permissions - granted by being in Manifest -->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!-- So that just for the duration of WiFi transfer we can hold a lock. -->
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <!-- Used at least for analytics, soon for Bloom Library download. Was present when I added
-    analytics, so may be used for something else also. -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <!-- On later versions of Android this seems to be needed for receiving UDP broadcasts. -->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- On later versions of Android this seems to be needed for receiving UDP broadcasts. -->
-    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
-    <!-- currently just because it's how we get the device name for WiFi, but eventually we will have
-    other Bluetooth functions. -->
-    <uses-permission android:name="android.permission.BLUETOOTH"/>
-
-    <!-- Dangerous Permissions - must be requested at runtime -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-
-    <!-- hasFragileUserData prompts the user with the option to keep app data upon uninstall -->
     <application
         android:name=".BloomReaderApplication"
-        android:requestLegacyExternalStorage="true"
-        android:preserveLegacyExternalStorage="true"
         android:allowBackup="true"
         android:hasFragileUserData="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:preserveLegacyExternalStorage="true"
+        android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <!-- Some activities which declare android:theme="@style/AppTheme.NoActionBar" actually
+        <activity
+            android:name=".NeedNewerWebViewActivity"
+            android:exported="false"
+            android:label="Missing web view"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <!--
+         Some activities which declare android:theme="@style/AppTheme.NoActionBar" actually
         do have action bars, but we're choosing to configure a toolbar as our action bar
-        using setSupportActionBar() -->
-        <!-- android:launchMode="singleTask" prevents MainActivity (thus BR) from
+        using setSupportActionBar()
+        -->
+        <!--
+ android:launchMode="singleTask" prevents MainActivity (thus BR) from
         launching multiple instances.
         Otherwise, opening a .bloompub/.bloomd file directly in a file manager or
         browser while BR is running can cause a second instance to be created in the
@@ -48,10 +35,10 @@
         -->
         <activity
             android:name=".MainActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:label="@string/app_name"
             android:launchMode="singleTask"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -79,9 +66,7 @@
                 extensions. The original filename is not available to the intent on the surface and
                 takes a bit of digging around to find.
             -->
-            <!--
-                Matches intents by file extension when no MIME type is set.
-            -->
+            <!-- Matches intents by file extension when no MIME type is set. -->
             <intent-filter
                 android:icon="@drawable/ic_bloomicon"
                 android:label="@string/app_name">
@@ -137,9 +122,7 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle.enc" />
             </intent-filter>
-            <!--
-                Match intents by file extension when a MIME type is set.
-            -->
+            <!-- Match intents by file extension when a MIME type is set. -->
             <intent-filter
                 android:icon="@drawable/ic_bloomicon"
                 android:label="@string/app_name">
@@ -151,7 +134,6 @@
                 <data android:scheme="file" />
                 <data android:scheme="content" />
                 <data android:host="*" />
-
                 <data android:mimeType="*/*" />
                 <!--
                     Work around Android's ugly primitive PatternMatcher implementation that can't
@@ -198,9 +180,7 @@
                 <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.bloombundle.enc" />
             </intent-filter>
 
-            <!--
-                Match intents by MIME type in case the file extension gets lost.
-            -->
+            <!-- Match intents by MIME type in case the file extension gets lost. -->
             <intent-filter
                 android:icon="@drawable/ic_bloomicon"
                 android:label="@string/app_name">
@@ -212,9 +192,11 @@
                 <data android:scheme="file" />
                 <data android:scheme="content" />
                 <!-- Sometimes the MIME type we get is not exactly what we set - hence the variety of options -->
-                <!-- As of May 2019, we don't actually know of any case where these 6 bloom-specific mime types get used,
+                <!--
+                     As of May 2019, we don't actually know of any case where these 6 bloom-specific mime types get used,
                      but I'm too paranoid to remove them. Comments added with these originally referred to
-                     their need in opening from email. -->
+                     their need in opening from email.
+                -->
                 <data android:mimeType="application/vnd.bloom" />
                 <data android:mimeType="application/bloom" />
                 <data android:mimeType="application/vnd.bloompub" />
@@ -224,13 +206,17 @@
                 <data android:mimeType="application/vnd.bloombundle" />
                 <data android:mimeType="application/bloombundle" />
 
-                <!-- This is unfortunate, but some apps (e.g. Gmail) just don't seem to include the file name in the path,
+                <!--
+                     This is unfortunate, but some apps (e.g. Gmail) just don't seem to include the file name in the path,
                      so pathPattern matching is completely useless. Adding this means Bloom Reader will offer to open
                      all files with application/octet-stream (which is what Gmail sends for our files as of May 2019),
-                     but we decided that is better than not offering to open any. -->
+                     but we decided that is better than not offering to open any.
+                -->
                 <data android:mimeType="application/octet-stream" />
-                <!-- I'm also adding application/zip in the anticipation that it will help with WhatsApp.
-                     (And it seems it may have... May 2019.) -->
+                <!--
+                     I'm also adding application/zip in the anticipation that it will help with WhatsApp.
+                     (And it seems it may have... May 2019.)
+                -->
                 <data android:mimeType="application/zip" />
                 <!-- This makes Drive able to open .bloompub/.bloomd files on my Android 6 phone... May 2019 -->
                 <data android:mimeType="application/x-zip" />
@@ -253,11 +239,13 @@
                 files, but possibly uninstalling it after getting the connection to one would allow
                 the user to reinstall and get a connection to the other without losing the first.
             -->
-            <!-- This filter opens up Bloom Reader to offering to handle all sorts of files!  This
+            <!--
+                 This filter opens up Bloom Reader to offering to handle all sorts of files!  This
                  is probably more confusing to more users than the workaround described above.
                  See https://issues.bloomlibrary.org/youtrack/issue/BL-7045.
             -->
-            <!--intent-filter
+            <!--
+            intent-filter
                 android:icon="@drawable/book"
                 android:label="@string/app_name">
                 <action android:name="android.intent.action.VIEW" />
@@ -269,13 +257,41 @@
                 <data android:host="*" />
 
                 <data android:mimeType="*/*" />
-            </intent-filter-->
+            </intent-filter
+            -->
         </activity>
         <activity
             android:name=".ReaderActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout" />
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".wifi.GetFromWiFiActivity"
+            android:excludeFromRecents="true"
+            android:label="@string/app_name"
+            android:theme="@style/WiFiDialogTheme" />
+        <activity
+            android:name=".ShelfActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths" />
+        </provider>
+
+        <receiver
+            android:name=".ConnectivityReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
 
         <service
             android:name=".wifi.NewBookListenerService"
@@ -285,33 +301,24 @@
             android:name=".wifi.SyncService"
             android:enabled="true"
             android:exported="true" />
-
-        <activity
-            android:name=".wifi.GetFromWiFiActivity"
-            android:label="@string/app_name"
-            android:excludeFromRecents="true"
-            android:theme="@style/WiFiDialogTheme" />
-        <activity
-            android:name=".ShelfActivity"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar" />
-
-        <receiver android:name="org.sil.bloom.reader.ConnectivityReceiver"
-            android:enabled="true">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            </intent-filter>
-        </receiver>
-
-        <provider
-            android:authorities="${applicationId}.fileprovider"
-            android:name="androidx.core.content.FileProvider"
-            android:grantUriPermissions="true"
-            android:exported="false">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/filepaths" />
-        </provider>
     </application>
+    <!--
+ Used at least for analytics, soon for Bloom Library download. Was present when I added
+    analytics, so may be used for something else also.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- On later versions of Android this seems to be needed for receiving UDP broadcasts. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- On later versions of Android this seems to be needed for receiving UDP broadcasts. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!--
+ currently just because it's how we get the device name for WiFi, but eventually we will have
+    other Bluetooth functions.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- Dangerous Permissions - must be requested at runtime -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
 </manifest>

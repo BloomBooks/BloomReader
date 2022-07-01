@@ -38,12 +38,71 @@ public class ReaderWebViewClient extends WebViewClient {
     @Nullable
     @Override
     public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-            if (urlIsAllowed(request.getUrl().toString()))
-                return super.shouldInterceptRequest(view, request);
+        String url = request.getUrl().toString();
 
-            return new WebResourceResponse("text", "utf-8", 403,
-                    "request for file not part of book",
-                    new HashMap<String,String>(), new ByteArrayInputStream("".getBytes()));
+        WebResourceResponse fontResponse = getHostedFontResponseIfApplicable(url);
+        if (fontResponse != null)
+            return fontResponse;
+
+        if (urlIsAllowed(url))
+            return super.shouldInterceptRequest(view, request);
+
+        return new WebResourceResponse("text", "utf-8", 403,
+                "request for file not part of book",
+                new HashMap<String, String>(), new ByteArrayInputStream("".getBytes()));
+    }
+
+    // Starting in bloom-player 2.1, we have font-face rules which tell the host to serve up
+    // the appropriate Andika or Andika New Basic font file. An example is:
+    //             @font-face {
+    //                font-family: "Andika New Basic";
+    //                font-weight: bold;
+    //                font-style: normal;
+    //                src:
+    //                    local("Andika New Basic Bold"),
+    //                    local("Andika Bold"),
+    //    ===>            url("./host/fonts/Andika New Basic Bold"),
+    //                    url("https://bloomlibrary.org/fonts/Andika%20New%20Basic/AndikaNewBasic-B.woff")
+    //                ;
+    //            }
+    // So if we have a request for /host/fonts/, here is where we intercept and handle it.
+    private WebResourceResponse getHostedFontResponseIfApplicable(String url) {
+        try {
+            if (!url.contains("/host/fonts/"))
+                return null;
+
+            String fontNameRequested = IOUtilities.getFilename(url);
+            fontNameRequested = URLDecoder.decode(fontNameRequested, "UTF-8");
+            String fontFileName = null;
+            switch (fontNameRequested) {
+                case "Andika New Basic":
+                case "Andika":
+                    fontFileName = "Andika-Regular.ttf";
+                    break;
+                case "Andika New Basic Bold":
+                case "Andika Bold":
+                    fontFileName = "Andika-Bold.ttf";
+                    break;
+                case "Andika New Basic Italic":
+                case "Andika Italic":
+                    fontFileName = "Andika-Italic.ttf";
+                    break;
+                case "Andika New Basic Bold Italic":
+                case "Andika Bold Italic":
+                    fontFileName = "Andika-BoldItalic.ttf";
+                    break;
+            }
+
+            if (fontFileName != null) {
+                return new WebResourceResponse("font/ttf", "utf-8", 200,
+                        "OK", new HashMap<>(),
+                        BloomReaderApplication.getBloomApplicationContext().getAssets().open("fonts/Andika/" + fontFileName));
+            }
+        } catch (Exception e) {
+            // Just silently fail on any exception; definitely not a good reason to crash
+            return null;
+        }
+        return null;
     }
 
     // We use the canonical path of the file to prevent hacks involving a valid directory

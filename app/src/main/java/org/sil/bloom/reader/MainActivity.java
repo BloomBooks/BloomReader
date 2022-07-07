@@ -94,9 +94,12 @@ public class MainActivity extends BaseActivity
     ProgressBar mLoadingProgressBar;       // accessed by InitializeLibraryTask
     TextView mLoadingTextView;
 
+    private static MainActivity mCurrentInstance;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mCurrentInstance = this;
 
         checkForPendingReadBookAnalyticsEvent();
 
@@ -107,6 +110,12 @@ public class MainActivity extends BaseActivity
         requestLocationUpdates();
 
         requestPermissionToReadDeviceIdJsonIfNeeded();
+    }
+
+    public static void noteNewBookInPrivateDirectory(String filePathOrUri) {
+        if (mCurrentInstance == null)
+            return;
+        mCurrentInstance.onNewOrUpdatedBook(filePathOrUri);
     }
 
     @Override
@@ -544,7 +553,8 @@ public class MainActivity extends BaseActivity
         // Cleans up old-style thumbnails - could be removed someday after it's run on most devices with old-style thumbnails
         BookCollection.cleanUpOldThumbs(this);
 
-        resumeMainActivity();
+        // OS automatically calls OnResume right after OnCreate, so we shouldn't need to call this here too.
+        //resumeMainActivity();
     }
 
     private void initializeNavigationDrawer(final Toolbar toolbar) {
@@ -739,6 +749,9 @@ public class MainActivity extends BaseActivity
             }
         }
 
+        DownloadsView downloads = findViewById(R.id.download_books);
+        downloads.updateUItoCurrentState();
+
         //Periodic cleanup
         SharingManager.fileCleanup(this);
     }
@@ -774,6 +787,11 @@ public class MainActivity extends BaseActivity
     }
 
     private void updateForNewBook(String filePathOrUri) {
+        if (_bookCollection == null) {
+            // This can happen when we detect during startup that a download has finished while we
+            // were stopped. We can afford to ignore it since we haven't loaded yet.
+            return;
+        }
 		filePathOrUri = BookCollection.fixBloomd(filePathOrUri);
         BookOrShelf book = _bookCollection.addBookOrShelfIfNeeded(filePathOrUri);
         highlightAndScrollTo(book);
@@ -967,6 +985,12 @@ public class MainActivity extends BaseActivity
             GetFromBloomFolder(KindOfPermissionRequest.LostBooksWithoutReport);
             return;
         }
+        if ("getBooksFromLibrary".equals(bookOrShelf.specialBehavior)) {
+            Intent intent = new Intent(context, BloomLibraryActivity.class);
+
+            context.startActivity(intent);
+            return;
+        }
         if (bookOrShelf.uri == null && !new File(path).exists()) {
             // Possibly deleted - possibly on an sd card that got removed
             Toast.makeText(this, getString(R.string.missing_book, BookOrShelf.getNameFromPath(path)), Toast.LENGTH_LONG).show();
@@ -983,14 +1007,20 @@ public class MainActivity extends BaseActivity
             intent.putExtra("background", bookOrShelf.backgroundColor);
             context.startActivity(intent);
         } else {
-            Intent intent = new Intent(context, ReaderActivity.class);
-            intent.putExtra("bookPath", path);
+            launchReader(context, path, bookOrShelf);
+        }
+    }
+
+    public static void launchReader(Context context, String path, BookOrShelf bookOrShelf) {
+        Intent intent = new Intent(context, ReaderActivity.class);
+        intent.putExtra("bookPath", path);
+        if (bookOrShelf != null) {
             if (bookOrShelf.uri != null) {
                 intent.putExtra("bookUri", bookOrShelf.uri.toString());
             }
             intent.putExtra("brandingProjectName", bookOrShelf.brandingProjectName);
-            context.startActivity(intent);
         }
+        context.startActivity(intent);
     }
 
     private void AskUserForPermissionToReadBloomExternal() {

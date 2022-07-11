@@ -4,7 +4,6 @@
         <shape>
             <solid
                 android:color="#FFF" />
-<!--            <size>android:height="10dp"</size>-->
             <corners android:radius="5dp" />
 
         </shape>
@@ -15,7 +14,6 @@
         <clip>
             <shape>
                 <solid android:color="@color/colorDownloadButtons" />
-<!--                <size>android:height="5dp"</size>-->
                 <corners android:radius="5dp" />
             </shape>
         </clip>

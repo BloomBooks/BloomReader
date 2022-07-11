@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Message;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,7 +38,7 @@ public class DownloadsView extends LinearLayout {
     private static final String BL_DOWNLOADS = "bl-downloads";
     DownloadProgressView mProgressView;
     Context mContext;
-    static List<DownloadsView> mInstances = new ArrayList<DownloadsView>();
+    static List<DownloadsView> sInstances = new ArrayList<DownloadsView>();
     boolean mRecentMultipleDownloads;
 
     public DownloadsView(Context context) {
@@ -106,21 +105,14 @@ public class DownloadsView extends LinearLayout {
 
         // remove the view showing its progress
         removeView(mProgressView);
-        updateChildSizes();
+        updateLayoutForChangedChildList();
     }
 
-    private void updateChildSizes() {
+    private void updateLayoutForChangedChildList() {
         ViewParent root = this.getParent();
         if (root == null) {
             // Can get called in constructor, in which case, we assume the parent layout will be
             // correctly recomputed when we are added to it.
-//            this.requestLayout();
-//            post(new Runnable() {
-//                @Override
-//                public void run() {
-//                    updateChildSizes();
-//                }
-//            });
         } else {
             // If we're already in a root, need to update it, too, since we changed size.
             root.requestLayout();
@@ -175,9 +167,10 @@ public class DownloadsView extends LinearLayout {
                                     // todo: something?
                                     break;
                             }
-                            Message message = Message.obtain();
-                            message.what = UPDATE_DOWNLOAD_PROGRESS;
-                            message.arg1 = progress;
+                            // Use this if we find we do need to do it on the UI thread.
+                            //Message message = Message.obtain();
+                            //message.what = UPDATE_DOWNLOAD_PROGRESS;
+                            //message.arg1 = progress;
                             //mainHandler.sendMessage(message);
                             data.progress= progress;
                             updateProgress();
@@ -226,13 +219,15 @@ public class DownloadsView extends LinearLayout {
         return result;
     }
 
-    private String getFileNameFromUri(String path) {
+    // This is a much simpler way of extracting a filename than we use in IOUtilities, OK because
+    // we create these URIs ourselves and know they are based on a local file.
+    public static String getFileNameFromUri(String path) {
         return path.replaceFirst(".*/", "").replaceFirst("\\.[^.]*$", "");
     }
 
     private void initializeViews(Context context) {
         mContext = context;
-        mInstances.add(this);
+        sInstances.add(this);
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         inflater.inflate(R.layout.downloads, this);
@@ -241,7 +236,7 @@ public class DownloadsView extends LinearLayout {
 
         //set filter to only when download is complete and register broadcast receiver
         IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        mContext.registerReceiver(downloadReceiver, filter);
+        mContext.registerReceiver(mDownloadReceiver, filter);
     }
 
     public void updateUItoCurrentState() {
@@ -296,9 +291,10 @@ public class DownloadsView extends LinearLayout {
                     default:
                         // if we see a failed download, for now we'll ignore it.
                         continue;
-                        // But if it's running or paused we want to show the status and allow it to complete.
+                        // But if it's running or paused or pending we want to show the status and allow it to complete.
                     case DownloadManager.STATUS_RUNNING:
                     case DownloadManager.STATUS_PAUSED:
+                    case DownloadManager.STATUS_PENDING:
                         showDownloadProgress(downloadId, downloadDest);
                         break;
                         // And if one has finished since our last call of this method, even while
@@ -321,19 +317,20 @@ public class DownloadsView extends LinearLayout {
         Uri Download_Uri = Uri.parse(url);
         DownloadManager.Request request = new DownloadManager.Request(Download_Uri);
         String fileName = getFileNameFromUri(Download_Uri.getPath());
-        request.setTitle("Downloading " + fileName); // Enhance: localize?
+        String template = getContext().getString(R.string.downloading_file);
+        request.setTitle(String.format(template, fileName));
         File downloadDest = new File(getDownloadDir(), fileName + ".bloompub");
         Uri target = Uri.fromFile(downloadDest);
         request.setDestinationUri(target);
-        long downloadReference = mDownloadManager.enqueue(request);
-        showDownloadProgress(downloadReference, downloadDest);
+        long downloadId = mDownloadManager.enqueue(request);
+        showDownloadProgress(downloadId, downloadDest);
     }
 
 
     @Override
     public void onDetachedFromWindow() {
-        mContext.unregisterReceiver(downloadReceiver);
-        mInstances.remove(this);
+        mContext.unregisterReceiver(mDownloadReceiver);
+        sInstances.remove(this);
         super.onDetachedFromWindow();
     }
 
@@ -348,12 +345,12 @@ public class DownloadsView extends LinearLayout {
         }
     }
 
-    private void showDownloadProgress(long downloadReference, File dest) {
+    private void showDownloadProgress(long downloadId, File dest) {
         // We save the information about current downloads in a dictionary because it's possible that
         // the user has more than one download going on, and we need this information in our
         // downloadReceiver function that gets called when the download is complete. This also helps
         // keep track of how many downloads are in progress.
-        if (mDownloadsInProgress.get(downloadReference) != null) {
+        if (mDownloadsInProgress.get(downloadId) != null) {
             // When initializing, we can find several references to the same download-in-progress.
             // (Or it may have just been that I was calling the function repeatedly. In any case,
             // a good precaution.)
@@ -365,21 +362,21 @@ public class DownloadsView extends LinearLayout {
             mRecentMultipleDownloads = true;
         } else {
             // we'll add one for the current single download.
-            mProgressView = new DownloadProgressView(mContext, this, downloadReference);
+            mProgressView = new DownloadProgressView(mContext, this, downloadId);
             mProgressView.setBook(dest.getPath());
             if (getChildCount() > 0) {
                 removeViewAt(0); // maybe a previous message about a successful delivery
             }
             addView(mProgressView);
-            updateChildSizes();
+            updateLayoutForChangedChildList();
         }
-        mDownloadsInProgress.put(downloadReference, new DownloadData(dest.getPath()));
+        mDownloadsInProgress.put(downloadId, new DownloadData(dest.getPath()));
         if (mDownloadsInProgress.size() == 1) {
             startMonitoringDownloads();
         }
     }
 
-    private BroadcastReceiver downloadReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver mDownloadReceiver = new BroadcastReceiver() {
 
         // Remember, this is a method of the BroadcastReceiver stored in downloadReceiver, not
         // of the parent class. We override this to receive messages when the download manager
@@ -405,7 +402,6 @@ public class DownloadsView extends LinearLayout {
                             // will count as a single.
                             mRecentMultipleDownloads = false;
                         }
-                        //BloomLibraryActivity.this
                     }
 
                     cursor.close();
@@ -416,11 +412,6 @@ public class DownloadsView extends LinearLayout {
     };
 
     private void handleDownloadComplete(String downloadDestPath, long downloadId) {
-        // This feels as if it should work, but we get a mysterious NullReference when
-        // trying to delete the temp file. Since we sent the destination to a known
-        // location in a folder we have write access to, we can manipulate the files
-        // directly.
-        //BloomLibraryActivity.this.moveBookFileToLocalFolderSAF(false, uri, dest);
         File source = new File(downloadDestPath);
         if (!source.exists()) {
             // just ignore any download we think we got that didn't result in a file.
@@ -436,18 +427,19 @@ public class DownloadsView extends LinearLayout {
             mDownloadManager.remove(downloadId);
             return;
         }
-        String fileName = downloadDestPath.replaceFirst(".*/", "").replaceFirst("\\.[^.]*$", "");
+        String fileName = DownloadsView.getFileNameFromUri(downloadDestPath);
         File dest = new File(BookCollection.getLocalBooksDirectory(), fileName + ".bloompub");
         IOUtilities.copyFile(source.getPath(), dest.getPath());
         source.delete();
-        // Now we've moved the file, telling the download manager to remove it won't delete it!
+        // We need to copy the file before we tell the download manager to remove it, or the DM
+        // will not just forget about it, but also delete the file!
         // See above for why we want to remove it.
         mDownloadManager.remove(downloadId);
         MainActivity.noteNewBookInPrivateDirectory(dest.getPath());
         // It's possible that during the download, we moved away from the activity that contains
         // the instance that initiated the download, but it still gets the notification.
         // We want to see the BookReadyView in whatever instance is actually visible.
-        for (DownloadsView v: mInstances) {
+        for (DownloadsView v: sInstances) {
             v.updateUiForNewInstance(dest.getPath());
         }
     }
@@ -457,7 +449,7 @@ public class DownloadsView extends LinearLayout {
     public void viewBooks(String bookPath) {
         // If we're closing this in one instance, we want to get rid of it in all of them.
         // Currently this is simplified since we only ever have one.
-        for (DownloadsView instance : mInstances) {
+        for (DownloadsView instance : sInstances) {
             if (instance.getChildCount() > 0) {
                 instance.removeViewAt(0);
             }
@@ -482,7 +474,7 @@ public class DownloadsView extends LinearLayout {
         BookReadyView brb = new BookReadyView(mContext, this);
         brb.setBook(mRecentMultipleDownloads ? "" : bookPath);
         addView(brb, 0);
-        updateChildSizes();
+        updateLayoutForChangedChildList();
     }
 }
 

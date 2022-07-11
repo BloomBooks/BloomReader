@@ -11,12 +11,9 @@ import android.widget.Toast;
 // This class is used by BloomLibraryActivity to configure its WebView. Apart from some error
 // capture, the main reason for it is to receive and pass on a notification when the title of
 // the web page changes.
-public class BloomLibraryWebChromeClient extends WebChromeClient {
-
-    Activity mContext;
-
+public class BloomLibraryWebChromeClient extends ReaderWebChromeClient {
     public BloomLibraryWebChromeClient(Activity context) {
-        mContext = context;
+        super(context);
     }
     @Override
     public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
@@ -48,6 +45,6 @@ public class BloomLibraryWebChromeClient extends WebChromeClient {
     @Override
     public void onReceivedTitle(WebView view, String title) {
         super.onReceivedTitle(view, title);
-        mContext.setTitle(title);
+        ((Activity)mContext).setTitle(title);
     }
 }

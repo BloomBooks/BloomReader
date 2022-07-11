@@ -7,10 +7,12 @@ import android.webkit.WebChromeClient;
 import android.widget.Toast;
 
 // This class implements a standard Android interface used to configure various behaviors of a
-// WebView.
+// WebView. This one is named for use in ReaderActivity, but currently also servers as a base class
+// for BloomLibraryWebChromeClient; if we ever have some behavior that is unique to the Reader,
+// we can extract a common superclass.
 public class ReaderWebChromeClient extends WebChromeClient {
 
-    Context mContext;
+    protected Context mContext;
 
     public ReaderWebChromeClient(Context context) {
         mContext = context;

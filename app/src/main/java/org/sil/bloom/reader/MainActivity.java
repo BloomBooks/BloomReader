@@ -61,7 +61,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 import static org.sil.bloom.reader.BloomReaderApplication.DEVICE_ID_FILE_NAME;
 import static org.sil.bloom.reader.BloomReaderApplication.shouldPreserveFilesInOldDirectory;
@@ -94,12 +93,12 @@ public class MainActivity extends BaseActivity
     ProgressBar mLoadingProgressBar;       // accessed by InitializeLibraryTask
     TextView mLoadingTextView;
 
-    private static MainActivity mCurrentInstance;
+    private static MainActivity sCurrentInstance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mCurrentInstance = this;
+        sCurrentInstance = this;
 
         checkForPendingReadBookAnalyticsEvent();
 
@@ -113,9 +112,9 @@ public class MainActivity extends BaseActivity
     }
 
     public static void noteNewBookInPrivateDirectory(String filePathOrUri) {
-        if (mCurrentInstance == null)
+        if (sCurrentInstance == null)
             return;
-        mCurrentInstance.onNewOrUpdatedBook(filePathOrUri);
+        sCurrentInstance.onNewOrUpdatedBook(filePathOrUri);
     }
 
     @Override
@@ -1018,6 +1017,7 @@ public class MainActivity extends BaseActivity
             if (bookOrShelf.uri != null) {
                 intent.putExtra("bookUri", bookOrShelf.uri.toString());
             }
+            // We think this is obsolete. Branding info is now obtained through BloomPlayer from meta.json.
             intent.putExtra("brandingProjectName", bookOrShelf.brandingProjectName);
         }
         context.startActivity(intent);

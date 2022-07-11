@@ -47,7 +47,10 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
         setContentView(R.layout.activity_bloom_library);
         mBrowser = this.findViewById(R.id.browser);
 
-        //mBrowser.clearCache(false); // BL-7567 fixes "cross-pollination" of images
+        // BL-7567 fixes "cross-pollination" of images.
+        // This is only marginally necessary here, but the user CAN actually read a book directly in
+        // the browser.
+        mBrowser.clearCache(false);
         mAppInterface = new WebAppInterface(this);
         // See the class comment on WebAppInterface for how this allows Javascript in
         // the WebView to make callbacks to our receiveMessage method.

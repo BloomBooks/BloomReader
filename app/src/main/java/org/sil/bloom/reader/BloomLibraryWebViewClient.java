@@ -28,7 +28,7 @@ public class BloomLibraryWebViewClient extends WebViewClient {
 
     // Without this, or at least without this class, we get an instance of Chrome loaded.
     // Review: are there any links that we want to launch a browser? Maybe if URL does not
-    // start with bloomlibrary.org/reader we should return true? e.g., might we want to open the
+    // start with bloomlibrary.org/app-hosted-v1 we should return true? e.g., might we want to open the
     // Full details view in Chrome? Or some of the links in book details?
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {

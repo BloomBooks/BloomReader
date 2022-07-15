@@ -340,6 +340,13 @@ public class BookCollection {
             fakeShelf.specialBehavior = "importOldBloomFolder";
             books.add(fakeShelf);
         }
+
+        String getMoreName = activity.getResources().getString(R.string.get_more_books);
+        BookOrShelf getMoreShelf = new BookOrShelf(getMoreName + IOUtilities.BOOKSHELF_FILE_EXTENSION);
+        getMoreShelf.specialBehavior = "getBooksFromLibrary";
+        getMoreShelf.sortLast = true;
+        books.add(getMoreShelf);
+
         addBooks(books);
     }
 

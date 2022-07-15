@@ -133,6 +133,7 @@ public class ZipFileOrUri {
             }
         } catch (IOException e) {
             // fall through and return null.
+            e.printStackTrace();
         }
         return null;
     }

@@ -28,6 +28,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -526,6 +527,15 @@ public class MainActivity extends BaseActivity
             navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
         }
 
+        Button getMoreBooksButton = findViewById(R.id.get_more_books);
+        getMoreBooksButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, BloomLibraryActivity.class);
+                MainActivity.this.startActivity(intent);
+            }
+        });
+
         mBookRecyclerView = findViewById(R.id.book_list2);
         SetupCollectionListView(mBookRecyclerView);
 
@@ -982,12 +992,6 @@ public class MainActivity extends BaseActivity
         }
         if ("importOldBloomFolder".equals(bookOrShelf.specialBehavior)) {
             GetFromBloomFolder(KindOfPermissionRequest.LostBooksWithoutReport);
-            return;
-        }
-        if ("getBooksFromLibrary".equals(bookOrShelf.specialBehavior)) {
-            Intent intent = new Intent(context, BloomLibraryActivity.class);
-
-            context.startActivity(intent);
             return;
         }
         if (bookOrShelf.uri == null && !new File(path).exists()) {

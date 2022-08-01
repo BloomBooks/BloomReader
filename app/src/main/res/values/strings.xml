@@ -83,7 +83,7 @@
     <string name="show_books_on_sd_card">Show Books on SD Card</string>
     <string name="please_click_use_this_folder">Bloom Reader will need your permission to show the books on your SD Card. After you touch "OK", Android will open a window. Touch the button that looks like this:</string>
     <string name="show_books_in_old_bloom_folder">Check for Lost Books</string>
-    <string name="get_more_books">Get More Books from our Library</string>
+    <string name="get_more_books">Get more books from our library</string>
     <string name="select_bloom_directory">Select Bloom directory</string>
     <string name="request_bloom_permission_usb">To receive books via USB, you will need to give Bloom Reader permission to use the "Bloom" folder at the root of Internal Storage. Touch "USE THIS FOLDER"</string>
     <string name="request_bloom_permission_lost">To find lost books, you will need to give Bloom Reader permission to use the "Bloom" folder at the root of Internal Storage. Touch "USE THIS FOLDER"</string>

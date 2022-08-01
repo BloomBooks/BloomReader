@@ -1,5 +1,6 @@
 package org.sil.bloom.reader;
 
+import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,6 +14,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.DownloadListener;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -128,6 +130,9 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
             // We would need to do something more if this activity could be launched from somewhere
             // other than the home screen, but that isn't currently the case.
             finish();
+        } else if (message.equals("close_keyboard")) {
+            InputMethodManager imm = (InputMethodManager) this.getSystemService(Activity.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(mBrowser.getWindowToken(), 0);
         }
     }
 }

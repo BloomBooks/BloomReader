@@ -28,8 +28,8 @@ public class ZipFileOrUri {
 
     public ZipFileOrUri(File input, String output) {
         try {
-            zipFile = new ZipFile(input);
             outputDir = output;
+            zipFile = new ZipFile(input);
         } catch (IOException e) {
             e.printStackTrace();
         }

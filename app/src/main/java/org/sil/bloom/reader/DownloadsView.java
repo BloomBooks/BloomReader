@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewParent;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import org.sil.bloom.reader.models.BookCollection;
 
@@ -317,6 +318,16 @@ public class DownloadsView extends LinearLayout {
         Uri Download_Uri = Uri.parse(url);
         DownloadManager.Request request = new DownloadManager.Request(Download_Uri);
         String fileName = getFileNameFromUri(Download_Uri.getPath());
+        if (fileName == null || fileName.equals(""))
+        {
+            // If there isn't a .bloompub file at the location we requested,
+            // we seem to get a meaningless url (probably from a 404 redirect).
+            // We have changed things on the blorg side now so this should
+            // not be possible; so it isn't worth localizing the error message.
+            Toast toast = Toast.makeText(mContext, "A problem occurred while downloading that book.", Toast.LENGTH_LONG);
+            toast.show();
+            return;
+        }
         String template = getContext().getString(R.string.downloading_file);
         request.setTitle(String.format(template, fileName));
         File downloadDest = new File(getDownloadDir(), fileName + ".bloompub");

@@ -130,7 +130,12 @@ public class DownloadsView extends LinearLayout {
         for (DownloadData data : mDownloadsInProgress.values()) {
             progress += data.progress;
         }
-        mProgressView.setProgress(progress / mDownloadsInProgress.size());
+
+        // The size can change while we are processing the progress.
+        int numDownloads = mDownloadsInProgress.size();
+        if (numDownloads == 0)
+            return;
+        mProgressView.setProgress(progress / numDownloads);
     }
 
     private void startMonitoringDownloads() {

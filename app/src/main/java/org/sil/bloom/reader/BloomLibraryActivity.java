@@ -1,33 +1,17 @@
 package org.sil.bloom.reader;
 
 import android.app.Activity;
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.DownloadListener;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
-
-import org.sil.bloom.reader.models.BookCollection;
-
-import java.io.File;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 // BloomLibraryActivity is used to interact with the online BloomLibrary. It uses special URLs
 // with a leading app-hosted-v1 element which result in a layout optimized for downloading books
@@ -42,6 +26,11 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Adds back button
+//        ActionBar actionBar = getSupportActionBar();
+//        if (actionBar != null)
+//                actionBar.setDisplayHomeAsUpEnabled(true);
 
         // Allows remote debugging of the WebView content using Chrome over a USB cable.
         WebView.setWebContentsDebuggingEnabled(true);
@@ -100,6 +89,21 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
         mDownloads.updateUItoCurrentState();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.bloom_library_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.bloom_library_home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     // At one point this seemed to be necessary to make the back button or gesture useful within
     // the web page rather than always immediately ending the BL activity. Later experiments made
     // me more doubtful...something else may have been preventing the browser from going back.
@@ -120,7 +124,7 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
     }
 
     // This function can receive messages sent by Javascript in BloomLibrary, in a way explained
-    // in WebAppInterace.
+    // in WebAppInterface.
     @Override
     public void receiveMessage(String message) {
         if (message.equals("go_home")) {

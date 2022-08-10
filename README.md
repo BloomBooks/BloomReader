@@ -155,6 +155,10 @@ See [./l10n/README.md](l10n/README.md)
 
 # Development
 
+## Testing local BloomLibrary
+
+To test your local BloomLibrary code in Bloom Reader, see the commented `mBrowser.loadUrl` line in `BloomLibraryActivity.java`.
+
 ## Sample book
 
 To update the sample book, *The Moon and the Cap*:

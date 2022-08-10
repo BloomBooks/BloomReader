@@ -12,6 +12,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 
 // BloomLibraryActivity is used to interact with the online BloomLibrary. It uses special URLs
 // with a leading app-hosted-v1 element which result in a layout optimized for downloading books
@@ -28,9 +29,9 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
         super.onCreate(savedInstanceState);
 
         // Adds back button
-//        ActionBar actionBar = getSupportActionBar();
-//        if (actionBar != null)
-//                actionBar.setDisplayHomeAsUpEnabled(true);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null)
+                actionBar.setDisplayHomeAsUpEnabled(true);
 
         // Allows remote debugging of the WebView content using Chrome over a USB cable.
         WebView.setWebContentsDebuggingEnabled(true);
@@ -77,6 +78,10 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
 
             // We start the browser showing this specialized page in BloomLibrary.
             mBrowser.loadUrl("https://alpha.bloomlibrary.org/app-hosted-v1/langs");
+
+            // Use this to test running local bloomlibrary in a BR emulator.
+            // 10.0.2.2 is the host machine's localhost.
+            //mBrowser.loadUrl("http://10.0.2.2:3000/app-hosted-v1/langs");
         } catch (Exception e) {
             Log.e("Load", e.getMessage());
         }
@@ -102,6 +107,12 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();
+        return false;
     }
 
     // At one point this seemed to be necessary to make the back button or gesture useful within

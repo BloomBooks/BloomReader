@@ -2,6 +2,7 @@ package org.sil.bloom.reader;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -42,14 +43,20 @@ public class BloomLibraryWebViewClient extends WebViewClient {
         mOwner = owner;
     }
 
-    // Without this, or at least without this class, we get an instance of Chrome loaded.
-    // Review: are there any links that we want to launch a browser? Maybe if URL does not
-    // start with bloomlibrary.org/app-hosted-v1 we should return true? e.g., might we want to open the
-    // Full details view in Chrome? Or some of the links in book details?
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-        //return super.shouldOverrideUrlLoading(view, request);
-        return false;
+        // Note, the webview never sees links when they are handled by the blorg router.
+
+        final Uri uri = request.getUrl();
+        if (String.valueOf(uri).contains("app-hosted-")) {
+            // load this url in the webView itself
+            return false;
+        } else {
+            // Open in external browser if not an app-hosted link (e.g. normal book detail page)
+            final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            mOwner.startActivity(intent);
+            return true;
+        }
     }
 
     class Response {

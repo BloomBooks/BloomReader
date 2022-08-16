@@ -76,12 +76,17 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
             // (This was copied from the init of the WebView for BloomPlayer. Probably not needed here, but harmless AFAIK.)
             mBrowser.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
-            // We start the browser showing this specialized page in BloomLibrary.
-            mBrowser.loadUrl("https://alpha.bloomlibrary.org/app-hosted-v1/langs");
+            String host = "https://bloomlibrary.org";
+            if (BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha"))
+                host = "https://alpha.bloomlibrary.org";
 
             // Use this to test running local bloomlibrary in a BR emulator.
             // 10.0.2.2 is the host machine's localhost.
-            //mBrowser.loadUrl("http://10.0.2.2:3000/app-hosted-v1/langs");
+            //host = "http://10.0.2.2:3000";
+
+            // We start the browser showing this specialized page in BloomLibrary.
+            mBrowser.loadUrl(host + "/app-hosted-v1/langs");
+
         } catch (Exception e) {
             Log.e("Load", e.getMessage());
         }

@@ -1,4 +1,5 @@
 # Bloom Reader
+
 [Bloom](http://bloomlibrary.org) is [award-winning](http://allchildrenreading.org/sil-international-wins-enabling-writers-prize-for-software-solution-to-childrens-book-shortage/) open source desktop software for Windows and Linux that communities, NGOs, and Education ministries around the world are using to create books in the world's thousands of minority languages. These books are mostly distributed via paper, though some people are making epubs. We can now also use SIL's Reading Application Builder to package books as Android apps that can be downloaded from the Play Store.
 
 So what's this "Bloom Reader" about? Bloom users tell us that it's difficult to find epub readers that are simple
@@ -10,48 +11,56 @@ people can use to read and share Bloom books.
 Bloom Reader is a native java app with a WebView for displaying Bloom books (which are HTML). We want to support the older Android versions and devices that are common in the developing world.
 
 # Distribution
+
 Bloom Reader is distributed through the Google Play Store.
-[Try it out](https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&amp;c=apps).
+[Try it out](https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&c=apps).
 
 Apks are also distributed through our [website](https://bloomlibrary.org/installers).
 
 # Road map
+
 ## Prototype
-* [x] Shows a list of books on the device's storage
-* [x] User can swipe through pages to read the book
+
+- [x] Shows a list of books on the device's storage
+- [x] User can swipe through pages to read the book
 
 Books get onto the device by plugging into a computer and transferring files over to some known location.
 
 ## MVP
-* [x] Works well with 3rd party file sharing apps.
-* [x] Works with Android 4.4 (KitKat) and up
-* [x] Comes with SIL's Andika literacy font
-* [x] Book scales to fit device screen
-* [x] Bloom desktop Publish tab offers a "Publish to Android Phone" option (Bloom version 4.0). That may have to reduce image resolution.
+
+- [x] Works well with 3rd party file sharing apps.
+- [x] Works with Android 4.4 (KitKat) and up
+- [x] Comes with SIL's Andika literacy font
+- [x] Book scales to fit device screen
+- [x] Bloom desktop Publish tab offers a "Publish to Android Phone" option (Bloom version 4.0). That may have to reduce image resolution.
 
 At this point, literacy projects can seed books into the community and let the community distribute them virally.
 
 ## Needed for SIL PNG literacy research project
-* [x] Plays talking books
-* [x] Book thumbnails
+
+- [x] Plays talking books
+- [x] Book thumbnails
 
 ## Tie into BloomLibrary.org
-* BloomLibrary.org publishes an [OPDS](http://opds-spec.org/specs/opds-catalog-1-1-20110627/) catalog of all its books.
-* User can see a list of all the books in her language that are on [BloomLibrary.org](http://bloomlibrary.org).
-* User can preview books, perhaps in a very low-bandwidth form.
-* User can choose to download books to her device.
-* User gets notifications when new or updated books are available.
+
+- BloomLibrary.org publishes an [OPDS](http://opds-spec.org/specs/opds-catalog-1-1-20110627/) catalog of all its books.
+- User can see a list of all the books in her language that are on [BloomLibrary.org](http://bloomlibrary.org).
+- User can preview books, perhaps in a very low-bandwidth form.
+- User can choose to download books to her device.
+- User gets notifications when new or updated books are available.
 
 At this point, anyone could publish a book using the existing Bloom mechanism, and have it immediately downloadable by anyone with Bloom Reader. Books would still spread mostly from person to person in expensive internet areas.
 
 ## Other things on the radar
-* [ ] Use [Crosswalk](https://crosswalk-project.org/) to get an up-to-date browser that can handle Bloom's Talking Books.
-* [ ] Use Graphite-enabled Crosswalk to support languages with the most complex scripts.
-* [x] Support Ken Burns animation as we do in [BloomPlayer.js](https://github.com/BloomBooks/BloomPlayer).
-* [x] Support background music that works across pages, as we do in BloomPlayer.js.
-* [x] In-app sharing/synchronization via bluetooth and wifi-direct.
+
+- [ ] Use [Crosswalk](https://crosswalk-project.org/) to get an up-to-date browser that can handle Bloom's Talking Books.
+- [ ] Use Graphite-enabled Crosswalk to support languages with the most complex scripts.
+- [x] Support Ken Burns animation as we do in [BloomPlayer.js](https://github.com/BloomBooks/BloomPlayer).
+- [x] Support background music that works across pages, as we do in BloomPlayer.js.
+- [x] In-app sharing/synchronization via bluetooth and wifi-direct.
 
 # Building
+
 ## Getting the Bloom Reader code and dependencies
 
     git clone https://github.com/BloomBooks/BloomReader
@@ -68,10 +77,10 @@ When building locally, if you need to make changes to BloomPlayer, you will curr
 It's necessary to do this after running gradlew yarn. Ever after, in the bloom-player project, just do `yarn build4br`. That will copy the needed files to a project named "BloomReader" that is a sibling of bloom-player. If your BloomReader project is elsewhere or named differently, create a junction so that it looks like it is a sibling of bloom-player.
 
 If you don't need to make changes in BloomPlayer, get these files using the following commands:
-	cd app
-	yarn
-	cd ..
-	gradlew copyBloomPlayerAssets
+cd app
+yarn
+cd ..
+gradlew copyBloomPlayerAssets
 
 If you want the latest version of BloomPlayer, rather than the one active when BloomReader was last
 updated, replace "yarn" with "yarn upgrade"
@@ -82,17 +91,17 @@ updated, replace "yarn" with "yarn upgrade"
    Reader team for developing the app.
 2. Clone the Bloom Reader code onto your local machine using **git** as described above.
 3. Start Android Studio and open the Bloom Reader project.
-4. Invoke the *Sync Project with Gradle Files* command in the *File* menu or the corresponding
-   button from the command button bar.  (This has the effect of limiting the default build
+4. Invoke the _Sync Project with Gradle Files_ command in the _File_ menu or the corresponding
+   button from the command button bar. (This has the effect of limiting the default build
    inside Android Studio to the debug configuration of the alpha flavor of the app, which is
    usually what you want.)
-5. Build Bloom Reader with the *Make Project* command in the *Build* menu or the corresponding
-   button from the command button bar.  This should complete successfully, running the
-   *assembleAlphaDebug* build.
-6. Run the newly built app with the *Run 'app'* command in the *Run* menu or the corresponding
-   button from the command button bar.  This should prompt you to set up an Android device
-   emulator.  Choose a device and then choose a version of Android to download to use on that
-   device.  Following all the program prompts, in a few minutes (depending on your internet
+5. Build Bloom Reader with the _Make Project_ command in the _Build_ menu or the corresponding
+   button from the command button bar. This should complete successfully, running the
+   _assembleAlphaDebug_ build.
+6. Run the newly built app with the _Run 'app'_ command in the _Run_ menu or the corresponding
+   button from the command button bar. This should prompt you to set up an Android device
+   emulator. Choose a device and then choose a version of Android to download to use on that
+   device. Following all the program prompts, in a few minutes (depending on your internet
    download speed), you should see Bloom Reader running in the device emulator.
 
    Running the Android device emulator on Linux may require a few more setup steps dealing with
@@ -117,7 +126,7 @@ The main reason for this is to prevent debug builds from polluting crash reports
 
 To sign a release build, you need the following file.
 
-	{UserHome}/keystore/keystore_bloom_reader.properties
+    {UserHome}/keystore/keystore_bloom_reader.properties
 
 The contents of this file are:
 
@@ -135,11 +144,11 @@ To publish to the Play Store, we use a gradle plugin: `https://github.com/Triple
 Gradle tasks which can be called with the plugin include:
 
 - publish{Alpha/Beta/Production}Release
-	- pushes both the apk and listing metadata to the Play Store
+  - pushes both the apk and listing metadata to the Play Store
 - publish{Alpha/Beta/Production}ReleaseApk
-	- pushes only the apk to the Play Store
+  - pushes only the apk to the Play Store
 - publish{Alpha/Beta/Production}ReleaseListing
-	- pushes only the listing metadata to the Play Store
+  - pushes only the listing metadata to the Play Store
 
 TeamCity builds are configured to publish the alpha, beta, and production flavors to three respective apps on the Play Store.
 
@@ -157,11 +166,11 @@ See [./l10n/README.md](l10n/README.md)
 
 ## Testing local BloomLibrary
 
-To test your local BloomLibrary code in Bloom Reader, see the commented `mBrowser.loadUrl` line in `BloomLibraryActivity.java`.
+To test your local BloomLibrary code in Bloom Reader, see the commented `host = "http://` line in `BloomLibraryActivity.java`, `onCreate`.
 
 ## Sample book
 
-To update the sample book, *The Moon and the Cap*:
+To update the sample book, _The Moon and the Cap_:
 
 - Open an English collection in the latest version of Bloom. Vernacular and National language should be English.
 - Set xMatter to Device.
@@ -176,10 +185,11 @@ To update the sample book, *The Moon and the Cap*:
   - Depending on your zip software, you may need to change the file extension from `.bloompub` to `.zip` to do so.
 - Pull the `meta.json` file out of the archive and edit it to include the following line:
 
-    `"brandingProjectName":"Sample-Book",` making sure there is not another line with the same `brandingProjectName` "key".
+  `"brandingProjectName":"Sample-Book",` making sure there is not another line with the same `brandingProjectName` "key".
+
 - Put the modified `meta.json` file back in the `.zip` archive and change the archive's extension back to `.bloompub`.
 - Save to {BloomReader}/app/src/main/assets/sample books/The Moon and the Cap.bloompub
 
 ## Contributions
-We welcome contributions, particularly if we pre-agree on UX.
 
+We welcome contributions, particularly if we pre-agree on UX.

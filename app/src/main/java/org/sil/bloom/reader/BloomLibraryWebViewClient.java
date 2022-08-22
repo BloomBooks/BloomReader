@@ -48,14 +48,15 @@ public class BloomLibraryWebViewClient extends WebViewClient {
         // Note, the webview never sees links when they are handled by the blorg router.
 
         final Uri uri = request.getUrl();
-        if (String.valueOf(uri).contains("app-hosted-")) {
-            // load this url in the webView itself
-            return false;
-        } else {
-            // Open in external browser if not an app-hosted link (e.g. normal book detail page)
+        final String externalStr = uri.getQueryParameter("external");
+        if (externalStr != null && externalStr.equals("true")) {
+            // Open in external browser
             final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
             mOwner.startActivity(intent);
             return true;
+        } else {
+            // load this url in the webView itself
+            return false;
         }
     }
 

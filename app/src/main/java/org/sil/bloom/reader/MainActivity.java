@@ -1427,10 +1427,18 @@ public class MainActivity extends BaseActivity
 
     // invoked by click on bloomUrl textview in nav_header_main because it has onClick property
     public void bloomUrlClicked(View v) {
-        Intent defaultBrowser = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER);
-        defaultBrowser.setData(Uri.parse("https://bloomlibrary.org"));
-        startActivity(defaultBrowser);
+        try {
+            Intent defaultBrowser = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_BROWSER);
+            defaultBrowser.setData(Uri.parse("https://bloomlibrary.org"));
+            startActivity(defaultBrowser);
+        } catch (Exception e) {
+            // Though this may never happen for a real user,
+            // we did see a couple test devices on Play Console
+            // which crashed, apparently because there was no
+            // default browser set up.
+            // Either way, it isn't worth crashing the app.
         }
+    }
 
     private final BookSearchListener mBookSearchListener = new BookSearchListener() {
 

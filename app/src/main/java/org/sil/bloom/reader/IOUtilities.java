@@ -37,7 +37,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -800,7 +799,7 @@ public class IOUtilities {
             try (Cursor cursor = contentResolver.query(uri, null, null, null, null)) {
                 if (cursor != null) {
                     if (cursor.moveToFirst())
-                        nameOrPath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                        nameOrPath = CommonUtilities.getStringFromCursor(cursor, OpenableColumns.DISPLAY_NAME);
                 }
             } catch (SecurityException se) {
                 // Not sure how this happens, but we see it on the Play Console.

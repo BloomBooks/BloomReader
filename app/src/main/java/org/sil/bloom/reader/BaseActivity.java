@@ -43,7 +43,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     // true, and we won't call this. If we don't have it, this is a good criterion for deciding
     // whether to ask for it.
     public static boolean osAllowsGeneralStorageAccess() {
-        // Counter-intuitively, Build.VERSION.SDK_IN is the version of the Android system
+        // Counterintuitively, Build.VERSION.SDK_INT is the version of the Android system
         // we are running under, not the one we were built for. Q is Android 10, the last
         // version where the user could give us this permission.
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q;
@@ -53,7 +53,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     // This MIGHT be true on Android 11, but only if Bloom was upgraded from an earlier version
     // where the permission was already granted.
     public static boolean haveLegacyStoragePermission(Context context) {
-        // Counter-intuitively, Build.VERSION.SDK_IN is the version of the Android system
+        // Counterintuitively, Build.VERSION.SDK_INT is the version of the Android system
         // we are running under, not the one we were built for.
         // Once we tested on 12 in release, we realized the checkSelfPermission calls were returning true
         // for an upgraded phone even though we didn't actually have write permission to move files.

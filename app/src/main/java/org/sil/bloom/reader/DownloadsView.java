@@ -152,15 +152,15 @@ public class DownloadsView extends LinearLayout {
                         DownloadData data = mDownloadsInProgress.get(downloadId);
                         Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
                         if (cursor.moveToFirst()) {
-                            int downloadStatus = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                            int downloadStatus = BloomReaderApplication.getCursorInt(cursor, DownloadManager.COLUMN_STATUS);
                             switch (downloadStatus) {
                                 case DownloadManager.STATUS_RUNNING:
-                                    long totalBytes = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                                    long totalBytes = BloomReaderApplication.getCursorLong(cursor, DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
                                     if (totalBytes > 0) {
-                                        long downloadedBytes = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-                                        progress = (int) (downloadedBytes * 100 / totalBytes);
+                                        long downloadedBytes = BloomReaderApplication.getCursorLong(cursor, DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+                                        if (downloadedBytes > 0)
+                                            progress = (int) (downloadedBytes * 100 / totalBytes);
                                     }
-
                                     break;
                                 case DownloadManager.STATUS_SUCCESSFUL:
                                     progress = 100;
@@ -272,7 +272,7 @@ public class DownloadsView extends LinearLayout {
         Cursor cursor = mDownloadManager.query(new DownloadManager.Query());
         if (cursor.moveToFirst()) {
             do {
-                String uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+                String uriString = BloomReaderApplication.getCursorString(cursor, DownloadManager.COLUMN_LOCAL_URI);
                 String path = "";
                 try {
                     if (uriString != null) {
@@ -291,23 +291,25 @@ public class DownloadsView extends LinearLayout {
                 // this is one of our downloads from the presence of the right subdirectory in the
                 // path, so it should be pretty safe to use our standard destination.
                 File downloadDest = new File(getDownloadDir(), fileName + ".bloompub");
-                long downloadId = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_ID));
-                int downloadStatus = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                switch (downloadStatus) {
-                    default:
-                        // if we see a failed download, for now we'll ignore it.
-                        continue;
-                        // But if it's running or paused or pending we want to show the status and allow it to complete.
-                    case DownloadManager.STATUS_RUNNING:
-                    case DownloadManager.STATUS_PAUSED:
-                    case DownloadManager.STATUS_PENDING:
-                        showDownloadProgress(downloadId, downloadDest);
-                        break;
+                long downloadId = BloomReaderApplication.getCursorLong(cursor, DownloadManager.COLUMN_ID);
+                int downloadStatus = BloomReaderApplication.getCursorInt(cursor, DownloadManager.COLUMN_STATUS);
+                if (downloadId > 0 && downloadStatus > 0) {
+                    switch (downloadStatus) {
+                        default:
+                            // if we see a failed download, for now we'll ignore it.
+                            continue;
+                            // But if it's running or paused or pending we want to show the status and allow it to complete.
+                        case DownloadManager.STATUS_RUNNING:
+                        case DownloadManager.STATUS_PAUSED:
+                        case DownloadManager.STATUS_PENDING:
+                            showDownloadProgress(downloadId, downloadDest);
+                            break;
                         // And if one has finished since our last call of this method, even while
                         // our app was not running, we'll show the complete message.
-                    case DownloadManager.STATUS_SUCCESSFUL:
-                        handleDownloadComplete(downloadDest.getPath(), downloadId);
-                        break;
+                        case DownloadManager.STATUS_SUCCESSFUL:
+                            handleDownloadComplete(downloadDest.getPath(), downloadId);
+                            break;
+                    }
                 }
 
             } while (cursor.moveToNext());

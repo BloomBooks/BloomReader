@@ -1,3 +1,9 @@
+3.1
+Bloom Reader now comes with Andika instead of Andika New Basic (ANB).
+  - Books which were designed to use ANB will display with Andika.
+Warns the user if the version of WebView on the device is too old.
+Fixes some performance issues when reading books.
+
 3.0
 Supports newer versions of Android (11+):
 - Android 11 no longer allows the user to give permission to access all files, so we had to find new ways to do many things.

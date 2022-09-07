@@ -1,8 +1,6 @@
-Supports newer versions of Android (11+):
-- Android 11 no longer allows the user to give permission to access all files, so we had to find new ways to do many things.
-"Find Books on this Device" no longer available on Android 11 and later.
-New "Open BoomPUB file" command lets you choose a single file to open.
-Can function without permission to access all files.
-Book collection is no longer shared with Beta and Release versions.
-Handle .bloompub files.
+Bloom Reader now comes with Andika instead of Andika New Basic (ANB).
+  - Books which were designed to use ANB will display with Andika.
+Warns the user if the version of WebView on the device is too old.
+Fixes some performance issues when reading books.
+Portuguese user interface.
 Various enhancements and fixes.

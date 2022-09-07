@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Bloom Reader</string>
+    <string name="delete">Excluir</string>
+    <string name="deleteConfirmation">Excluir do dispositivo?</string>
+    <!-- %1$s is a book title -->
+    <string name="deleteExplanationBook">%1$s desaparecerá do seu dispositivo.</string>
+    <!-- %1$s is the name of the shelf -->
+    <string name="deleteExplanationEmptyShelf">A estante %1$s desaparecerá do seu dispositivo.</string>
+    <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
+    <string name="deleteExplanationShelf">Todos os livros %1$d e %2$s prateleiras da estante desaparecerão do seu dispositivo.</string>
+    <string name="deleteConfirmButton">Excluir agora</string>
+    <string name="share">Compartilhar</string>
+    <!-- %1$s is a book title -->
+    <string name="shareBook">Compartilhar %1$s</string>
+    <string name="cancel">Cancelar</string>
+    <string name="ok">OK</string>
+    <string name="navigation_drawer_open">Abrir gaveta de navegação</string>
+    <string name="navigation_drawer_close">Fechar gaveta de navegação</string>
+    <string name="get_books_local_wifi">Receber libros de Bloom em um computador por WiFi</string>
+    <!-- %1$s is a book title -->
+    <string name="already_have_version">\"%1$s\" foi encontrado, já tem essa versão.</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_new_version">Encontrada nova versão de \"%1$s\" a partir de \"%2$s\", solicitando…</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_file">Encontrado \"%1$s\" de \"%2$s\", solicitando…</string>
+    <!-- As in, Done receiving a file-->
+    <string name="done">Concluído.</string>
+    <string name="transferFailed">Algo deu errado. Se a fonte ainda estiver disponível, tentaremos novamente em breve.</string>
+    <string name="downloading">Baixando…</string>
+    <!-- %1$s is a description of the sending network -->
+    <string name="looking_for_adds">Procurando anúncios de livros na rede Wi-Fi %1s…</string>
+    <string name="device_hotspot">Ponto de acesso do dispositivo</string>
+    <string name="no_wifi_connected">O dispositivo não parece estar conectado a uma rede WiFi.</string>
+    <string name="failed_book_import">Falha ao importar livro.</string>
+    <string name="failed_book_import2">O Bloom Reader não pôde ler o livro \"%1$s.</string>
+    <string name="external_storage_unavailable">Não foi possível acessar o armazenamento de arquivos. O cartão SD está ausente?</string>
+    <string name="need_newer_webview">Para utilizar este aplicativo, você precisará atualizar o <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System WebView</a> na Google Play Store e, em seguida, reiniciar o aplicativo.</string>
+    <string name="share_app_link"><u>Compartilhe o link para obter o Bloom Reader no Google Play</u></string>
+    <string name="share_app_with_friend">Compartilhe o app Bloom Reader com um amigo!</string>
+    <string name="share_books_with_friend">Compartilhe todos os seus livros com um amigo que já tem instalado o Bloom Reader.</string>
+    <string name="share_app_via">Compartilhar App via</string>
+    <string name="share_link_via">Compartilhar link via</string>
+    <string name="share_books_via">Compartilhar Livros via</string>
+    <!-- %1$s is the app name (defined by app_name) -->
+    <string name="recommend_app">Ler livros Bloom com a aplicação %1$s:</string>
+    <string name="failed_to_share_apk">Falha ao compartilhar o arquivo do aplicativo.</string>
+    <string name="failed_to_share_books">Falha ao compartilhar livros</string>
+    <string name="failed_to_open_book">O livro não pode ser aberto</string>
+    <!-- %1$s is a book title -->
+    <string name="missing_book">%1$s está faltando. Pode ter sido removido em um cartão SD, ou pode ter sido excluído.</string>
+    <string name="device_storage_is_full">No se puede abrir o livro. O dispositivo de armazenamento está cheio. Intente de novo depois de liberar espaço.</string>
+    <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
+    <string name="adding_book">Adicionando %1$s...</string>
+    <string name="bundle_import_out_of_space">Não há espaço suficiente no dispositivo para todos os livros deste pacote.</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">Houve um problema ao ler %1$s. Tente baixá-lo novamente.</string>
+    <string name="share_app">Compartilhe o app Bloom Reader</string>
+    <string name="open_bloompub_file">Abrir arquivo BloomPUB</string>
+    <string name="searching">Pesquisando...</string>
+    <string name="no_books_added">Não foram encontrados novos livros ou pacotes Bloom no dispositivo.</string>
+    <string name="release_notes">Notas da Versão</string>
+    <string name="about_bloom_reader">Sobre Bloom Reader</string>
+    <string name="about_bloom">Sobre Bloom</string>
+    <string name="about_sil">Sobre SIL</string>
+    <string name="or">ou</string>
+    <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
+    <string name="receive_books_over_wifi">Receber livros do computador</string>
+    <!-- Used both as a menu option and as the title of the resulting dialog-->
+    <string name="receive_books_over_usb">Receber livros via USB</string>
+    <string name="ready_to_receive_usb">Bloom Reader está pronto para receber livros através do cabo USB do programa Bloom Editor</string>
+    <string name="please_send_book">Por favor envie um livro da Bloom Editor e depois escolha novamente este comando</string>
+    <string name="need_storage_permission">Bloom Reader precisa de acesso ao armazenamento de arquivos para funcionar.</string>
+    <string name="grant_storage_permission">Permissão de armazenamento</string>
+    <string name="renaming_invalid_book">Renomear livro inválido para %1$s</string>
+    <string name="preparing_to_show_books">Preparando para mostrar livros…</string>
+    <string name="show_books_on_sd_card">Mostrar livros no cartão SD</string>
+    <string name="please_click_use_this_folder">Bloom Reader precisará da sua permissão para mostrar os livros no seu Cartão SD. Depois de tocar em \"OK\", o Android abrirá uma janela. Toque no botão que se assemelha a este:</string>
+    <string name="show_books_in_old_bloom_folder">Procurar Livros Perdidos</string>
+    <string name="select_bloom_directory">Seleccionar directório Bloom</string>
+    <string name="request_bloom_permission_usb">Para receber livros via USB, será necessário dar permissão ao Bloom Reader para utilizar a pasta \"Bloom\" na raiz do Armazenamento Interno. Toque em \"UTILIZAR ESTA PASTA\"</string>
+    <string name="request_bloom_permission_lost">Para encontrar livros perdidos, será necessário dar permissão ao Bloom Reader para utilizar a pasta \"Bloom\" na raiz do Armazenamento Interno. Toque em \"UTILIZAR ESTA PASTA\"</string>
+    <string name="request_bloom_permission_device_stats">Para terminar a criação de um relatório de estatísticas, será necessário dar permissão ao Bloom Reader para utilizar a pasta \"Bloom\" na raiz do Armazenamento Interno. Toque em \"UTILIZAR ESTA PASTA\"</string>
+    <string name="share_location">Compartilhar localização</string>
+    <string name="request_location">Desejamos registar a sua cidade porque as pessoas que compartilham estes livros gratuitamente gostam de saber onde os seus livros são lidos.</string>
+    <string name="allow">Permitir</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="dont_allow">Não permitir</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="turn_on_location">Activar Localização</string>
+    <string name="request_gps">Os autores e Ilustradores gostam de saber onde os seus livros gratuitos são lidos. Mas precisamos que active a capacidade do seu dispositivo para utilizar o seu Serviço de Localização GPS</string>
+    <string name="attempting_to_send_reading_stats">Procurando enviar estatísticas de leitura...</string>
+    <string name="all_reading_stats_sent">Todas as estatísticas de leitura enviadas.</string>
+    <string name="find_lost_books">Encontrar livros perdidos</string>
+    <string name="no_lost_books_found">Não foram encontrados livros perdidos.</string>
+    <string name="restart">Reiniciar</string>
+</resources>

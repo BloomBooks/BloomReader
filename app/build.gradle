@@ -5,7 +5,7 @@ plugins {
 
 // This is the master definition of what version of Bloom Reader we are building
 def versionMajor = 3
-def versionMinor = 0
+def versionMinor = 1
 def versionRelease = getVersionRelease()
 
 int getVersionRelease() {
@@ -134,10 +134,8 @@ dependencies {
     // Supports the WiFi module's 'server' used to receive books from Bloom desktop
     implementation  'cz.msebera.android:httpclient:4.5.8'
 
-    // Be careful about upgrading this. It might cause unexpected build issues.
-    implementation  'com.segment.analytics.android:analytics:4.7.0'
+    implementation 'com.segment.analytics.android:analytics:4.10.4'
 
-    // The IDE wants to upgrade this to version 20030203.0005500. Don't! It is from 2005.
     implementation  'commons-io:commons-io:2.6'
 
     // Needed (at least) for making tar archives to send multiple books.

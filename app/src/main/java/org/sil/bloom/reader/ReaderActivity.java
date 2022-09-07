@@ -15,6 +15,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 // This is the main class that displays a Bloom book, using a WebView containing an instance of bloom-player.
 public class ReaderActivity extends BaseActivity {
@@ -30,6 +32,59 @@ public class ReaderActivity extends BaseActivity {
 
     private long mTimeStarted;
 
+    public static boolean haveCurrentWebView(WebView browser) {
+        String agent = browser.getSettings().getUserAgentString();
+
+        // We're looking for something like
+        // Mozilla/5.0 (Linux; Android 11; moto g(8) power Build/RPES31.Q4U-47-35-12; wv)...
+        // If we don't find the wv at the end of the Mozilla section, we need a newer WebView.
+        // Unfortunately, while I've found doc that says to look for this "wv" as characteristic
+        // of Lollipop+ WebView, I haven't found instructions on exactly how to search for it.
+        // Maybe a weaker search...simply for "wv"...is better? Perhaps the wv won't follow a semi-colon
+        // and precede a parenthesis in some future version? Maybe it should be stronger...
+        // try to check that it's  whole word in the Mozilla section? Not very easy to do, as
+        // device names like g(8) complicate picking out the Mozilla section. Could there be an
+        // old device whose name happens to contain "wv"? This seems like a reasonable compromise
+        // subject to testing.
+        // Also unknown: is it helpful, neutral, or harmful to search for "wv" in addition to
+        // looking for the Chrome version below?
+        if( agent.indexOf("; wv)") < 0)
+            return false;
+        // The wv test did not prove sufficient, so we also look for a minimum Chrome version. The difficulty
+        // is to know what version we actually require. It probably isn't very important to get the
+        // exact minimum. Android 5 (lollipop) is supposed to update WebView automatically. My test
+        // device, for example, which has no SIM and was recently reset to factory, reports
+        // Chrome 101, the current latest.
+        // Here is my attempted research:
+        // According to https://developer.chrome.com/docs/multidevice/user-agent/#webview_user_agent,
+        // WebViews based on Chromium should include a string like Chrome/43.0.2357.65.
+        // This apparently began with 4.4, before the 'wv'; the site above shows Chrome 30 in
+        // Android 4.4. Based on this and earlier experiments, it seems Chrome 30 is not good enough.
+        // According to https://www.androidpolice.com/2014/10/19/lollipop-feature-spotlight-webview-now-unbundled-android-free-auto-update-google-play/,
+        // Android 4.4.3 had version 33 of Chromium, and the first developer preview of 5.0 had version 37.
+        // I have done considerable google searching and cannot find any indication of the minimum
+        // version of Chrome needed for Swiper, which IIRC is the component that forced us to require
+        // Android 5. Based on the first article above, which reports version 43 with Android 5.5.1,
+        // it seems likely that anything older than that ought to be updated.
+        // Based on my own testing with emulators, I was able to find that a Pixel 3 running Android
+        // 7.0 (api 24) reports Chrome 51 and works; a Pixel 4XL running Android 6 with API 23 reports
+        // Chrome 44 and does not. I looked at CanIUse data for feature support between those two
+        // versions and each adds something; it's not obvious that we can safely set a minimum
+        // below 51 unless we can find a test device to confirm it is OK. Note that we're only
+        // encouraging the user to update, they CAN just hit back and see if it works.
+        // Given that any device with Android 5+ connected to the web will update to the
+        // current version of Chrome, it's likely that most users have something much more recent
+        // than 51, so I think it's reasonable to just use that until we have better data.
+        Pattern p = Pattern.compile("Chrome/(\\d+)\\."); //"Chrome/(\\d*)\\."
+        Matcher m = p.matcher(agent);
+        if (!m.find())
+            return false;
+        int version = Integer.parseInt(m.group(1));
+        if (version < 51)
+            return false;
+        return true;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,6 +98,27 @@ public class ReaderActivity extends BaseActivity {
 
         setContentView(R.layout.activity_reader);
         mBrowser = this.findViewById(R.id.bloom_player);
+
+        if (!haveCurrentWebView(mBrowser)) {
+            Intent intent = new Intent(this, NeedNewerWebViewActivity.class);
+            startActivity(intent);
+            // It's not obvious what we should do with THIS activity, which as things stand the
+            // user can return to with the Back button from the warning activity.
+            // We could instead, I think, replace this activity with the warning one, so that
+            // 'back' returns the user to the main screen. (If we decide on that, we may need
+            // to use a different 'context' to initialize the new activity.)
+            // Or we could try to quit BR altogether, since it's not much use without a usable
+            // WebView...but when exactly should it quit? We want the user to be able to read
+            // the message. And there are SOME things the user can do without being able to read,
+            // such as sharing the books to other devices.
+            // There may also be some possibility that we are wrong...that the webview the user
+            // currently has IS usable, even though we don't expect it to be.
+            // Putting all these considerations together, I tentatively decided to just go on
+            // with the normal initialization of this activity, which means that if the user
+            // chooses 'back' he will be in the screen with "Loading Bloom Player..." (unless
+            // things unexpectedly work, of course).
+        }
+
         mBrowser.clearCache(false); // BL-7567 fixes "cross-pollination" of images
         mAppInterface = new WebAppInterface(this);
         // See the class comment on WebAppInterface for how this allows Javascript in
@@ -95,7 +171,7 @@ public class ReaderActivity extends BaseActivity {
             final BloomFileReader fileReader = new BloomFileReader(getApplicationContext(), path, uri);
             final File bookHtmlFile = fileReader.getHtmlFile();
             String bookFolder = new File(bookHtmlFile.getCanonicalPath()).getParent();
-            mBrowser.setWebViewClient(new ReaderWebViewClient("file://" + bookFolder));
+            mBrowser.setWebViewClient(new ReaderWebViewClient(bookFolder, fileReader));
             mBrowser.setWebChromeClient(new ReaderWebChromeClient(this));
 
             // The url determines the content of the WebView, which is the bloomplayer.htm

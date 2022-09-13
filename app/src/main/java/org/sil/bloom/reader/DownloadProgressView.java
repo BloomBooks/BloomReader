@@ -62,13 +62,14 @@ public class DownloadProgressView extends ConstraintLayout {
     public static String titleFromName(String name) {
         // Filenames from BL commonly contain plus signs for spaces.
         // Nearly always things will be more readable if we replace them.
-        // A sequence of three plus signs might indicate that the name really had a plus sign
-        // (The temporary placeholder for +++ is a very unlikely sequence of PUA characters.)
-        String result = name.replace("+++","\uefff\ueffe");
-        result = result.replace("+", " ");
-        result = result.replace("\uefff\ueffe", " + ");
-        // The above might just possibly have produced a sequence of two or three spaces.
-        result = result.replace("  ", " ").replace("  ", " ");
+        // A sequence of three plus signs might indicate that the name really had a plus sign.
+        // But it might equally indicate a sequence of undesirable characters that each got
+        // changed to a space to make a file name. (We had some code briefly to treat three
+        // plus signs specially, but got bad results for an Adangbe book called "Bɔ++++kuu.bloompub".)
+        String result = name.replace("+", " ");
+        // The above might just possibly have produced a sequence of several spaces.
+        while (result.indexOf("  ") >= 0)
+            result = result.replace("  ", " ");
         // We don't need a file extension in the name.
         result = result.replace(".bloompub", "").replace(".bloomd", "");
         return result;

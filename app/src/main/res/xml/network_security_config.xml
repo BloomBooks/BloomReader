@@ -6,5 +6,10 @@
         <domain includeSubdomains="true">localhost</domain>
         <!-- 10.0.2.2 is the host computer's localhost when running an emulator -->
         <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- To run on a real device using local server, you'll have to put your computer's address here.
+         Get it using ipconfig or similar; the one that yarn start-performance reports
+         ("On Your Network:") is WRONG.
+         -->
+        <!-- domain includeSubdomains="true">192.168.0.246</domain -->
     </domain-config>
 </network-security-config>

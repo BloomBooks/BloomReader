@@ -43,6 +43,7 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
         // This is only marginally necessary here, but the user CAN actually read a book directly in
         // the browser.
         mBrowser.clearCache(false);
+        mBrowser.getSettings().setUserAgentString(mBrowser.getSettings().getUserAgentString() + ";sil-bloom");
         mAppInterface = new WebAppInterface(this);
         // See the class comment on WebAppInterface for how this allows Javascript in
         // the WebView to make callbacks to our receiveMessage method.
@@ -79,10 +80,18 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
             String host = "https://bloomlibrary.org";
             if (BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha"))
                 host = "https://alpha.bloomlibrary.org";
+            // Note: if you configure a host that needs to use the dev parse server,
+            // you will need to add a case to the code in BloomLibraryWebViewClient.shouldInterceptRequest
+            // which sets X-Parse-Application-Id, and have it set the appropriate key for dev.
 
             // Use this to test running local bloomlibrary in a BR emulator.
             // 10.0.2.2 is the host machine's localhost.
             //host = "http://10.0.2.2:3000";
+            // Use something like this to test a real device with a local build.
+            // Get the right IP address for your serving computer using ipconfig or similar;
+            // the one that yarn start-performance reports ("On Your Network:") is WRONG.
+            // Also enable this URL in res/xml/network_security_config.xml
+            //host = "http://192.168.0.246:3000";
 
             // We start the browser showing this specialized page in BloomLibrary.
             mBrowser.loadUrl(host + "/app-hosted-v1/langs");

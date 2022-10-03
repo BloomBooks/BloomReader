@@ -125,6 +125,8 @@ public class BloomLibraryWebViewClient extends WebViewClient {
 
                 URL url1 = new java.net.URL(modUrl);
                 HttpURLConnection connection = (HttpURLConnection)url1.openConnection();
+                if (url1.getHost().equals("analytics.bloomlibrary.org"))
+                    return null; // caching is not relevant here, and we get CORS errors if we intercept
 
                 if (path.startsWith("/parse/")) {
                     connection.setRequestProperty("X-Parse-Application-Id", "R6qNTeumQXjJCMutAJYAwPtip1qBulkFyLefkCE5");

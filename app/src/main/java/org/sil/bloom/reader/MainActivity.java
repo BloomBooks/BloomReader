@@ -810,7 +810,7 @@ public class MainActivity extends BaseActivity
         else {
             playNewBookSound();
         }
-        Toast.makeText(MainActivity.this, book.name + " added or updated", Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, book.getNiceName(this) + " added or updated", Toast.LENGTH_SHORT).show();
     }
 
     private void highlightAndScrollTo(BookOrShelf book) {
@@ -911,7 +911,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void deleteBook(final BookOrShelf book) {
-        new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(getString(R.string.deleteExplanationBook, book.name))
+        new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(getString(R.string.deleteExplanationBook, book.getNiceName(this)))
                 .setTitle(getString(R.string.deleteConfirmation))
                 .setPositiveButton(getString(R.string.deleteConfirmButton), (dialog, which) -> {
                         Log.i("BloomReader", "DeleteBook "+ book.toString());

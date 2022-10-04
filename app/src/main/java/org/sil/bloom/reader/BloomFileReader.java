@@ -186,11 +186,9 @@ public class BloomFileReader {
     private JSONObject getMetaProperties(){
         if(metaProperties == null) {
             try {
-                File metaFile = fileOrUri.tryGetFile(META_JSON_FILE);
-                if (metaFile == null)
-                    throw new IOException(META_JSON_FILE + " not found");
-                metaProperties = new JSONObject(IOUtilities.FileToString(metaFile));
-            } catch (JSONException | IOException e) {
+                String rawJson = getFileContent(META_JSON_FILE);
+                metaProperties = new JSONObject(rawJson);
+            } catch (JSONException e) {
                 Log.e("BloomFileReader", "Error parsing meta.json: " + e.getMessage());
                 e.printStackTrace();
                 return null;

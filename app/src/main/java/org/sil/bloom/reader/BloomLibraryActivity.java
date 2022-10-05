@@ -61,7 +61,7 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
                                         String contentDisposition, String mimetype,
                                         long contentLength) {
 
-                mDownloads.onDownloadStart(url, userAgent, contentDisposition, mimetype, contentLength);
+                mDownloads.onDownloadStart(url, userAgent, contentDisposition, mimetype, contentLength, mBrowser.getUrl());
             }
         });
 

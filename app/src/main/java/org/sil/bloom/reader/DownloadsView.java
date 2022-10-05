@@ -14,6 +14,9 @@ import android.view.ViewParent;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.segment.analytics.Analytics;
+import com.segment.analytics.Properties;
+
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.io.File;
@@ -293,6 +296,7 @@ public class DownloadsView extends LinearLayout {
                 File downloadDest = new File(getDownloadDir(), fileName + ".bloompub");
                 long downloadId = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_ID));
                 int downloadStatus = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                String downloadDescription = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_DESCRIPTION));
                 switch (downloadStatus) {
                     default:
                         // if we see a failed download, for now we'll ignore it.
@@ -306,7 +310,7 @@ public class DownloadsView extends LinearLayout {
                         // And if one has finished since our last call of this method, even while
                         // our app was not running, we'll show the complete message.
                     case DownloadManager.STATUS_SUCCESSFUL:
-                        handleDownloadComplete(downloadDest.getPath(), downloadId);
+                        handleDownloadComplete(downloadDest.getPath(), downloadId, downloadDescription);
                         break;
                 }
 
@@ -318,7 +322,7 @@ public class DownloadsView extends LinearLayout {
     }
     public void onDownloadStart(String url, String userAgent,
                                 String contentDisposition, String mimetype,
-                                long contentLength) {
+                                long contentLength, String sourceUrl) {
 
         Uri Download_Uri = Uri.parse(url);
         DownloadManager.Request request = new DownloadManager.Request(Download_Uri);
@@ -338,6 +342,7 @@ public class DownloadsView extends LinearLayout {
         File downloadDest = new File(getDownloadDir(), fileName + ".bloompub");
         Uri target = Uri.fromFile(downloadDest);
         request.setDestinationUri(target);
+        request.setDescription(sourceUrl);
         long downloadId = mDownloadManager.enqueue(request);
         showDownloadProgress(downloadId, downloadDest);
     }
@@ -409,8 +414,9 @@ public class DownloadsView extends LinearLayout {
                     Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
                     if (cursor.moveToFirst()) {
                         LinearLayout downloads = findViewById(R.id.download_books);
+                        String downloadDescription = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_DESCRIPTION));
                         mDownloadsInProgress.remove(downloadId);
-                        handleDownloadComplete(data.destPath, downloadId);
+                        handleDownloadComplete(data.destPath, downloadId, downloadDescription);
                         if (mDownloadsInProgress.size() == 0) {
                             cleanupDownloadDirectory();
                             //  We may have just finished multiple ones, but if so, we already put
@@ -427,7 +433,7 @@ public class DownloadsView extends LinearLayout {
         }
     };
 
-    private void handleDownloadComplete(String downloadDestPath, long downloadId) {
+    private void handleDownloadComplete(String downloadDestPath, long downloadId, String downloadDescription) {
         File source = new File(downloadDestPath);
         if (!source.exists()) {
             // just ignore any download we think we got that didn't result in a file.
@@ -443,9 +449,38 @@ public class DownloadsView extends LinearLayout {
             mDownloadManager.remove(downloadId);
             return;
         }
+        // In the downloadDescription we capture the URL of the book instance page that requested the download.
+        // Something like https://alpha.bloomlibrary.org/app-hosted-v1/app-hosted-v1/language:af/book/FONq0aa85h?lang=af
+        int lastSlash = downloadDescription.lastIndexOf('/');
+        int queryIndex = downloadDescription.lastIndexOf('?');
+        if (queryIndex < 0) {
+            queryIndex = downloadDescription.length();
+        }
+        String bookDbId = "";
+        if (lastSlash >= 0 && queryIndex > lastSlash) {
+            bookDbId = downloadDescription.substring(lastSlash + 1, queryIndex);
+        }
+        int lastEquals = downloadDescription.lastIndexOf("lang=");
+        String lang = "";
+        if (lastEquals > 0 ) {
+            lang = downloadDescription.substring(lastEquals + 5);
+        }
         String fileName = DownloadsView.getFileNameFromUri(downloadDestPath);
         File dest = new File(BookCollection.getLocalBooksDirectory(), fileName + ".bloompub");
         IOUtilities.copyFile(source.getPath(), dest.getPath());
+        Properties props = new Properties();
+
+        BloomFileReader reader = new BloomFileReader(mContext, dest.getPath());
+        props.putValue("bookInstanceId", reader.getStringMetaProperty("bookInstanceId", ""));
+        props.putValue("title", reader.getStringMetaProperty("title", ""));
+        props.putValue("originalTitle", reader.getStringMetaProperty("originalTitle", ""));
+        props.putValue("brandingProjectName", reader.getStringMetaProperty("brandingProjectName", ""));
+        props.putValue("publisher", reader.getStringMetaProperty("publisher", ""));
+        props.putValue("originalPublisher", reader.getStringMetaProperty("originalPublisher", ""));
+        props.putValue("bookDbId", bookDbId);
+        props.putValue("lang", lang);
+        props.putValue("downloadSourceUrl", downloadDescription);
+        Analytics.with(mContext).track("Download Book", props);
         source.delete();
         // We need to copy the file before we tell the download manager to remove it, or the DM
         // will not just forget about it, but also delete the file!

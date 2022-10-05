@@ -14,6 +14,9 @@ import android.view.ViewParent;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.segment.analytics.Analytics;
+import com.segment.analytics.Properties;
+
 import org.sil.bloom.reader.models.BookCollection;
 
 import java.io.File;
@@ -446,6 +449,12 @@ public class DownloadsView extends LinearLayout {
         String fileName = DownloadsView.getFileNameFromUri(downloadDestPath);
         File dest = new File(BookCollection.getLocalBooksDirectory(), fileName + ".bloompub");
         IOUtilities.copyFile(source.getPath(), dest.getPath());
+        Properties props = new Properties();
+        BloomFileReader reader = new BloomFileReader(mContext, dest.getPath());
+        props.putValue("bookInstanceId", reader.getStringMetaProperty("bookInstanceId", ""));
+        props.putValue("title", reader.getStringMetaProperty("title", ""));
+        props.putValue("originalTitle", reader.getStringMetaProperty("originalTitle", ""));
+        Analytics.with(mContext).track("Download Book", props);
         source.delete();
         // We need to copy the file before we tell the download manager to remove it, or the DM
         // will not just forget about it, but also delete the file!

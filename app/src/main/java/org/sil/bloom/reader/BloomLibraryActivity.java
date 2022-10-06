@@ -78,7 +78,7 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
             mBrowser.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
             String host = "https://bloomlibrary.org";
-            if (BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha"))
+            if (BuildConfig.DEBUG || BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta"))
                 host = "https://alpha.bloomlibrary.org";
             // Note: if you configure a host that needs to use the dev parse server,
             // you will need to add a case to the code in BloomLibraryWebViewClient.shouldInterceptRequest

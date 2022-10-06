@@ -1,8 +1,8 @@
 # Bloom Reader
 
-[Bloom](http://bloomlibrary.org) is [award-winning](http://allchildrenreading.org/sil-international-wins-enabling-writers-prize-for-software-solution-to-childrens-book-shortage/) open source desktop software for Windows and Linux that communities, NGOs, and Education ministries around the world are using to create books in the world's thousands of minority languages. These books are mostly distributed via paper, though some people are making epubs. We can now also use SIL's Reading Application Builder to package books as Android apps that can be downloaded from the Play Store.
+[Bloom](http://bloomlibrary.org) is [award-winning](http://allchildrenreading.org/sil-international-wins-enabling-writers-prize-for-software-solution-to-childrens-book-shortage/) open source desktop software for Windows and Linux that communities, NGOs, and Education ministries around the world are using to create books in the world's thousands of minority languages. These books are mostly distributed via paper, though some people are making ePUBs. We can now also use SIL's Reading Application Builder to package books as Android apps that can be downloaded from the Play Store.
 
-So what's this "Bloom Reader" about? Bloom users tell us that it's difficult to find epub readers that are simple
+So what's this "Bloom Reader" about? Bloom users tell us that it's difficult to find ePUB readers that are simple
 to use and that can reliably display Bloom books and play audio from Bloom Talking books.
 They want the simplicity of apps. But they don't want to have to create apps or have people download
 apps for each book that gets published. Instead, they want an app, kind of like a Kindle app, which
@@ -15,7 +15,7 @@ Bloom Reader is a native java app with a WebView for displaying Bloom books (whi
 Bloom Reader is distributed through the Google Play Store.
 [Try it out](https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&c=apps).
 
-Apks are also distributed through our [website](https://bloomlibrary.org/installers).
+Apks are also distributed through our [website](https://bloomlibrary.org/page/create/bloom-reader).
 
 # Road map
 
@@ -43,20 +43,18 @@ At this point, literacy projects can seed books into the community and let the c
 
 ## Tie into BloomLibrary.org
 
-- BloomLibrary.org publishes an [OPDS](http://opds-spec.org/specs/opds-catalog-1-1-20110627/) catalog of all its books.
-- User can see a list of all the books in her language that are on [BloomLibrary.org](http://bloomlibrary.org).
-- User can preview books, perhaps in a very low-bandwidth form.
-- User can choose to download books to her device.
-- User gets notifications when new or updated books are available.
+- [x] BloomLibrary.org publishes an [OPDS](http://opds-spec.org/specs/opds-catalog-1-1-20110627/) catalog of all its books.
+- [x] User can see a list of all the books in her language that are on [BloomLibrary.org](http://bloomlibrary.org).
+- [x] User can preview books, perhaps in a very low-bandwidth form.
+- [x] User can choose to download books to her device.
+- [ ] User gets notifications when new or updated books are available.
 
-At this point, anyone could publish a book using the existing Bloom mechanism, and have it immediately downloadable by anyone with Bloom Reader. Books would still spread mostly from person to person in expensive internet areas.
+At this point, anyone can publish a book using the existing Bloom mechanism, and have it immediately downloadable by anyone with Bloom Reader. Books still spread mostly from person to person in expensive internet areas.
 
 ## Other things on the radar
 
-- [ ] Use [Crosswalk](https://crosswalk-project.org/) to get an up-to-date browser that can handle Bloom's Talking Books.
-- [ ] Use Graphite-enabled Crosswalk to support languages with the most complex scripts.
-- [x] Support Ken Burns animation as we do in [BloomPlayer.js](https://github.com/BloomBooks/BloomPlayer).
-- [x] Support background music that works across pages, as we do in BloomPlayer.js.
+- [x] Support Ken Burns animation.
+- [x] Support background music that works across pages.
 - [x] In-app sharing/synchronization via bluetooth and wifi-direct.
 
 # Building

@@ -19,7 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // This is the main class that displays a Bloom book, using a WebView containing an instance of bloom-player.
-public class ReaderActivity extends BaseActivity {
+public class ReaderActivity extends BaseActivity implements MessageReceiver {
 
     private static final String TAG = "ReaderActivity";// https://developer.android.com/reference/android/util/Log.html
 

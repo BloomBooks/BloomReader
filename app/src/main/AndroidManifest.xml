@@ -12,7 +12,8 @@
         android:preserveLegacyExternalStorage="true"
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".NeedNewerWebViewActivity"
             android:exported="false"
@@ -265,6 +266,11 @@
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".BloomLibraryActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme" />
         <activity
             android:name=".wifi.GetFromWiFiActivity"
             android:excludeFromRecents="true"

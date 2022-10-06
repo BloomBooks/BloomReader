@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- allows for running bloomlibrary locally on BR
+    cleartextTrafficPermitted="true" is needed for http (vs https) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <!-- 10.0.2.2 is the host computer's localhost when running an emulator -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- To run on a real device using local server, you'll have to put your computer's address here.
+         Get it using ipconfig or similar; the one that yarn start-performance reports
+         ("On Your Network:") is WRONG.
+         -->
+        <!-- domain includeSubdomains="true">192.168.0.246</domain -->
+    </domain-config>
+</network-security-config>

@@ -362,6 +362,8 @@ public class SAFUtilities {
             DocumentsContract.deleteDocument(context.getContentResolver(),uri);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        } catch (NullPointerException e) { // weird, but has happened when passing a vdlid URI to deleteDocument
+            e.printStackTrace();
         }
     }
 

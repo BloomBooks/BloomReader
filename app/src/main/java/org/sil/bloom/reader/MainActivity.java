@@ -28,6 +28,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -61,7 +62,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 import static org.sil.bloom.reader.BloomReaderApplication.DEVICE_ID_FILE_NAME;
 import static org.sil.bloom.reader.BloomReaderApplication.shouldPreserveFilesInOldDirectory;
@@ -94,9 +94,12 @@ public class MainActivity extends BaseActivity
     ProgressBar mLoadingProgressBar;       // accessed by InitializeLibraryTask
     TextView mLoadingTextView;
 
+    private static MainActivity sCurrentInstance;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sCurrentInstance = this;
 
         checkForPendingReadBookAnalyticsEvent();
 
@@ -107,6 +110,12 @@ public class MainActivity extends BaseActivity
         requestLocationUpdates();
 
         requestPermissionToReadDeviceIdJsonIfNeeded();
+    }
+
+    public static void noteNewBookInPrivateDirectory(String filePathOrUri) {
+        if (sCurrentInstance == null)
+            return;
+        sCurrentInstance.onNewOrUpdatedBook(filePathOrUri);
     }
 
     @Override
@@ -518,6 +527,15 @@ public class MainActivity extends BaseActivity
             navigationView.getMenu().removeItem(R.id.nav_test_location_analytics);
         }
 
+        Button getMoreBooksButton = findViewById(R.id.get_more_books);
+        getMoreBooksButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, BloomLibraryActivity.class);
+                MainActivity.this.startActivity(intent);
+            }
+        });
+
         mBookRecyclerView = findViewById(R.id.book_list2);
         SetupCollectionListView(mBookRecyclerView);
 
@@ -544,7 +562,8 @@ public class MainActivity extends BaseActivity
         // Cleans up old-style thumbnails - could be removed someday after it's run on most devices with old-style thumbnails
         BookCollection.cleanUpOldThumbs(this);
 
-        resumeMainActivity();
+        // OS automatically calls OnResume right after OnCreate, so we shouldn't need to call this here too.
+        //resumeMainActivity();
     }
 
     private void initializeNavigationDrawer(final Toolbar toolbar) {
@@ -739,6 +758,9 @@ public class MainActivity extends BaseActivity
             }
         }
 
+        DownloadsView downloads = findViewById(R.id.download_books);
+        downloads.updateUItoCurrentState();
+
         //Periodic cleanup
         SharingManager.fileCleanup(this);
     }
@@ -774,6 +796,11 @@ public class MainActivity extends BaseActivity
     }
 
     private void updateForNewBook(String filePathOrUri) {
+        if (_bookCollection == null) {
+            // This can happen when we detect during startup that a download has finished while we
+            // were stopped. We can afford to ignore it since we haven't loaded yet.
+            return;
+        }
 		filePathOrUri = BookCollection.fixBloomd(filePathOrUri);
         BookOrShelf book = _bookCollection.addBookOrShelfIfNeeded(filePathOrUri);
         highlightAndScrollTo(book);
@@ -783,7 +810,7 @@ public class MainActivity extends BaseActivity
         else {
             playNewBookSound();
         }
-        Toast.makeText(MainActivity.this, book.name + " added or updated", Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, book.getNiceName(this) + " added or updated", Toast.LENGTH_SHORT).show();
     }
 
     private void highlightAndScrollTo(BookOrShelf book) {
@@ -884,7 +911,7 @@ public class MainActivity extends BaseActivity
     }
 
     private void deleteBook(final BookOrShelf book) {
-        new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(getString(R.string.deleteExplanationBook, book.name))
+        new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(getString(R.string.deleteExplanationBook, book.getNiceName(this)))
                 .setTitle(getString(R.string.deleteConfirmation))
                 .setPositiveButton(getString(R.string.deleteConfirmButton), (dialog, which) -> {
                         Log.i("BloomReader", "DeleteBook "+ book.toString());
@@ -983,14 +1010,21 @@ public class MainActivity extends BaseActivity
             intent.putExtra("background", bookOrShelf.backgroundColor);
             context.startActivity(intent);
         } else {
-            Intent intent = new Intent(context, ReaderActivity.class);
-            intent.putExtra("bookPath", path);
+            launchReader(context, path, bookOrShelf);
+        }
+    }
+
+    public static void launchReader(Context context, String path, BookOrShelf bookOrShelf) {
+        Intent intent = new Intent(context, ReaderActivity.class);
+        intent.putExtra("bookPath", path);
+        if (bookOrShelf != null) {
             if (bookOrShelf.uri != null) {
                 intent.putExtra("bookUri", bookOrShelf.uri.toString());
             }
+            // We think this is obsolete. Branding info is now obtained through BloomPlayer from meta.json.
             intent.putExtra("brandingProjectName", bookOrShelf.brandingProjectName);
-            context.startActivity(intent);
         }
+        context.startActivity(intent);
     }
 
     private void AskUserForPermissionToReadBloomExternal() {

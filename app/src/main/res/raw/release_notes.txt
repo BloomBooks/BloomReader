@@ -1,3 +1,6 @@
+3.2
+Download books directly from Bloom Library.
+
 3.1
 Bloom Reader now comes with Andika instead of Andika New Basic (ANB).
   - Books which were designed to use ANB will display with Andika.
@@ -56,5 +59,3 @@ French user interface.
 Minimum Android version: 4.4.
 
 Each version also includes various enhancements and fixes.
-
-An upcoming release will include the ability to get books directly from bloomlibrary.org.

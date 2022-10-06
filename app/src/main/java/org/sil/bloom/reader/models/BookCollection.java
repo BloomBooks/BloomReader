@@ -340,6 +340,7 @@ public class BookCollection {
             fakeShelf.specialBehavior = "importOldBloomFolder";
             books.add(fakeShelf);
         }
+
         addBooks(books);
     }
 

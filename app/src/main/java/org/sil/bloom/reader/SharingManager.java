@@ -1,5 +1,6 @@
 package org.sil.bloom.reader;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -61,6 +62,7 @@ public class SharingManager {
         return null;
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     public void shareApkFile() {
         try {
             File apkFile = copyApkToDirectoryForSharing();

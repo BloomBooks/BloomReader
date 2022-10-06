@@ -29,12 +29,12 @@ android {
      * compile your app. This means your app can use the API features included in
      * this API level and lower.
      */
-    compileSdkVersion 30
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "org.sil.bloom.reader"
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionCode versionMajor * 100000 + versionMinor * 1000 + versionRelease.toInteger()
         versionName "${versionMajor}.${versionMinor}.${versionRelease}"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
@@ -110,12 +110,11 @@ android {
         promoteTrack = "beta"
     }
 
-    lintOptions {
-        warning "MissingTranslation"
-        warning "ExtraTranslation"
-    }
     testOptions {
         animationsDisabled = true
+    }
+    lint {
+        warning 'MissingTranslation', 'ExtraTranslation'
     }
 }
 
@@ -124,14 +123,14 @@ repositories {
 }
 
 dependencies {
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.3.0'
+    implementation 'androidx.appcompat:appcompat:1.5.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
-    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'com.google.android.material:material:1.6.1'
     // Supports the WiFi module's 'server' used to receive books from Bloom desktop
     implementation  'cz.msebera.android:httpclient:4.5.8'
 
@@ -147,12 +146,12 @@ dependencies {
     testImplementation  'org.mockito:mockito-core:3.4.6'
     testImplementation  'org.json:json:20200518'  // make org.json classes available in unit tests
 
-    androidTestImplementation 'com.google.android.material:material:1.3.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test:rules:1.3.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.3.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-web:3.3.0'
+    androidTestImplementation 'com.google.android.material:material:1.6.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test:rules:1.4.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.4.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-web:3.4.0'
 }
 
 task copyBloomPlayerAssets(type: Copy, group: "Custom", description: "Copies bloom-player artifacts to required directory") {

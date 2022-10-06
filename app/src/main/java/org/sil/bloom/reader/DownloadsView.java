@@ -155,15 +155,15 @@ public class DownloadsView extends LinearLayout {
                         DownloadData data = mDownloadsInProgress.get(downloadId);
                         Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
                         if (cursor.moveToFirst()) {
-                            int downloadStatus = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                            int downloadStatus = CommonUtilities.getIntFromCursor(cursor, DownloadManager.COLUMN_STATUS);
                             switch (downloadStatus) {
                                 case DownloadManager.STATUS_RUNNING:
-                                    long totalBytes = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                                    long totalBytes = CommonUtilities.getLongFromCursor(cursor, DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
                                     if (totalBytes > 0) {
-                                        long downloadedBytes = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-                                        progress = (int) (downloadedBytes * 100 / totalBytes);
+                                        long downloadedBytes = CommonUtilities.getLongFromCursor(cursor, DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+                                        if (downloadedBytes > 0)
+                                            progress = (int) (downloadedBytes * 100 / totalBytes);
                                     }
-
                                     break;
                                 case DownloadManager.STATUS_SUCCESSFUL:
                                     progress = 100;
@@ -275,7 +275,7 @@ public class DownloadsView extends LinearLayout {
         Cursor cursor = mDownloadManager.query(new DownloadManager.Query());
         if (cursor.moveToFirst()) {
             do {
-                String uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+                String uriString = CommonUtilities.getStringFromCursor(cursor, DownloadManager.COLUMN_LOCAL_URI);
                 String path = "";
                 try {
                     if (uriString != null) {
@@ -294,24 +294,26 @@ public class DownloadsView extends LinearLayout {
                 // this is one of our downloads from the presence of the right subdirectory in the
                 // path, so it should be pretty safe to use our standard destination.
                 File downloadDest = new File(getDownloadDir(), fileName + ".bloompub");
-                long downloadId = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_ID));
-                int downloadStatus = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                String downloadDescription = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_DESCRIPTION));
-                switch (downloadStatus) {
-                    default:
-                        // if we see a failed download, for now we'll ignore it.
-                        continue;
-                        // But if it's running or paused or pending we want to show the status and allow it to complete.
-                    case DownloadManager.STATUS_RUNNING:
-                    case DownloadManager.STATUS_PAUSED:
-                    case DownloadManager.STATUS_PENDING:
-                        showDownloadProgress(downloadId, downloadDest);
-                        break;
+                long downloadId = CommonUtilities.getLongFromCursor(cursor, DownloadManager.COLUMN_ID);
+                int downloadStatus = CommonUtilities.getIntFromCursor(cursor, DownloadManager.COLUMN_STATUS);
+                if (downloadId > 0 && downloadStatus > 0) {
+                    switch (downloadStatus) {
+                        default:
+                            // if we see a failed download, for now we'll ignore it.
+                            continue;
+                            // But if it's running or paused or pending we want to show the status and allow it to complete.
+                        case DownloadManager.STATUS_RUNNING:
+                        case DownloadManager.STATUS_PAUSED:
+                        case DownloadManager.STATUS_PENDING:
+                            showDownloadProgress(downloadId, downloadDest);
+                            break;
                         // And if one has finished since our last call of this method, even while
                         // our app was not running, we'll show the complete message.
-                    case DownloadManager.STATUS_SUCCESSFUL:
-                        handleDownloadComplete(downloadDest.getPath(), downloadId, downloadDescription);
-                        break;
+                        case DownloadManager.STATUS_SUCCESSFUL:
+                            String downloadDescription = CommonUtilities.getStringFromCursor(cursor, DownloadManager.COLUMN_DESCRIPTION);
+                            handleDownloadComplete(downloadDest.getPath(), downloadId, downloadDescription);
+                            break;
+                    }
                 }
 
             } while (cursor.moveToNext());
@@ -414,7 +416,7 @@ public class DownloadsView extends LinearLayout {
                     Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
                     if (cursor.moveToFirst()) {
                         LinearLayout downloads = findViewById(R.id.download_books);
-                        String downloadDescription = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_DESCRIPTION));
+                        String downloadDescription = CommonUtilities.getStringFromCursor(cursor, DownloadManager.COLUMN_DESCRIPTION);
                         mDownloadsInProgress.remove(downloadId);
                         handleDownloadComplete(data.destPath, downloadId, downloadDescription);
                         if (mDownloadsInProgress.size() == 0) {
@@ -449,21 +451,23 @@ public class DownloadsView extends LinearLayout {
             mDownloadManager.remove(downloadId);
             return;
         }
-        // In the downloadDescription we capture the URL of the book instance page that requested the download.
-        // Something like https://alpha.bloomlibrary.org/app-hosted-v1/app-hosted-v1/language:af/book/FONq0aa85h?lang=af
-        int lastSlash = downloadDescription.lastIndexOf('/');
-        int queryIndex = downloadDescription.lastIndexOf('?');
-        if (queryIndex < 0) {
-            queryIndex = downloadDescription.length();
-        }
         String bookDbId = "";
-        if (lastSlash >= 0 && queryIndex > lastSlash) {
-            bookDbId = downloadDescription.substring(lastSlash + 1, queryIndex);
-        }
-        int lastEquals = downloadDescription.lastIndexOf("lang=");
         String lang = "";
-        if (lastEquals > 0 ) {
-            lang = downloadDescription.substring(lastEquals + 5);
+        if (downloadDescription != null) {
+            // In the downloadDescription we capture the URL of the book instance page that requested the download.
+            // Something like https://alpha.bloomlibrary.org/app-hosted-v1/app-hosted-v1/language:af/book/FONq0aa85h?lang=af
+            int lastSlash = downloadDescription.lastIndexOf('/');
+            int queryIndex = downloadDescription.lastIndexOf('?');
+            if (queryIndex < 0) {
+                queryIndex = downloadDescription.length();
+            }
+            if (lastSlash >= 0 && queryIndex > lastSlash) {
+                bookDbId = downloadDescription.substring(lastSlash + 1, queryIndex);
+            }
+            int lastEquals = downloadDescription.lastIndexOf("lang=");
+            if (lastEquals > 0) {
+                lang = downloadDescription.substring(lastEquals + 5);
+            }
         }
         String fileName = DownloadsView.getFileNameFromUri(downloadDestPath);
         File dest = new File(BookCollection.getLocalBooksDirectory(), fileName + ".bloompub");

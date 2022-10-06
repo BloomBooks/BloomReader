@@ -1,6 +1,2 @@
-Bloom Reader now comes with Andika instead of Andika New Basic (ANB).
-  - Books which were designed to use ANB will display with Andika.
-Warns the user if the version of WebView on the device is too old.
-Fixes some performance issues when reading books.
-Portuguese user interface.
+Download books directly from Bloom Library.
 Various enhancements and fixes.

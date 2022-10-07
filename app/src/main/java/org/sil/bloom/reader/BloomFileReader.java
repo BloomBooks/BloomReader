@@ -188,7 +188,7 @@ public class BloomFileReader {
             try {
                 String rawJson = getFileContent(META_JSON_FILE);
                 metaProperties = new JSONObject(rawJson);
-            } catch (JSONException e) {
+            } catch (JSONException | NullPointerException e) { // NullPointerException was seen on Play Console pre-launch test...
                 Log.e("BloomFileReader", "Error parsing meta.json: " + e.getMessage());
                 e.printStackTrace();
                 return null;

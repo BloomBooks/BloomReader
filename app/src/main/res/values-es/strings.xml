@@ -15,7 +15,6 @@
     <string name="shareBook">Compartir %1$s</string>
     <string name="cancel">Cancelar</string>
     <string name="ok">Aceptar</string>
-
     <string name="navigation_drawer_open">Abrir panel lateral de navegación</string>
     <string name="navigation_drawer_close">Cerrar panel lateral de navegación</string>
     <string name="get_books_local_wifi">Recibir libros desde Bloom en una computadora, utilizando Wifi</string>
@@ -36,9 +35,7 @@
     <string name="failed_book_import">Falló la importación del libro.</string>
     <string name="failed_book_import2">Bloom Reader no pudo leer el libro \"%1$s\".</string>
     <string name="external_storage_unavailable">No se pudo acceder al almacenamiento de archivos. ¿Hace falta la tarjeta SD?</string>
-
     <string name="need_newer_webview">Para poder utilizar esta aplicación, deberá actualizar el <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Sistema Android WebView</a> desde la Google Play Store y luego reiniciar la aplicación.</string>
-
     <string name="share_app_link"><u>Compartir el enlace para conseguir el Bloom Reader en Google Play</u></string>
     <string name="share_app_with_friend">¡Comparta la aplicación Bloom Reader con un amigo!</string>
     <string name="share_books_with_friend">Comparta todos sus libros con un amigo que ya tiene el Bloom Reader instalado.</string>
@@ -58,7 +55,6 @@
     <string name="bundle_import_out_of_space">No hay espacio suficiente en este dispositivo para todos los libros en este paquete.</string>
     <!-- %1$s is the name of a bloombundle that failed to import -->
     <string name="bundle_import_error">Hubo un problema leyendo %1$s. Intenta descargarlo de nuevo.</string>
-
     <string name="share_app">Compartir la aplicación Bloom Reader</string>
     <string name="open_bloompub_file">Abrir el archivo BloomPUB</string>
     <string name="searching">Buscando...</string>
@@ -74,7 +70,6 @@
     <string name="receive_books_over_usb">Recibir libros por USB</string>
     <string name="ready_to_receive_usb">Bloom Reader está listo para recibir libros a través del cable USB desde el programa Bloom Editor</string>
     <string name="please_send_book">Por favor, envíe un libro desde Bloom Editor y luego vuelva a elegir este comando</string>
-
     <string name="need_storage_permission">Bloom Reader necesita acceso al almacenamiento de archivos para funcionar.</string>
     <string name="grant_storage_permission">Otorgar permiso de almacenamiento</string>
     <string name="renaming_invalid_book">Renombrando el libro inválido a %1$s</string>
@@ -82,24 +77,29 @@
     <string name="show_books_on_sd_card">Mostrar libros en la tarjeta SD</string>
     <string name="please_click_use_this_folder">Bloom Reader necesitará tu permiso para mostrar los libros de tu tarjeta SD. Después de tocar \"OK\", Android abrirá una ventana. Toca el botón que se ve así:</string>
     <string name="show_books_in_old_bloom_folder">Comprobación de libros perdidos</string>
+    <string name="get_more_books">Obtenga más libros de nuestra biblioteca</string>
     <string name="select_bloom_directory">Seleccione el directorio Bloom</string>
     <string name="request_bloom_permission_usb">Para recibir libros a través de USB, tendrá que dar permiso a Bloom Reader para utilizar la carpeta \"Bloom\" en la raíz del almacenamiento interno. Toque \"Usar esta carpeta\"</string>
     <string name="request_bloom_permission_lost">Para encontrar los libros perdidos, tendrás que dar permiso a Bloom Reader para que utilice la carpeta \"Bloom\" en la raíz del almacenamiento interno. Toque \"Usar esta carpeta\"</string>
     <string name="request_bloom_permission_device_stats">Para terminar de configurar los informes estadísticos, deberá dar permiso a Bloom Reader para utilizar la carpeta \"Bloom\" en la raíz del almacenamiento interno. Toque \"Usar esta carpeta\"</string>
-
     <string name="share_location">Compartir ubicación</string>
     <string name="request_location">Nos gustaría registrar la ciudad donde usted reside porque aquellos que gratuitamente comparten estos libros les gusta saber dónde se leen sus libros.</string>
     <string name="allow">Si</string>
     <!-- Response button to the above request for permission to use location -->
     <string name="dont_allow">No</string>
     <!-- Response button to the above request for permission to use location -->
-
     <string name="turn_on_location">Activar ubicación</string>
     <string name="request_gps">A los autores e ilustradores les gusta saber dónde se leen sus libros gratuitos. Pero necesitamos que usted active el servicio de localización GPS en su dispositivo.</string>
     <string name="attempting_to_send_reading_stats">Intentando enviar estadísticas de lectura...</string>
     <string name="all_reading_stats_sent">Se enviaron todas las estadísticas de lectura.</string>
-
     <string name="find_lost_books">Encontrar libros perdidos</string>
     <string name="no_lost_books_found">No se han encontrado libros perdidos.</string>
     <string name="restart">Reiniciar</string>
+    <string name="close">Cerrar</string>
+    <string name="read_now">Leer ahora</string>
+    <string name="download_is_complete">La descarga del libro está completa</string>
+    <string name="downloads_are_complete">Las descargas de libros están completas</string>
+    <string name="downloading_file">Descargando %s</string>
+    <string name="downloading_books">Descargando libros</string>
+    <string name="view_books">Ver libros</string>
 </resources>

@@ -35,6 +35,7 @@
     <string name="failed_book_import">پاین آوردن کتاب انجام نشد.</string>
     <string name="failed_book_import2">Bloom Reader was not able to read the book \"%1$s\".</string>
     <string name="external_storage_unavailable">دسترسی به حافظه فایل امکان پذیر نیست. آیا کارت SD از گم شده است?</string>
+    <string name="need_newer_webview">In order to use this app, you will need to update the <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System WebView</a> from the Google Play Store and then restart the app.</string>
     <string name="share_app_link"><u> برای دریافت Bloom Reader در Google Play آدرس را به اشتراک بگذارید </u></string>
     <string name="share_app_with_friend">این برنامه Bloom Reader را با یک دوست تان به اشتراک بگذارید!</string>
     <string name="share_books_with_friend">تمام کتاب های خود را با یک دوست تان که در حال حاضر Bloom Reader را نصب کرده است به اشتراک بگذارید.</string>
@@ -55,8 +56,7 @@
     <!-- %1$s is the name of a bloombundle that failed to import -->
     <string name="bundle_import_error">هنگام خواندن %1$s. مشکلی وجود داشت. دوباره آن را بالا کنید.</string>
     <string name="share_app">برنامه Bloom Reader را به اشتراک بگذارید</string>
-    <string name="share_books">کتاب ها را به اشتراک بگزارید</string>
-    <string name="find_books_on_device">کتاب های بلوم را در این وسیله پیدا کنید</string>
+    <string name="open_bloompub_file">Open BloomPUB file</string>
     <string name="searching">جستجوکردن...</string>
     <string name="no_books_added">هیچ کتاب ها یا بسته های جدید بلوم در وسیله یافت نشد.</string>
     <string name="release_notes">یاد داشت های منتشر شده</string>
@@ -69,10 +69,19 @@
     <!-- Used both as a menu option and as the title of the resulting dialog-->
     <string name="receive_books_over_usb">Receive books via USB</string>
     <string name="ready_to_receive_usb">Bloom Reader is ready to receive books via USB cable from the Bloom Editor program</string>
+    <string name="please_send_book">Please send a book from Bloom Editor and then choose this command again</string>
     <string name="need_storage_permission">Bloom Reader برای کار دسترسی به حافظه فایل نیاز دارد.</string>
     <string name="grant_storage_permission">به ذخیره نمودن اجاز دهید</string>
     <string name="renaming_invalid_book">تغییر نام کتاب بی باوره به%1$s</string>
     <string name="preparing_to_show_books">Preparing to show books…</string>
+    <string name="show_books_on_sd_card">Show Books on SD Card</string>
+    <string name="please_click_use_this_folder">Bloom Reader will need your permission to show the books on your SD Card. After you touch \"OK\", Android will open a window. Touch the button that looks like this:</string>
+    <string name="show_books_in_old_bloom_folder">Check for Lost Books</string>
+    <string name="get_more_books">Get more books from our library</string>
+    <string name="select_bloom_directory">Select Bloom directory</string>
+    <string name="request_bloom_permission_usb">To receive books via USB, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"</string>
+    <string name="request_bloom_permission_lost">To find lost books, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"</string>
+    <string name="request_bloom_permission_device_stats">To finish setting up stats reporting, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"</string>
     <string name="share_location">Share location</string>
     <string name="request_location">We would like to record your city because the people who share these books for free like to know where their books are being read.</string>
     <string name="allow">Allow</string>
@@ -83,4 +92,14 @@
     <string name="request_gps">Authors &amp; Illustrators like to know where their free books are being read. But we need you to turn on your device\'s ability to use its GPS Location Service</string>
     <string name="attempting_to_send_reading_stats">Attempting to send reading stats...</string>
     <string name="all_reading_stats_sent">All reading stats sent.</string>
+    <string name="find_lost_books">Find lost books</string>
+    <string name="no_lost_books_found">No lost books found.</string>
+    <string name="restart">Restart</string>
+    <string name="close">Close</string>
+    <string name="read_now">Read Now</string>
+    <string name="download_is_complete">Book download is complete</string>
+    <string name="downloads_are_complete">Book downloads are complete</string>
+    <string name="downloading_file">Downloading %s</string>
+    <string name="downloading_books">Downloading books</string>
+    <string name="view_books">View books</string>
 </resources>

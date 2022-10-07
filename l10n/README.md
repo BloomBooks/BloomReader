@@ -15,7 +15,7 @@ Warning: with the current project settings in Crowdin, you will download all tra
 
 ## Add/Update/Remove English strings in Crowdin
 
-1. Make sure you on the `master` branch.
+1. Make sure you are on the `master` branch.
 2. After modifications have been made to `{BR root}/app/src/main/res/values/strings.xml`, upload it using Crowdin plugin (see below).
 
 Warning: This will also delete strings from Crowdin if the strings are not in the file.

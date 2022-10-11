@@ -1,7 +1,6 @@
 package org.sil.bloom.reader;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.net.http.SslError;
@@ -13,29 +12,15 @@ import android.webkit.WebViewClient;
 
 import androidx.annotation.Nullable;
 
-import org.apache.commons.io.IOUtils;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLDecoder;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
-
-import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.HttpHeaders;
-import cz.msebera.android.httpclient.HttpResponse;
-import cz.msebera.android.httpclient.client.methods.HttpGet;
-import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
 
 // This class is used by BloomLibraryActivity to configure its WebView. It passes on the page title
 // when the page is loaded and overrides another method to prevent the system from loading certain
@@ -47,11 +32,20 @@ public class BloomLibraryWebViewClient extends WebViewClient {
         mOwner = owner;
     }
 
+    // This deprecated version of the method is needed to support Android 6
+    @Override
+    public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        return shouldOverrideUrlLoadingInternal(view, Uri.parse(url));
+    }
+
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+        return shouldOverrideUrlLoadingInternal(view, request.getUrl());
+    }
+
+    private boolean shouldOverrideUrlLoadingInternal(WebView view, Uri uri) {
         // Note, the webview never sees links when they are handled by the blorg router.
 
-        final Uri uri = request.getUrl();
         final String externalStr = uri.getQueryParameter("external");
         if (externalStr != null && externalStr.equals("true")) {
             // Open in external browser

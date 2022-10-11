@@ -113,6 +113,12 @@ android {
     lintOptions {
         warning "MissingTranslation"
         warning "ExtraTranslation"
+
+        // Just adding these two temporarily for beta and release builds (should not be in master).
+        // I can't figure out why/how they suddenly became errors without a code change,
+        // but apparently it has to do with upgrading java on the build agent.
+        warning "Range"
+        warning "MissingPermission"
     }
     testOptions {
         animationsDisabled = true

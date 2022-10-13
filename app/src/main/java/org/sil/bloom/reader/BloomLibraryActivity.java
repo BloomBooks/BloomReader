@@ -43,7 +43,12 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
         // This is only marginally necessary here, but the user CAN actually read a book directly in
         // the browser.
         mBrowser.clearCache(false);
-        mBrowser.getSettings().setUserAgentString(mBrowser.getSettings().getUserAgentString() + ";sil-bloom");
+
+        // At one point, this was being used to keep BloomLibrary from sending us the parse app ID header.
+        // We had to do that when we were overriding BloomLibraryWebViewClient's shouldInterceptRequest.
+        // But see notes there why we are not overriding it currently.
+        //mBrowser.getSettings().setUserAgentString(mBrowser.getSettings().getUserAgentString() + ";sil-bloom");
+
         mAppInterface = new WebAppInterface(this);
         // See the class comment on WebAppInterface for how this allows Javascript in
         // the WebView to make callbacks to our receiveMessage method.

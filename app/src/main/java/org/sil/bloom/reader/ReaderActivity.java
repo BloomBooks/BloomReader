@@ -2,7 +2,6 @@ package org.sil.bloom.reader;
 
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,7 +27,6 @@ public class ReaderActivity extends BaseActivity implements MessageReceiver {
     private JSONObject mBookProgressReport; // to send when activity finishes, if not overwritten first
     WebView mBrowser;
     WebAppInterface mAppInterface;
-    String mDistribution;
 
     private long mTimeStarted;
 
@@ -48,7 +46,7 @@ public class ReaderActivity extends BaseActivity implements MessageReceiver {
         // subject to testing.
         // Also unknown: is it helpful, neutral, or harmful to search for "wv" in addition to
         // looking for the Chrome version below?
-        if( agent.indexOf("; wv)") < 0)
+        if(!agent.contains("; wv)"))
             return false;
         // The wv test did not prove sufficient, so we also look for a minimum Chrome version. The difficulty
         // is to know what version we actually require. It probably isn't very important to get the
@@ -62,6 +60,7 @@ public class ReaderActivity extends BaseActivity implements MessageReceiver {
         // Android 4.4. Based on this and earlier experiments, it seems Chrome 30 is not good enough.
         // According to https://www.androidpolice.com/2014/10/19/lollipop-feature-spotlight-webview-now-unbundled-android-free-auto-update-google-play/,
         // Android 4.4.3 had version 33 of Chromium, and the first developer preview of 5.0 had version 37.
+        //
         // I have done considerable google searching and cannot find any indication of the minimum
         // version of Chrome needed for Swiper, which IIRC is the component that forced us to require
         // Android 5. Based on the first article above, which reports version 43 with Android 5.5.1,
@@ -75,14 +74,14 @@ public class ReaderActivity extends BaseActivity implements MessageReceiver {
         // Given that any device with Android 5+ connected to the web will update to the
         // current version of Chrome, it's likely that most users have something much more recent
         // than 51, so I think it's reasonable to just use that until we have better data.
+        //
+        // Later (Oct 2022): we now require 54 for app-hosted bloomlibrary.org. Object.entries, at least, needs 54.
         Pattern p = Pattern.compile("Chrome/(\\d+)\\."); //"Chrome/(\\d*)\\."
         Matcher m = p.matcher(agent);
         if (!m.find())
             return false;
         int version = Integer.parseInt(m.group(1));
-        if (version < 51)
-            return false;
-        return true;
+        return version >= 54;
     }
 
     @Override

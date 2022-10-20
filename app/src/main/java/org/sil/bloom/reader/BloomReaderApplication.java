@@ -162,15 +162,19 @@ public class BloomReaderApplication extends Application {
             Properties p = new Properties();
             p.put("provider", "getInstallerPackageName");
             p.putValue("installer", installer); // The fields of 'campaign' don't seem to apply
-            LocationManager lm = null;
-            if(MainActivity.haveLocationPermission(context)) {
-                lm = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
-            }
 
-            // essentially same as Analytics.with(...).track("Install Attributed", p); but with standard location properties added.
-            // See https://issues.bloomlibrary.org/youtrack/issue/BL-8821.
-            new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams("Install Attributed", p, lm ));
+            ReportAnalyticsWithLocationIfPossible(context, "Install Attributed", p);
         }
+    }
+
+    public static void ReportAnalyticsWithLocationIfPossible(Context context, String event, Properties p) {
+        // Location
+        LocationManager lm = null;
+        if (MainActivity.haveLocationPermission(context)) {
+            lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        }
+
+        new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams(event, p, lm));
     }
 
     public static void setUpDeviceIdentityForAnalytics(){

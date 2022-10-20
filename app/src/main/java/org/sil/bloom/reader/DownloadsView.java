@@ -449,8 +449,30 @@ public class DownloadsView extends LinearLayout {
             mDownloadManager.remove(downloadId);
             return;
         }
+
+        String fileName = DownloadsView.getFileNameFromUri(downloadDestPath);
+        File dest = new File(BookCollection.getLocalBooksDirectory(), fileName + ".bloompub");
+        IOUtilities.copyFile(source.getPath(), dest.getPath());
+
+        ReportDownloadAnalytics(downloadDescription, dest);
+
+        source.delete();
+        // We need to copy the file before we tell the download manager to remove it, or the DM
+        // will not just forget about it, but also delete the file!
+        // See above for why we want to remove it.
+        mDownloadManager.remove(downloadId);
+        MainActivity.noteNewBookInPrivateDirectory(dest.getPath());
+        // It's possible that during the download, we moved away from the activity that contains
+        // the instance that initiated the download, but it still gets the notification.
+        // We want to see the BookReadyView in whatever instance is actually visible.
+        for (DownloadsView v: sInstances) {
+            v.updateUiForNewInstance(dest.getPath());
+        }
+    }
+
+    private void ReportDownloadAnalytics(String downloadDescription, File dest) {
         // In the downloadDescription we capture the URL of the book instance page that requested the download.
-        // Something like https://alpha.bloomlibrary.org/app-hosted-v1/app-hosted-v1/language:af/book/FONq0aa85h?lang=af
+        // Something like https://alpha.bloomlibrary.org/app-hosted-v1/language:af/book/FONq0aa85h?lang=af
         int lastSlash = downloadDescription.lastIndexOf('/');
         int queryIndex = downloadDescription.lastIndexOf('?');
         if (queryIndex < 0) {
@@ -465,11 +487,8 @@ public class DownloadsView extends LinearLayout {
         if (lastEquals > 0 ) {
             lang = downloadDescription.substring(lastEquals + 5);
         }
-        String fileName = DownloadsView.getFileNameFromUri(downloadDestPath);
-        File dest = new File(BookCollection.getLocalBooksDirectory(), fileName + ".bloompub");
-        IOUtilities.copyFile(source.getPath(), dest.getPath());
-        Properties props = new Properties();
 
+        Properties props = new Properties();
         BloomFileReader reader = new BloomFileReader(mContext, dest.getPath());
         props.putValue("bookInstanceId", reader.getStringMetaProperty("bookInstanceId", ""));
         props.putValue("title", reader.getStringMetaProperty("title", ""));
@@ -480,19 +499,7 @@ public class DownloadsView extends LinearLayout {
         props.putValue("bookDbId", bookDbId);
         props.putValue("lang", lang);
         props.putValue("downloadSourceUrl", downloadDescription);
-        Analytics.with(mContext).track("Download Book", props);
-        source.delete();
-        // We need to copy the file before we tell the download manager to remove it, or the DM
-        // will not just forget about it, but also delete the file!
-        // See above for why we want to remove it.
-        mDownloadManager.remove(downloadId);
-        MainActivity.noteNewBookInPrivateDirectory(dest.getPath());
-        // It's possible that during the download, we moved away from the activity that contains
-        // the instance that initiated the download, but it still gets the notification.
-        // We want to see the BookReadyView in whatever instance is actually visible.
-        for (DownloadsView v: sInstances) {
-            v.updateUiForNewInstance(dest.getPath());
-        }
+        BloomReaderApplication.ReportAnalyticsWithLocationIfPossible(mContext, "Download Book", props);
     }
 
     // Called by the ViewBooks button in the BookReady view.

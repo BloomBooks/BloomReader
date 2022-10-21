@@ -3,7 +3,6 @@ package org.sil.bloom.reader;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -90,18 +89,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                 Log.e("sendAnalytics", "Very unexpectedly we can't get a value whose key we just retrieved");
             }
         }
-
-        // Location
-        LocationManager lm = null;
-        if (MainActivity.haveLocationPermission(this)) {
-            lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        }
-
-        // This should be roughly equivalent to
-        //Analytics.with(BloomReaderApplication.getBloomApplicationContext()).track(event, p);
-        // However reports sent like that have sometimes gotten lost when sent as the activity
-        // is closing down. We hope that sending them from a distinct thread may help.
-        new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams(event, p, lm));
+        BloomReaderApplication.ReportAnalyticsWithLocationIfPossible(this, event, p);
     }
 
     protected void moveBookFileToLocalFolderLegacy(boolean preserveFilesInOldDirectory, File bookFileToMove, File dest) {

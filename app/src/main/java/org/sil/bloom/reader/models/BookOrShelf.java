@@ -38,6 +38,8 @@ public class BookOrShelf {
     // when we don't have permission to access it...that behave specially when clicked.
     public String specialBehavior = null;
 
+    public boolean sortLast = false;
+
     private Set<String> bookshelves = new HashSet<String>();
 
     public BookOrShelf(String pathOrUri, String name, Uri uri) {
@@ -76,6 +78,13 @@ public class BookOrShelf {
     public long lastModified() {
         if (uri != null) return IOUtilities.lastModified(BloomReaderApplication.getBloomApplicationContext(), uri);
         else return new File(pathOrUri).lastModified();
+    }
+    public String getNiceName(Context context) {
+        BloomFileReader fileReader = new BloomFileReader(context, pathOrUri, uri);
+        String result = fileReader.getStringMetaProperty("title", "");
+        if (result == null || result.length() == 0)
+            return name.replaceAll("\\+", " ");
+        return result;
     }
 
     private JSONObject getBookMeta(Context context) {

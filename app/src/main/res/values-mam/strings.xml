@@ -35,6 +35,7 @@
     <string name="failed_book_import">Ma el naj tb\'eyil u\'jb\'il .</string>
     <string name="failed_book_import2">Bloom Reader was not able to read the book \"%1$s\".</string>
     <string name="external_storage_unavailable">Mixti\'  xb\'ant qokx toj k\'ub\'il aq\'untl. Taj makb\'il xk\'utz\'ib\' SD?</string>
+    <string name="need_newer_webview">In order to use this app, you will need to update the <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System WebView</a> from the Google Play Store and then restart the app.</string>
     <string name="share_app_link"><u>Pujb\'ankub\'a tb\'eyil tu\'ntzun tkanet Bloom Reader toj Google Play</u></string>
     <string name="share_app_with_friend">¡Pujb\'ankub\'a aq\'untl Bloom Reader kyuk\'il juntl tuk\'ila!</string>
     <string name="share_books_with_friend">Pujb\'ankub\'a kyaqil u\'jb\'il tuk\'il  jun tuk\'ila at Bloom Reader tuk\'il.</string>
@@ -55,8 +56,7 @@
     <!-- %1$s is the name of a bloombundle that failed to import -->
     <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
     <string name="share_app">Sipinkub\'a aq\'unb\'il xk\'utz\'ib\' Bloom Reader</string>
-    <string name="share_books">Pujb\'ankub\'a u\'jb\'il</string>
-    <string name="find_books_on_device">Jyol u\'jb\'il te Bloom toj tmakb\'ila xk\'utz\'ib\'</string>
+    <string name="open_bloompub_file">Open BloomPUB file</string>
     <string name="searching">In jayon...</string>
     <string name="no_books_added">Min ma chi okyal ak\'a\'j u\'jb\'il mo tnej Bloom toj makb\'il xk\'utz\'ib\' lu\'.</string>
     <string name="release_notes">Tz\'ib\'ajtz tib\'aj tu\'mel</string>
@@ -69,10 +69,19 @@
     <!-- Used both as a menu option and as the title of the resulting dialog-->
     <string name="receive_books_over_usb">Receive books via USB</string>
     <string name="ready_to_receive_usb">Bloom Reader is ready to receive books via USB cable from the Bloom Editor program</string>
+    <string name="please_send_book">Please send a book from Bloom Editor and then choose this command again</string>
     <string name="need_storage_permission">Taj Bloom Reader amb\'il tu\'n tokx toj k\'ub\'il kye qe nak\'ub\'il aq\'unb\'il tu\'ntzan taq\'unan.</string>
     <string name="grant_storage_permission">Q\'ob\'il tu\'mel te k\'ub\'il</string>
     <string name="renaming_invalid_book">In ok q\'etl juntl tb\'i u\'jb\'il  mixti\' xk\'amli %1$s</string>
     <string name="preparing_to_show_books">Preparing to show books…</string>
+    <string name="show_books_on_sd_card">Show Books on SD Card</string>
+    <string name="please_click_use_this_folder">Bloom Reader will need your permission to show the books on your SD Card. After you touch \"OK\", Android will open a window. Touch the button that looks like this:</string>
+    <string name="show_books_in_old_bloom_folder">Check for Lost Books</string>
+    <string name="get_more_books">Get more books from our library</string>
+    <string name="select_bloom_directory">Select Bloom directory</string>
+    <string name="request_bloom_permission_usb">To receive books via USB, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"</string>
+    <string name="request_bloom_permission_lost">To find lost books, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"</string>
+    <string name="request_bloom_permission_device_stats">To finish setting up stats reporting, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"</string>
     <string name="share_location">Share location</string>
     <string name="request_location">We would like to record your city because the people who share these books for free like to know where their books are being read.</string>
     <string name="allow">Allow</string>
@@ -83,4 +92,14 @@
     <string name="request_gps">Authors &amp; Illustrators like to know where their free books are being read. But we need you to turn on your device\'s ability to use its GPS Location Service</string>
     <string name="attempting_to_send_reading_stats">Attempting to send reading stats...</string>
     <string name="all_reading_stats_sent">All reading stats sent.</string>
+    <string name="find_lost_books">Find lost books</string>
+    <string name="no_lost_books_found">No lost books found.</string>
+    <string name="restart">Restart</string>
+    <string name="close">Close</string>
+    <string name="read_now">Read Now</string>
+    <string name="download_is_complete">Book download is complete</string>
+    <string name="downloads_are_complete">Book downloads are complete</string>
+    <string name="downloading_file">Downloading %s</string>
+    <string name="downloading_books">Downloading books</string>
+    <string name="view_books">View books</string>
 </resources>

@@ -77,6 +77,7 @@
     <string name="show_books_on_sd_card">Afficher les Livres sur la Carte SD</string>
     <string name="please_click_use_this_folder">Afin d\'afficher les livres sur votre Carte SD, vous devrez autoriser Bloom Reader. Après avoir appuyé sur \"OK\", Android ouvrira une fenêtre. Appuyez sur le bouton qui ressemble à ceci :</string>
     <string name="show_books_in_old_bloom_folder">Contrôler pour des Livres Perdus</string>
+    <string name="get_more_books">Téléchargez d\'autres livres depuis notre bibliothèque</string>
     <string name="select_bloom_directory">Sélectionner un répertoire Bloom</string>
     <string name="request_bloom_permission_usb">Pour recevoir des livres sur USB, vous devrez autoriser Bloom Reader à utiliser le dossier \"Bloom\" à la racine du Stockage Interne. Appuyez sur \"UTILISER CE DOSSIER\"</string>
     <string name="request_bloom_permission_lost">Pour repérer des livres perdus, vous devrez autoriser Bloom Reader à utiliser le dossier \"Bloom\" à la racine du Stockage Interne. Appuyez sur \"UTILISER CE DOSSIER\"</string>
@@ -94,4 +95,11 @@
     <string name="find_lost_books">Trouver des livres perdus</string>
     <string name="no_lost_books_found">Aucun livre perdu trouvé.</string>
     <string name="restart">Redémarrer</string>
+    <string name="close">Fermer</string>
+    <string name="read_now">Lire Maintenant</string>
+    <string name="download_is_complete">Fin du téléchargement du livre</string>
+    <string name="downloads_are_complete">Fin du téléchargement des livres</string>
+    <string name="downloading_file">Téléchargement de %s</string>
+    <string name="downloading_books">Téléchargement des livres</string>
+    <string name="view_books">Voir les livres</string>
 </resources>

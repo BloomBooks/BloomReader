@@ -1,5 +1,6 @@
 package org.sil.bloom.reader;
 
+import android.content.Context;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
 
@@ -17,16 +18,16 @@ import android.widget.Toast;
 
 public class WebAppInterface {
     // The reader activity that created this class to serve a particular web view.
-    private ReaderActivity mContext;
+    private MessageReceiver mContext;
 
-    WebAppInterface(ReaderActivity c) {
+    WebAppInterface(MessageReceiver c) {
         mContext = c;
     }
 
     // This can be helpful in debugging. It's not currently used in production.
     @JavascriptInterface
     public void showToast(String toast) {
-        Toast.makeText(mContext, toast, Toast.LENGTH_SHORT).show();
+        Toast.makeText((Context)mContext, toast, Toast.LENGTH_SHORT).show();
     }
 
     // Receives messages 'posted' by the javascript in the webview.
@@ -37,4 +38,14 @@ public class WebAppInterface {
     public void receiveMessage(String message) {
         mContext.receiveMessage(message);
     }
+
+    // This allows a more natural syntax in the calling Javascript, which is SENDING a message:
+    // It can use (window as any).ParentProxy.postMessage("some string").
+    // We still support (window as any).ParentProxy.receiveMessage("some string") since that's
+    // what the current BloomPlayer uses. Both result in our client RECEIVING a message.
+    @JavascriptInterface
+    public void postMessage(String message) {
+        mContext.receiveMessage(message);
+    }
 }
+

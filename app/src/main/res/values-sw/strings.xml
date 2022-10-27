@@ -35,6 +35,7 @@
     <string name="failed_book_import">Imeshindwa kuagiza kitabu.</string>
     <string name="failed_book_import2">Bloom Reader haikuweza kusoma kitabu \"%1$s\".</string>
     <string name="external_storage_unavailable">Imeshindwa kufikia hifadhi ya faili. Je! Kadi ya SD inakosekana?</string>
+    <string name="need_newer_webview">In order to use this app, you will need to update the <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System WebView</a> from the Google Play Store and then restart the app.</string>
     <string name="share_app_link"><u> Shiriki kiungo ili upate Bloom Reader kwenye Google Play </u></string>
     <string name="share_app_with_friend">Shiriki programu hii ya Bloom Reader na rafiki!</string>
     <string name="share_books_with_friend">Shiriki vitabu vyako vyote na rafiki ambaye tayari ameweka Bloom Reader.</string>
@@ -55,8 +56,7 @@
     <!-- %1$s is the name of a bloombundle that failed to import -->
     <string name="bundle_import_error">Kulikuwa na tatizo kusoma %1$s. Jaribu kuipakua tena.</string>
     <string name="share_app">Shirki programu ya Bloom Reader</string>
-    <string name="share_books">Shiriki Vitabu</string>
-    <string name="find_books_on_device">Pata vitabu vya Bloom kwenye kifaa hiki</string>
+    <string name="open_bloompub_file">Fungua faili ya BloomPUB</string>
     <string name="searching">Inatafuta...</string>
     <string name="no_books_added">Hakuna vitabu vipya vya Bloom au vifungu vinavyopatikana kwenye kifaa.</string>
     <string name="release_notes">Toa Maelezo</string>
@@ -69,10 +69,19 @@
     <!-- Used both as a menu option and as the title of the resulting dialog-->
     <string name="receive_books_over_usb">Pokea vitabu kupitia USB</string>
     <string name="ready_to_receive_usb">Bloom Reader iko tayari kupokea vitabu kupitia kebo ya USB kutoka kwa programu ya Mhariri wa Bloom</string>
+    <string name="please_send_book">Tafadhali tuma kitabu kutoka kwa Bloom Editor kisha uchague amri hii tena</string>
     <string name="need_storage_permission">Bloom Reader inahitaji ufikiaji wa kuhifadhi faili ili ifanye kazi.</string>
     <string name="grant_storage_permission">Toa Ruhusa ya Kuhifadhi</string>
     <string name="renaming_invalid_book">Kubadilisha jina la kitabu batili kuwa%1$s</string>
     <string name="preparing_to_show_books">Inajiandaa Kuonyesha Vitabu…</string>
+    <string name="show_books_on_sd_card">Onyesha vitabu kwenye kadi ya SD</string>
+    <string name="please_click_use_this_folder">Bloom Reader itahitaji ruhusa yako ili kuonyesha vitabu kwenye Kadi yako ya SD. Baada ya kugusa \"OK\", Android itafungua dirisha. Gusa kitufe kinachoonekana kama hii:</string>
+    <string name="show_books_in_old_bloom_folder">Tafuta vitabu vilivyopotea</string>
+    <string name="get_more_books">Get more books from our library</string>
+    <string name="select_bloom_directory">Chagua saraka ya Bloom</string>
+    <string name="request_bloom_permission_usb">Ili kupokea vitabu kupitia USB, utahitaji kupatia Bloom Reader ruhusa ya kutumia folda ya \"Bloom\" kwenye mzizi wa Hifadhi ya Ndani. Gusa \"TUMIA FOLDER HII\"</string>
+    <string name="request_bloom_permission_lost">Ili kupata vitabu vilivyopotea, utahitaji kuipatia Bloom Reader ruhusa ya kuitumia folda ya \"Bloom\" kwenye mzizi wa Hifadhi ya Ndani. Gusa \"TUMIA FOLDER HII\"</string>
+    <string name="request_bloom_permission_device_stats">Ili kukamilisha kusanidi kuripoti takwimu, utahitaji kuipatia Bloom Reader ruhusa ya kuitumia folda ya \"Bloom\" kwenye mzizi wa Hifadhi ya Ndani. Gusa \"TUMIA FOLDER HII\"</string>
     <string name="share_location">Shiriki eneo</string>
     <string name="request_location">Tungependa kurekodi jiji lako kwa sababu watu wanaoshiriki vitabu hivi bure wanapenda kujua mahali ambapo vitabu vyao vinasomwa.</string>
     <string name="allow">Ruhusu</string>
@@ -83,4 +92,14 @@
     <string name="request_gps">Waandishi &amp; Wafafanuzi hupenda kujua ni wapi vitabu vyao vya bure husomwa. Lakini tunahitaji uwashe uwezo wa kifaa chako kutumia Huduma yake ya eneo ya GPS</string>
     <string name="attempting_to_send_reading_stats">Inajaribu kutuma takwimu za kusoma...</string>
     <string name="all_reading_stats_sent">Takwimu zote za kusoma zimetumwa.</string>
+    <string name="find_lost_books">Tafuta vitabu vilivyopotea</string>
+    <string name="no_lost_books_found">Hakuna vitabu vilivyopotea vimepatikana.</string>
+    <string name="restart">Restart</string>
+    <string name="close">Close</string>
+    <string name="read_now">Read Now</string>
+    <string name="download_is_complete">Book download is complete</string>
+    <string name="downloads_are_complete">Book downloads are complete</string>
+    <string name="downloading_file">Downloading %s</string>
+    <string name="downloading_books">Downloading books</string>
+    <string name="view_books">View books</string>
 </resources>

@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.provider.Settings.System;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -128,6 +129,10 @@ public class BloomReaderApplication extends Application {
 
         // Check for deviceId json file and use its contents to identify this device
         setUpDeviceIdentityForAnalytics();
+
+        // Don't collect any analytics when running in the FirebaseTestLab.
+        if (IsRunningInFirebaseTestLab())
+            Analytics.with(getBloomApplicationContext()).optOut(true);
     }
 
     static boolean firstRunAfterInstallOrUpdate = false;
@@ -157,15 +162,19 @@ public class BloomReaderApplication extends Application {
             Properties p = new Properties();
             p.put("provider", "getInstallerPackageName");
             p.putValue("installer", installer); // The fields of 'campaign' don't seem to apply
-            LocationManager lm = null;
-            if(MainActivity.haveLocationPermission(context)) {
-                lm = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
-            }
 
-            // essentially same as Analytics.with(...).track("Install Attributed", p); but with standard location properties added.
-            // See https://issues.bloomlibrary.org/youtrack/issue/BL-8821.
-            new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams("Install Attributed", p, lm ));
+            ReportAnalyticsWithLocationIfPossible(context, "Install Attributed", p);
         }
+    }
+
+    public static void ReportAnalyticsWithLocationIfPossible(Context context, String event, Properties p) {
+        // Location
+        LocationManager lm = null;
+        if (MainActivity.haveLocationPermission(context)) {
+            lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        }
+
+        new ReportAnalyticsTask().execute(new ReportAnalyticsTaskParams(event, p, lm));
     }
 
     public static void setUpDeviceIdentityForAnalytics(){
@@ -271,6 +280,9 @@ public class BloomReaderApplication extends Application {
         if (testMode)
             return true;
 
+        if (IsRunningInFirebaseTestLab())
+            return true;
+
         try {
             // We're looking for a file called UseTestAnalytics in the old Bloom folder at the root of
             // the device storage. We no longer have access to the files in this folder, unless the user
@@ -292,6 +304,15 @@ public class BloomReaderApplication extends Application {
         }
     }
 
+    public static boolean IsRunningInFirebaseTestLab() {
+        try {
+            // From https://firebase.google.com/docs/test-lab/android/android-studio#modify_instrumented_test_behavior_for
+            return "true".equals(System.getString(getBloomApplicationContext().getContentResolver(), "firebase.test.lab"));
+        } catch (Exception e) {
+            // No exception here is worth crashing
+            return false;
+        }
+    }
 
     public static void VerboseToast(String message){
         if(InTestModeForAnalytics()) {

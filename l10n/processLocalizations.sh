@@ -14,6 +14,7 @@ mkdir -p values-es && mv values-es-rES/strings.xml values-es/strings.xml #es
 mkdir -p values-fr && mv values-fr-rFR/strings.xml values-fr/strings.xml #fr
 mkdir -p values-hi && mv values-hi-rIN/strings.xml values-hi/strings.xml #hi
 mkdir -p values-my && mv values-my-rMM/strings.xml values-my/strings.xml #my
+mkdir -p values-pt && mv values-pt-rPT/strings.xml values-pt/strings.xml #pt
 mkdir -p values-quc && mv values-quc-rGT/strings.xml values-quc/strings.xml #quc
 mkdir -p values-sw && mv values-sw-rKE/strings.xml values-sw/strings.xml #sw
 

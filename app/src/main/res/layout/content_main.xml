@@ -5,17 +5,12 @@
     android:id="@+id/content_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:backgroundTint="#FFFFFF"
     android:orientation="vertical"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="org.sil.bloom.reader.MainActivity"
     tools:showIn="@layout/app_bar_main">
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/book_list2"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="@color/colorBackground" />
 
     <LinearLayout
         android:id="@+id/searching_text"
@@ -38,5 +33,51 @@
             android:textColor="#FFFFFFFF"
             android:textSize="22sp" />
     </LinearLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/book_list2"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="16dp"
+            android:background="#FFFFFF"
+            app:layout_constraintBottom_toTopOf="@+id/get_more_books_wrapper"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"></androidx.recyclerview.widget.RecyclerView>
+
+        <LinearLayout
+            android:id="@+id/get_more_books_wrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="6dp"
+            app:layout_constraintBottom_toTopOf="@+id/download_books"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            >
+            <Button
+                android:id="@+id/get_more_books"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/red_border"
+                android:text="@string/get_more_books"
+                android:drawableLeft="@drawable/ic_search"
+                android:textColor="@color/colorBloomRed"
+                android:padding="6dp"
+                android:paddingStart="12dp"/>
+        </LinearLayout>
+        <org.sil.bloom.reader.DownloadsView
+            android:id="@+id/download_books"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="org.sil.bloom.reader"
     android:installLocation="auto">
     <!-- So that just for the duration of WiFi transfer we can hold a lock. -->
@@ -36,8 +37,8 @@
         -->
         <activity
             android:name=".MainActivity"
+            android:exported="true"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:label="@string/app_name"
             android:launchMode="singleTask"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -264,21 +265,17 @@
         <activity
             android:name=".ReaderActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".BloomLibraryActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:label="@string/app_name"
             android:theme="@style/AppTheme" />
         <activity
             android:name=".wifi.GetFromWiFiActivity"
             android:excludeFromRecents="true"
-            android:label="@string/app_name"
             android:theme="@style/WiFiDialogTheme" />
         <activity
             android:name=".ShelfActivity"
-            android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <provider
@@ -293,7 +290,8 @@
 
         <receiver
             android:name=".ConnectivityReceiver"
-            android:enabled="true">
+            android:enabled="true"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
@@ -308,23 +306,22 @@
             android:enabled="true"
             android:exported="true" />
     </application>
-    <!--
- Used at least for analytics, soon for Bloom Library download. Was present when I added
-    analytics, so may be used for something else also.
-    -->
+
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- On later versions of Android this seems to be needed for receiving UDP broadcasts. -->
     <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- On later versions of Android this seems to be needed for receiving UDP broadcasts. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!--
- currently just because it's how we get the device name for WiFi, but eventually we will have
-    other Bluetooth functions.
-    -->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- Dangerous Permissions - must be requested at runtime -->
+
+    <!-- I'm not sure if these 2 are still needed Sep 2022. -->
+    <!-- They may have only been for when we used Bluetooth to get the device name. -->
+    <!-- But they may be needed for getting books via wifi from Bloom. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
+
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
 </manifest>

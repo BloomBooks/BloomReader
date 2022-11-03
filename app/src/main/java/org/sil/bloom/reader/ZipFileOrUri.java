@@ -44,12 +44,9 @@ public class ZipFileOrUri {
             // read the whole file (at least as far as the thing we want) each time. Better, though
             // not good, to get them all in a single pass.
             IOUtilities.unzip(context, uri, new File(outputDir));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (IOException | SecurityException e) {
             e.printStackTrace();
         }
-
     }
 
     public File tryGetFile(String name) {
@@ -123,6 +120,10 @@ public class ZipFileOrUri {
                     }
                 }
             } else {
+                if (outputDir == null) {
+                    // Not sure how this can happen, but it did.
+                    return null;
+                }
                 File existing = IOUtilities.findFirstMatching(new File(outputDir), condition);
                 if (existing!= null && newName != null) {
                     File dest = new File(outputDir + File.separator + newName);

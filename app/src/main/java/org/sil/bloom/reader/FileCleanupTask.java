@@ -69,17 +69,17 @@ public class FileCleanupTask extends AsyncTask<Uri, Void, Void> {
             // Throws if not found (or no permission, etc.)
             DocumentsContract.deleteDocument(context.getContentResolver(), uriToCleanUp);
         }
-        catch (SecurityException e) {
-            // SecurityException can be thrown by File.delete()
-            Log.e("BloomReader", e.getLocalizedMessage());
-            assert false; // we want to look into this in debug builds
-        } catch (Exception e) {
+        catch (Exception e) {
+            // Originally, we caught SecurityException which can be thrown by File.delete().
+            // But then expanded to Exception:
             // Note: if thinking of cutting this back, note that in at least one case we attempted
             // to clean up the same URI twice, and the second try failed not with any sensible
             // exception but with IllegalArgumentException. So I decided if for any reason we can't
             // clean up, just don't.
             e.printStackTrace();
-            Log.e("BloomReader", e.getLocalizedMessage());
+            String message = e.getLocalizedMessage();
+            if (message != null)
+                Log.e("BloomReader", message);
             assert false; // we want to look into this in debug builds
         }
     }

@@ -1,7 +1,6 @@
 package org.sil.bloom.reader;
 
 import android.app.Application;
-import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -336,15 +335,17 @@ public class BloomReaderApplication extends Application {
         return sApplicationContext;
     }
 
-    // It's slightly odd to use the Bluetooth name as a general device name (also used e.g.
-    // in WiFi function), but it's the only generally-available user-configurable device name we
-    // can find. (Some devices...e.g., JohnT's Note 4...have a setting for a more general device
-    // name, but others (e.g., Nexus) do not, and it's not obvious how to get at the one the
-    // Note has, anyway.)
     public static String getOurDeviceName() {
-        BluetoothAdapter myDevice = BluetoothAdapter.getDefaultAdapter();
-        if (myDevice != null)
-            return myDevice.getName();
+        try {
+            return android.provider.Settings.Global.getString(sApplicationContext.getContentResolver(), "device_name");
+        } catch (Exception e) {
+            // Oh well, fall back to Build.MODEL
+        }
+        try {
+            return android.os.Build.MODEL;
+        } catch (Exception e) {
+            // Oh well, we tried.
+        }
         return null;
     }
 }

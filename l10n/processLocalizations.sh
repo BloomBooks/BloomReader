@@ -21,3 +21,6 @@ mkdir -p values-sw && mv values-sw-rKE/strings.xml values-sw/strings.xml #sw
 # add the 2-letter code with region (which is the one Android usually/always? uses)
 mkdir -p values-ps-rAF && cp values-pbu/strings.xml values-ps-rAF/strings.xml #pbu -> ps-AF
 mkdir -p values-fa-rAF && cp values-prs/strings.xml values-fa-rAF/strings.xml #pbu -> fa-AF
+
+# the presence of this directory causes the app not to build
+rm -r values-qaa-rx-rtest

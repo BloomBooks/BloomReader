@@ -286,24 +286,28 @@ public class SAFUtilities {
                     null,
                     null);
             try {
-                while (c.moveToNext()) {
-                    final String docId = c.getString(0);
-                    final String name = c.getString(1);
-                    final String mime = c.getString(2);
-                    Log.d(TAG, "name: " + name + ", mime: " + mime);
+                if (c != null) {
+                    while (c.moveToNext()) {
+                        final String docId = c.getString(0);
+                        final String name = c.getString(1);
+                        final String mime = c.getString(2);
+                        Log.d(TAG, "name: " + name + ", mime: " + mime);
 
-                    if (isDirectory(mime)) {
-                        final Uri newNode = DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, docId);
-                        dirNodes.add(newNode);
-                    } else {
-                        Uri uri = DocumentsContract.buildDocumentUriUsingTree(rootUri, docId);
-                        if (name.endsWith(BLOOM_BUNDLE_FILE_EXTENSION) ||
-                                name.endsWith(BLOOM_BUNDLE_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
-                            bookSearchListener.onFoundBundle(uri);
-                        } else if (IOUtilities.isBloomPubFile(name, true) ||
-                                name.endsWith(BOOKSHELF_FILE_EXTENSION) ||
-                                name.endsWith(BOOKSHELF_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
-                            bookSearchListener.onFoundBookOrShelf(new File(uri.getPath()), uri);
+                        if (isDirectory(mime)) {
+                            final Uri newNode = DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, docId);
+                            dirNodes.add(newNode);
+                        } else {
+                            Uri uri = DocumentsContract.buildDocumentUriUsingTree(rootUri, docId);
+                            if (name.endsWith(BLOOM_BUNDLE_FILE_EXTENSION) ||
+                                    name.endsWith(BLOOM_BUNDLE_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
+                                bookSearchListener.onFoundBundle(uri);
+                            } else if (IOUtilities.isBloomPubFile(name, true) ||
+                                    name.endsWith(BOOKSHELF_FILE_EXTENSION) ||
+                                    name.endsWith(BOOKSHELF_FILE_EXTENSION + ENCODED_FILE_EXTENSION)) {
+                                String uriPath = uri.getPath();
+                                if (uriPath != null)
+                                    bookSearchListener.onFoundBookOrShelf(new File(uriPath), uri);
+                            }
                         }
                     }
                 }

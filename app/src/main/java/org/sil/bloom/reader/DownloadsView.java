@@ -14,7 +14,6 @@ import android.view.ViewParent;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
 import org.sil.bloom.reader.models.BookCollection;
@@ -41,23 +40,20 @@ public class DownloadsView extends LinearLayout {
     // our main books directory and then deleted.
     private static final String BL_DOWNLOADS = "bl-downloads";
     DownloadProgressView mProgressView;
-    Context mContext;
-    static List<DownloadsView> sInstances = new ArrayList<DownloadsView>();
+    static List<DownloadsView> sInstances = new ArrayList<>();
     boolean mRecentMultipleDownloads;
 
     public DownloadsView(Context context) {
         super(context);
-        initializeViews(context);
+        initializeViews();
     }
 
     public DownloadsView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        initializeViews(context);
+        initializeViews();
     }
 
-
-    class DownloadData {
-
+    static class DownloadData {
         public DownloadData(String destPath) {
             this.destPath = destPath;
             //progressView = view;
@@ -72,17 +68,17 @@ public class DownloadsView extends LinearLayout {
     // not enough protection from race conditions to produce exactly the ideal behavior, but it
     // should at least prevent crashes, and it should be extremely rare for multiple downloads to
     // finish at the same instant.
-    ConcurrentHashMap<Long, DownloadData> mDownloadsInProgress = new ConcurrentHashMap<Long, DownloadData>();
+    ConcurrentHashMap<Long, DownloadData> mDownloadsInProgress = new ConcurrentHashMap<>();
     DownloadManager mDownloadManager;
 
-    // Arbitrary identifier to indicate that we would like to update download progress
-    private static final int UPDATE_DOWNLOAD_PROGRESS = 1973;
 
     // Use a background thread to check the progress of downloading
     private ExecutorService executor;
 
     // The boilerplate I started from has this, but it seems to work fine to update progress directly:
-    // Use a handler to update progress bar on the main thread
+//    // Arbitrary identifier to indicate that we would like to update download progress
+//    private static final int UPDATE_DOWNLOAD_PROGRESS = 1973;
+//    // Use a handler to update progress bar on the main thread
 //    private final Handler mainHandler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
 //        @Override
 //        public boolean handleMessage(@NonNull Message msg) {
@@ -102,8 +98,10 @@ public class DownloadsView extends LinearLayout {
             // stop the download
             mDownloadManager.remove(downloadId);
             // Delete any incomplete temp file
-            File source = new File(data.destPath);
-            source.delete();
+            if (data != null) {
+                File source = new File(data.destPath);
+                source.delete();
+            }
         }
         mDownloadsInProgress.clear();
 
@@ -114,6 +112,7 @@ public class DownloadsView extends LinearLayout {
 
     private void updateLayoutForChangedChildList() {
         ViewParent root = this.getParent();
+        //noinspection StatementWithEmptyBody
         if (root == null) {
             // Can get called in constructor, in which case, we assume the parent layout will be
             // correctly recomputed when we are added to it.
@@ -146,12 +145,11 @@ public class DownloadsView extends LinearLayout {
             executor = Executors.newFixedThreadPool(1);
         }
         // Run a task in a background thread to check download progress
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                int progress = 0;
-                while (mDownloadsInProgress.size() > 0) {
-                    for (long downloadId: mDownloadsInProgress.keySet()) {
+        executor.execute(() -> {
+            int progress = 0;
+            while (mDownloadsInProgress.size() > 0) {
+                for (long downloadId: mDownloadsInProgress.keySet()) {
+                    try {
                         DownloadData data = mDownloadsInProgress.get(downloadId);
                         Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
                         if (cursor.moveToFirst()) {
@@ -181,21 +179,26 @@ public class DownloadsView extends LinearLayout {
                             //message.what = UPDATE_DOWNLOAD_PROGRESS;
                             //message.arg1 = progress;
                             //mainHandler.sendMessage(message);
-                            data.progress= progress;
+
+                            if (data != null) { // Play console indicates data can be null here.
+                                data.progress = progress;
+                            }
                             updateProgress();
                         }
-                    }
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
-                if (executor != null) {
-                    // Not sure how we get here with it null, but I did.
-                    executor.shutdown(); // we'll restart it if we do another download.
-                    executor = null; // we'll make a new one if we need it.
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
+            }
+            if (executor != null) {
+                // Not sure how we get here with it null, but I did.
+                executor.shutdown(); // we'll restart it if we do another download.
+                executor = null; // we'll make a new one if we need it.
             }
         });
     }
@@ -223,29 +226,34 @@ public class DownloadsView extends LinearLayout {
         // Apparently there is a theoretical possibility that a device doesn't provide the app with
         // an externalFilesDir, but it seems to be unheard-of; devices without a real SD card
         // emulate one.
-        File result = new File(DownloadsView.this.mContext.getExternalFilesDir(null), BL_DOWNLOADS);
+        File result = new File(getContext().getExternalFilesDir(null), BL_DOWNLOADS);
         result.mkdirs(); // make sure it exists.
         return result;
     }
 
     // This is a much simpler way of extracting a filename than we use in IOUtilities, OK because
     // we create these URIs ourselves and know they are based on a local file.
-    public static String getFileNameFromUri(String path) {
+    private static String getFileNameFromUri(Uri uri) {
+        if (uri == null) return null;
+        String path = uri.getPath();
+        if (path == null) return null;
+        return getFileNameFromUriPath(path);
+    }
+    private static String getFileNameFromUriPath(String path) {
         return path.replaceFirst(".*/", "").replaceFirst("\\.[^.]*$", "");
     }
 
-    private void initializeViews(Context context) {
-        mContext = context;
+    private void initializeViews() {
         sInstances.add(this);
-        LayoutInflater inflater = (LayoutInflater) context
+        LayoutInflater inflater = (LayoutInflater) getContext()
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         inflater.inflate(R.layout.downloads, this);
 
-        mDownloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
+        mDownloadManager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
 
         //set filter to only when download is complete and register broadcast receiver
         IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        mContext.registerReceiver(mDownloadReceiver, filter);
+        getContext().registerReceiver(mDownloadReceiver, filter);
     }
 
     public void updateUItoCurrentState() {
@@ -272,8 +280,9 @@ public class DownloadsView extends LinearLayout {
         }
         // we will rediscover any that are still running, and want to create new progress views for them.
         mDownloadsInProgress.clear();
-        Cursor cursor = mDownloadManager.query(new DownloadManager.Query());
-        if (cursor.moveToFirst()) {
+
+        Cursor cursor = getDownloadManagerCursor();
+        if (cursor != null && cursor.moveToFirst()) {
             do {
                 String uriString = CommonUtilities.getStringFromCursor(cursor, DownloadManager.COLUMN_LOCAL_URI);
                 String path = "";
@@ -286,10 +295,10 @@ public class DownloadsView extends LinearLayout {
                     ex.printStackTrace();
                     // Apart from logging, if it's not a parseable URI we'll just hope it's not one of ours.
                 }
-                if (!path.contains("/" + BL_DOWNLOADS + "/")) {
+                if (path == null || !path.contains("/" + BL_DOWNLOADS + "/")) {
                     continue; // some unrelated download
                 }
-                String fileName = getFileNameFromUri(path);
+                String fileName = getFileNameFromUriPath(path);
                 // We can't directly get a File from the download URI. However, we'll only use this if we're pretty sure
                 // this is one of our downloads from the presence of the right subdirectory in the
                 // path, so it should be pretty safe to use our standard destination.
@@ -319,26 +328,46 @@ public class DownloadsView extends LinearLayout {
             } while (cursor.moveToNext());
         }
 
-        cursor.close();
+        if (cursor != null)
+            cursor.close();
         cleanupDownloadDirectory();
     }
+
+    private Cursor getDownloadManagerCursor() {
+        Cursor cursor = null;
+        try {
+            cursor = mDownloadManager.query(new DownloadManager.Query());
+        } catch (IllegalStateException ise) {
+            // Play console indicates this is happening sometimes on resume. My guess is we need to
+            // set up the download manager again. But it's just a guess.
+            mDownloadManager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+            try {
+                cursor = mDownloadManager.query(new DownloadManager.Query());
+            } catch (IllegalStateException ise2) {
+                // ignore; we've done what we know to try
+                ise2.printStackTrace();
+            }
+        }
+        return cursor;
+    }
+
     public void onDownloadStart(String url, String userAgent,
                                 String contentDisposition, String mimetype,
                                 long contentLength, String sourceUrl) {
 
-        Uri Download_Uri = Uri.parse(url);
-        DownloadManager.Request request = new DownloadManager.Request(Download_Uri);
-        String fileName = getFileNameFromUri(Download_Uri.getPath());
+        Uri downloadUri = Uri.parse(url);
+        String fileName = getFileNameFromUri(downloadUri);
         if (fileName == null || fileName.equals(""))
         {
             // If there isn't a .bloompub file at the location we requested,
             // we seem to get a meaningless url (probably from a 404 redirect).
             // We have changed things on the blorg side now so this should
             // not be possible; so it isn't worth localizing the error message.
-            Toast toast = Toast.makeText(mContext, "A problem occurred while downloading that book.", Toast.LENGTH_LONG);
+            Toast toast = Toast.makeText(getContext(), "A problem occurred while downloading that book.", Toast.LENGTH_LONG);
             toast.show();
             return;
         }
+        DownloadManager.Request request = new DownloadManager.Request(downloadUri);
         String template = getContext().getString(R.string.downloading_file);
         request.setTitle(String.format(template, fileName));
         File downloadDest = new File(getDownloadDir(), fileName + ".bloompub");
@@ -352,7 +381,7 @@ public class DownloadsView extends LinearLayout {
 
     @Override
     public void onDetachedFromWindow() {
-        mContext.unregisterReceiver(mDownloadReceiver);
+        getContext().unregisterReceiver(mDownloadReceiver);
         sInstances.remove(this);
         super.onDetachedFromWindow();
     }
@@ -362,9 +391,11 @@ public class DownloadsView extends LinearLayout {
             return; // unsafe to clean up, may be in use
         }
         File downloadDir = getDownloadDir();
-        for (File leftover : downloadDir.listFiles())
-        {
-            leftover.delete();
+        File[] downloadDirFiles = downloadDir.listFiles();
+        if (downloadDirFiles != null) {
+            for (File leftover : downloadDirFiles) {
+                leftover.delete();
+            }
         }
     }
 
@@ -385,7 +416,7 @@ public class DownloadsView extends LinearLayout {
             mRecentMultipleDownloads = true;
         } else {
             // we'll add one for the current single download.
-            mProgressView = new DownloadProgressView(mContext, this, downloadId);
+            mProgressView = new DownloadProgressView(getContext(), this, downloadId);
             mProgressView.setBook(dest.getPath());
             if (getChildCount() > 0) {
                 removeViewAt(0); // maybe a previous message about a successful delivery
@@ -399,7 +430,7 @@ public class DownloadsView extends LinearLayout {
         }
     }
 
-    private BroadcastReceiver mDownloadReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mDownloadReceiver = new BroadcastReceiver() {
 
         // Remember, this is a method of the BroadcastReceiver stored in downloadReceiver, not
         // of the parent class. We override this to receive messages when the download manager
@@ -412,10 +443,9 @@ public class DownloadsView extends LinearLayout {
             DownloadData data = mDownloadsInProgress.get(downloadId);
             if (data != null) { // otherwise, for some reason we're getting a notification about a download we didn't start!
                 String action = intent.getAction();
-                if (action.equals(DownloadManager.ACTION_DOWNLOAD_COMPLETE)) {
+                if (action != null && action.equals(DownloadManager.ACTION_DOWNLOAD_COMPLETE)) {
                     Cursor cursor = mDownloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
                     if (cursor.moveToFirst()) {
-                        LinearLayout downloads = findViewById(R.id.download_books);
                         String downloadDescription = CommonUtilities.getStringFromCursor(cursor, DownloadManager.COLUMN_DESCRIPTION);
                         mDownloadsInProgress.remove(downloadId);
                         handleDownloadComplete(data.destPath, downloadId, downloadDescription);
@@ -430,7 +460,6 @@ public class DownloadsView extends LinearLayout {
 
                     cursor.close();
                 }
-
             }
         }
     };
@@ -452,7 +481,7 @@ public class DownloadsView extends LinearLayout {
             return;
         }
 
-        String fileName = DownloadsView.getFileNameFromUri(downloadDestPath);
+        String fileName = DownloadsView.getFileNameFromUriPath(downloadDestPath);
         File dest = new File(BookCollection.getLocalBooksDirectory(), fileName + ".bloompub");
         IOUtilities.copyFile(source.getPath(), dest.getPath());
 
@@ -493,7 +522,7 @@ public class DownloadsView extends LinearLayout {
         }
 
         Properties props = new Properties();
-        BloomFileReader reader = new BloomFileReader(mContext, dest.getPath());
+        BloomFileReader reader = new BloomFileReader(getContext(), dest.getPath());
         props.putValue("bookInstanceId", reader.getStringMetaProperty("bookInstanceId", ""));
         props.putValue("title", reader.getStringMetaProperty("title", ""));
         props.putValue("originalTitle", reader.getStringMetaProperty("originalTitle", ""));
@@ -503,7 +532,7 @@ public class DownloadsView extends LinearLayout {
         props.putValue("bookDbId", bookDbId);
         props.putValue("lang", lang);
         props.putValue("downloadSourceUrl", downloadDescription);
-        BloomReaderApplication.ReportAnalyticsWithLocationIfPossible(mContext, "Download Book", props);
+        BloomReaderApplication.ReportAnalyticsWithLocationIfPossible(getContext(), "Download Book", props);
     }
 
     // Called by the ViewBooks button in the BookReady view.
@@ -516,12 +545,12 @@ public class DownloadsView extends LinearLayout {
                 instance.removeViewAt(0);
             }
         }
-        if (bookPath != "") {
-            MainActivity.launchReader(mContext, bookPath, null);
-        } else if (mContext instanceof BloomLibraryActivity) {
+        if (!"".equals(bookPath)) {
+            MainActivity.launchReader(getContext(), bookPath, null);
+        } else if (getContext() instanceof BloomLibraryActivity) {
             // View Books button kicks us back to the main activity. Would need enhancing if BloomLibraryActivity
             // could be launched from elsewhere, or if DownloadsView were embedded in more places.
-            ((BloomLibraryActivity) mContext).finish();
+            ((BloomLibraryActivity) getContext()).finish();
         }
     }
 
@@ -533,7 +562,7 @@ public class DownloadsView extends LinearLayout {
             removeViewAt(0); // previous progress view
         }
 
-        BookReadyView brb = new BookReadyView(mContext, this);
+        BookReadyView brb = new BookReadyView(getContext(), this);
         brb.setBook(mRecentMultipleDownloads ? "" : bookPath);
         addView(brb, 0);
         updateLayoutForChangedChildList();

@@ -32,10 +32,9 @@ public class SharingManager {
         mActivity = activity;
     }
 
-    public void shareBook(Context context, BookOrShelf book){
-        // The second condition is temporary. See comment in stageBook. For now, almost all
-        // books (except perhaps in BloomExternal) will get staged.
-        File bookFile = book.inShareableDirectory() && book.pathOrUri.endsWith(".bloomd")
+    public void shareBook(Context context, BookOrShelf book) {
+        // Almost all books (except perhaps in BloomExternal) will get staged.
+        File bookFile = book.inShareableDirectory()
                 ? new File(book.pathOrUri)
                 : stageBook(context, book);
         if (bookFile == null) return;
@@ -45,16 +44,6 @@ public class SharingManager {
 
     private File stageBook(Context context, BookOrShelf book) {
         String bookFileName = new File(book.pathOrUri).getName();
-        // This is temporary. The destination may be an old version of BloomReader that only
-        // understands .bloomd. When we think most users have a version of
-        // BloomReader that understands .bloompub files, we will start sharing them directly.
-        if (!bookFileName.endsWith(".bloomd")) {
-            int index = bookFileName.lastIndexOf(".");
-            if (index >= 0) {
-                bookFileName = bookFileName.substring(0, index);
-            }
-            bookFileName += ".bloomd";
-        }
         String outPath = context.getCacheDir().getPath() + File.separator + bookFileName;
         if (IOUtilities.copyFile(book.pathOrUri, outPath)) {
             return new File(outPath);

@@ -276,6 +276,15 @@ public class NewBookListenerService extends Service {
         String oldSha = "";
         try {
             oldSha = new String(oldShaBytes, "UTF-8");
+            // Some versions of Bloom accidentally put out a version.txt starting with a BOM
+            if (oldSha.startsWith("\uFEFF")) {
+                oldSha = oldSha.substring(1);
+            }
+            // I don't think the version code in the Bloom publisher advertisement ever had a BOM,
+            // but let's make it robust anyway.
+            if (newBookVersion.startsWith("\uFEFF")) {
+                newBookVersion = newBookVersion.substring(1);
+            }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

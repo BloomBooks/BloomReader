@@ -12,6 +12,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
@@ -49,6 +50,7 @@ import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 
@@ -1203,20 +1205,31 @@ public class MainActivity extends BaseActivity
                             final int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             getContentResolver().takePersistableUriPermission(uri, takeFlags);
                         }
-                        if (uri.getPath().endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {
+
+                        String fileNameOrPath = IOUtilities.getFileNameOrPathFromUri(this, uri);
+
+                        if (fileNameOrPath.endsWith(BLOOM_BUNDLE_FILE_EXTENSION)) {
                             importBloomBundle(uri);
                             return;
                         }
 
                         TextFileContent metaFile = new TextFileContent("meta.json");
-                        boolean validFile = uri.getPath().endsWith(BOOKSHELF_FILE_EXTENSION)
+                        boolean validFile = fileNameOrPath.endsWith(BOOKSHELF_FILE_EXTENSION)
                                 ? BloomShelfFileReader.isValidShelf(this, uri)
                                 : IOUtilities.isValidZipUri(uri, IOUtilities.CHECK_BLOOMPUB, metaFile);
                         if (!validFile)
                         {
-                            Toast toast = Toast.makeText(this, "This does not appear to be a bloom file. Try files ending with .bloompub, .bloomd, .bloomshelf, or .bloombundle.",
-                                    Toast.LENGTH_LONG);
-                            toast.show();
+                            String invalidFileMsg = "This does not appear to be a Bloom Reader file. Try files ending with .bloompub, .bloombundle, .bloomshelf, or .bloomd.";
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && mBookRecyclerView.isShown()) {
+                                // Have to use a snackbar because toasts were truncated to two lines starting with Android 12
+                                Snackbar snackbar = Snackbar.make(this, mBookRecyclerView, invalidFileMsg, Snackbar.LENGTH_LONG);
+                                TextView textView = snackbar.getView().findViewById(com.google.android.material.R.id.snackbar_text);
+                                textView.setMaxLines(5); // default is 2
+                                snackbar.show();}
+                            else {
+                                Toast toast = Toast.makeText(this, invalidFileMsg, Toast.LENGTH_LONG);
+                                toast.show();
+                            }
                             return;
                         }
                         importBookOrShelf(uri, true);

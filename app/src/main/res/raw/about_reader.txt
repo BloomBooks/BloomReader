@@ -1,4 +1,4 @@
-Copyright SIL International 2017-2022
+Copyright SIL International 2017-2024
 
 Support:
 https://community.software.sil.org/c/bloom

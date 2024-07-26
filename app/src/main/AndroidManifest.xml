@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="org.sil.bloom.reader"
     android:installLocation="auto">
     <!-- So that just for the duration of WiFi transfer we can hold a lock. -->
     <application

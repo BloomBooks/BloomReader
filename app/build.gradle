@@ -163,6 +163,25 @@ tasks.register('copyBloomPlayerAssets', Copy) {
     exclude '*.map', 'bloomPlayer.js'
 }
 
+// I'm chalking this up to one of those magical Android incantations you never
+// really understand. Essentially, upgrading to the 34 sdk (or the latest gradle
+// or something else which I upgraded at the same time) started forcing me to
+// say that my custom task needed to be run before all these others.
+// I applied no logic to creating the list. I just added them until the errors stopped.
+// The .*?s cover all the alpha/beta/production and debug/release combos
+// as well as lint/lintVital.
+project.afterEvaluate {
+    tasks.configureEach { task ->
+        if (
+                task.name.matches('^merge.*?Assets$') ||
+                task.name.matches('^generate.*?Lint.*?ReportModel$') ||
+                task.name.matches('^lint.*?Analyze.*?')
+        ) {
+            task.dependsOn copyBloomPlayerAssets
+        }
+    }
+}
+
 // To make the build completely automated, including fetching bloom-player from npm:
 // Add these lines at the very start:
 //plugins {

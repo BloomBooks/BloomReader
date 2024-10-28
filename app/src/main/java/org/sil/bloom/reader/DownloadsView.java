@@ -14,6 +14,8 @@ import android.view.ViewParent;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.core.content.ContextCompat;
+
 import com.segment.analytics.Properties;
 
 import org.sil.bloom.reader.models.BookCollection;
@@ -253,7 +255,7 @@ public class DownloadsView extends LinearLayout {
 
         //set filter to only when download is complete and register broadcast receiver
         IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-        getContext().registerReceiver(mDownloadReceiver, filter);
+        ContextCompat.registerReceiver(getContext(), mDownloadReceiver, filter, ContextCompat.RECEIVER_EXPORTED);
     }
 
     public void updateUItoCurrentState() {

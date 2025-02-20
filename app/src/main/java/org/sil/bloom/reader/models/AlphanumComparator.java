@@ -32,6 +32,9 @@ package org.sil.bloom.reader.models;
  */
 
 import java.util.Comparator;
+import java.util.Locale;
+import android.icu.text.Collator;
+import android.os.Build;
 
 /**
  * This is an updated version with enhancements made by Daniel Migowski,
@@ -44,6 +47,16 @@ import java.util.Comparator;
  *   Collections.sort(your list, new AlphanumComparator());
  */
 public class AlphanumComparator implements Comparator<BookOrShelf> {
+
+    private static Collator sIcuCollator = null;
+
+    static {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            sIcuCollator = Collator.getInstance(Locale.ROOT);
+            sIcuCollator.setStrength(Collator.SECONDARY);
+        }
+    }
+
     private final boolean isDigit(char ch) {
         return ((ch >= 48) && (ch <= 57)); // Digits 0 through 9
     }
@@ -177,7 +190,11 @@ public class AlphanumComparator implements Comparator<BookOrShelf> {
                     }
                 }
             } else {
-                result = thisChunk.compareToIgnoreCase(thatChunk);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    result = sIcuCollator.compare(thisChunk, thatChunk);
+                } else {
+                    result = thisChunk.compareToIgnoreCase(thatChunk);
+                }
             }
 
             if (result != 0)

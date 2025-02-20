@@ -13,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class BookOrShelfTest {
 
     @Test
-    public void alphabeticalComparator_sortsAlphabetically() {
+    public void alphanumComparator_sortsAlphabetically() {
 
         List<BookOrShelf> books = Arrays.asList(
                 new BookOrShelf("/dummypath/c"),
@@ -27,7 +27,7 @@ public class BookOrShelfTest {
     }
 
     @Test
-    public void alphabeticalComparator_edgeCases_sortsAlphabeticallyWithNullsLast() {
+    public void alphanumComparator_edgeCases_sortsAlphabeticallyWithNullsLast() {
 
         List<BookOrShelf> books = Arrays.asList(
                 new BookOrShelf("z", null),
@@ -71,4 +71,37 @@ public class BookOrShelfTest {
         assertThat(books.get(3).name, is("12bob"));
         assertThat(books.get(4).name, is("bob"));
     }
+
+    // I've spent almost a day (maybe more?) trying to get this unit test to work.
+    // At this point, I'm giving up and saying it isn't worth it.
+    // The complication is the gated code in AlphanumComparator for the SDK version.
+    // When running unit tests, Build.Version.SDK_INT is 0.
+    // I tried
+    // 1. setting the SDK_INT via reflection
+    // 2. mocking a wrapper around Build.VERSION.SDK_INT
+    // 3. putting an if in production code seeing if we are running tests
+//    @Test
+//    public void alphanumComparator_sortsUnicodeIntelligently() throws Exception {
+//
+//        List<BookOrShelf> books = Arrays.asList(
+//                new BookOrShelf("/dummypath/Huɛɲɔ̃"),
+//                new BookOrShelf("/dummypath/Hããsiekɔluwɔ"),
+//                new BookOrShelf("/dummypath/Nuɔ̃kɔ"),
+//                new BookOrShelf("/dummypath/Sɛ̃cɔ"),
+//                new BookOrShelf("/dummypath/Vasirɔ biɛ̃ŋɔ̃"),
+//                new BookOrShelf("/dummypath/Ɲĩbũmɔ̃")
+//        );
+//
+//        for (int code : new int[]{Build.VERSION_CODES.N, Build.VERSION_CODES.LOLLIPOP}) {
+//            setBuildVersionSdk(code);
+//            Collections.sort(books, BookOrShelf.AlphanumComparator);
+//
+//            List<String> expectedNames = code == Build.VERSION_CODES.N ?
+//                    Arrays.asList("Hããsiekɔluwɔ", "Huɛɲɔ̃", "Nuɔ̃kɔ", "Ɲĩbũmɔ̃", "Sɛ̃cɔ", "Vasirɔ biɛ̃ŋɔ̃") :
+//                    Arrays.asList("Hããsiekɔluwɔ", "Huɛɲɔ̃", "Nuɔ̃kɔ", "Sɛ̃cɔ", "Vasirɔ biɛ̃ŋɔ̃", "Ɲĩbũmɔ̃");
+//
+//            List<String> actualNames = books.stream().map(book -> book.name).collect(Collectors.toList());
+//            assertThat(actualNames, is(expectedNames));
+//        }
+//    }
 }

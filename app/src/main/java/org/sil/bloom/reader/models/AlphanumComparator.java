@@ -40,7 +40,7 @@ import android.os.Build;
  * This is an updated version with enhancements made by Daniel Migowski,
  * Andre Bogus, and David Koelle. Updated by David Koelle in 2017.
  *
- * Some changes were made by the Bloom team for their needs in 2020.
+ * Some changes were made by the Bloom team for their needs.
  *
  * To use this class:
  *   Use the static "sort" method from the java.util.Collections class:
@@ -120,29 +120,23 @@ public class AlphanumComparator implements Comparator<BookOrShelf> {
         }
 
         if (one.specialBehavior != null ^ two.specialBehavior != null) {
-            // One is special and one isn't. Make the one with special behavior come first.,
-            // unless it has sortLast set.
-            // Note: if both are special (or neither is, sort by name. I don't think it's useful
-            // to sort BY the specialBehavior, even if we eventually have more than one, since
-            // the user doesn't see that.
-            // (Currently, we only have one...the special folder for getting permission on
-            // BloomExternal.
-            if (one.specialBehavior == null) {
-                return two.sortLast ?-1 : 1;
-            } else {
-                return one.sortLast ? 1 : -1;
-            }
+            // One is special and one isn't. Make the one with special behavior come first.
+            return one.specialBehavior == null ? 1 : -1;
+        } else {
+            // Both or neither are special. Fall out to using the normal title/name sort.
         }
-        if (one.name == null ^ two.name == null) {
-            return (one.name == null) ? 1 : -1;
+
+        String s1 = one.title != null ? one.title : one.name;
+        String s2 = two.title != null ? two.title : two.name;
+        if (s1 == null ^ s2 == null) {
+            return (s1 == null) ? 1 : -1;
         }
-        String s1 = one.name;
-        String s2 = two.name;
         if (s1 != null && s2 != null) {
             int nameCompare = compare(s1, s2);
             if (nameCompare != 0)
                 return nameCompare;
         }
+
         String p1 = one.pathOrUri;
         String p2 = two.pathOrUri;
         if (p1 == null ^ p2 == null) {

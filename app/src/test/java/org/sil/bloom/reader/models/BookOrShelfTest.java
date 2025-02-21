@@ -34,6 +34,7 @@ public class BookOrShelfTest {
                 new BookOrShelf("z", "a"),
                 null,
                 new BookOrShelf("y", "b"),
+                new BookOrShelf("y", null),
                 new BookOrShelf("y", "a"),
                 new BookOrShelf((String)null, "b"),
                 new BookOrShelf((String)null, "a")
@@ -49,9 +50,11 @@ public class BookOrShelfTest {
         assertThat(books.get(3).pathOrUri, is("y"));
         assertThat(books.get(4).name, is("b"));
         assertThat(books.get(4).pathOrUri, nullValue());
-        assertThat(books.get(5).name, is("z"));
-        assertThat(books.get(5).pathOrUri, is("z"));
-        assertThat(books.get(6), nullValue());
+        assertThat(books.get(5).name, is("y"));
+        assertThat(books.get(5).pathOrUri, is("y"));
+        assertThat(books.get(6).name, is("z"));
+        assertThat(books.get(6).pathOrUri, is("z"));
+        assertThat(books.get(7), nullValue());
     }
 
     @Test

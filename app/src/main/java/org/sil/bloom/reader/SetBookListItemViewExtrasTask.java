@@ -61,18 +61,6 @@ public class SetBookListItemViewExtrasTask extends AsyncTask<Void, Void, SetBook
             viewHolder.imageView.setPadding(newPadding, newPadding, newPadding, newPadding);
             return;
         }
-        if ("getBooksFromLibrary".equals(bookOrShelf.specialBehavior)) {
-            viewHolder.imageView.setImageResource(R.drawable.ic_search);
-            final Resources resources = viewHolder.getContext().getResources();
-            // Converts 'dp' measurements into actual pixels
-            int newPadding = (int) TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP,
-                    12,
-                    resources.getDisplayMetrics()
-            );
-            viewHolder.imageView.setPadding(newPadding, newPadding, newPadding, newPadding);
-            return;
-        }
         if ("importOldBloomFolder".equals(bookOrShelf.specialBehavior)) {
             // Enhance: add some suitable icon
             //viewHolder.imageView.setImageResource(R.drawable.ic_sd_card);

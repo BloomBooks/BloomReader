@@ -38,8 +38,6 @@ public class BookOrShelf {
     // when we don't have permission to access it...that behave specially when clicked.
     public String specialBehavior = null;
 
-    public boolean sortLast = false;
-
     private Set<String> bookshelves = new HashSet<String>();
 
     public BookOrShelf(String pathOrUri, String name, Uri uri) {

@@ -64,8 +64,8 @@
             android:layout_width="56dp"
             android:layout_height="match_parent"
             android:layout_weight="0.08"
-            app:srcCompat="@drawable/sil_logo_tm_blue_2014_no_bleed_no_tag"
-            android:contentDescription="SIL International logo"
+            android:contentDescription="SIL Global logo"
+            app:srcCompat="@drawable/sil_glyph_logo_color___andika_v1_rgb"
             tools:ignore="HardcodedText" />
     </LinearLayout>
 

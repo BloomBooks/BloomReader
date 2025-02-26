@@ -13,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class BookOrShelfTest {
 
     @Test
-    public void alphabeticalComparator_sortsAlphabetically() {
+    public void alphanumComparator_sortsAlphabetically() {
 
         List<BookOrShelf> books = Arrays.asList(
                 new BookOrShelf("/dummypath/c"),
@@ -27,13 +27,14 @@ public class BookOrShelfTest {
     }
 
     @Test
-    public void alphabeticalComparator_edgeCases_sortsAlphabeticallyWithNullsLast() {
+    public void alphanumComparator_edgeCases_sortsAlphabeticallyWithNullsLast() {
 
         List<BookOrShelf> books = Arrays.asList(
                 new BookOrShelf("z", null),
                 new BookOrShelf("z", "a"),
                 null,
                 new BookOrShelf("y", "b"),
+                new BookOrShelf("y", null),
                 new BookOrShelf("y", "a"),
                 new BookOrShelf((String)null, "b"),
                 new BookOrShelf((String)null, "a")
@@ -49,9 +50,11 @@ public class BookOrShelfTest {
         assertThat(books.get(3).pathOrUri, is("y"));
         assertThat(books.get(4).name, is("b"));
         assertThat(books.get(4).pathOrUri, nullValue());
-        assertThat(books.get(5).name, is("z"));
-        assertThat(books.get(5).pathOrUri, is("z"));
-        assertThat(books.get(6), nullValue());
+        assertThat(books.get(5).name, is("y"));
+        assertThat(books.get(5).pathOrUri, is("y"));
+        assertThat(books.get(6).name, is("z"));
+        assertThat(books.get(6).pathOrUri, is("z"));
+        assertThat(books.get(7), nullValue());
     }
 
     @Test
@@ -71,4 +74,38 @@ public class BookOrShelfTest {
         assertThat(books.get(3).name, is("12bob"));
         assertThat(books.get(4).name, is("bob"));
     }
+
+    // I've spent almost a day (maybe more?) trying to get this unit test to work.
+    // At this point, I'm giving up and saying it isn't worth it.
+    // Complication 1: gated code in AlphanumComparator for the SDK version.
+    //  When running unit tests, Build.Version.SDK_INT is 0.
+    //  I tried
+    //  1. setting the SDK_INT via reflection
+    //  2. mocking a wrapper around Build.VERSION.SDK_INT
+    //  3. an "if" condition in production code which checks if we are running unit tests
+    // Complication 2:
+    //  Even when it was possible to get the correct production code to run,
+    //  the unit test fails with "java.lang.RuntimeException: Method getInstance in android.icu.text.Collator not mocked."
+    //  Turns out, you can't use the real ICU collator in unit tests. We could mock the collator,
+    //  but that's basically working around the whole point of this test.
+//    @Test
+//    public void alphanumComparator_sortsUnicodeIntelligently() {
+//
+//        List<BookOrShelf> books = Arrays.asList(
+//                new BookOrShelf("/dummypath/Huɛɲɔ̃"),
+//                new BookOrShelf("/dummypath/Hããsiekɔluwɔ"),
+//                new BookOrShelf("/dummypath/Nuɔ̃kɔ"),
+//                new BookOrShelf("/dummypath/Sɛ̃cɔ"),
+//                new BookOrShelf("/dummypath/Vasirɔ biɛ̃ŋɔ̃"),
+//                new BookOrShelf("/dummypath/Ɲĩbũmɔ̃")
+//        );
+//
+//        Collections.sort(books, BookOrShelf.AlphanumComparator);
+//
+//        List<String> expectedNames =
+//                Arrays.asList("Hããsiekɔluwɔ", "Huɛɲɔ̃", "Nuɔ̃kɔ", "Ɲĩbũmɔ̃", "Sɛ̃cɔ", "Vasirɔ biɛ̃ŋɔ̃");
+//
+//        List<String> actualNames = books.stream().map(book -> book.name).collect(Collectors.toList());
+//        assertThat(actualNames, is(expectedNames));
+//    }
 }

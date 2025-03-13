@@ -59,14 +59,46 @@ At this point, anyone can publish a book using the existing Bloom mechanism, and
 
 # Building
 
-## Getting the Bloom Reader code and dependencies
+## Setting up the build environment
 
-    git clone https://github.com/BloomBooks/BloomReader
-    cd BloomReader/app
-    yarn
-    cd ..
-    gradlew copyBloomPlayerAssets
-    gradlew (or, more likely, open the project in Android Studio)
+1. Install [Android Studio](https://developer.android.com/studio), the IDE used by the Bloom
+   Reader team for developing the app.
+2. Install [Open JDK 21](https://www.openlogic.com/openjdk-downloads).  A later version such as the
+   one that comes with Android Studio may work, but Open JDK 21 is the most recent one used by Bloom
+   Reader team and known to work.  The installation should adjust the PATH environment variable to
+   make the java command available and set the JAVA_HOME environment variable.  If not, you need to
+   do this yourself.
+3. Install [volta](https://docs.volta.sh/guide/getting-started)
+4. Use volta to install yarn: `volta install yarn@1.22.22`  This version of yarn is old, but one
+   that is known to work with our setup.
+5. Clone the Bloom Reader code onto your local machine using **git** as follows. 
+```
+     git clone https://github.com/BloomBooks/BloomReader
+     cd BloomReader/app
+     yarn
+     cd ..
+     ./gradlew copyBloomPlayerAssets
+```
+   If you clone from a fork of the project, be sure that the fork is up to date with the main
+   repository (BloomBooks/BloomReader).
+6. Start Android Studio and open the Bloom Reader project (BloomReader folder).
+7. Invoke the _Sync Project with Gradle Files_ command in the _File_ menu or the corresponding
+   button from the command button bar. (This has the effect of limiting the default build
+   inside Android Studio to the debug configuration of the alpha flavor of the app, which is
+   usually what you want.)
+8. Build Bloom Reader with the _Assemble Project_ command in the _Build_ menu or the corresponding
+   button from the command button bar. This should complete successfully, running the
+   _assembleAlphaDebug_ build.
+9. Run the newly built app with the _Run 'app'_ command in the _Run_ menu or the corresponding
+   button from the command button bar. This should prompt you to set up an Android device
+   emulator. Choose a device and then choose a version of Android to download to use on that
+   device. Following all the program prompts, in a few minutes (depending on your internet
+   download speed), you should see Bloom Reader running in the device emulator.
+
+   Running the Android device emulator on Linux may require a few more setup steps dealing with
+   /dev/kvm: Internet search engines will help with that complication.
+
+## Getting the Bloom Reader code dependencies
 
 BloomReader requires a number of files from the[bloom-player](https://github.com/BloomBooks/bloom-player.git) project. By default,
 and in the TeamCity build, these are obtained using yarn from the npm output of bloom-player.
@@ -78,32 +110,11 @@ If you don't need to make changes in BloomPlayer, get these files using the foll
 cd app
 yarn
 cd ..
-gradlew copyBloomPlayerAssets
+./gradlew copyBloomPlayerAssets
 
 If you want the latest version of BloomPlayer, rather than the one active when BloomReader was last
-updated, replace "yarn" with "yarn upgrade"
-
-## Setting up the build environment
-
-1. Install [Android Studio](https://developer.android.com/studio), the IDE used by the Bloom
-   Reader team for developing the app.
-2. Clone the Bloom Reader code onto your local machine using **git** as described above.
-3. Start Android Studio and open the Bloom Reader project.
-4. Invoke the _Sync Project with Gradle Files_ command in the _File_ menu or the corresponding
-   button from the command button bar. (This has the effect of limiting the default build
-   inside Android Studio to the debug configuration of the alpha flavor of the app, which is
-   usually what you want.)
-5. Build Bloom Reader with the _Make Project_ command in the _Build_ menu or the corresponding
-   button from the command button bar. This should complete successfully, running the
-   _assembleAlphaDebug_ build.
-6. Run the newly built app with the _Run 'app'_ command in the _Run_ menu or the corresponding
-   button from the command button bar. This should prompt you to set up an Android device
-   emulator. Choose a device and then choose a version of Android to download to use on that
-   device. Following all the program prompts, in a few minutes (depending on your internet
-   download speed), you should see Bloom Reader running in the device emulator.
-
-   Running the Android device emulator on Linux may require a few more setup steps dealing with
-   /dev/kvm: Internet search engines will help with that complication.
+updated, replace "yarn" with "yarn upgrade".  You can also edit the app/packages.json file to update
+the version number of bloom-reader if needed.
 
 # Signing and Deployment
 

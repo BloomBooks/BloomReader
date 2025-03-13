@@ -1,6 +1,11 @@
 package org.sil.bloom.reader;
 
+import static androidx.core.content.ContextCompat.startActivity;
+
 import androidx.annotation.Nullable;
+
+import android.content.Intent;
+import android.net.Uri;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
@@ -50,6 +55,17 @@ public class ReaderWebViewClient extends WebViewClient {
         return new WebResourceResponse("text", "utf-8", 403,
                 "request for file not part of book",
                 new HashMap<String, String>(), new ByteArrayInputStream("".getBytes()));
+    }
+
+    // Allow external links to be opened in the default browser. (BL-13801)
+    @Override
+    public boolean shouldOverrideUrlLoading (WebView view, WebResourceRequest request) {
+        String url = request.getUrl().toString();
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(view.getContext(), browserIntent, null);
+        }
+        return true;
     }
 
     // Starting in bloom-player 2.1, we have font-face rules which tell the host to serve up

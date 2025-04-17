@@ -64,8 +64,9 @@ public class ReaderWebViewClient extends WebViewClient {
         if (url.startsWith("http://") || url.startsWith("https://")) {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             startActivity(view.getContext(), browserIntent, null);
+            return true;
         }
-        return true;
+        return super.shouldOverrideUrlLoading(view, request);
     }
 
     // Starting in bloom-player 2.1, we have font-face rules which tell the host to serve up

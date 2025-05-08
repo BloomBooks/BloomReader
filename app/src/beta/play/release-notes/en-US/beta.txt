@@ -1,2 +1,2 @@
-Download books directly from Bloom Library.
+Support Bloom 6.2 Games.
 Various enhancements and fixes.

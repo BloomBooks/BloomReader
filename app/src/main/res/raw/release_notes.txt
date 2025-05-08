@@ -1,3 +1,10 @@
+3.4
+Support Bloom 6.2 Games.
+
+3.3
+Book-reading engine improvements and fixes.
+Infrastructure upgrades.
+
 3.2
 Download books directly from Bloom Library.
 

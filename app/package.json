@@ -4,11 +4,11 @@
   "private": true,
   "dependencies": {
     "//": "Developers need to `yarn upgrade bloom-player` to get the latest, because of yarn.lock. (TeamCity does this automatically.)",
-    "bloom-player": "2.9.2"
+    "bloom-player": "2.11.0"
   },
   "scripts": {},
   "volta": {
-    "node": "16.14.0",
-    "yarn": "1.22.19"
+    "node": "20.15.1",
+    "yarn": "1.22.22"
   }
 }

@@ -855,8 +855,9 @@ public class MainActivity extends BaseActivity
             contextualActionBarMode.finish();
     }
 
-    private void shareBookOrShelf(){
-        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItem();
+    private void shareSelection(){
+        //TODO make this work
+        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItems().get(0);
         if (bookOrShelf == null) {
             // Not sure how this can happen, but it did
             return;
@@ -878,8 +879,9 @@ public class MainActivity extends BaseActivity
         dialogFragment.show(getSupportFragmentManager(), ShareShelfDialogFragment.FRAGMENT_TAG);
     }
 
-    private void deleteBookOrShelf(){
-        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItem();
+    private void deleteSelection(){
+        //TODO make this work
+        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItems().get(0);
 
         // Somehow, the pre-launch tests on the Play console were able to get this to be null
         if (bookOrShelf == null)
@@ -956,11 +958,11 @@ public class MainActivity extends BaseActivity
             public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
                 int itemId = item.getItemId();
                 if (itemId == R.id.share) {
-                        shareBookOrShelf();
+                        shareSelection();
                         mode.finish();
                         return true;
                 } else if (itemId == R.id.delete) {
-                        deleteBookOrShelf();
+                        deleteSelection();
                         return true;
                 }
                         return false;
@@ -968,7 +970,7 @@ public class MainActivity extends BaseActivity
 
             @Override
             public void onDestroyActionMode(android.view.ActionMode mode) {
-                mBookListAdapter.unselect(selectedBookOrShelf);
+                mBookListAdapter.clearSelection();
                 contextualActionBarMode = null;
             }
         });

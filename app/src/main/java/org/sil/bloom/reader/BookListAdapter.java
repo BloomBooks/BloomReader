@@ -30,12 +30,14 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     private BookCollection bookCollection;
     private BookClickListener bookClickListener;
-    private BookOrShelf selectedItem;
+    private final ArrayList<BookOrShelf> selectedItems;
     private boolean inHighlightedState = false;
 
     public BookListAdapter(BookCollection bookCollection, BookClickListener bookClickListener){
         this.bookCollection = bookCollection;
         this.bookClickListener = bookClickListener;
+
+        this.selectedItems = new ArrayList<>();
     }
 
     @Override
@@ -68,7 +70,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
             originalColors = holder.bookNameView.getTextColors();
         else
             holder.bookNameView.setTextColor(originalColors);
-        if (holder.bookOrShelf == selectedItem)
+        if ( selectedItems.contains(holder.bookOrShelf) )
             holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.colorAccent));
         else if (holder.bookOrShelf.highlighted)
             holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.new_book_highlight));
@@ -132,47 +134,68 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     @Override
     public void onClick(View view) {
-        if (selectedItem != null) {
-            clearSelection();
-            bookClickListener.onClearBookSelection();
-        }
-        else {
-            bookClickListener.onBookClick((BookOrShelf) view.getTag());
-        }
+        BookOrShelf clickedItem = (BookOrShelf) view.getTag();
 
-        clearHighlight();
+        if (selectedItems.isEmpty()) {
+            bookClickListener.onBookClick(clickedItem);
+        }
+        else{
+            if (selectedItems.contains(clickedItem)) {
+                deselect(clickedItem);
+            }
+            else
+            {
+                selectedItems.add(clickedItem);
+                notifyItemChanged(bookCollection.indexOf(clickedItem));
+            }
+        }
     }
 
     @Override
     public boolean onLongClick(View view) {
         BookOrShelf clickedItem = (BookOrShelf) view.getTag();
-        if (selectedItem == clickedItem)
+        if (selectedItems.contains(clickedItem)) {
             return true;
-
-        if (selectedItem != null)
-            clearSelection();
-
-        selectedItem = clickedItem;
-        notifyItemChanged(bookCollection.indexOf(selectedItem));
-        return bookClickListener.onBookLongClick(selectedItem);
+        }
+        addToSelection(clickedItem);
+        if(selectedItems.size() == 1) {
+            //the listener's onBookLongCLick() method is what sends us into multi-select mode. We don't want to try and enter multi-select mode again if we're already in that mode.
+            return bookClickListener.onBookLongClick(clickedItem);
+        }
+        return false;
     }
 
-    public BookOrShelf getSelectedItem(){
-        return selectedItem;
+    public List<BookOrShelf> getSelectedItems(){
+        return selectedItems;
     }
 
-    // This also gets called in the course of changing the selection
-    // We don't want to clear if the selection has already moved on
-    public void unselect(BookOrShelf bookOrShelf) {
-        if (bookOrShelf == selectedItem)
-            clearSelection();
+    public void clearSelection(){
+        for(BookOrShelf bos : selectedItems){
+            deselect(bos);
+        }
     }
 
-    private void clearSelection(){
-        BookOrShelf oldSelection = selectedItem;
-        selectedItem = null;
-        if (oldSelection != null)
-            notifyItemChanged(bookCollection.indexOf(oldSelection));
+    //removes an item from selectedItems, de-highlights it, and notifies observers that it changed.
+    //Call this instead of selectedItems.remove() whenever you want to remove something from the list of selected items
+    private void deselect(BookOrShelf itemToDeselect){
+        selectedItems.remove(itemToDeselect);
+        highlightSelectedItems();
+        if (itemToDeselect != null)
+            notifyItemChanged(bookCollection.indexOf(itemToDeselect));
+
+        if(selectedItems.isEmpty()){
+            bookClickListener.onClearBookSelection();
+        }
+    }
+
+    //adds an item to selectedItems, highlights it, and notifies observers that it changed.
+    //Call this instead of selectedItems.add() whenever you want to add something to the list of selected items
+    private void addToSelection(BookOrShelf itemToAdd){
+        if(!selectedItems.contains(itemToAdd)) {
+            highlightSelectedItems();
+            selectedItems.add(itemToAdd);
+            notifyItemChanged(bookCollection.indexOf(itemToAdd));
+        }
     }
 
     public int highlightItem(BookOrShelf bookOrShelf){
@@ -199,6 +222,14 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         }
         notifyDataSetChanged();
         return firstHighlighted;
+    }
+
+    public void highlightSelectedItems(){
+        List<String> selectedPaths = new ArrayList<>(selectedItems.size());
+        for(BookOrShelf bos : selectedItems){
+            selectedPaths.add(bos.pathOrUri);
+        }
+        highlightItems(selectedPaths);
     }
 
     private void clearHighlight(){

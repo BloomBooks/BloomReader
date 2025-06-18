@@ -103,21 +103,16 @@ At this point, anyone can publish a book using the existing Bloom mechanism, and
 
 ## Getting the Bloom Reader code dependencies
 
-BloomReader requires a number of files from the[bloom-player](https://github.com/BloomBooks/bloom-player.git) project. By default,
+BloomReader requires a number of files from the [bloom-player](https://github.com/BloomBooks/bloom-player.git) project. By default,
 and in the TeamCity build, these are obtained using yarn from the npm output of bloom-player.
 
-When building locally, if you need to make changes to BloomPlayer, you will currently need to build BloomPlayer first and copy the file over.
-It's necessary to do this after running gradlew yarn. Ever after, in the bloom-player project, just do `yarn build4br`. That will copy the needed files to a project named "BloomReader" that is a sibling of bloom-player. If your BloomReader project is elsewhere or named differently, create a junction so that it looks like it is a sibling of bloom-player.
+When building locally, if you need to make changes to bloom-player, you can use `yarn link`.
 
-If you don't need to make changes in BloomPlayer, get these files using the following commands:
-cd app
-yarn
-cd ..
-./gradlew copyBloomPlayerAssets
+If you don't need to make changes in bloom-player, get these files using the yarn and copy commands above.
 
-If you want the latest version of BloomPlayer, rather than the one active when BloomReader was last
-updated, replace "yarn" with "yarn upgrade bloom-player".  You can also edit the app/packages.json
-file to update the version number of bloom-reader if needed.
+If you want the latest version of bloom-player, rather than the one active when BloomReader was last
+updated, replace `yarn` with `yarn upgrade bloom-player`.  You can also edit the app/packages.json
+file to update the version number of bloom-player if needed.
 
 # Signing and Deployment
 

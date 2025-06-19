@@ -171,8 +171,12 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     public void clearSelection(){
         for(BookOrShelf bos : selectedItems){
-            deselect(bos);
+            //we can't call deselect here. That opens us up to a crash from trying to close the action bar twice on multi-delete: once from the deleteSelection method, and once from onClearBookSelection
+            //deselect(bos);
+            selectedItems.remove(bos);
         }
+        highlightSelectedItems();
+        //we don't need to notify anyone that the item changed because multi-delete already does that
     }
 
     //removes an item from selectedItems, de-highlights it, and notifies observers that it changed.

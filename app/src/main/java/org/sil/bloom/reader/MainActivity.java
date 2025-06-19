@@ -880,17 +880,38 @@ public class MainActivity extends BaseActivity
     }
 
     private void deleteSelection(){
-        //TODO make this work
-        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItems().get(0);
+        List<BookOrShelf> selection = mBookListAdapter.getSelectedItems();
 
-        // Somehow, the pre-launch tests on the Play console were able to get this to be null
-        if (bookOrShelf == null)
-            return;
+        if(selection.size() == 1){
+            BookOrShelf toDelete = selection.get(0);
+            if(toDelete.isShelf()){
+                deleteShelf(toDelete);
+            }
+            else{
+                deleteBook(toDelete);
+            }
+        }
+        else {
+            new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(getString(R.string.deleteExplanationShelf, selection.size(), "selected"))
+                    .setTitle(getString(R.string.deleteConfirmation))
+                    .setPositiveButton(getString(R.string.deleteConfirmButton), (dialog, which) -> {
+                        Log.i("BloomReader", "Multi-delete " + selection.size() + " items.");
 
-        if (bookOrShelf.isShelf())
-            deleteShelf(bookOrShelf);
-        else
-            deleteBook(bookOrShelf);
+                        for (BookOrShelf bos : selection) {
+                            if (bos == null)
+                                return;
+                            else {
+                                _bookCollection.deleteFromDevice(bos);
+                            }
+                        }
+
+                        mBookListAdapter.notifyDataSetChanged();
+                        closeContextualActionBar();
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+        }
     }
 
     private void deleteShelf(final BookOrShelf shelf){

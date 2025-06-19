@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -30,12 +31,19 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     private BookCollection bookCollection;
     private BookClickListener bookClickListener;
-    private BookOrShelf selectedItem;
+    private ArrayList<BookOrShelf> selectedItems;
+    private MenuItem deleteButton;
     private boolean inHighlightedState = false;
 
     public BookListAdapter(BookCollection bookCollection, BookClickListener bookClickListener){
         this.bookCollection = bookCollection;
         this.bookClickListener = bookClickListener;
+
+        this.selectedItems = new ArrayList<>();
+    }
+
+    public void setDeleteButton(MenuItem newDeleteButton){
+        this.deleteButton = newDeleteButton;
     }
 
     @Override
@@ -68,7 +76,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
             originalColors = holder.bookNameView.getTextColors();
         else
             holder.bookNameView.setTextColor(originalColors);
-        if (holder.bookOrShelf == selectedItem)
+        if ( selectedItems.contains(holder.bookOrShelf) )
             holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.colorAccent));
         else if (holder.bookOrShelf.highlighted)
             holder.linearLayout.setBackgroundColor(ContextCompat.getColor(holder.getContext(), R.color.new_book_highlight));
@@ -132,47 +140,76 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     @Override
     public void onClick(View view) {
-        if (selectedItem != null) {
-            clearSelection();
-            bookClickListener.onClearBookSelection();
-        }
-        else {
-            bookClickListener.onBookClick((BookOrShelf) view.getTag());
-        }
+        BookOrShelf clickedItem = (BookOrShelf) view.getTag();
 
-        clearHighlight();
+        if (selectedItems.isEmpty()) {
+            bookClickListener.onBookClick(clickedItem);
+        }
+        else{
+            if (selectedItems.contains(clickedItem)) {
+                deselect(clickedItem);
+            }
+            else
+            {
+                addToSelection(clickedItem);
+            }
+        }
     }
 
     @Override
     public boolean onLongClick(View view) {
         BookOrShelf clickedItem = (BookOrShelf) view.getTag();
-        if (selectedItem == clickedItem)
+        if (selectedItems.contains(clickedItem)) {
             return true;
-
-        if (selectedItem != null)
-            clearSelection();
-
-        selectedItem = clickedItem;
-        notifyItemChanged(bookCollection.indexOf(selectedItem));
-        return bookClickListener.onBookLongClick(selectedItem);
+        }
+        addToSelection(clickedItem);
+        if(selectedItems.size() == 1) {
+            //the listener's onBookLongCLick() method is what sends us into multi-select mode. We don't want to try and enter multi-select mode again if we're already in that mode.
+            return bookClickListener.onBookLongClick(clickedItem);
+        }
+        return false;
     }
 
-    public BookOrShelf getSelectedItem(){
-        return selectedItem;
+    public List<BookOrShelf> getSelectedItems(){
+        return selectedItems;
     }
 
-    // This also gets called in the course of changing the selection
-    // We don't want to clear if the selection has already moved on
-    public void unselect(BookOrShelf bookOrShelf) {
-        if (bookOrShelf == selectedItem)
-            clearSelection();
+    //this is called from onDestroyActionMode, which happens after the action bar is closed. We have to make sure we don't try to close the action bar again after it's been closed
+    public void clearSelection(){
+        selectedItems = new ArrayList<>();
+        clearHighlight();
+        notifyDataSetChanged();
     }
 
-    private void clearSelection(){
-        BookOrShelf oldSelection = selectedItem;
-        selectedItem = null;
-        if (oldSelection != null)
-            notifyItemChanged(bookCollection.indexOf(oldSelection));
+    //removes an item from selectedItems, de-highlights it, and notifies observers that it changed.
+    //Call this instead of selectedItems.remove() whenever you want to remove something from the list of selected items
+    private void deselect(BookOrShelf itemToDeselect){
+        selectedItems.remove(itemToDeselect);
+        highlightSelectedItems();
+        if (itemToDeselect != null)
+            notifyItemChanged(bookCollection.indexOf(itemToDeselect));
+
+        if(selectedItems.isEmpty()){
+            bookClickListener.onClearBookSelection();
+        }
+
+        if(deleteButton != null) {
+            deleteButton.setVisible(selectedItems.size() == 1);
+        }
+    }
+
+    //adds an item to selectedItems, highlights it, and notifies observers that it changed.
+    //Call this instead of selectedItems.add() whenever you want to add something to the list of selected items
+    private void addToSelection(BookOrShelf itemToAdd){
+        if(!selectedItems.contains(itemToAdd)) {
+            highlightSelectedItems();
+            selectedItems.add(itemToAdd);
+            notifyItemChanged(bookCollection.indexOf(itemToAdd));
+        }
+
+        if(deleteButton != null) {
+            deleteButton.setVisible(selectedItems.size() == 1);
+        }
     }
 
     public int highlightItem(BookOrShelf bookOrShelf){
@@ -201,12 +238,24 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         return firstHighlighted;
     }
 
+    public void highlightSelectedItems(){
+        List<String> selectedPaths = new ArrayList<>(selectedItems.size());
+        for(BookOrShelf bos : selectedItems){
+            selectedPaths.add(bos.pathOrUri);
+        }
+        highlightItems(selectedPaths);
+    }
+
     private void clearHighlight(){
         if (!inHighlightedState)
             return;
 
-        for (int i=0; i<bookCollection.size(); ++i)
-            bookCollection.get(i).highlighted = false;
+        for (int i=0; i<bookCollection.size(); ++i) {
+            BookOrShelf bos = bookCollection.get(i);
+            if(bos != null){
+                bos.highlighted = false;
+            }
+        }
 
         inHighlightedState = false;
 

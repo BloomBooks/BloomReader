@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -30,7 +31,8 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     private BookCollection bookCollection;
     private BookClickListener bookClickListener;
-    private final ArrayList<BookOrShelf> selectedItems;
+    private ArrayList<BookOrShelf> selectedItems;
+    private MenuItem deleteButton;
     private boolean inHighlightedState = false;
 
     public BookListAdapter(BookCollection bookCollection, BookClickListener bookClickListener){
@@ -38,6 +40,10 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         this.bookClickListener = bookClickListener;
 
         this.selectedItems = new ArrayList<>();
+    }
+
+    public void setDeleteButton(MenuItem newDeleteButton){
+        this.deleteButton = newDeleteButton;
     }
 
     @Override
@@ -145,8 +151,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
             }
             else
             {
-                selectedItems.add(clickedItem);
-                notifyItemChanged(bookCollection.indexOf(clickedItem));
+                addToSelection(clickedItem);
             }
         }
     }
@@ -169,14 +174,17 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         return selectedItems;
     }
 
+    //this is called from onDestroyActionMode, which happens after the action bar is closed. We have to make sure we don't try to close the action bar again after it's been closed
     public void clearSelection(){
-        for(BookOrShelf bos : selectedItems){
-            //we can't call deselect here. That opens us up to a crash from trying to close the action bar twice on multi-delete: once from the deleteSelection method, and once from onClearBookSelection
-            //deselect(bos);
-            selectedItems.remove(bos);
-        }
-        highlightSelectedItems();
-        //we don't need to notify anyone that the item changed because multi-delete already does that
+//        for(BookOrShelf bos : selectedItems){
+//            //we can't call deselect here. That opens us up to a crash from trying to close the action bar twice on multi-delete: once from the deleteSelection method, and once from onClearBookSelection
+//            //deselect(bos);
+//            selectedItems.remove(bos);
+//            //notifyItemChanged(bookCollection.indexOf(bos));
+//        }
+        selectedItems = new ArrayList<>();
+        clearHighlight();
+        notifyDataSetChanged();
     }
 
     //removes an item from selectedItems, de-highlights it, and notifies observers that it changed.
@@ -190,6 +198,10 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         if(selectedItems.isEmpty()){
             bookClickListener.onClearBookSelection();
         }
+
+        if(deleteButton != null) {
+            deleteButton.setVisible(selectedItems.size() == 1);
+        }
     }
 
     //adds an item to selectedItems, highlights it, and notifies observers that it changed.
@@ -199,6 +211,10 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
             highlightSelectedItems();
             selectedItems.add(itemToAdd);
             notifyItemChanged(bookCollection.indexOf(itemToAdd));
+        }
+
+        if(deleteButton != null) {
+            deleteButton.setVisible(selectedItems.size() == 1);
         }
     }
 
@@ -240,8 +256,12 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
         if (!inHighlightedState)
             return;
 
-        for (int i=0; i<bookCollection.size(); ++i)
-            bookCollection.get(i).highlighted = false;
+        for (int i=0; i<bookCollection.size(); ++i) {
+            BookOrShelf bos = bookCollection.get(i);
+            if(bos != null){
+                bos.highlighted = false;
+            }
+        }
 
         inHighlightedState = false;
 

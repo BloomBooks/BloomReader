@@ -60,6 +60,7 @@ import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -856,16 +857,30 @@ public class MainActivity extends BaseActivity
     }
 
     private void shareSelection(){
-        //TODO make this work
-        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItems().get(0);
-        if (bookOrShelf == null) {
-            // Not sure how this can happen, but it did
-            return;
+        List<BookOrShelf> selection = mBookListAdapter.getSelectedItems();
+        if (selection.size() == 1) {
+            BookOrShelf bookOrShelf = selection.get(0);
+            if (bookOrShelf.isShelf())
+                shareShelf(bookOrShelf);
+            else
+                shareBook(bookOrShelf);
         }
-        if (bookOrShelf.isShelf())
-            shareShelf(bookOrShelf);
-        else
-            shareBook(bookOrShelf);
+        else if (selection.size() > 1){
+            List<BookOrShelf> collectionToShare = new ArrayList<>();
+
+            for(BookOrShelf bos : selection){
+                if(bos.isShelf()){
+                    collectionToShare.addAll( _bookCollection.getAllBooksWithinShelf(bos) );
+                }
+                else{
+                    collectionToShare.add(bos);
+                }
+            }
+
+            ShareShelfDialogFragment dialogFragment = new ShareShelfDialogFragment();
+            dialogFragment.setBooksAndShelves(collectionToShare);
+            dialogFragment.show(getSupportFragmentManager(), ShareShelfDialogFragment.FRAGMENT_TAG);
+        }
     }
 
     private void shareBook(BookOrShelf book){
@@ -891,7 +906,8 @@ public class MainActivity extends BaseActivity
                 deleteBook(toDelete);
             }
         }
-        else {
+        else if (selection.size() > 1) {
+            //this else branch correctly multi-deletes, but it's unreachable because the delete button is hidden for selection size > 1
             new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(getString(R.string.deleteExplanationShelf, selection.size(), "selected"))
                     .setTitle(getString(R.string.deleteConfirmation))
                     .setPositiveButton(getString(R.string.deleteConfirmButton), (dialog, which) -> {
@@ -900,12 +916,16 @@ public class MainActivity extends BaseActivity
                         for (BookOrShelf bos : selection) {
                             if (bos == null)
                                 return;
+                            else if (bos.isShelf()){
+                                List<BookOrShelf> subItems = _bookCollection.getAllBooksWithinShelf(bos);
+                                for(BookOrShelf subItem : subItems){
+                                    _bookCollection.deleteFromDevice(subItem);
+                                }
+                            }
                             else {
                                 _bookCollection.deleteFromDevice(bos);
                             }
                         }
-
-                        mBookListAdapter.notifyDataSetChanged();
                         closeContextualActionBar();
                         dialog.dismiss();
                     })
@@ -967,6 +987,7 @@ public class MainActivity extends BaseActivity
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 mode.getMenuInflater().inflate(R.menu.book_item_menu, menu);
                 menu.findItem(R.id.delete).setVisible(selectedBookOrShelf.isDeleteable());
+                mBookListAdapter.setDeleteButton(menu.findItem(R.id.delete)); //send the delete button so it can be hidden if multiple items are selected
                 return true;
             }
 

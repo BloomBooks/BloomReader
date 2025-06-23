@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.graphics.PointF;
 import android.location.Location;
 import android.location.LocationListener;
@@ -64,6 +65,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Scanner;
 
 import static org.sil.bloom.reader.BloomReaderApplication.DEVICE_ID_FILE_NAME;
 import static org.sil.bloom.reader.BloomReaderApplication.shouldPreserveFilesInOldDirectory;
@@ -559,6 +561,14 @@ public class MainActivity extends BaseActivity
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
+        //TODO ask about localization
+        String playerVersionText = getPlayerVersion();
+        TextView playerVersionUIElement = navigationView.getHeaderView(0).findViewById(R.id.playerVersion);
+        if(playerVersionText != null) {
+            playerVersionUIElement.setText("Bloom Player " + playerVersionText);
+        }else{
+            playerVersionUIElement.setText("Bloom Player");
+        }
 
 
         // Cleans up old-style thumbnails - could be removed someday after it's run on most devices with old-style thumbnails
@@ -633,6 +643,25 @@ public class MainActivity extends BaseActivity
     private String getVersionAndDateText(String versionName, String date) {
         // Not bothering trying to internationalize this for now...
         return versionName + ", " + date;
+    }
+
+    private String getPlayerVersion(){
+        try {
+            AssetManager am = BloomReaderApplication.getBloomApplicationContext().getAssets();
+            Scanner playerPackageScanner = new Scanner(am.open("bloom-player/package.json"));
+            while(playerPackageScanner.hasNextLine()){
+                String line = playerPackageScanner.nextLine();
+                if(line.contains("version")){
+                    line = line.substring(line.indexOf(':')+3);
+                    int end = line.indexOf('\"');
+                    return line.substring(0, end);
+                }
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
     // This is a hook to allow ShelfActivity to disable the navigation drawer and replace it

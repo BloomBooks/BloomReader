@@ -550,16 +550,11 @@ public class MainActivity extends BaseActivity
         // Insert the build version and date into the appropriate control.
         // We have to find it indirectly through the navView's header or it won't be found
         // this early in the view construction.
-        TextView versionDate = navigationView.getHeaderView(0).findViewById(R.id.versionDate);
-        try {
-            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-            Date buildDate = new Date(BuildConfig.TIMESTAMP);
-            String date = DateFormat.format("dd MMM yyyy", buildDate).toString();
-            versionDate.setText(getVersionAndDateText(versionName, date));
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
+        String versionDateText = getVersionAndDateText();
+        if(versionDateText != null) {
+            TextView versionDateUIElement = navigationView.getHeaderView(0).findViewById(R.id.versionDate);
+            versionDateUIElement.setText(versionDateText);
         }
-
 
         // Cleans up old-style thumbnails - could be removed someday after it's run on most devices with old-style thumbnails
         BookCollection.cleanUpOldThumbs(this);
@@ -630,8 +625,19 @@ public class MainActivity extends BaseActivity
         configureActionBar(toggle);
     }
 
-    private String getVersionAndDateText(String versionName, String date) {
+    private String getVersionAndDateText() {
         // Not bothering trying to internationalize this for now...
+
+        String versionName = "", date = "";
+
+        try {
+            versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            Date buildDate = new Date(BuildConfig.TIMESTAMP);
+            date = DateFormat.format("dd MMM yyyy", buildDate).toString();
+        } catch (PackageManager.NameNotFoundException e) {
+            return null;
+        }
+
         return versionName + ", " + date;
     }
 
@@ -1142,7 +1148,15 @@ public class MainActivity extends BaseActivity
         } else if (id == R.id.nav_test_location_analytics) {
                 showLocationAnalyticsData();
         } else if (id == R.id.about_reader) {
-                DisplaySimpleResource(getString(R.string.about_bloom_reader), R.raw.about_reader);
+                String aboutTitle = getString(R.string.about_bloom_reader);
+                String versionAndDate = getVersionAndDateText();
+                if( versionAndDate == null ) {
+                    versionAndDate = "";
+                }
+                else{
+                    versionAndDate = versionAndDate + "\n\n";
+                }
+                DisplayPrefixedSimpleResource(aboutTitle, R.raw.about_reader, versionAndDate);
         } else if (id == R.id.about_bloom) {
                 DisplaySimpleResource(getString(R.string.about_bloom), R.raw.about_bloom);
         } else if (id == R.id.about_sil) {
@@ -1423,8 +1437,17 @@ public class MainActivity extends BaseActivity
     }
 
     private void DisplaySimpleResource(String title, int fileResourceId) {
-        // Linkify the message
         final SpannableString msg = new SpannableString(IOUtilities.InputStreamToString(getResources().openRawResource(fileResourceId)));
+        showAlert(title, msg);
+    }
+
+    private void DisplayPrefixedSimpleResource(String title, int fileResourceId, String prefix){
+        SpannableString msg = new SpannableString(IOUtilities.InputStreamToString(getResources().openRawResource(fileResourceId)));
+        msg = new SpannableString(prefix + msg);
+        showAlert(title, msg);
+    }
+
+    private void showAlert(String title, SpannableString msg){
         Linkify.addLinks(msg, Linkify.ALL);
 
         final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)

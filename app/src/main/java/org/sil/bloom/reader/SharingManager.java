@@ -149,6 +149,7 @@ public class SharingManager {
 
     private void shareFile(File file, String fileType, String dialogTitle){
         Uri uri = FileProvider.getUriForFile(mActivity, BuildConfig.APPLICATION_ID + ".fileprovider", file);
+        //System.out.println("\n\n\nuri: " + uri + "\nfile: " + file + "\nfiletype: " + "\ndialog title: " + dialogTitle + "\n\n\n");
         Intent shareIntent = ShareCompat.IntentBuilder.from(mActivity)
                 .setStream(uri)
                 .getIntent()

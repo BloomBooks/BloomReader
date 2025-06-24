@@ -61,6 +61,7 @@ import org.sil.bloom.reader.models.BookOrShelf;
 import org.sil.bloom.reader.wifi.GetFromWiFiActivity;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -554,14 +555,10 @@ public class MainActivity extends BaseActivity
         // Insert the build version and date into the appropriate control.
         // We have to find it indirectly through the navView's header or it won't be found
         // this early in the view construction.
-        TextView versionDate = navigationView.getHeaderView(0).findViewById(R.id.versionDate);
-        try {
-            String versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-            Date buildDate = new Date(BuildConfig.TIMESTAMP);
-            String date = DateFormat.format("dd MMM yyyy", buildDate).toString();
-            versionDate.setText(getVersionAndDateText(versionName, date));
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
+        String versionDateText = getVersionAndDateText();
+        if(versionDateText != null) {
+            TextView versionDateUIElement = navigationView.getHeaderView(0).findViewById(R.id.versionDate);
+            versionDateUIElement.setText(versionDateText);
         }
 
         String playerVersionText = getPlayerVersion();
@@ -639,8 +636,19 @@ public class MainActivity extends BaseActivity
         configureActionBar(toggle);
     }
 
-    private String getVersionAndDateText(String versionName, String date) {
+    private String getVersionAndDateText() {
         // Not bothering trying to internationalize this for now...
+
+        String versionName = "", date = "";
+
+        try {
+            versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            Date buildDate = new Date(BuildConfig.TIMESTAMP);
+            date = DateFormat.format("dd MMM yyyy", buildDate).toString();
+        } catch (PackageManager.NameNotFoundException e) {
+            return null;
+        }
+
         return versionName + ", " + date;
     }
 
@@ -885,16 +893,31 @@ public class MainActivity extends BaseActivity
             contextualActionBarMode.finish();
     }
 
-    private void shareBookOrShelf(){
-        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItem();
-        if (bookOrShelf == null) {
-            // Not sure how this can happen, but it did
-            return;
+    private void shareSelection(){
+        List<BookOrShelf> selection = mBookListAdapter.getSelectedItems();
+        if (selection.size() == 1) {
+            BookOrShelf bookOrShelf = selection.get(0);
+            if (bookOrShelf.isShelf())
+                shareShelf(bookOrShelf);
+            else
+                shareBook(bookOrShelf);
         }
-        if (bookOrShelf.isShelf())
-            shareShelf(bookOrShelf);
-        else
-            shareBook(bookOrShelf);
+        else if (selection.size() > 1){
+            List<BookOrShelf> collectionToShare = new ArrayList<>();
+
+            for(BookOrShelf bos : selection){
+                if(bos.isShelf()){
+                    collectionToShare.addAll( _bookCollection.getAllBooksWithinShelf(bos) );
+                }
+                else{
+                    collectionToShare.add(bos);
+                }
+            }
+
+            ShareShelfDialogFragment dialogFragment = new ShareShelfDialogFragment();
+            dialogFragment.setBooksAndShelves(collectionToShare);
+            dialogFragment.show(getSupportFragmentManager(), ShareShelfDialogFragment.FRAGMENT_TAG);
+        }
     }
 
     private void shareBook(BookOrShelf book){
@@ -908,17 +931,44 @@ public class MainActivity extends BaseActivity
         dialogFragment.show(getSupportFragmentManager(), ShareShelfDialogFragment.FRAGMENT_TAG);
     }
 
-    private void deleteBookOrShelf(){
-        BookOrShelf bookOrShelf = mBookListAdapter.getSelectedItem();
+    private void deleteSelection(){
+        List<BookOrShelf> selection = mBookListAdapter.getSelectedItems();
 
-        // Somehow, the pre-launch tests on the Play console were able to get this to be null
-        if (bookOrShelf == null)
-            return;
+        if(selection.size() == 1){
+            BookOrShelf toDelete = selection.get(0);
+            if(toDelete.isShelf()){
+                deleteShelf(toDelete);
+            }
+            else{
+                deleteBook(toDelete);
+            }
+        }
+        else if (selection.size() > 1) {
+            //this else branch correctly multi-deletes, but it's unreachable because the delete button is hidden for selection size > 1
+            new AlertDialog.Builder(this, R.style.SimpleDialogTheme).setMessage(getString(R.string.deleteExplanationShelf, selection.size(), "selected"))
+                    .setTitle(getString(R.string.deleteConfirmation))
+                    .setPositiveButton(getString(R.string.deleteConfirmButton), (dialog, which) -> {
+                        Log.i("BloomReader", "Multi-delete " + selection.size() + " items.");
 
-        if (bookOrShelf.isShelf())
-            deleteShelf(bookOrShelf);
-        else
-            deleteBook(bookOrShelf);
+                        for (BookOrShelf bos : selection) {
+                            if (bos == null)
+                                return;
+                            else if (bos.isShelf()){
+                                List<BookOrShelf> subItems = _bookCollection.getAllBooksWithinShelf(bos);
+                                for(BookOrShelf subItem : subItems){
+                                    _bookCollection.deleteFromDevice(subItem);
+                                }
+                            }
+                            else {
+                                _bookCollection.deleteFromDevice(bos);
+                            }
+                        }
+                        closeContextualActionBar();
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+        }
     }
 
     private void deleteShelf(final BookOrShelf shelf){
@@ -934,7 +984,6 @@ public class MainActivity extends BaseActivity
                         Log.i("BloomReader", "DeleteShelf " + shelf.toString());
                         for(BookOrShelf b : booksAndShelves)
                             _bookCollection.deleteFromDevice(b);
-                        mBookListAdapter.notifyDataSetChanged();
                         closeContextualActionBar();
                         dialog.dismiss();
                 })
@@ -948,7 +997,6 @@ public class MainActivity extends BaseActivity
                 .setPositiveButton(getString(R.string.deleteConfirmButton), (dialog, which) -> {
                         Log.i("BloomReader", "DeleteBook "+ book.toString());
                         _bookCollection.deleteFromDevice(book);
-                        mBookListAdapter.notifyDataSetChanged();
                         closeContextualActionBar();
                         dialog.dismiss();
                 })
@@ -974,6 +1022,7 @@ public class MainActivity extends BaseActivity
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
                 mode.getMenuInflater().inflate(R.menu.book_item_menu, menu);
                 menu.findItem(R.id.delete).setVisible(selectedBookOrShelf.isDeleteable());
+                mBookListAdapter.setDeleteButton(menu.findItem(R.id.delete)); //send the delete button so it can be hidden if multiple items are selected
                 return true;
             }
 
@@ -986,11 +1035,11 @@ public class MainActivity extends BaseActivity
             public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
                 int itemId = item.getItemId();
                 if (itemId == R.id.share) {
-                        shareBookOrShelf();
+                        shareSelection();
                         mode.finish();
                         return true;
                 } else if (itemId == R.id.delete) {
-                        deleteBookOrShelf();
+                        deleteSelection();
                         return true;
                 }
                         return false;
@@ -998,7 +1047,7 @@ public class MainActivity extends BaseActivity
 
             @Override
             public void onDestroyActionMode(android.view.ActionMode mode) {
-                mBookListAdapter.unselect(selectedBookOrShelf);
+                mBookListAdapter.clearSelection();
                 contextualActionBarMode = null;
             }
         });
@@ -1172,7 +1221,15 @@ public class MainActivity extends BaseActivity
         } else if (id == R.id.nav_test_location_analytics) {
                 showLocationAnalyticsData();
         } else if (id == R.id.about_reader) {
-                DisplaySimpleResource(getString(R.string.about_bloom_reader), R.raw.about_reader);
+                String aboutTitle = getString(R.string.about_bloom_reader);
+                String versionAndDate = getVersionAndDateText();
+                if( versionAndDate == null ) {
+                    versionAndDate = "";
+                }
+                else{
+                    versionAndDate = versionAndDate + "\n\n";
+                }
+                DisplayPrefixedSimpleResource(aboutTitle, R.raw.about_reader, versionAndDate);
         } else if (id == R.id.about_bloom) {
                 DisplaySimpleResource(getString(R.string.about_bloom), R.raw.about_bloom);
         } else if (id == R.id.about_sil) {
@@ -1453,8 +1510,17 @@ public class MainActivity extends BaseActivity
     }
 
     private void DisplaySimpleResource(String title, int fileResourceId) {
-        // Linkify the message
         final SpannableString msg = new SpannableString(IOUtilities.InputStreamToString(getResources().openRawResource(fileResourceId)));
+        showAlert(title, msg);
+    }
+
+    private void DisplayPrefixedSimpleResource(String title, int fileResourceId, String prefix){
+        SpannableString msg = new SpannableString(IOUtilities.InputStreamToString(getResources().openRawResource(fileResourceId)));
+        msg = new SpannableString(prefix + msg);
+        showAlert(title, msg);
+    }
+
+    private void showAlert(String title, SpannableString msg){
         Linkify.addLinks(msg, Linkify.ALL);
 
         final AlertDialog d = new AlertDialog.Builder(this, R.style.SimpleDialogTheme)

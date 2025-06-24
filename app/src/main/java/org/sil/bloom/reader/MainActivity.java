@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.graphics.PointF;
 import android.location.Location;
 import android.location.LocationListener;
@@ -64,6 +65,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.sil.bloom.reader.BloomReaderApplication.DEVICE_ID_FILE_NAME;
 import static org.sil.bloom.reader.BloomReaderApplication.shouldPreserveFilesInOldDirectory;
@@ -560,6 +564,11 @@ public class MainActivity extends BaseActivity
             e.printStackTrace();
         }
 
+        String playerVersionText = getPlayerVersion();
+        TextView playerVersionUIElement = navigationView.getHeaderView(0).findViewById(R.id.playerVersion);
+        if(playerVersionText != null) {
+            playerVersionUIElement.setText("Bloom Player " + playerVersionText);
+        }
 
         // Cleans up old-style thumbnails - could be removed someday after it's run on most devices with old-style thumbnails
         BookCollection.cleanUpOldThumbs(this);
@@ -633,6 +642,27 @@ public class MainActivity extends BaseActivity
     private String getVersionAndDateText(String versionName, String date) {
         // Not bothering trying to internationalize this for now...
         return versionName + ", " + date;
+    }
+
+    private String getPlayerVersion(){
+        try {
+            AssetManager am = BloomReaderApplication.getBloomApplicationContext().getAssets();
+            Scanner playerPackageScanner = new Scanner(am.open("bloom-player/package.json"));
+
+            Pattern vPattern =  Pattern.compile("\"version\"\\s*:\\s*\"([^\"]*)\"");
+
+            while(playerPackageScanner.hasNextLine()) {
+                String line = playerPackageScanner.nextLine();
+                Matcher vMatcher = vPattern.matcher(line);
+                if (vMatcher.find()) {
+                    return vMatcher.group(1);
+                }
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
     // This is a hook to allow ShelfActivity to disable the navigation drawer and replace it

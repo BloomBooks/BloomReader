@@ -2,7 +2,7 @@
 
 We use Crowdin for localization. Bloom Reader's `strings.xml` is included in the general [SIL-Bloom](https://crowdin.com/project/sil-bloom) project in Crowdin and is aliased as `Bloom Reader`.
 
-## Updating/Adding translations from Crowdin
+## Update/Add translations from Crowdin
 
 1. Download the translations using the Crowdin plugin (see below). (Or manually download them and copy to the correct structure.)
 2. Run `processLocalizations.sh`.
@@ -22,18 +22,32 @@ Warning: This will also delete strings from Crowdin if the strings are not in th
 
 ## Crowdin plugin
 
-The easiest way to upload new strings and download translations is through the [JetBrains plugin for Android Studio](https://plugins.jetbrains.com/plugin/9463-crowdin). You will need to add the `crowdin.properties` file at the root of this repo. The file should have the following format:
+The easiest way to upload new strings and download translations is through the Crowdin plugin for Android Studio.
 
-```
-project-identifier=sil-bloom
-project-key={secret key}
-auto-upload=false
-```
+### Configuration
 
-`project-key` can be found in the Crowdin project if you have the appropriate permissions.
+The `crowdin.yml` file contains the project configuration.
 
-`auto-upload=false` toggles off the (totally bizzare, in my opinion) default behavior of uploading all changes immediately.
+### Setup
 
-I decided not to add the file, even without the key, to the repo because it would be a lot easier for someone to accidentally commit the key at that point. As it is, we can .gitignore the file entirely.
+1. Install the Crowdin plugin from the [JetBrains marketplace](https://plugins.jetbrains.com/plugin/9463-crowdin) in Android Studio.
+1. Turn off the "Automatically upload sources" option in the Crowdin plugin settings.
+  a. `File` -> `Settings` -> `Tools` -> `Crowdin`.
+1. Set your API token as an environment variable:
+   - BLOOM_CROWDIN_TOKEN = your_api_token
+
+     The API token can be found in your Crowdin account settings if you have the appropriate permissions.
+
+### Usage
+
+To upload source strings to Crowdin:
+
+1. In the Crowdin plugin UI, click the Upload tab.
+2. Click "Upload Sources".
+
+To download translations from Crowdin:
+
+1. In the Crowdin plugin UI, click the Download tab.
+2. Click "Download Translations".
 
 Warning: with the current project settings in Crowdin, you will download all translated strings, even unapproved ones.

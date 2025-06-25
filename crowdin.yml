@@ -1,0 +1,13 @@
+project_id: "261564"
+api_token_env: BLOOM_CROWDIN_TOKEN
+
+branch: "master"
+
+files:
+  [
+    {
+      source: app/src/main/res/values/strings.xml,
+      translation: app/src/main/res/values-%two_letters_code%/strings.xml,
+      dest: /strings.xml,
+    },
+  ]

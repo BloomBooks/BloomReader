@@ -57,6 +57,7 @@
     <string name="bundle_import_error">Un problème est survenu lors de la lecture de %1$s. Essayez de le télécharger à nouveau.</string>
     <string name="share_app">Partager l\'application Bloom Reader</string>
     <string name="open_bloompub_file">Ouvrir un fichier BloomPUB</string>
+    <string name="open_bloombundle_file">Ouvrir le fichier BloomBundle</string>
     <string name="searching">Recherche en cours...</string>
     <string name="no_books_added">Aucun livre ou pacquet de livres Bloom retrouvé sur cet appareil.</string>
     <string name="release_notes">Notes de publication</string>

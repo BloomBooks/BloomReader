@@ -57,6 +57,7 @@
     <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
     <string name="share_app">ဘလွန်းဖတ်စာအဲပ်ကို မျှဝေမည်။</string>
     <string name="open_bloompub_file">Open BloomPUB file</string>
+    <string name="open_bloombundle_file">Open BloomBundle file</string>
     <string name="searching">Searching...</string>
     <string name="no_books_added">No new Bloom books or bundles found on the device.</string>
     <string name="release_notes">ထုတ်ကုန် မှတ်တမ်း</string>

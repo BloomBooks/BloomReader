@@ -1211,8 +1211,12 @@ public class MainActivity extends BaseActivity
         } else if (id == R.id.nav_release_notes) {
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
         } else if (id == R.id.nav_open_bloompub_file) {
-            openBloomPubFile();
-        } else if (id == R.id.nav_find_lost_books) {
+            ImportBloomReaderFile();
+        }
+        else if (id == R.id.nav_open_bloombundle_file){
+            ImportBloomReaderFile();
+        }
+        else if (id == R.id.nav_find_lost_books) {
             if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
                 completeSAFMoveOrCopyWithPermission();
             } else {
@@ -1261,15 +1265,15 @@ public class MainActivity extends BaseActivity
         return false;
     }
 
-    private void openBloomPubFile() {
+    private void ImportBloomReaderFile() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
-        mOpenBloomPubFileLauncher.launch(intent);
+        mOpenBloomReaderFileLauncher.launch(intent);
     }
 
     @SuppressLint("WrongConstant")
-    private final ActivityResultLauncher<Intent> mOpenBloomPubFileLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+    private final ActivityResultLauncher<Intent> mOpenBloomReaderFileLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if (result.getResultCode() == RESULT_OK) {
                     Intent data = result.getData();

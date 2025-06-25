@@ -60,6 +60,7 @@
 
     <string name="share_app">Share Bloom Reader app</string>
     <string name="open_bloompub_file">Open BloomPUB file</string>
+    <string name="open_bloombundle_file">Open BloomBundle file</string>
     <string name="searching">Searching...</string>
     <string name="no_books_added">No new Bloom books or bundles found on the device.</string>
     <string name="release_notes">Release Notes</string>

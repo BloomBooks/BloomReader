@@ -1212,7 +1212,11 @@ public class MainActivity extends BaseActivity
                 DisplaySimpleResource(getString(R.string.release_notes), R.raw.release_notes);
         } else if (id == R.id.nav_open_bloompub_file) {
             openBloomPubFile();
-        } else if (id == R.id.nav_find_lost_books) {
+        }
+        else if (id == R.id.nav_open_bloombundle_file){
+            openBloomPubFile();
+        }
+        else if (id == R.id.nav_find_lost_books) {
             if (SAFUtilities.hasPermissionToBloomDirectory(this)) {
                 completeSAFMoveOrCopyWithPermission();
             } else {

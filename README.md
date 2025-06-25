@@ -179,6 +179,7 @@ To test your local BloomLibrary code in Bloom Reader, see the commented `host = 
 
 To update the sample book, _The Moon and the Cap_:
 
+- In {BloomDesktop}/BloomExe/Book/BookInfo.cs, find the line that reads 'set { MetaData.SubscriptionDescriptor = value; }' and replace it with 'set { MetaData.SubscriptionDescriptor = "Sample-Book"; }'
 - Open an English collection in the latest version of Bloom. Vernacular and National language should be English.
 - Set xMatter to Device.
 - Set Enterprise to SIL subscription so we don't lose the quiz pages.
@@ -188,14 +189,8 @@ To update the sample book, _The Moon and the Cap_:
   - Make sure all languages are selected.
     - Unfortunately, this currently means the Tibetan quiz is blank. Not sure what to do about that...
   - Save Bloom Reader File
-- Open the .bloompub which is just a .zip archive.
-  - Depending on your zip software, you may need to change the file extension from `.bloompub` to `.zip` to do so.
-- Pull the `meta.json` file out of the archive and edit it to include the following line:
-
-  `"brandingProjectName":"Sample-Book",` making sure there is not another line with the same `brandingProjectName` "key".
-
-- Put the modified `meta.json` file back in the `.zip` archive and change the archive's extension back to `.bloompub`.
 - Save to {BloomReader}/app/src/main/assets/sample books/The Moon and the Cap.bloompub
+- Go back to {BloomDesktop}/BloomExe/Book/BookInfo.cs and change the modified line back to its original state.
 
 ## Contributions
 

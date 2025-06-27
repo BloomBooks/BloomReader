@@ -57,6 +57,7 @@
     <string name="bundle_import_error">د %1$s په لوستلو کې ستونزه وه. بیا یې د راښته کولو هڅه وکړئ.</string>
     <string name="share_app">د بلوم ریډر اپلیکشن شریک کړئ</string>
     <string name="open_bloompub_file">Open BloomPUB file</string>
+    <string name="open_bloombundle_file">Open BloomBundle file</string>
     <string name="searching">لټول...</string>
     <string name="no_books_added">په وسیله کې د بلوم نوي کتابونه یا بنډلونه ونه موندل شول.</string>
     <string name="release_notes">یادښتونه خپاره کړئ</string>

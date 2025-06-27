@@ -57,6 +57,7 @@
     <string name="bundle_import_error">পড়তে সমস্যা হয়েছে %1$s এটি আবার ডাউনলোড করার চেষ্টা করুন</string>
     <string name="share_app">ব্লুম পুস্তক অ্যাপটি শেয়ার করুন</string>
     <string name="open_bloompub_file">Open BloomPUB file</string>
+    <string name="open_bloombundle_file">Open BloomBundle file</string>
     <string name="searching">অনুসন্ধান করা হচ্ছে...</string>
     <string name="no_books_added">কোন নতুন ব্লুম বই বা থোকা এই ডিভাইসে খুঁজে পাওয়া যায়নি।</string>
     <string name="release_notes">রিলিজ নোট/ মুক্ত স্মারকলিপি</string>

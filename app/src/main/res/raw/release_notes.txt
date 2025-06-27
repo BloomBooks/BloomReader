@@ -1,5 +1,6 @@
 3.4
 Support Bloom 6.2 Games.
+Share multiple books at once.
 
 3.3
 Book-reading engine improvements and fixes.

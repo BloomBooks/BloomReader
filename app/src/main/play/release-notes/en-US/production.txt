@@ -1,2 +1,3 @@
 Support Bloom 6.2 Games.
+Share multiple books at once.
 Various enhancements and fixes.

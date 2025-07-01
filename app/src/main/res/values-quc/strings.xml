@@ -57,6 +57,7 @@
     <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
     <string name="share_app">Ula\'xik le kojkemchakub\'al Bloom Reader</string>
     <string name="open_bloompub_file">Open BloomPUB file</string>
+    <string name="open_bloombundle_file">Open BloomBundle file</string>
     <string name="searching">Katajin utzukuxik...</string>
     <string name="no_books_added">Man xriqitaj ta chi upam ri wiqkemchakub\'al k\'ak\' taq wuj xuquje\' tanaj Bloom.</string>
     <string name="release_notes">Ub\'ixikil pa uwi\' le q\'atchak</string>

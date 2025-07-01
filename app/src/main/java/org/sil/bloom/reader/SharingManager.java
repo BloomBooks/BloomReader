@@ -84,7 +84,7 @@ public class SharingManager {
             intent.putExtra(Intent.EXTRA_SUBJECT, appName);
 
             String sAux = "\n" + mActivity.getString(R.string.recommend_app, appName) + "\n\n" +
-                    "https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&amp;c=apps" + " \n\n";
+                    "https://play.google.com/store/apps/details?id=org.sil.bloom.reader" + " \n\n";
             intent.putExtra(Intent.EXTRA_TEXT, sAux);
 
             Intent chooser = Intent.createChooser(intent, mActivity.getString(R.string.share_link_via));
@@ -149,6 +149,7 @@ public class SharingManager {
 
     private void shareFile(File file, String fileType, String dialogTitle){
         Uri uri = FileProvider.getUriForFile(mActivity, BuildConfig.APPLICATION_ID + ".fileprovider", file);
+        //System.out.println("\n\n\nuri: " + uri + "\nfile: " + file + "\nfiletype: " + "\ndialog title: " + dialogTitle + "\n\n\n");
         Intent shareIntent = ShareCompat.IntentBuilder.from(mActivity)
                 .setStream(uri)
                 .getIntent()

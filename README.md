@@ -13,7 +13,7 @@ Bloom Reader is a native java app with a WebView for displaying Bloom books (whi
 # Distribution
 
 Bloom Reader is distributed through the Google Play Store.
-[Try it out](https://play.google.com/store/search?q=%2B%22sil%20international%22%20%2B%22bloom%20reader%22&c=apps).
+[Try it out](https://play.google.com/store/apps/details?id=org.sil.bloom.reader).
 
 Apks are also distributed through our [website](https://bloomlibrary.org/page/create/bloom-reader).
 
@@ -103,21 +103,16 @@ At this point, anyone can publish a book using the existing Bloom mechanism, and
 
 ## Getting the Bloom Reader code dependencies
 
-BloomReader requires a number of files from the[bloom-player](https://github.com/BloomBooks/bloom-player.git) project. By default,
+BloomReader requires a number of files from the [bloom-player](https://github.com/BloomBooks/bloom-player.git) project. By default,
 and in the TeamCity build, these are obtained using yarn from the npm output of bloom-player.
 
-When building locally, if you need to make changes to BloomPlayer, you will currently need to build BloomPlayer first and copy the file over.
-It's necessary to do this after running gradlew yarn. Ever after, in the bloom-player project, just do `yarn build4br`. That will copy the needed files to a project named "BloomReader" that is a sibling of bloom-player. If your BloomReader project is elsewhere or named differently, create a junction so that it looks like it is a sibling of bloom-player.
+When building locally, if you need to make changes to bloom-player, you can use `yarn link`.
 
-If you don't need to make changes in BloomPlayer, get these files using the following commands:
-cd app
-yarn
-cd ..
-./gradlew copyBloomPlayerAssets
+If you don't need to make changes in bloom-player, get these files using the yarn and copy commands above.
 
-If you want the latest version of BloomPlayer, rather than the one active when BloomReader was last
-updated, replace "yarn" with "yarn upgrade bloom-player".  You can also edit the app/packages.json
-file to update the version number of bloom-reader if needed.
+If you want the latest version of bloom-player, rather than the one active when BloomReader was last
+updated, replace `yarn` with `yarn upgrade bloom-player`.  You can also edit the app/packages.json
+file to update the version number of bloom-player if needed.
 
 # Signing and Deployment
 
@@ -184,6 +179,7 @@ To test your local BloomLibrary code in Bloom Reader, see the commented `host = 
 
 To update the sample book, _The Moon and the Cap_:
 
+- In {BloomDesktop}/BloomExe/Book/BookInfo.cs, find the line that reads 'set { MetaData.SubscriptionDescriptor = value; }' and replace it with 'set { MetaData.SubscriptionDescriptor = "Sample-Book"; }'
 - Open an English collection in the latest version of Bloom. Vernacular and National language should be English.
 - Set xMatter to Device.
 - Set Enterprise to SIL subscription so we don't lose the quiz pages.
@@ -193,14 +189,8 @@ To update the sample book, _The Moon and the Cap_:
   - Make sure all languages are selected.
     - Unfortunately, this currently means the Tibetan quiz is blank. Not sure what to do about that...
   - Save Bloom Reader File
-- Open the .bloompub which is just a .zip archive.
-  - Depending on your zip software, you may need to change the file extension from `.bloompub` to `.zip` to do so.
-- Pull the `meta.json` file out of the archive and edit it to include the following line:
-
-  `"brandingProjectName":"Sample-Book",` making sure there is not another line with the same `brandingProjectName` "key".
-
-- Put the modified `meta.json` file back in the `.zip` archive and change the archive's extension back to `.bloompub`.
 - Save to {BloomReader}/app/src/main/assets/sample books/The Moon and the Cap.bloompub
+- Go back to {BloomDesktop}/BloomExe/Book/BookInfo.cs and change the modified line back to its original state.
 
 ## Contributions
 

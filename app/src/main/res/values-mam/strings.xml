@@ -57,6 +57,7 @@
     <string name="bundle_import_error">There was a problem reading %1$s. Try downloading it again.</string>
     <string name="share_app">Sipinkub\'a aq\'unb\'il xk\'utz\'ib\' Bloom Reader</string>
     <string name="open_bloompub_file">Open BloomPUB file</string>
+    <string name="open_bloombundle_file">Open BloomBundle file</string>
     <string name="searching">In jayon...</string>
     <string name="no_books_added">Min ma chi okyal ak\'a\'j u\'jb\'il mo tnej Bloom toj makb\'il xk\'utz\'ib\' lu\'.</string>
     <string name="release_notes">Tz\'ib\'ajtz tib\'aj tu\'mel</string>

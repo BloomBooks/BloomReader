@@ -57,6 +57,7 @@
     <string name="bundle_import_error">هنگام خواندن %1$s. مشکلی وجود داشت. دوباره آن را بالا کنید.</string>
     <string name="share_app">برنامه Bloom Reader را به اشتراک بگذارید</string>
     <string name="open_bloompub_file">Open BloomPUB file</string>
+    <string name="open_bloombundle_file">Open BloomBundle file</string>
     <string name="searching">جستجوکردن...</string>
     <string name="no_books_added">هیچ کتاب ها یا بسته های جدید بلوم در وسیله یافت نشد.</string>
     <string name="release_notes">یاد داشت های منتشر شده</string>

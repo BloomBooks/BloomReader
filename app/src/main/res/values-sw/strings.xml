@@ -57,6 +57,7 @@
     <string name="bundle_import_error">Kulikuwa na tatizo kusoma %1$s. Jaribu kuipakua tena.</string>
     <string name="share_app">Shirki programu ya Bloom Reader</string>
     <string name="open_bloompub_file">Fungua faili ya BloomPUB</string>
+    <string name="open_bloombundle_file">Open BloomBundle file</string>
     <string name="searching">Inatafuta...</string>
     <string name="no_books_added">Hakuna vitabu vipya vya Bloom au vifungu vinavyopatikana kwenye kifaa.</string>
     <string name="release_notes">Toa Maelezo</string>

@@ -215,9 +215,6 @@ public class NewBookListenerService extends Service {
         // Send one package to the desktop to request the book. Its contents tell the desktop
         // what IP address to use.
 
-        // SendMessage is a deprecated class as of API level 30.
-        // For an alternative use a Socket, which allows the associated IP address to be specified.
-        //
         // Create and bind the UDP socket here and send the UDP packet.
         // It will be on the same thread but that should be fine -- NewBookListenerService doesn't
         // have anything better to do. We're making a book request so there is no need to quickly

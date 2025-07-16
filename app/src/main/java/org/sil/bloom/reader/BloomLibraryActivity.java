@@ -11,6 +11,7 @@ import android.webkit.DownloadListener;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 
@@ -28,7 +29,7 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Adds back button
+        // Adds back and home buttons
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null)
                 actionBar.setDisplayHomeAsUpEnabled(true);
@@ -56,6 +57,8 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
         final WebSettings webSettings = mBrowser.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
+
+        setupCustomBackPressHandling();
 
         mDownloads = (DownloadsView) BloomLibraryActivity.this
                 .findViewById(R.id.download_books);
@@ -129,21 +132,26 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
     }
 
     @Override
+    // Confusingly, this is the left arrow button on the action bar.
     public boolean onSupportNavigateUp() {
-        onBackPressed();
-        return false;
+        handleBack();
+        return true; // Handled
     }
 
-    // At one point this seemed to be necessary to make the back button or gesture useful within
-    // the web page rather than always immediately ending the BL activity. Later experiments made
-    // me more doubtful...something else may have been preventing the browser from going back.
-    // But it's the recommended way to do this so I'm leaving it in.
-    @Override
-    public void onBackPressed() {
-        if (mBrowser.canGoBack()) {
+    private void setupCustomBackPressHandling() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleBack();
+            }
+        });
+    }
+
+    private void handleBack() {
+        if (mBrowser != null && mBrowser.canGoBack()) {
             mBrowser.goBack();
         } else {
-            super.onBackPressed();
+            finish();
         }
     }
 
@@ -158,8 +166,6 @@ public class BloomLibraryActivity extends BaseActivity implements MessageReceive
     @Override
     public void receiveMessage(String message) {
         if (message.equals("go_home")) {
-            // Unexpectedly, this takes us back to the home page in the webview.
-            //super.onBackPressed();
             // This terminates the whole activity and takes us back to the main view.
             // We would need to do something more if this activity could be launched from somewhere
             // other than the home screen, but that isn't currently the case.

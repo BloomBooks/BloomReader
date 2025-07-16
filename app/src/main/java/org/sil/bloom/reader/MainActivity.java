@@ -841,7 +841,7 @@ public class MainActivity extends BaseActivity
             // were stopped. We can afford to ignore it since we haven't loaded yet.
             return;
         }
-		filePathOrUri = BookCollection.fixBloomd(filePathOrUri);
+        filePathOrUri = BookCollection.fixBloomd(filePathOrUri);
         BookOrShelf book = _bookCollection.addBookOrShelfIfNeeded(filePathOrUri);
         highlightAndScrollTo(book);
         if (sSkipNextNewFileSound) {
@@ -1154,16 +1154,6 @@ public class MainActivity extends BaseActivity
         // This apparently has no effect. If it ever does, we should plan to allow it to be localized.
         permissionIntent.putExtra(DocumentsContract.EXTRA_PROMPT, "Allow Bloom to access books on SD card");
         mGetExternalFilesDirectoryUri.launch(permissionIntent);
-    }
-
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        if (drawer != null && drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
     }
 
  //maybe someday. This is the 3-vertical dot menu

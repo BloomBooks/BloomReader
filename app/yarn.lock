@@ -3,6 +3,6 @@
 
 
 bloom-player@^2.9.1:
-  version "2.15.4"
-  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-2.15.4.tgz#9e6cd667bed0106a314581a66fff528438ab2e51"
-  integrity sha512-ESv52m+60U667Ty59pU496PsXPw8naUN8bk2as6jKQP5AfVm4NxJxHlFoTRDbRToSZkmU4ro8SPZFD5Wrcg7WA==
+  version "2.17.0"
+  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-2.17.0.tgz#bbf951af61114851e985ea07bcaaa63059b4e81e"
+  integrity sha512-EI1qRC6dLOFBLcO/mJTirvB/A9Q1UGCBBt5rnwNi/0DqjIE9pq9cAgfYn4ToArdYQ+t7OAhS4LzW+xNC85pUiA==

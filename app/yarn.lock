@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-bloom-player@2.18.1:
-  version "2.18.1"
-  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-2.18.1.tgz#9609f365737121cdfc9093c963a418bf191ae4fc"
-  integrity sha512-zhpOfJ3UjWKt54JzkzxCJ62fY4ovNpgepVDC8mdYOh05tkQzSwgsXSsfmKdumDPvNAq2h+x3jKSmBHuCulBhVA==
+bloom-player@2.20.0:
+  version "2.20.0"
+  resolved "https://registry.yarnpkg.com/bloom-player/-/bloom-player-2.20.0.tgz#5b75324643a9e6d136e848e32ddba49eae3ecae5"
+  integrity sha512-9WAd1LZ1h2HP+G1CjzMRSbR8eOWAwd7brVm7WFQxn7IRpaUJUzctWP7qxaYK6S4p1WXNGCMXQ2pHoKGRAcBFvg==

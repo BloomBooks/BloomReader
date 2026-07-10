@@ -34,7 +34,8 @@ name: Publish to Play Console
 
 on:
   push:
-    branches: [master, release]
+    # TEMP (test branch only): trigger on pushes to this branch.
+    branches: [master, release, play-publish-gha-test]
   workflow_dispatch:
     inputs:
       flavor:
@@ -75,6 +76,9 @@ jobs:
             FLAVOR="${{ inputs.flavor }}"
           elif [ "${{ github.ref }}" = "refs/heads/release" ]; then
             FLAVOR="Production"
+          # TEMP (test branch only): test the real production publish path.
+          elif [ "${{ github.ref }}" = "refs/heads/play-publish-gha-test" ]; then
+            FLAVOR="Production"
           else
             FLAVOR="Alpha"
           fi
@@ -89,7 +93,11 @@ jobs:
           # from the wrong branch corrupts that app's version numbering.
           # Dry runs commit nothing to Play and may run from any branch.
           if [ "$DRY_RUN" != "true" ]; then
-            if [ "$FLAVOR" = "Production" ] && [ "${{ github.ref }}" != "refs/heads/release" ]; then
+            # TEMP (test branch only): the test branch is exempted from the
+            # release-only guard so it can really publish to the internal
+            # track. The tag and S3 steps still require the release ref, so
+            # nothing public-facing is produced.
+            if [ "$FLAVOR" = "Production" ] && [ "${{ github.ref }}" != "refs/heads/release" ] && [ "${{ github.ref }}" != "refs/heads/play-publish-gha-test" ]; then
               echo "::error::A real Production publish must run from the release branch."
               exit 1
             fi
@@ -103,6 +111,11 @@ jobs:
           # app/build.gradle), so bumping the version resets it to 0 on its
           # own, and master (alpha) and release (production) count
           # independently on their own branches.
+          # TEMP (test branch only): pin the patch number to the lowest value
+          # above the live 3.4.7 production release; future release-branch
+          # publishes derive their number from its commit count (~60+), far
+          # above this.
+          PATCH_INPUT="${PATCH_INPUT:-8}"
           if [ -n "$PATCH_INPUT" ]; then
             if ! [[ "$PATCH_INPUT" =~ ^[0-9]+$ ]]; then
               echo "::error::patch must be a plain number, got: $PATCH_INPUT"
@@ -214,8 +227,11 @@ jobs:
       # the publish above succeeded. Requiring the release ref (redundant
       # with the branch guard above) keeps public-facing artifacts off any
       # other branch, e.g. during workflow testing.
+      # TEMP (test branch only): also allowed from the test branch — the
+      # policy is that bloomlibrary.org updates as soon as a release reaches
+      # the internal track, which this test really does (3.4.8).
       - name: Upload APK and version file to bloomlibrary.org S3
-        if: steps.config.outputs.flavor == 'Production' && steps.config.outputs.dry_run == 'false' && github.ref == 'refs/heads/release'
+        if: steps.config.outputs.flavor == 'Production' && steps.config.outputs.dry_run == 'false' && (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/play-publish-gha-test')
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.BLOOMLIBRARY_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.BLOOMLIBRARY_AWS_SECRET_ACCESS_KEY }}
@@ -229,8 +245,10 @@ jobs:
 
       # Only reached if the publish above succeeded. Release ref required
       # for the same reason as the S3 step.
+      # TEMP (test branch only): also allowed from the test branch; the
+      # test really publishes 3.4.8, so it gets a real v3.4.8 tag.
       - name: Tag the released commit
-        if: steps.config.outputs.flavor == 'Production' && steps.config.outputs.dry_run == 'false' && github.ref == 'refs/heads/release'
+        if: steps.config.outputs.flavor == 'Production' && steps.config.outputs.dry_run == 'false' && (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/play-publish-gha-test')
         run: |
           TAG="v${{ steps.config.outputs.version }}"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then

@@ -1,0 +1,257 @@
+# Publishes Bloom Reader to the Google Play Console (internal track).
+#
+# - Pushes to `master`  -> alpha flavor      -> internal track of the "BR Alpha" app
+# - Pushes to `release` -> production flavor -> internal track of the "Bloom Reader" app
+#
+# (The Play track is set to "internal" in app/build.gradle's `play {}` block;
+# promotion to other tracks is done manually in the Play Console or via the
+# promote*Artifact gradle tasks.)
+#
+# Required repository secrets:
+#   KEYSTORE_BASE64            base64 of keystore_bloom_reader.keystore
+#                              (e.g. `base64 -w0 keystore_bloom_reader.keystore`)
+#   KEYSTORE_STORE_PASSWORD    storePassword from keystore_bloom_reader.properties
+#   KEYSTORE_KEY_ALIAS         keyAlias from keystore_bloom_reader.properties
+#   KEYSTORE_KEY_PASSWORD      keyPassword from keystore_bloom_reader.properties
+#   PLAY_SERVICE_ACCOUNT_JSON  contents of the Google Play service account json file
+#   BLOOMLIBRARY_AWS_ACCESS_KEY_ID     credentials of the BloomLibrary AWS profile,
+#   BLOOMLIBRARY_AWS_SECRET_ACCESS_KEY used to upload the production APK and
+#                              version file to the bloomlibrary.org S3 bucket
+#
+# Optional repository variable:
+#   PLAY_DRY_RUN               set to "true" to build, sign, and upload to a Play
+#                              edit WITHOUT committing it — nothing becomes
+#                              visible in the Play Console. Use while verifying
+#                              this workflow; delete the variable to go live.
+#
+# Versioning: the patch number (3.4.NNN) is the number of commits since
+# versionMajor/versionMinor last changed in app/build.gradle, so it resets to 0
+# automatically when the version is bumped, and master (alpha) and release
+# (production) count independently. NOTE: build.gradle computes versionCode =
+# major*100000 + minor*1000 + patch, so patch must stay below 1000.
+
+name: Publish to Play Console
+
+on:
+  push:
+    branches: [master, release]
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: "Flavor to publish (both go to the internal track)"
+        type: choice
+        options: [Alpha, Production]
+        default: Alpha
+      patch:
+        description: "Override the patch number (default: commits since the last version bump, plus the +77 legacy alpha offset)"
+        type: string
+        required: false
+        default: ""
+
+# Never run two publishes at once; Play edits would race.
+concurrency:
+  group: play-publish
+  cancel-in-progress: false
+
+# contents: write lets the workflow push the release tag.
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history: the patch number is derived from it
+          fetch-tags: true # the tag step checks for existing release tags
+
+      - name: Determine flavor and build number
+        id: config
+        env:
+          PATCH_INPUT: ${{ inputs.patch }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            FLAVOR="${{ inputs.flavor }}"
+          elif [ "${{ github.ref }}" = "refs/heads/release" ]; then
+            FLAVOR="Production"
+          else
+            FLAVOR="Alpha"
+          fi
+          # Normalize the dry-run flag once; everything downstream uses the
+          # dry_run output so shell, gradle, and expression contexts cannot
+          # disagree (e.g. on a value like "True").
+          DRY_RUN=$(echo "${{ vars.PLAY_DRY_RUN }}" | tr '[:upper:]' '[:lower:]')
+          [ "$DRY_RUN" = "true" ] || DRY_RUN=false
+          echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
+          # A real publish must run from the flavor's own branch: the two
+          # branches have different commit counts, so publishing a flavor
+          # from the wrong branch corrupts that app's version numbering.
+          # Dry runs commit nothing to Play and may run from any branch.
+          if [ "$DRY_RUN" != "true" ]; then
+            if [ "$FLAVOR" = "Production" ] && [ "${{ github.ref }}" != "refs/heads/release" ]; then
+              echo "::error::A real Production publish must run from the release branch."
+              exit 1
+            fi
+            if [ "$FLAVOR" = "Alpha" ] && [ "${{ github.ref }}" != "refs/heads/master" ]; then
+              echo "::error::A real Alpha publish must run from the master branch."
+              exit 1
+            fi
+          fi
+          # The patch number counts commits since the last version bump (the
+          # last commit that changed the versionMajor/versionMinor lines in
+          # app/build.gradle), so bumping the version resets it to 0 on its
+          # own, and master (alpha) and release (production) count
+          # independently on their own branches.
+          if [ -n "$PATCH_INPUT" ]; then
+            if ! [[ "$PATCH_INPUT" =~ ^[0-9]+$ ]]; then
+              echo "::error::patch must be a plain number, got: $PATCH_INPUT"
+              exit 1
+            fi
+            BUILD_NUMBER="$PATCH_INPUT"
+          else
+            BUMP_COMMIT=$(git log -1 --format=%H -G'^def version(Major|Minor)' -- app/build.gradle)
+            if [ -z "$BUMP_COMMIT" ]; then
+              # Without this guard, an empty BUMP_COMMIT would make rev-list
+              # silently count 0 and publish a bogus x.y.0.
+              echo "::error::Could not find the version bump commit in app/build.gradle history."
+              exit 1
+            fi
+            BUILD_NUMBER=$(git rev-list --count "$BUMP_COMMIT..HEAD")
+            # Continuity with the old TeamCity build counter (alpha was at
+            # 3.4.103 when this workflow took over). Keyed to the 3.4 bump
+            # commit, so it expires by itself: the next version bump becomes
+            # the new BUMP_COMMIT and this no longer applies.
+            if [ "$BUMP_COMMIT" = "06dc6358a9a2ea410d5ce9bf6b39474177461618" ] && [ "$FLAVOR" = "Alpha" ]; then
+              BUILD_NUMBER=$(( BUILD_NUMBER + 77 ))
+            fi
+          fi
+          if [ "$BUILD_NUMBER" -gt 999 ]; then
+            echo "::error::patch $BUILD_NUMBER would overflow into the minor-version digits of versionCode"
+            exit 1
+          fi
+          # Gradle task lists mirror the TeamCity builds ("clean" omitted:
+          # the build dir doesn't exist on a fresh runner), plus the publish
+          # step. TC's production build stops at assemble (publishing was a
+          # separate manual step); here publishProductionRelease assembles
+          # and publishes to the internal track.
+          if [ "$FLAVOR" = "Alpha" ]; then
+            # The full "build" deliberately compiles, lints, and unit-tests
+            # every flavor and build type — each alpha run verifies that
+            # nothing is broken even in the variants we don't publish.
+            TASKS="build publishAlphaRelease promoteAlphaReleaseArtifact"
+          else
+            # APK-only for production: the "Bloom Reader" store listing is
+            # managed in the Play Console, and the listing text/graphics in
+            # app/src/main/play are years stale — a full publish task would
+            # overwrite the live listing with them.
+            TASKS="lintProductionRelease testProductionReleaseUnitTest publishProductionReleaseApk"
+          fi
+          MAJOR=$(sed -n 's/^def versionMajor = \([0-9]*\).*/\1/p' app/build.gradle)
+          MINOR=$(sed -n 's/^def versionMinor = \([0-9]*\).*/\1/p' app/build.gradle)
+          echo "flavor=$FLAVOR" >> "$GITHUB_OUTPUT"
+          echo "flavor_lc=${FLAVOR,,}" >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "version=$MAJOR.$MINOR.$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "tasks=$TASKS" >> "$GITHUB_OUTPUT"
+          echo "Publishing flavor $FLAVOR version $MAJOR.$MINOR.$BUILD_NUMBER (tasks: $TASKS)"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: app/yarn.lock
+
+      - name: Install bloom-player
+        working-directory: app
+        run: yarn install --frozen-lockfile
+
+      # Alpha builds always ship the latest alpha of bloom-player;
+      # production builds use the version locked in yarn.lock.
+      - name: Upgrade to latest bloom-player alpha
+        if: steps.config.outputs.flavor == 'Alpha'
+        working-directory: app
+        run: yarn upgrade bloom-player@alpha
+
+      - name: Set up signing and Play credentials
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTORE_STORE_PASSWORD }}
+          KEYSTORE_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
+          KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          # app/build.gradle reads ~/keystore/keystore_bloom_reader.properties
+          mkdir -p "$HOME/keystore"
+          echo "$KEYSTORE_BASE64" | base64 -d > "$HOME/keystore/keystore_bloom_reader.keystore"
+          printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > "$HOME/keystore/play-service-account.json"
+          cat > "$HOME/keystore/keystore_bloom_reader.properties" <<EOF
+          storeFile=$HOME/keystore/keystore_bloom_reader.keystore
+          storePassword=$KEYSTORE_STORE_PASSWORD
+          keyAlias=$KEYSTORE_KEY_ALIAS
+          keyPassword=$KEYSTORE_KEY_PASSWORD
+          serviceAccountJsonFile=$HOME/keystore/play-service-account.json
+          EOF
+
+      - name: Copy bloom-player assets
+        run: ./gradlew copyBloomPlayerAssets
+
+      - name: Build and publish to internal track
+        run: >
+          ./gradlew ${{ steps.config.outputs.tasks }}
+          "-Pbuild.number=${{ steps.config.outputs.build_number }}"
+          "-PplayDryRun=${{ steps.config.outputs.dry_run }}"
+
+      # bloomlibrary.org serves the production APK for direct download and
+      # reads the version file to know the latest version. Only reached if
+      # the publish above succeeded. Requiring the release ref (redundant
+      # with the branch guard above) keeps public-facing artifacts off any
+      # other branch, e.g. during workflow testing.
+      - name: Upload APK and version file to bloomlibrary.org S3
+        if: steps.config.outputs.flavor == 'Production' && steps.config.outputs.dry_run == 'false' && github.ref == 'refs/heads/release'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BLOOMLIBRARY_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BLOOMLIBRARY_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          printf '%s' "${{ steps.config.outputs.version }}" > bloomReaderVersionNumber.txt
+          aws s3 cp app/build/outputs/apk/production/release/app-production-release.apk \
+            s3://bloomlibrary.org/bloomReader/apks/release/latest/BloomReader.apk
+          aws s3 cp bloomReaderVersionNumber.txt \
+            s3://bloomlibrary.org/assets/bloomReaderVersionNumber.txt
+
+      # Only reached if the publish above succeeded. Release ref required
+      # for the same reason as the S3 step.
+      - name: Tag the released commit
+        if: steps.config.outputs.flavor == 'Production' && steps.config.outputs.dry_run == 'false' && github.ref == 'refs/heads/release'
+        run: |
+          TAG="v${{ steps.config.outputs.version }}"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            if [ "$(git rev-parse "refs/tags/$TAG^{commit}")" = "$(git rev-parse HEAD)" ]; then
+              echo "Tag $TAG already exists on this commit (re-run); nothing to do."
+              exit 0
+            fi
+            echo "::error::Tag $TAG already exists on a different commit."
+            exit 1
+          fi
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -rf "$HOME/keystore"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: bloomreader-${{ steps.config.outputs.flavor }}-${{ steps.config.outputs.build_number }}
+          # The build task assembles every flavor; only keep the one published.
+          path: app/build/outputs/apk/${{ steps.config.outputs.flavor_lc }}/release/*.apk
+          if-no-files-found: warn

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "//": "Developers need to `yarn upgrade bloom-player` to get the latest, because of yarn.lock. (TeamCity does this automatically.)",
+    "//": "Developers need to `yarn upgrade bloom-player` to get the latest, because of yarn.lock. (CI alpha builds do this automatically.)",
     "bloom-player": "^2.20.1"
   },
   "scripts": {},

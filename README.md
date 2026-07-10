@@ -104,7 +104,7 @@ At this point, anyone can publish a book using the existing Bloom mechanism, and
 ## Getting the Bloom Reader code dependencies
 
 BloomReader requires a number of files from the [bloom-player](https://github.com/BloomBooks/bloom-player.git) project. By default,
-and in the TeamCity build, these are obtained using yarn from the npm output of bloom-player.
+and in the CI build, these are obtained using yarn from the npm output of bloom-player.
 
 When building locally, if you need to make changes to bloom-player, you can use `yarn link`.
 
@@ -118,11 +118,14 @@ file to update the version number of bloom-player if needed.
 
 ## Flavors
 
-We build three flavors of the app:
+We build two flavors of the app:
 
 - alpha (`org.sil.bloom.reader.alpha`)
-- beta (`org.sil.bloom.reader.beta`)
 - production (`org.sil.bloom.reader`)
+
+(There was formerly a beta flavor (`org.sil.bloom.reader.beta`), but the Play
+Store shut down the BR Beta app; its definition is commented out in
+app/build.gradle.)
 
 ## Debug builds
 
@@ -144,9 +147,9 @@ The contents of this file are:
 
 where `storeFile` is an absolute path to `keystore_bloom_reader.keystore`. This file and the other values must be shared with you by a member of the team who has them.
 
-## TeamCity builds (and deploying to the Play Store)
+## Deploying to the Play Store
 
-To publish to the Play Store, we use a gradle plugin: `https://github.com/Triple-T/gradle-play-publisher`. To use the plugin, you must add `serviceAccountJsonFile=` to the `.properties` file described above. Set the value as an absolute path to the `Google Play Android Developer-cf6d1afc73be.json` file which you must obtain from a member of the team.
+To publish to the Play Store, we use a gradle plugin: `https://github.com/Triple-T/gradle-play-publisher`. To use the plugin locally, you must add `serviceAccountJsonFile=` to the `.properties` file described above. Set the value as an absolute path to the `Google Play Android Developer-cf6d1afc73be.json` file which you must obtain from a member of the team.
 
 Gradle tasks which can be called with the plugin include:
 
@@ -157,13 +160,68 @@ Gradle tasks which can be called with the plugin include:
 - publish{Alpha/Beta/Production}ReleaseListing
   - pushes only the listing metadata to the Play Store
 
-TeamCity builds are configured to publish the alpha, beta, and production flavors to three respective apps on the Play Store.
+### CI/CD (GitHub Actions)
 
-- The alpha build is a continuous publish to the internal test and alpha tracks of the "BR Alpha" app.
-- The beta build is a manual publish to the internal test and beta tracks of the "BR Beta" app.
-- The production build is a manual publish to the internal test track of the "Bloom Reader" app. Currently, releases need to be promoted to production manually in the Play Console.
+Publishing is automated by the GitHub Actions workflow
+[.github/workflows/play-publish.yml](.github/workflows/play-publish.yml):
 
-The `ba-bloom-win10` (in the Bloom pool) is currently the only agent configured with the `.properties` file described above.
+- Every push to `master` builds the **alpha** flavor — first upgrading to the
+  latest `bloom-player@alpha` — runs the full `build` (deliberately compiling,
+  linting, and unit-testing every flavor and build type, so each alpha run
+  verifies nothing is broken even in variants we don't publish), publishes to
+  the internal track of the "BR Alpha" Play app, and then promotes it per the
+  `play {}` config in app/build.gradle.
+- Every push to `release` runs lint and unit tests, builds the **production**
+  flavor (using the bloom-player version pinned in app/yarn.lock), publishes
+  the APK (only — the store listing is managed in the Play Console, not the
+  repo) to the internal track of the "Bloom Reader" Play app, uploads the APK
+  and a version-number file to the bloomlibrary.org S3 bucket (which serves
+  the APK for direct download), and tags the commit `vX.Y.Z`. Promoting from
+  the internal track to production is still a manual step in the Play Console.
+- The workflow can also be dispatched manually from the Actions tab (choose a
+  flavor; optionally override the patch number). A real publish must be
+  dispatched from the flavor's own branch; dry runs may run from any branch.
+
+#### Version numbers
+
+`versionMajor` and `versionMinor` are defined in app/build.gradle. CI derives
+the patch number (the x in 3.4.x) by counting the commits since the last
+commit that changed those two lines. Consequences:
+
+- Bumping the version resets the patch to 0 automatically — to start 3.5,
+  just change `versionMinor` and commit. (But don't touch those lines for any
+  other reason, e.g. reformatting: that also resets the patch counter.)
+- `master` (alpha) and `release` (production) have independent patch numbers.
+- versionCode = major\*100000 + minor\*1000 + patch, so the patch must stay
+  below 1000; the workflow fails if it would overflow.
+- Until the next version bump, alpha patch numbers include a hardcoded +77
+  offset for continuity with the old TeamCity build counter. It is keyed to
+  the 3.4 bump commit and expires on its own (see the workflow).
+
+#### The legacy 1.4 APK
+
+Every production release retains the legacy 1.4 APK (versionCode 104001) so
+that devices below the current minSdkVersion keep a working app (see
+`playConfigs` in app/build.gradle). A production release must never be
+published without it: re-adding an APK that targets an old API level may not
+be possible under current Play requirements.
+
+#### Secrets and configuration
+
+The workflow requires these GitHub repository secrets:
+
+- `KEYSTORE_BASE64` — base64 of `keystore_bloom_reader.keystore`
+- `KEYSTORE_STORE_PASSWORD`, `KEYSTORE_KEY_ALIAS`, `KEYSTORE_KEY_PASSWORD` —
+  the corresponding values from `keystore_bloom_reader.properties`
+- `PLAY_SERVICE_ACCOUNT_JSON` — the contents of the service account json file
+- `BLOOMLIBRARY_AWS_ACCESS_KEY_ID`, `BLOOMLIBRARY_AWS_SECRET_ACCESS_KEY` —
+  credentials of the BloomLibrary AWS profile, used to upload the production
+  APK and version file to the bloomlibrary.org S3 bucket
+
+Setting the repository **variable** `PLAY_DRY_RUN` to `true` makes every run
+build, sign, and upload to a Play edit without committing it, so nothing
+becomes visible in the Play Console. Use it when verifying changes to the
+workflow; delete the variable to resume real publishing.
 
 # Localization
 

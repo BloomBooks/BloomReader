@@ -4,6 +4,9 @@ plugins {
 }
 
 // This is the master definition of what version of Bloom Reader we are building
+// NOTE: CI derives the patch number by counting commits since the last commit
+// that changed the two lines below, so any edit to them (even reformatting)
+// resets the published patch number to 0. Touch them only to bump the version.
 def versionMajor = 3
 def versionMinor = 4
 def versionRelease = getVersionRelease()
@@ -80,12 +83,14 @@ android {
             signingConfig signingConfigs.release
             dimension 'default'
         }
-        beta {
-            applicationIdSuffix ".beta"
-            versionNameSuffix "-beta"
-            signingConfig signingConfigs.release
-            dimension 'default'
-        }
+        // We don't currently publish a beta; the Play Store shut down the
+        // BR Beta app. Restore this block if that ever changes.
+        // beta {
+        //     applicationIdSuffix ".beta"
+        //     versionNameSuffix "-beta"
+        //     signingConfig signingConfigs.release
+        //     dimension 'default'
+        // }
         production {
             // no id or version name suffix; this is the main product.
             signingConfig signingConfigs.release
@@ -108,6 +113,21 @@ android {
         // Used for the promote*Artifact tasks
         fromTrack = "internal"
         promoteTrack = "beta"
+
+        // CI passes -PplayDryRun=true to build, sign, and upload to a Play
+        // edit without committing it, so nothing changes in the Play Console.
+        commit = findProperty('playDryRun') != 'true'
+    }
+
+    playConfigs {
+        production {
+            // Each production release must continue to offer the legacy 1.4
+            // build (versionCode 104001) so devices below our current
+            // minSdkVersion keep getting a working app. Retaining it here
+            // means every publish includes it automatically instead of
+            // relying on a manual step in the Play Console.
+            retain.artifacts = [104001L]
+        }
     }
 
     testOptions {
@@ -119,6 +139,31 @@ android {
     namespace 'org.sil.bloom.reader'
     buildFeatures {
         buildConfig true
+    }
+}
+
+// Fail any production publish that is not going to retain the legacy 1.4 APK
+// (see the playConfigs block above) rather than let a release silently drop
+// it -- e.g. if a gradle-play-publisher upgrade changes how retain is
+// configured or applied. This reads the merged config off the publish task
+// itself (the value the task will actually use). The hasProperty filter
+// skips the plugin's plain "...Wrapper" companion tasks, which carry no
+// config; the isEmpty check keeps this loud if a plugin upgrade renames
+// everything and the filter no longer matches any task at all.
+project.afterEvaluate {
+    def guarded = tasks.findAll {
+        it.name.startsWith('publishProduction') && it.hasProperty('extension')
+    }
+    if (guarded.isEmpty()) {
+        throw new GradleException("Found no gradle-play-publisher production publish tasks to guard. Did a plugin upgrade change task or property names? Update the legacy-1.4-APK retain check (near playConfigs in app/build.gradle) to match.")
+    }
+    guarded.each { task ->
+        task.doFirst {
+            def retained = task.extension.retain.artifacts
+            if (retained == null || !retained.contains(104001L)) {
+                throw new GradleException("${task.name} is not configured to retain the legacy 1.4 APK (versionCode 104001). See playConfigs in app/build.gradle.")
+            }
+        }
     }
 }
 
@@ -195,4 +240,4 @@ project.afterEvaluate {
 //    preBuild.dependsOn copyBloomPlayerAssets
 //}
 // But, if we do that, we can't overwrite the bloom-player assets temporarily for testing versions under development.
-// Instead, TeamCity will need build steps to cd app, yarn, cd .., "gradle copyBloomPlayerAssets"
+// Instead, the CI build needs steps to cd app, yarn, cd .., "gradle copyBloomPlayerAssets"

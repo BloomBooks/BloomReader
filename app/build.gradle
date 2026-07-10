@@ -4,6 +4,9 @@ plugins {
 }
 
 // This is the master definition of what version of Bloom Reader we are building
+// NOTE: CI derives the patch number by counting commits since the last commit
+// that changed the two lines below, so any edit to them (even reformatting)
+// resets the published patch number to 0. Touch them only to bump the version.
 def versionMajor = 3
 def versionMinor = 4
 def versionRelease = getVersionRelease()
@@ -108,6 +111,21 @@ android {
         // Used for the promote*Artifact tasks
         fromTrack = "internal"
         promoteTrack = "beta"
+
+        // CI passes -PplayDryRun=true to build, sign, and upload to a Play
+        // edit without committing it, so nothing changes in the Play Console.
+        commit = findProperty('playDryRun') != 'true'
+    }
+
+    playConfigs {
+        production {
+            // Each production release must continue to offer the legacy 1.4
+            // build (versionCode 104001) so devices below our current
+            // minSdkVersion keep getting a working app. Retaining it here
+            // means every publish includes it automatically instead of
+            // relying on a manual step in the Play Console.
+            retain.artifacts = [104001L]
+        }
     }
 
     testOptions {
@@ -195,4 +213,4 @@ project.afterEvaluate {
 //    preBuild.dependsOn copyBloomPlayerAssets
 //}
 // But, if we do that, we can't overwrite the bloom-player assets temporarily for testing versions under development.
-// Instead, TeamCity will need build steps to cd app, yarn, cd .., "gradle copyBloomPlayerAssets"
+// Instead, the CI build needs steps to cd app, yarn, cd .., "gradle copyBloomPlayerAssets"

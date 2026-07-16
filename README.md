@@ -151,14 +151,18 @@ where `storeFile` is an absolute path to `keystore_bloom_reader.keystore`. This 
 
 To publish to the Play Store, we use a gradle plugin: `https://github.com/Triple-T/gradle-play-publisher`. To use the plugin locally, you must add `serviceAccountJsonFile=` to the `.properties` file described above. Set the value as an absolute path to the `Google Play Android Developer-cf6d1afc73be.json` file which you must obtain from a member of the team.
 
-Gradle tasks which can be called with the plugin include:
+Gradle tasks which can be called with the plugin include (run
+`./gradlew tasks --group publishing` for the full list):
 
-- publish{Alpha/Beta/Production}Release
+- publish{Alpha/Production}ReleaseApps
   - pushes both the apk and listing metadata to the Play Store
-- publish{Alpha/Beta/Production}ReleaseApk
+- publish{Alpha/Production}ReleaseApk
   - pushes only the apk to the Play Store
-- publish{Alpha/Beta/Production}ReleaseListing
+- publish{Alpha/Production}ReleaseListing
   - pushes only the listing metadata to the Play Store
+- promote{Alpha/Production}ReleaseArtifact
+  - promotes a release between tracks (see fromTrack/promoteTrack in
+    app/build.gradle)
 
 ### CI/CD (GitHub Actions)
 
@@ -194,9 +198,14 @@ commit that changed those two lines. Consequences:
 - `master` (alpha) and `release` (production) have independent patch numbers.
 - versionCode = major\*100000 + minor\*1000 + patch, so the patch must stay
   below 1000; the workflow fails if it would overflow.
-- Until the next version bump, alpha patch numbers include a hardcoded +77
-  offset for continuity with the old TeamCity build counter. It is keyed to
-  the 3.4 bump commit and expires on its own (see the workflow).
+- Alpha is sometimes rebuilt with no new commit (e.g. when a bloom-player
+  update dispatches the workflow), which would reuse the same versionCode.
+  The alpha flavor therefore uses gradle-play-publisher's
+  `resolutionStrategy = AUTO` (see `playConfigs` in app/build.gradle): each
+  publish uses max(derived number, highest on Play + 1), and the version name
+  is kept in sync with the final code. Production deliberately keeps the
+  strict default (FAIL): it is never rebuilt without a commit, so a duplicate
+  versionCode there means something is wrong and the publish fails loudly.
 
 #### The legacy 1.4 APK
 

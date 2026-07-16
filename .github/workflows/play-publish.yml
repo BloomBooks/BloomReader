@@ -27,8 +27,12 @@
 # Versioning: the patch number (3.4.NNN) is the number of commits since
 # versionMajor/versionMinor last changed in app/build.gradle, so it resets to 0
 # automatically when the version is bumped, and master (alpha) and release
-# (production) count independently. NOTE: build.gradle computes versionCode =
-# major*100000 + minor*1000 + patch, so patch must stay below 1000.
+# (production) count independently. For alpha, gradle-play-publisher's
+# resolutionStrategy AUTO (see playConfigs in app/build.gradle) additionally
+# floors the published versionCode at (Play's highest uploaded code + 1), so
+# rebuilds with no new commit (e.g. dispatched after a bloom-player update)
+# still publish. NOTE: build.gradle computes versionCode = major*100000 +
+# minor*1000 + patch, so patch must stay below 1000.
 
 name: Publish to Play Console
 
@@ -43,7 +47,7 @@ on:
         options: [Alpha, Production]
         default: Alpha
       patch:
-        description: "Override the patch number (default: commits since the last version bump, plus the +77 legacy alpha offset)"
+        description: "Override the patch number (default: commits since the last version bump; alpha additionally bumps past Play's highest versionCode)"
         type: string
         required: false
         default: ""
@@ -118,13 +122,6 @@ jobs:
               exit 1
             fi
             BUILD_NUMBER=$(git rev-list --count "$BUMP_COMMIT..HEAD")
-            # Continuity with the old TeamCity build counter (alpha was at
-            # 3.4.103 when this workflow took over). Keyed to the 3.4 bump
-            # commit, so it expires by itself: the next version bump becomes
-            # the new BUMP_COMMIT and this no longer applies.
-            if [ "$BUMP_COMMIT" = "06dc6358a9a2ea410d5ce9bf6b39474177461618" ] && [ "$FLAVOR" = "Alpha" ]; then
-              BUILD_NUMBER=$(( BUILD_NUMBER + 77 ))
-            fi
           fi
           if [ "$BUILD_NUMBER" -gt 999 ]; then
             echo "::error::patch $BUILD_NUMBER would overflow into the minor-version digits of versionCode"
@@ -139,7 +136,7 @@ jobs:
             # The full "build" deliberately compiles, lints, and unit-tests
             # every flavor and build type — each alpha run verifies that
             # nothing is broken even in the variants we don't publish.
-            TASKS="build publishAlphaRelease promoteAlphaReleaseArtifact"
+            TASKS="build publishAlphaReleaseApps promoteAlphaReleaseArtifact"
           else
             # APK-only for production: the "Bloom Reader" store listing is
             # managed in the Play Console, and the listing text/graphics in
@@ -152,9 +149,8 @@ jobs:
           echo "flavor=$FLAVOR" >> "$GITHUB_OUTPUT"
           echo "flavor_lc=${FLAVOR,,}" >> "$GITHUB_OUTPUT"
           echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "version=$MAJOR.$MINOR.$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
           echo "tasks=$TASKS" >> "$GITHUB_OUTPUT"
-          echo "Publishing flavor $FLAVOR version $MAJOR.$MINOR.$BUILD_NUMBER (tasks: $TASKS)"
+          echo "Derived version $MAJOR.$MINOR.$BUILD_NUMBER for flavor $FLAVOR (tasks: $TASKS)"
 
       - uses: actions/setup-java@v5
         with:
@@ -199,7 +195,6 @@ jobs:
           keyPassword=$KEYSTORE_KEY_PASSWORD
           serviceAccountJsonFile=$HOME/keystore/play-service-account.json
           EOF
-
       - name: Copy bloom-player assets
         run: ./gradlew copyBloomPlayerAssets
 
@@ -208,6 +203,19 @@ jobs:
           ./gradlew ${{ steps.config.outputs.tasks }}
           "-Pbuild.number=${{ steps.config.outputs.build_number }}"
           "-PplayDryRun=${{ steps.config.outputs.dry_run }}"
+
+      # Alpha uses gradle-play-publisher's resolutionStrategy AUTO (see
+      # playConfigs in app/build.gradle), so a rebuild with no new commits
+      # publishes a higher version than the git-derived one. Read the final
+      # values from the build output; for production (strategy FAIL) they
+      # always equal the derived ones.
+      - name: Read published version
+        id: published
+        run: |
+          META="app/build/outputs/apk/${{ steps.config.outputs.flavor_lc }}/release/output-metadata.json"
+          VERSION_NAME=$(jq -r '.elements[0].versionName' "$META")
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "Published versionName $VERSION_NAME (versionCode $(jq -r '.elements[0].versionCode' "$META"))"
 
       # bloomlibrary.org serves the production APK for direct download and
       # reads the version file to know the latest version. Only reached if
@@ -221,7 +229,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.BLOOMLIBRARY_AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: us-east-1
         run: |
-          printf '%s' "${{ steps.config.outputs.version }}" > bloomReaderVersionNumber.txt
+          printf '%s' "${{ steps.published.outputs.version_name }}" > bloomReaderVersionNumber.txt
           aws s3 cp app/build/outputs/apk/production/release/app-production-release.apk \
             s3://bloomlibrary.org/bloomReader/apks/release/latest/BloomReader.apk
           aws s3 cp bloomReaderVersionNumber.txt \
@@ -232,7 +240,7 @@ jobs:
       - name: Tag the released commit
         if: steps.config.outputs.flavor == 'Production' && steps.config.outputs.dry_run == 'false' && github.ref == 'refs/heads/release'
         run: |
-          TAG="v${{ steps.config.outputs.version }}"
+          TAG="v${{ steps.published.outputs.version_name }}"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             if [ "$(git rev-parse "refs/tags/$TAG^{commit}")" = "$(git rev-parse HEAD)" ]; then
               echo "Tag $TAG already exists on this commit (re-run); nothing to do."
@@ -251,7 +259,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
         with:
-          name: bloomreader-${{ steps.config.outputs.flavor }}-${{ steps.config.outputs.build_number }}
+          name: bloomreader-${{ steps.published.outputs.version_name }}
           # The build task assembles every flavor; only keep the one published.
           path: app/build/outputs/apk/${{ steps.config.outputs.flavor_lc }}/release/*.apk
           if-no-files-found: warn

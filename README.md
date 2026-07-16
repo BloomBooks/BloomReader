@@ -151,14 +151,18 @@ where `storeFile` is an absolute path to `keystore_bloom_reader.keystore`. This 
 
 To publish to the Play Store, we use a gradle plugin: `https://github.com/Triple-T/gradle-play-publisher`. To use the plugin locally, you must add `serviceAccountJsonFile=` to the `.properties` file described above. Set the value as an absolute path to the `Google Play Android Developer-cf6d1afc73be.json` file which you must obtain from a member of the team.
 
-Gradle tasks which can be called with the plugin include:
+Gradle tasks which can be called with the plugin include (run
+`./gradlew tasks --group publishing` for the full list):
 
-- publish{Alpha/Beta/Production}Release
+- publish{Alpha/Production}ReleaseApps
   - pushes both the apk and listing metadata to the Play Store
-- publish{Alpha/Beta/Production}ReleaseApk
+- publish{Alpha/Production}ReleaseApk
   - pushes only the apk to the Play Store
-- publish{Alpha/Beta/Production}ReleaseListing
+- publish{Alpha/Production}ReleaseListing
   - pushes only the listing metadata to the Play Store
+- promote{Alpha/Production}ReleaseArtifact
+  - promotes a release between tracks (see fromTrack/promoteTrack in
+    app/build.gradle)
 
 ### CI/CD (GitHub Actions)
 

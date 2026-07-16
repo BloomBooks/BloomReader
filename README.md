@@ -196,13 +196,12 @@ commit that changed those two lines. Consequences:
   below 1000; the workflow fails if it would overflow.
 - Alpha is sometimes rebuilt with no new commit (e.g. when a bloom-player
   update dispatches the workflow), which would reuse the same versionCode.
-  Before running gradle, the workflow therefore asks the Play API for the
-  alpha app's highest uploaded versionCode and uses max(derived number,
-  highest + 1). Production is deliberately not adjusted: it is never rebuilt
-  without a commit, so a duplicate versionCode there means something is wrong
-  and the publish fails loudly. (gradle-play-publisher 2.8's built-in
-  `resolutionStrategy = "auto"` cannot be used for this: it overrides the
-  version at task-execution time, which AGP 8 forbids.)
+  The alpha flavor therefore uses gradle-play-publisher's
+  `resolutionStrategy = AUTO` (see `playConfigs` in app/build.gradle): each
+  publish uses max(derived number, highest on Play + 1), and the version name
+  is kept in sync with the final code. Production deliberately keeps the
+  strict default (FAIL): it is never rebuilt without a commit, so a duplicate
+  versionCode there means something is wrong and the publish fails loudly.
 
 #### The legacy 1.4 APK
 

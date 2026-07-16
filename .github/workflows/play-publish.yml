@@ -27,11 +27,12 @@
 # Versioning: the patch number (3.4.NNN) is the number of commits since
 # versionMajor/versionMinor last changed in app/build.gradle, so it resets to 0
 # automatically when the version is bumped, and master (alpha) and release
-# (production) count independently. Alpha additionally floors its number at
-# (Play's highest uploaded versionCode + 1), so rebuilds with no new commit
-# (e.g. dispatched after a bloom-player update) still publish. NOTE:
-# build.gradle computes versionCode = major*100000 + minor*1000 + patch, so
-# patch must stay below 1000.
+# (production) count independently. For alpha, gradle-play-publisher's
+# resolutionStrategy AUTO (see playConfigs in app/build.gradle) additionally
+# floors the published versionCode at (Play's highest uploaded code + 1), so
+# rebuilds with no new commit (e.g. dispatched after a bloom-player update)
+# still publish. NOTE: build.gradle computes versionCode = major*100000 +
+# minor*1000 + patch, so patch must stay below 1000.
 
 name: Publish to Play Console
 
@@ -112,7 +113,6 @@ jobs:
               exit 1
             fi
             BUILD_NUMBER="$PATCH_INPUT"
-            echo "patch_overridden=true" >> "$GITHUB_OUTPUT"
           else
             BUMP_COMMIT=$(git log -1 --format=%H -G'^def version(Major|Minor)' -- app/build.gradle)
             if [ -z "$BUMP_COMMIT" ]; then
@@ -136,7 +136,7 @@ jobs:
             # The full "build" deliberately compiles, lints, and unit-tests
             # every flavor and build type — each alpha run verifies that
             # nothing is broken even in the variants we don't publish.
-            TASKS="build publishAlphaRelease promoteAlphaReleaseArtifact"
+            TASKS="build publishAlphaReleaseApps promoteAlphaReleaseArtifact"
           else
             # APK-only for production: the "Bloom Reader" store listing is
             # managed in the Play Console, and the listing text/graphics in
@@ -148,8 +148,6 @@ jobs:
           MINOR=$(sed -n 's/^def versionMinor = \([0-9]*\).*/\1/p' app/build.gradle)
           echo "flavor=$FLAVOR" >> "$GITHUB_OUTPUT"
           echo "flavor_lc=${FLAVOR,,}" >> "$GITHUB_OUTPUT"
-          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
-          echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
           echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
           echo "tasks=$TASKS" >> "$GITHUB_OUTPUT"
           echo "Derived version $MAJOR.$MINOR.$BUILD_NUMBER for flavor $FLAVOR (tasks: $TASKS)"
@@ -197,79 +195,27 @@ jobs:
           keyPassword=$KEYSTORE_KEY_PASSWORD
           serviceAccountJsonFile=$HOME/keystore/play-service-account.json
           EOF
-
-      # Alpha is sometimes rebuilt with no new commit (e.g. when a
-      # bloom-player update dispatches this workflow), which would reuse the
-      # same derived patch number and be rejected by Play as a duplicate
-      # versionCode. Ask Play for the highest versionCode already uploaded to
-      # the alpha app and use max(derived, highest + 1).
-      # (gradle-play-publisher 2.8's built-in resolutionStrategy "auto" does
-      # the same thing but at task-execution time, which throws under AGP 8 —
-      # the variant version properties are locked after configuration — so we
-      # resolve the number here, before gradle runs.)
-      # Production is deliberately not adjusted: it is never rebuilt without
-      # a commit, so a duplicate versionCode there means something is wrong
-      # and the publish should fail loudly.
-      - name: Resolve final patch number
-        id: version
-        run: |
-          BUILD_NUMBER="${{ steps.config.outputs.build_number }}"
-          MAJOR="${{ steps.config.outputs.major }}"
-          MINOR="${{ steps.config.outputs.minor }}"
-          # An explicit patch override (manual dispatch) is used exactly as
-          # given — no Play adjustment.
-          if [ "${{ steps.config.outputs.flavor }}" = "Alpha" ] && [ "${{ steps.config.outputs.patch_overridden }}" != "true" ]; then
-            SA="$HOME/keystore/play-service-account.json"
-            b64() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
-            EMAIL=$(jq -r .client_email "$SA")
-            NOW=$(date +%s)
-            HDR=$(printf '{"alg":"RS256","typ":"JWT"}' | b64)
-            CLM=$(printf '{"iss":"%s","scope":"https://www.googleapis.com/auth/androidpublisher","aud":"https://oauth2.googleapis.com/token","iat":%d,"exp":%d}' "$EMAIL" "$NOW" $((NOW+3600)) | b64)
-            jq -r .private_key "$SA" > "$RUNNER_TEMP/sa.key"
-            SIG=$(printf '%s.%s' "$HDR" "$CLM" | openssl dgst -sha256 -sign "$RUNNER_TEMP/sa.key" -binary | b64)
-            rm "$RUNNER_TEMP/sa.key"
-            TOKEN=$(curl -sf -X POST https://oauth2.googleapis.com/token \
-              -d "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=$HDR.$CLM.$SIG" | jq -r .access_token)
-            if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
-              echo "::error::Could not get a Play API token to check for versionCode collisions."
-              exit 1
-            fi
-            BASE="https://androidpublisher.googleapis.com/androidpublisher/v3/applications/org.sil.bloom.reader.alpha"
-            EDIT=$(curl -sf -X POST -H "Authorization: Bearer $TOKEN" "$BASE/edits" | jq -r .id)
-            if [ -z "$EDIT" ] || [ "$EDIT" = "null" ]; then
-              echo "::error::Could not open a Play edit to check for versionCode collisions."
-              exit 1
-            fi
-            # Delete the edit even if the list call fails (this shell runs
-            # with -e, so without the trap a failure would skip the cleanup
-            # and orphan the edit).
-            trap 'curl -s -X DELETE -H "Authorization: Bearer $TOKEN" "$BASE/edits/$EDIT" >/dev/null 2>&1 || true' EXIT
-            MAX_CODE=$(curl -sf -H "Authorization: Bearer $TOKEN" "$BASE/edits/$EDIT/apks" | jq '[.apks[]?.versionCode] | max // 0')
-            curl -s -X DELETE -H "Authorization: Bearer $TOKEN" "$BASE/edits/$EDIT" >/dev/null || true
-            trap - EXIT
-            DERIVED_CODE=$(( MAJOR * 100000 + MINOR * 1000 + BUILD_NUMBER ))
-            echo "Highest versionCode on Play: $MAX_CODE; derived: $DERIVED_CODE"
-            if [ "$DERIVED_CODE" -le "$MAX_CODE" ]; then
-              BUILD_NUMBER=$(( MAX_CODE - MAJOR * 100000 - MINOR * 1000 + 1 ))
-              if [ "$BUILD_NUMBER" -lt 1 ] || [ "$BUILD_NUMBER" -gt 999 ]; then
-                echo "::error::Bumped patch $BUILD_NUMBER is out of range; Play's highest versionCode $MAX_CODE is outside the current $MAJOR.$MINOR version block."
-                exit 1
-              fi
-              echo "Derived versionCode collides; bumping patch to $BUILD_NUMBER"
-            fi
-          fi
-          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "version=$MAJOR.$MINOR.$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "Final version: $MAJOR.$MINOR.$BUILD_NUMBER"
-
       - name: Copy bloom-player assets
         run: ./gradlew copyBloomPlayerAssets
 
       - name: Build and publish to internal track
         run: >
           ./gradlew ${{ steps.config.outputs.tasks }}
-          "-Pbuild.number=${{ steps.version.outputs.build_number }}"
+          "-Pbuild.number=${{ steps.config.outputs.build_number }}"
           "-PplayDryRun=${{ steps.config.outputs.dry_run }}"
+
+      # Alpha uses gradle-play-publisher's resolutionStrategy AUTO (see
+      # playConfigs in app/build.gradle), so a rebuild with no new commits
+      # publishes a higher version than the git-derived one. Read the final
+      # values from the build output; for production (strategy FAIL) they
+      # always equal the derived ones.
+      - name: Read published version
+        id: published
+        run: |
+          META="app/build/outputs/apk/${{ steps.config.outputs.flavor_lc }}/release/output-metadata.json"
+          VERSION_NAME=$(jq -r '.elements[0].versionName' "$META")
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "Published versionName $VERSION_NAME (versionCode $(jq -r '.elements[0].versionCode' "$META"))"
 
       # bloomlibrary.org serves the production APK for direct download and
       # reads the version file to know the latest version. Only reached if
@@ -283,7 +229,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.BLOOMLIBRARY_AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: us-east-1
         run: |
-          printf '%s' "${{ steps.version.outputs.version }}" > bloomReaderVersionNumber.txt
+          printf '%s' "${{ steps.published.outputs.version_name }}" > bloomReaderVersionNumber.txt
           aws s3 cp app/build/outputs/apk/production/release/app-production-release.apk \
             s3://bloomlibrary.org/bloomReader/apks/release/latest/BloomReader.apk
           aws s3 cp bloomReaderVersionNumber.txt \
@@ -294,7 +240,7 @@ jobs:
       - name: Tag the released commit
         if: steps.config.outputs.flavor == 'Production' && steps.config.outputs.dry_run == 'false' && github.ref == 'refs/heads/release'
         run: |
-          TAG="v${{ steps.version.outputs.version }}"
+          TAG="v${{ steps.published.outputs.version_name }}"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             if [ "$(git rev-parse "refs/tags/$TAG^{commit}")" = "$(git rev-parse HEAD)" ]; then
               echo "Tag $TAG already exists on this commit (re-run); nothing to do."
@@ -313,7 +259,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
         with:
-          name: bloomreader-${{ steps.config.outputs.flavor }}-${{ steps.version.outputs.build_number }}
+          name: bloomreader-${{ steps.published.outputs.version_name }}
           # The build task assembles every flavor; only keep the one published.
           path: app/build/outputs/apk/${{ steps.config.outputs.flavor_lc }}/release/*.apk
           if-no-files-found: warn

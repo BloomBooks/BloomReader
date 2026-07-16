@@ -1,7 +1,9 @@
 plugins {
     id 'com.android.application'
-    id 'com.github.triplet.play' version '2.8.0'
+    id 'com.github.triplet.play' version '3.13.0'
 }
+
+import com.github.triplet.gradle.androidpublisher.ResolutionStrategy
 
 // This is the master definition of what version of Bloom Reader we are building
 // NOTE: CI derives the patch number by counting commits since the last commit
@@ -101,9 +103,10 @@ android {
     play {
         if (keystoreProperties) {
             serviceAccountCredentials = file(keystoreProperties['serviceAccountJsonFile'])
-        } else {
-            serviceAccountCredentials = file("dummy.json")
         }
+        // (When no credentials file is configured, publish tasks simply can't
+        // run; building is unaffected. CI could alternatively use the
+        // ANDROID_PUBLISHER_CREDENTIALS environment variable.)
 
         // We default to always uploading to internal initially. This makes the new apk
         // available much sooner for testing. Then we can promote it to whichever channel we
@@ -120,20 +123,26 @@ android {
     }
 
     playConfigs {
-        // NOTE: do not be tempted by gradle-play-publisher 2.8's
-        // resolutionStrategy = "auto" for handling versionCode collisions: it
-        // sets versionCodeOverride at task-execution time, and under AGP 8
-        // the variant version properties are locked after configuration, so
-        // every publish would fail with "The value for this property cannot
-        // be changed any further." The CI workflow instead resolves the
-        // final patch number against the Play API before gradle runs.
+        alpha {
+            // Alpha is sometimes rebuilt with no new commit (e.g. when a
+            // bloom-player update dispatches the CI workflow), which would
+            // reuse the same derived versionCode and be rejected by Play as
+            // a duplicate. AUTO asks Play for the highest uploaded code and
+            // publishes max(local, highest + 1); the version name is kept in
+            // sync by the androidComponents block below. Gated on
+            // credentials so local builds (which can't publish anyway) don't
+            // acquire a Play API dependency. Production deliberately keeps
+            // the default (FAIL): it is never rebuilt without a commit, so a
+            // duplicate there means something is wrong.
+            resolutionStrategy = keystoreProperties ? ResolutionStrategy.AUTO : ResolutionStrategy.FAIL
+        }
         production {
             // Each production release must continue to offer the legacy 1.4
             // build (versionCode 104001) so devices below our current
             // minSdkVersion keep getting a working app. Retaining it here
             // means every publish includes it automatically instead of
             // relying on a manual step in the Play Console.
-            retain.artifacts = [104001L]
+            retain.artifacts.set([104001L])
         }
     }
 
@@ -149,14 +158,30 @@ android {
     }
 }
 
+// Keep the alpha version name in sync with the version code that
+// gradle-play-publisher's AUTO resolution may bump (see playConfigs above).
+// This is the plugin's documented pattern: with AUTO, output.versionCode
+// becomes a provider of the final resolved code.
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        if (variant.flavorName == "alpha") {
+            variant.outputs.each { output ->
+                output.versionName.set(output.versionCode.map { code ->
+                    "${code.intdiv(100000)}.${(code % 100000).intdiv(1000)}.${code % 1000}-alpha"
+                })
+            }
+        }
+    }
+}
+
 // Fail any production publish that is not going to retain the legacy 1.4 APK
 // (see the playConfigs block above) rather than let a release silently drop
 // it -- e.g. if a gradle-play-publisher upgrade changes how retain is
 // configured or applied. This reads the merged config off the publish task
 // itself (the value the task will actually use). The hasProperty filter
-// skips the plugin's plain "...Wrapper" companion tasks, which carry no
-// config; the isEmpty check keeps this loud if a plugin upgrade renames
-// everything and the filter no longer matches any task at all.
+// skips the plugin's plain lifecycle/companion tasks, which carry no config;
+// the isEmpty check keeps this loud if a plugin upgrade renames everything
+// and the filter no longer matches any task at all.
 project.afterEvaluate {
     def guarded = tasks.findAll {
         it.name.startsWith('publishProduction') && it.hasProperty('extension')
@@ -166,8 +191,8 @@ project.afterEvaluate {
     }
     guarded.each { task ->
         task.doFirst {
-            def retained = task.extension.retain.artifacts
-            if (retained == null || !retained.contains(104001L)) {
+            def retained = task.extension.retain.artifacts.getOrElse([])
+            if (!retained.contains(104001L)) {
                 throw new GradleException("${task.name} is not configured to retain the legacy 1.4 APK (versionCode 104001). See playConfigs in app/build.gradle.")
             }
         }

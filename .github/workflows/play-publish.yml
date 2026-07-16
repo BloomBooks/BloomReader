@@ -236,8 +236,17 @@ jobs:
             fi
             BASE="https://androidpublisher.googleapis.com/androidpublisher/v3/applications/org.sil.bloom.reader.alpha"
             EDIT=$(curl -sf -X POST -H "Authorization: Bearer $TOKEN" "$BASE/edits" | jq -r .id)
+            if [ -z "$EDIT" ] || [ "$EDIT" = "null" ]; then
+              echo "::error::Could not open a Play edit to check for versionCode collisions."
+              exit 1
+            fi
+            # Delete the edit even if the list call fails (this shell runs
+            # with -e, so without the trap a failure would skip the cleanup
+            # and orphan the edit).
+            trap 'curl -s -X DELETE -H "Authorization: Bearer $TOKEN" "$BASE/edits/$EDIT" >/dev/null 2>&1 || true' EXIT
             MAX_CODE=$(curl -sf -H "Authorization: Bearer $TOKEN" "$BASE/edits/$EDIT/apks" | jq '[.apks[]?.versionCode] | max // 0')
-            curl -sf -X DELETE -H "Authorization: Bearer $TOKEN" "$BASE/edits/$EDIT" >/dev/null || true
+            curl -s -X DELETE -H "Authorization: Bearer $TOKEN" "$BASE/edits/$EDIT" >/dev/null || true
+            trap - EXIT
             DERIVED_CODE=$(( MAJOR * 100000 + MINOR * 1000 + BUILD_NUMBER ))
             echo "Highest versionCode on Play: $MAX_CODE; derived: $DERIVED_CODE"
             if [ "$DERIVED_CODE" -le "$MAX_CODE" ]; then

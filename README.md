@@ -197,6 +197,13 @@ commit that changed those two lines. Consequences:
 - Until the next version bump, alpha patch numbers include a hardcoded +77
   offset for continuity with the old TeamCity build counter. It is keyed to
   the 3.4 bump commit and expires on its own (see the workflow).
+- Alpha is sometimes rebuilt with no new commit (e.g. when a bloom-player
+  update dispatches the workflow), which would reuse the same versionCode.
+  The alpha flavor therefore uses gradle-play-publisher's
+  `resolutionStrategy = "auto"` (see `playConfigs` in app/build.gradle): each
+  publish uses max(derived number, highest on Play + 1). Production keeps the
+  strict default and fails on a duplicate, since it is never rebuilt without
+  a commit.
 
 #### The legacy 1.4 APK
 

@@ -209,6 +209,18 @@ jobs:
           "-Pbuild.number=${{ steps.config.outputs.build_number }}"
           "-PplayDryRun=${{ steps.config.outputs.dry_run }}"
 
+      # Alpha uses gradle-play-publisher's resolutionStrategy "auto" (see
+      # app/build.gradle), so a rebuild with no new commits publishes a
+      # higher version than the git-derived one. Read the final values from
+      # the build output.
+      - name: Read published version
+        id: published
+        run: |
+          META="app/build/outputs/apk/${{ steps.config.outputs.flavor_lc }}/release/output-metadata.json"
+          VERSION_NAME=$(jq -r '.elements[0].versionName' "$META")
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "Published versionName $VERSION_NAME (versionCode $(jq -r '.elements[0].versionCode' "$META"))"
+
       # bloomlibrary.org serves the production APK for direct download and
       # reads the version file to know the latest version. Only reached if
       # the publish above succeeded. Requiring the release ref (redundant
@@ -251,7 +263,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
         with:
-          name: bloomreader-${{ steps.config.outputs.flavor }}-${{ steps.config.outputs.build_number }}
+          name: bloomreader-${{ steps.published.outputs.version_name }}
           # The build task assembles every flavor; only keep the one published.
           path: app/build/outputs/apk/${{ steps.config.outputs.flavor_lc }}/release/*.apk
           if-no-files-found: warn

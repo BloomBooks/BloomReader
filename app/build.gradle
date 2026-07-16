@@ -120,6 +120,27 @@ android {
     }
 
     playConfigs {
+        alpha {
+            // Alpha is sometimes rebuilt with no new commit (e.g. when a
+            // bloom-player update dispatches the CI workflow), which would
+            // reuse the same git-derived versionCode and be rejected as a
+            // duplicate. "auto" asks Play for the highest published code and
+            // uses max(local, highest + 1), so such rebuilds step past the
+            // collision while normal builds keep their derived number.
+            // Production deliberately keeps the default ("fail"): it is never
+            // rebuilt without a commit, so a duplicate there means something
+            // is wrong.
+            // Gated on credentials because "auto" wires a Play API call into
+            // the alpha release build, which would break local builds that
+            // have no credentials (and no ability to publish anyway).
+            resolutionStrategy = keystoreProperties ? "auto" : "fail"
+            // Runs after resolution: keep the visible version name in sync
+            // with the (possibly bumped) final version code.
+            outputProcessor { output ->
+                int code = output.versionCodeOverride > 0 ? output.versionCodeOverride : output.versionCode
+                output.versionNameOverride = "${code.intdiv(100000)}.${(code % 100000).intdiv(1000)}.${code % 1000}-alpha"
+            }
+        }
         production {
             // Each production release must continue to offer the legacy 1.4
             // build (versionCode 104001) so devices below our current

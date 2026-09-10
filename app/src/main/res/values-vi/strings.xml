@@ -8,7 +8,7 @@
     <!-- %1$s is the name of the shelf -->
     <string name="deleteExplanationEmptyShelf">Kệ sách %1$s sẽ biến mất khỏi thiết bị của bạn.</string>
     <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
-    <string name="deleteExplanationShelf">Tất cả sách %1$d và kệ sách ở %2$s sẽ biến mất khỏi thiết bị của bạn.</string>
+    <string name="deleteExplanationShelf">Tất cả %1$d sách và kệ sách trong kệ sách %2$s sẽ biến mất khỏi thiết bị của bạn.</string>
     <string name="deleteConfirmButton">Xóa ngay bây giờ</string>
     <string name="share">Chia sẻ</string>
     <!-- %1$s is a book title -->
@@ -21,7 +21,7 @@
     <!-- %1$s is a book title -->
     <string name="already_have_version">Đã tìm thấy \"%1$s\", phiên bản này đã có sẵn.</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
-    <string name="found_new_version">Đã tìm thấy phiên bản \"%1$s\" mới từ \"%2$s\", đang yêu cầu…</string>
+    <string name="found_new_version">Đã tìm thấy \"%1$s\" từ \"%2$s\", đang yêu cầu…</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
     <string name="found_file">Đã tìm thấy \"%1$s\" mới từ \"%2$s\", đang yêu cầu…</string>
     <!-- As in, Done receiving a file-->
@@ -30,7 +30,7 @@
     <string name="downloading">Đang tải xuống…</string>
     <!-- %1$s is a description of the sending network -->
     <string name="looking_for_adds">Đang tìm kiếm quảng cáo sách qua mạng lưới WiFi %1s…</string>
-    <string name="device_hotspot">Device Hotspot</string>
+    <string name="device_hotspot">Điểm phát sóng di động</string>
     <string name="no_wifi_connected">Thiết bị này có vẻ như không kết nối với mạng WiFi.</string>
     <string name="failed_book_import">Nhập dữ liệu sách thất bại.</string>
     <string name="failed_book_import2">Bloom Reader không thể đọc được sách \"%1$s\".</string>
@@ -48,7 +48,7 @@
     <string name="failed_to_share_books">Không chia sẻ sách được</string>
     <string name="failed_to_open_book">Không thể mở sách</string>
     <!-- %1$s is a book title -->
-    <string name="missing_book">Không tìm thấy %1$s. Có thể nó nằm trên thẻ nhớ SD đã lấy ra khỏd máy, hoặc nó đã bị xóa.</string>
+    <string name="missing_book">Không tìm thấy %1$s. Có thể nó nằm trên thẻ nhớ SD đã lấy ra khỏi máy, hoặc nó đã bị xóa.</string>
     <string name="device_storage_is_full">Không thể mở sách. Ổ nhớ trên thiết bị đã đầy. Hãy xóa bớt ổ nhớ và thử lại.</string>
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
     <string name="adding_book">Đang thêm %1$s...</string>
@@ -57,7 +57,7 @@
     <string name="bundle_import_error">Xảy ra lỗi khi đọc %1$s. Hãy thử tải lại lần nữa.</string>
     <string name="share_app">Chia sẻ app Bloom Reader</string>
     <string name="open_bloompub_file">Mở tập tin BloomPUB</string>
-    <string name="open_bloombundle_file">Open BloomBundle file</string>
+    <string name="open_bloombundle_file">Mở tập tin BloomBundle</string>
     <string name="searching">Đang tìm kiếm...</string>
     <string name="no_books_added">Không tìm thấy sách Bloom hay nhóm sách mới nào trên thiết bị này.</string>
     <string name="release_notes">Ghi chú Phát hành</string>
@@ -66,14 +66,14 @@
     <string name="about_sil">Về SIL</string>
     <string name="or">hoặc</string>
     <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
-    <string name="receive_books_over_wifi">Nhận sách từ máy tính</string>
+    <string name="receive_books_over_wifi">Nhận sách qua WiFi</string>
     <!-- Used both as a menu option and as the title of the resulting dialog-->
     <string name="receive_books_over_usb">Nhận sách qua USB</string>
     <string name="ready_to_receive_usb">Bloom Reader sẵn sàng nhận sách qua cáp USB từ chương trình Bloom Editor</string>
     <string name="please_send_book">Vui lòng gửi một cuốn sách từ Bloom Editor và sau đó chọn lại lệnh này</string>
     <string name="need_storage_permission">Bloom Reader cần quyền truy cập ổ chứa tập tin để chạy chương trình.</string>
     <string name="grant_storage_permission">Cho phép Tiếp cận Ổ lưu trữ</string>
-    <string name="renaming_invalid_book">Đổi tên sách thành %1$s</string>
+    <string name="renaming_invalid_book">Đổi tên sách không hợp lệ thành %1$s</string>
     <string name="preparing_to_show_books">Đang chuẩn bị để trình bày sách…</string>
     <string name="show_books_on_sd_card">Hiển thị sách trên Thẻ SD</string>
     <string name="please_click_use_this_folder">Bloom Reader sẽ cần bạn cho phép để hiển thị sách trên Thẻ SD của bạn. Sau khi bạn nhấn \"OK\", Android sẽ mở một cửa sổ. Nhấn vào nút trông giống như sau:</string>

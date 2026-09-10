@@ -12,7 +12,7 @@
     <string name="deleteConfirmButton">Futa sasa</string>
     <string name="share">Shiriki</string>
     <!-- %1$s is a book title -->
-    <string name="shareBook">Shiriki%1$s</string>
+    <string name="shareBook">Shiriki %1$s</string>
     <string name="cancel">Ghairi</string>
     <string name="ok">Sawa</string>
     <string name="navigation_drawer_open">Fungua droo ya uabiri</string>
@@ -23,7 +23,7 @@
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
     <string name="found_new_version">Tumepata toleo jipya la \"%1$s\" kutoka \"%2$s\", linaomba…</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
-    <string name="found_file">Tumepata%1$s\"kutoka\"%2$s\", inaomba…</string>
+    <string name="found_file">Tumepata \"%1$s\" kutoka \"%2$s\", inaomba…</string>
     <!-- As in, Done receiving a file-->
     <string name="done">Imekamilika.</string>
     <string name="transferFailed">Hitilafu imetokea. Ikiwa chanzo bado kinapatikana, tutajaribu tena hivi karibuni.</string>
@@ -43,24 +43,24 @@
     <string name="share_link_via">Shiriki Kiungo kupitia</string>
     <string name="share_books_via">Shiriki vitabu kupitia</string>
     <!-- %1$s is the app name (defined by app_name) -->
-    <string name="recommend_app">Soma vitabu vya Bloom na programu ya%1$s:</string>
+    <string name="recommend_app">Soma vitabu vya Bloom na programu ya %1$s:</string>
     <string name="failed_to_share_apk">Imeshindwa kushiriki faili ya programu.</string>
     <string name="failed_to_share_books">Imeshindwa kushiriki vitabu</string>
     <string name="failed_to_open_book">Haiwezi kufungua kitabu</string>
     <!-- %1$s is a book title -->
-    <string name="missing_book">%1$shaipo. Inawezekana ilikuwa kwenye kadi ya sd ambayo iliondolewa, au inaweza kuwa ilifutwa.</string>
+    <string name="missing_book">%1$s haipo. Inawezekana ilikuwa kwenye kadi ya sd ambayo iliondolewa, au inaweza kuwa ilifutwa.</string>
     <string name="device_storage_is_full">Imeshindwa kufungua kitabu. Hifadhi ya kifaa imejaa. Fungua nafasi na ujaribu tena.</string>
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
     <string name="adding_book">Kuongeza %1$s...</string>
     <string name="bundle_import_out_of_space">Hakuna nafasi ya kutosha kwenye kifaa kwa vitabu vyote kwenye kifungu hiki.</string>
     <!-- %1$s is the name of a bloombundle that failed to import -->
     <string name="bundle_import_error">Kulikuwa na tatizo kusoma %1$s. Jaribu kuipakua tena.</string>
-    <string name="share_app">Shirki programu ya Bloom Reader</string>
+    <string name="share_app">Shiriki programu ya Bloom Reader</string>
     <string name="open_bloompub_file">Fungua faili ya BloomPUB</string>
     <string name="open_bloombundle_file">Open BloomBundle file</string>
     <string name="searching">Inatafuta...</string>
     <string name="no_books_added">Hakuna vitabu vipya vya Bloom au vifungu vinavyopatikana kwenye kifaa.</string>
-    <string name="release_notes">Toa Maelezo</string>
+    <string name="release_notes">Maelezo ya Toleo</string>
     <string name="about_bloom_reader">Kuhusu programu ya Bloom reader</string>
     <string name="about_bloom">Kuhusu Bloom</string>
     <string name="about_sil">Kuhusu SIL</string>
@@ -69,11 +69,11 @@
     <string name="receive_books_over_wifi">Pokea vitabu kupitia Wi-Fi</string>
     <!-- Used both as a menu option and as the title of the resulting dialog-->
     <string name="receive_books_over_usb">Pokea vitabu kupitia USB</string>
-    <string name="ready_to_receive_usb">Bloom Reader iko tayari kupokea vitabu kupitia kebo ya USB kutoka kwa programu ya Mhariri wa Bloom</string>
+    <string name="ready_to_receive_usb">Bloom Reader iko tayari kupokea vitabu kupitia kebo ya USB kutoka kwa programu ya Bloom Editor</string>
     <string name="please_send_book">Tafadhali tuma kitabu kutoka kwa Bloom Editor kisha uchague amri hii tena</string>
     <string name="need_storage_permission">Bloom Reader inahitaji ufikiaji wa kuhifadhi faili ili ifanye kazi.</string>
     <string name="grant_storage_permission">Toa Ruhusa ya Kuhifadhi</string>
-    <string name="renaming_invalid_book">Kubadilisha jina la kitabu batili kuwa%1$s</string>
+    <string name="renaming_invalid_book">Kubadilisha jina la kitabu batili kuwa %1$s</string>
     <string name="preparing_to_show_books">Inajiandaa Kuonyesha Vitabu…</string>
     <string name="show_books_on_sd_card">Onyesha vitabu kwenye kadi ya SD</string>
     <string name="please_click_use_this_folder">Bloom Reader itahitaji ruhusa yako ili kuonyesha vitabu kwenye Kadi yako ya SD. Baada ya kugusa \"OK\", Android itafungua dirisha. Gusa kitufe kinachoonekana kama hii:</string>
@@ -89,8 +89,8 @@
     <!-- Response button to the above request for permission to use location -->
     <string name="dont_allow">Usiruhusu</string>
     <!-- Response button to the above request for permission to use location -->
-    <string name="turn_on_location">Onyesha eneo</string>
-    <string name="request_gps">Waandishi &amp; Wafafanuzi hupenda kujua ni wapi vitabu vyao vya bure husomwa. Lakini tunahitaji uwashe uwezo wa kifaa chako kutumia Huduma yake ya eneo ya GPS</string>
+    <string name="turn_on_location">Washa Eneo</string>
+    <string name="request_gps">Waandishi &amp; Wachoraji hupenda kujua ni wapi vitabu vyao vya bure husomwa. Lakini tunahitaji uwashe uwezo wa kifaa chako kutumia Huduma yake ya eneo ya GPS</string>
     <string name="attempting_to_send_reading_stats">Inajaribu kutuma takwimu za kusoma...</string>
     <string name="all_reading_stats_sent">Takwimu zote za kusoma zimetumwa.</string>
     <string name="find_lost_books">Tafuta vitabu vilivyopotea</string>

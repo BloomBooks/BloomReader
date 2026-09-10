@@ -36,7 +36,7 @@
     <string name="failed_book_import2">Bloom Reader was not able to read the book \"%1$s\".</string>
     <string name="external_storage_unavailable">Man xb’an ta kowinem chech ri okemab’al pa k’olom wi ri k’i k’olchak ¿Kraj na ri retab\'alil SD?</string>
     <string name="need_newer_webview">In order to use this app, you will need to update the <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System WebView</a> from the Google Play Store and then restart the app.</string>
-    <string name="share_app_link">Ula\'nik rech le tiqb’al rech utzukuxik ri Bloom Reader en Google Play&lt;/u&gt;</string>
+    <string name="share_app_link"><u>Ula\'nik rech le tiqb’al rech utzukuxik ri Bloom Reader en Google Play</u></string>
     <string name="share_app_with_friend">¡Chajacha’ ri kojkemchak Bloom Reader ruk’ jun utz awachib\'il!</string>
     <string name="share_books_with_friend">Chajacha\' ronojel taq ri awuj ruk\' jun utz awachib\'il ri ujeqeb\'an le Bloom Reader.</string>
     <string name="share_app_via">Chawula\'j le kojkemchakub\'al rumal</string>

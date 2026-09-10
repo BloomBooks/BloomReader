@@ -18,6 +18,9 @@ mkdir -p values-pt && mv values-pt-rPT/strings.xml values-pt/strings.xml #pt
 mkdir -p values-quc && mv values-quc-rGT/strings.xml values-quc/strings.xml #quc
 mkdir -p values-sw && mv values-sw-rKE/strings.xml values-sw/strings.xml #sw
 
+# Android uses the legacy ISO code "in" for Indonesian (Crowdin gives "id")
+mkdir -p values-in && mv values-id/strings.xml values-in/strings.xml && rmdir values-id #id -> in
+
 # add the 2-letter code with region (which is the one Android usually/always? uses for these)
 mkdir -p values-ps-rAF && cp values-pbu/strings.xml values-ps-rAF/strings.xml #pbu -> ps-AF
 mkdir -p values-fa-rAF && cp values-prs/strings.xml values-fa-rAF/strings.xml #prs -> fa-AF

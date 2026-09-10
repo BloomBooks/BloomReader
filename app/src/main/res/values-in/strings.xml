@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Bloom Reader</string>
+    <string name="delete">Hapus</string>
+    <string name="deleteConfirmation">Hapus dari perangkat?</string>
+    <!-- %1$s is a book title -->
+    <string name="deleteExplanationBook">%1$s akan hilang dari perangkat Anda.</string>
+    <!-- %1$s is the name of the shelf -->
+    <string name="deleteExplanationEmptyShelf">%1$s rak buku akan hilang dari perangkat Anda.</string>
+    <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
+    <string name="deleteExplanationShelf">Semua %1$d buku dan rak di rak buku %2$s akan hilang dari perangkat Anda.</string>
+    <string name="deleteConfirmButton">Hapus sekarang</string>
+    <string name="share">Bagikan</string>
+    <!-- %1$s is a book title -->
+    <string name="shareBook">Bagikan %1$s</string>
+    <string name="cancel">Batal</string>
+    <string name="ok">OK</string>
+    <string name="navigation_drawer_open">Buka panel navigasi</string>
+    <string name="navigation_drawer_close">Tutup panel navigasi</string>
+    <string name="get_books_local_wifi">Terima buku dari Bloom di komputer, melalui Wi-Fi</string>
+    <!-- %1$s is a book title -->
+    <string name="already_have_version">Ditemukan \"%1$s\", versi ini sudah ada.</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_new_version">Ditemukan versi baru \"%1$s\" dari \"%2$s\", meminta…</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_file">Ditemukan \"%1$s\" dari \"%2$s\", meminta…</string>
+    <!-- As in, Done receiving a file-->
+    <string name="done">Selesai.</string>
+    <string name="transferFailed">Terjadi kesalahan. Jika sumbernya masih tersedia, kami akan segera mencoba lagi.</string>
+    <string name="downloading">Mengunduh…</string>
+    <!-- %1$s is a description of the sending network -->
+    <string name="looking_for_adds">Mencari penyiaran buku di jaringan Wi-Fi %1s…</string>
+    <string name="device_hotspot">Hotspot Perangkat</string>
+    <string name="no_wifi_connected">Perangkat tidak terhubung ke jaringan Wi-Fi.</string>
+    <string name="failed_book_import">Gagal mengimpor buku.</string>
+    <string name="failed_book_import2">Buku \"%1$s\" tidak bisa dibaca oleh Bloom Reader.</string>
+    <string name="external_storage_unavailable">Tidak dapat mengakses penyimpanan file. Apakah kartu SD hilang?</string>
+    <string name="need_newer_webview">Untuk menggunakan aplikasi ini, Anda perlu memperbarui <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System WebView</a> dari Google Play Store, lalu mulai ulang aplikasi.</string>
+    <string name="share_app_link"><u>Bagikan link untuk mendapatkan Bloom Reader di Google Play</u></string>
+    <string name="share_app_with_friend">Bagikan aplikasi Bloom Reader ini dengan teman!</string>
+    <string name="share_books_with_friend">Bagikan semua buku Anda kepada teman yang sudah memasang Bloom Reader.</string>
+    <string name="share_app_via">Bagikan App via</string>
+    <string name="share_link_via">Bagikan Link via</string>
+    <string name="share_books_via">Bagikan Buku via</string>
+    <!-- %1$s is the app name (defined by app_name) -->
+    <string name="recommend_app">Baca buku Bloom dengan aplikasi %1$s:</string>
+    <string name="failed_to_share_apk">Gagal membagikan file aplikasi.</string>
+    <string name="failed_to_share_books">Gagal membagikan buku</string>
+    <string name="failed_to_open_book">Buku tidak bisa dibuka</string>
+    <!-- %1$s is a book title -->
+    <string name="missing_book">%1$s tidak ditemukan. Mungkin berada di kartu sd yang sudah dilepas, atau sudah dihapus.</string>
+    <string name="device_storage_is_full">Buku tidak bisa dibuka. Penyimpanan perangkat penuh. Kosongkan sebagian ruang lalu coba lagi.</string>
+    <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
+    <string name="adding_book">Menambahkan %1$s...</string>
+    <string name="bundle_import_out_of_space">Ruang di perangkat tidak cukup untuk semua buku dalam paket Bloom ini.</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">Terjadi masalah saat membaca %1$s. Coba unduh lagi.</string>
+    <string name="share_app">Bagikan aplikasi Bloom Reader</string>
+    <string name="open_bloompub_file">Buka file BloomPUB</string>
+    <string name="open_bloombundle_file">Buka file BloomBundle</string>
+    <string name="searching">Mencari...</string>
+    <string name="no_books_added">Tidak ditemukan buku atau paket Bloom baru di perangkat.</string>
+    <string name="release_notes">Catatan Rilis</string>
+    <string name="about_bloom_reader">Tentang Bloom Reader</string>
+    <string name="about_bloom">Tentang Bloom</string>
+    <string name="about_sil">Tentang SIL</string>
+    <string name="or">atau</string>
+    <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
+    <string name="receive_books_over_wifi">Terima buku via WiFi</string>
+    <!-- Used both as a menu option and as the title of the resulting dialog-->
+    <string name="receive_books_over_usb">Terima buku via USB</string>
+    <string name="ready_to_receive_usb">Bloom Reader siap menerima buku melalui kabel USB dari program Bloom Editor</string>
+    <string name="please_send_book">Silakan kirim buku dari Bloom Editor, lalu pilih perintah ini lagi</string>
+    <string name="need_storage_permission">Bloom Reader memerlukan akses ke penyimpanan file agar dapat berfungsi.</string>
+    <string name="grant_storage_permission">Berikan Izin Penyimpanan</string>
+    <string name="renaming_invalid_book">Mengganti nama buku yang tidak valid menjadi %1$s</string>
+    <string name="preparing_to_show_books">Menyiapkan untuk menampilkan buku…</string>
+    <string name="show_books_on_sd_card">Tampilkan Buku di Kartu SD</string>
+    <string name="please_click_use_this_folder">Bloom Reader memerlukan izin Anda untuk menampilkan buku di Kartu SD. Setelah Anda mengklik \"OK\", Android akan membuka jendela. Klik tombol yang terlihat seperti ini:</string>
+    <string name="show_books_in_old_bloom_folder">Periksa Buku yang Hilang</string>
+    <string name="get_more_books">Dapatkan lebih banyak buku dari perpustakaan kami</string>
+    <string name="select_bloom_directory">Pilih direktori Bloom</string>
+    <string name="request_bloom_permission_usb">Untuk menerima buku melalui USB, Anda perlu memberikan izin kepada Bloom Reader untuk menggunakan folder \"Bloom\" di root Penyimpanan Internal. Klik \"GUNAKAN FOLDER INI\"</string>
+    <string name="request_bloom_permission_lost">Untuk menemukan buku yang hilang, Anda perlu memberikan izin kepada Bloom Reader untuk menggunakan folder \"Bloom\" di root Penyimpanan Internal. Klik \"GUNAKAN FOLDER INI\"</string>
+    <string name="request_bloom_permission_device_stats">Untuk menyelesaikan pengaturan pelaporan statistik, Anda perlu memberikan izin kepada Bloom Reader untuk menggunakan folder \"Bloom\" di root Penyimpanan Internal. Klik \"GUNAKAN FOLDER INI\"</string>
+    <string name="share_location">Bagikan lokasi</string>
+    <string name="request_location">Kami ingin mencatat kota Anda karena orang-orang yang membagikan buku-buku ini secara gratis ingin tahu di mana buku mereka dibaca.</string>
+    <string name="allow">Izinkan</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="dont_allow">Jangan Izinkan</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="turn_on_location">Aktifkan Lokasi</string>
+    <string name="request_gps">Penulis &amp; Ilustrator ingin tahu di mana buku gratis mereka dibaca. Silakan aktifkan Layanan Lokasi GPS perangkat Anda</string>
+    <string name="attempting_to_send_reading_stats">Sedang mencoba mengirim statistik bacaan...</string>
+    <string name="all_reading_stats_sent">Semua statistik bacaan telah dikirim.</string>
+    <string name="find_lost_books">Temukan buku yang hilang</string>
+    <string name="no_lost_books_found">Tidak ditemukan buku yang hilang.</string>
+    <string name="restart">Mulai ulang</string>
+    <string name="close">Tutup</string>
+    <string name="read_now">Baca Sekarang</string>
+    <string name="download_is_complete">Pengunduhan buku selesai</string>
+    <string name="downloads_are_complete">Pengunduhan buku selesai</string>
+    <string name="downloading_file">Mengunduh %s</string>
+    <string name="downloading_books">Mengunduh buku</string>
+    <string name="view_books">Lihat buku</string>
+</resources>

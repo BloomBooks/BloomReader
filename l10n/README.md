@@ -4,12 +4,22 @@ We use Crowdin for localization. Bloom Reader's `strings.xml` is included in the
 
 ## Update/Add translations from Crowdin
 
-1. Download the translations using the Crowdin plugin (see below). (Or manually download them and copy to the correct structure.)
+1. Download the translations. Either:
+   - Run `downloadFromCrowdin.sh` (needs `BLOOM_CROWDIN_TOKEN`, `curl`, and `python`). It triggers a translation
+     build via the Crowdin REST API, downloads the archive, extracts every `values-*/strings.xml` into
+     `app/src/main/res`, and then runs `processLocalizations.sh` for you (skip step 2).
+   - Or use the Crowdin plugin (see below). (Or manually download them and copy to the correct structure.)
 2. Run `processLocalizations.sh`.
-   - This remaps the language codes in the way we expect.
+   - This remaps the language codes in the way we expect (e.g. Crowdin's `id` becomes Android's legacy `in` for Indonesian).
 3. At this point, existing files should be updated correctly.
-4. There will also be a bunch of new files added for languages we haven't included previously. Delete those.
+   - Crowdin exports untranslated strings as copies of the English, and the files come back with LF line endings,
+     so use `git diff` (not `git status`) to see which languages really changed.
+4. There will also be a bunch of new files added for languages we haven't included previously. Delete those
+   (`git clean -fd app/src/main/res`).
    - (Or decide to add them, thinking through what the language code should be. And update `processLocalizations.sh`.)
+
+Note: the standalone Crowdin CLI does not work with this repo's `crowdin.yml` (it rejects `dest` without
+`preserve_hierarchy` and then cannot match the exported paths). Use the script or the plugin instead.
 
 Warning: with the current project settings in Crowdin, you will download all translated strings, even unapproved ones. Therefore, this process will add unapproved strings.
 

@@ -26,5 +26,5 @@ mkdir -p values-ps-rAF && cp values-pbu/strings.xml values-ps-rAF/strings.xml #p
 mkdir -p values-fa-rAF && cp values-prs/strings.xml values-fa-rAF/strings.xml #prs -> fa-AF
 mkdir -p values-zh-rCN && cp values-zh/strings.xml values-zh-rCN/strings.xml #zh -> zh-CN
 
-# the presence of this directory causes the app not to build
-rm -r values-qaa-rx-rtest
+# the test pseudo-locale (qaa-x-test) must not ship; the region-coded form also broke the build
+rm -rf values-qaa-rx-rtest values-qaa

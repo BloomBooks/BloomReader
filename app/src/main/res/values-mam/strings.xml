@@ -12,18 +12,18 @@
     <string name="deleteConfirmButton">Ok elel ja\'lo</string>
     <string name="share">Aq\'pul</string>
     <!-- %1$s is a book title -->
-    <string name="shareBook">Aq\'pul%1$s</string>
+    <string name="shareBook">Aq\'pul %1$s</string>
     <string name="cancel">Min lajet</string>
     <string name="ok">K\'amol</string>
     <string name="navigation_drawer_open">Jaqb\'il swej te b\'etb\'il toj chemaj xin.</string>
     <string name="navigation_drawer_close">Lametil swej te b\'etb\'il toj chemajxin</string>
     <string name="get_books_local_wifi">K\'amol u\'jb\'il toj Bloom toj jun xk\'utz\'ib\' toj taq\'nab\'il Wifi</string>
     <!-- %1$s is a book title -->
-    <string name="already_have_version">Ma kanet %1$s\", at aq\'na\'b\'il lu\' toj.</string>
+    <string name="already_have_version">Ma kanet \"%1$s\", at aq\'na\'b\'il lu\' toj.</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
-    <string name="found_new_version">Ma kanet jun ak\'aj aq\'na\'b\'il te %1$s\" tojtzaj %2$s\", in qanin…</string>
+    <string name="found_new_version">Ma kanet jun ak\'aj aq\'na\'b\'il te \"%1$s\" tojtzaj \"%2$s\", in qanin…</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
-    <string name="found_file">Ma kanet %1$s\" tojtzaj %2$s\", in qanin…</string>
+    <string name="found_file">Ma kanet \"%1$s\" tojtzaj \"%2$s\", in qanin…</string>
     <!-- As in, Done receiving a file-->
     <string name="done">Ma b\'ant.</string>
     <string name="transferFailed">At jun min xb\'ant. Qa atix tlok\', jaku kub\' b\'inchet juntl maj.</string>

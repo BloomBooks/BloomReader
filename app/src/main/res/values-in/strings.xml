@@ -6,7 +6,7 @@
     <!-- %1$s is a book title -->
     <string name="deleteExplanationBook">%1$s akan hilang dari perangkat Anda.</string>
     <!-- %1$s is the name of the shelf -->
-    <string name="deleteExplanationEmptyShelf">%1$s rak buku akan hilang dari perangkat Anda.</string>
+    <string name="deleteExplanationEmptyShelf">Rak buku %1$s akan hilang dari perangkat Anda.</string>
     <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
     <string name="deleteExplanationShelf">Semua %1$d buku dan rak di rak buku %2$s akan hilang dari perangkat Anda.</string>
     <string name="deleteConfirmButton">Hapus sekarang</string>

@@ -45,7 +45,7 @@
     <!-- %1$s is the app name (defined by app_name) -->
     <string name="recommend_app">%1$s ऐप में ब्लूम पुस्तकें पढ़ें:</string>
     <string name="failed_to_share_apk">ऐप फाइल सांझा करने में विफल।</string>
-    <string name="failed_to_share_books">पुस्तकें आयात करने में विफल</string>
+    <string name="failed_to_share_books">पुस्तकें साझा करने में विफल</string>
     <string name="failed_to_open_book">पुस्तक को खोलने में असमर्थ</string>
     <!-- %1$s is a book title -->
     <string name="missing_book">%1$s मौजूद नहीं है। शायद वह जो एसडी कार्ड निकाला गया उस में होगा, या शायद वह डिलीट हो गया होगा।</string>

@@ -66,7 +66,7 @@
     <string name="about_sil">Acerca de SIL</string>
     <string name="or">o</string>
     <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
-    <string name="receive_books_over_wifi">Recibir libros desde la computadora</string>
+    <string name="receive_books_over_wifi">Recibir libros por WiFi</string>
     <!-- Used both as a menu option and as the title of the resulting dialog-->
     <string name="receive_books_over_usb">Recibir libros por USB</string>
     <string name="ready_to_receive_usb">Bloom Reader está listo para recibir libros a través del cable USB desde el programa Bloom Editor</string>

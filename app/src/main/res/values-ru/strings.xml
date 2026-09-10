@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Bloom Ридер</string>
+    <string name="delete">Удалить</string>
+    <string name="deleteConfirmation">Удалить с устройства?</string>
+    <!-- %1$s is a book title -->
+    <string name="deleteExplanationBook">%1$s будет удалено с вашего устройства.</string>
+    <!-- %1$s is the name of the shelf -->
+    <string name="deleteExplanationEmptyShelf">Книжная полка %1$s исчезнет с вашего устройства.</string>
+    <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
+    <string name="deleteExplanationShelf">Все %1$d книг и полок на книжной полке %2$s будут удалены с вашего устройства.</string>
+    <string name="deleteConfirmButton">Удалить сейчас</string>
+    <string name="share">Поделиться</string>
+    <!-- %1$s is a book title -->
+    <string name="shareBook">Поделиться %1$s</string>
+    <string name="cancel">Отменить</string>
+    <string name="ok">Ок</string>
+    <string name="navigation_drawer_open">Открыть панель навигации</string>
+    <string name="navigation_drawer_close">Закрыть панель навигации</string>
+    <string name="get_books_local_wifi">Получать книги от Bloom на компьютере, через Wifi</string>
+    <!-- %1$s is a book title -->
+    <string name="already_have_version">Найдена \"%1$s\", уже есть эта версия.</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_new_version">Найдена новая версия \"%1$s\" от \"%2$s\", запрос…</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_file">Найдена \"%1$s\" от \"%2$s\", запрос…</string>
+    <!-- As in, Done receiving a file-->
+    <string name="done">Готово.</string>
+    <string name="transferFailed">Что-то пошло не так. Если источник по-прежнему доступен, мы скоро попробуем снова.</string>
+    <string name="downloading">Загрузка…</string>
+    <!-- %1$s is a description of the sending network -->
+    <string name="looking_for_adds">Поиск книжных объявлений в сети WiFi %1s…</string>
+    <string name="device_hotspot">Точка доступа устройства</string>
+    <string name="no_wifi_connected">Похоже, что устройство не подключено к сети WiFi.</string>
+    <string name="failed_book_import">Не удалось импортировать книгу.</string>
+    <string name="failed_book_import2">Bloom Ридер не смог прочитать книгу \"%1$s\".</string>
+    <string name="external_storage_unavailable">Не удается получить доступ к файловому хранилищу. Отсутствует SD-карта?</string>
+    <string name="need_newer_webview">In order to use this app, you will need to update the <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System WebView</a> from the Google Play Store and then restart the app.</string>
+    <string name="share_app_link"><u>Поделитесь ссылкой, чтобы получить Bloom Reader на Google Play</u></string>
+    <string name="share_app_with_friend">Поделитесь приложением Bloom Ридер с другом!</string>
+    <string name="share_books_with_friend">Поделитесь всеми своими книгами с другом, у которого уже установлен Bloom Ридер.</string>
+    <string name="share_app_via">Поделиться приложением через</string>
+    <string name="share_link_via">Поделиться ссылкой через</string>
+    <string name="share_books_via">Поделиться книгами через</string>
+    <!-- %1$s is the app name (defined by app_name) -->
+    <string name="recommend_app">Читайте книги Bloom в приложении %1$s:</string>
+    <string name="failed_to_share_apk">Не удалось поделиться файлом приложения.</string>
+    <string name="failed_to_share_books">Не удалось поделиться книгами</string>
+    <string name="failed_to_open_book">Не удается открыть книгу</string>
+    <!-- %1$s is a book title -->
+    <string name="missing_book">%1$s отсутствует. Возможно, книга была на извлечённой SD-карте или была удалена.</string>
+    <string name="device_storage_is_full">Невозможно открыть книгу. Память устройства заполнена. Освободите место и повторите попытку.</string>
+    <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
+    <string name="adding_book">Добавление %1$s...</string>
+    <string name="bundle_import_out_of_space">Недостаточно места на устройстве для всех книг в этом наборе.</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">При чтении %1$s возникла проблема. Попробуйте загрузить его снова.</string>
+    <string name="share_app">Поделиться приложением Bloom Ридер</string>
+    <string name="open_bloompub_file">Open BloomPUB file</string>
+    <string name="open_bloombundle_file">Open BloomBundle file</string>
+    <string name="searching">Поиск...</string>
+    <string name="no_books_added">На данном устройстве не найдено новых книг или наборов Bloom.</string>
+    <string name="release_notes">Примечания к выпуску</string>
+    <string name="about_bloom_reader">О программе Bloom Ридер</string>
+    <string name="about_bloom">О программе Bloom</string>
+    <string name="about_sil">Об организации SIL</string>
+    <string name="or">или</string>
+    <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
+    <string name="receive_books_over_wifi">Получать книги через WiFi</string>
+    <!-- Used both as a menu option and as the title of the resulting dialog-->
+    <string name="receive_books_over_usb">Получать книги через USB</string>
+    <string name="ready_to_receive_usb">Bloom Ридер готов к получению книг по USB-кабелю из программы Bloom Editor</string>
+    <string name="please_send_book">Please send a book from Bloom Editor and then choose this command again</string>
+    <string name="need_storage_permission">Для работы Bloom Ридер необходим доступ к хранилищу файлов.</string>
+    <string name="grant_storage_permission">Предоставить доступ к хранилищу</string>
+    <string name="renaming_invalid_book">Переименование недействительной книги в %1$s</string>
+    <string name="preparing_to_show_books">Подготовка к показу книг…</string>
+    <string name="show_books_on_sd_card">Show Books on SD Card</string>
+    <string name="please_click_use_this_folder">Bloom Reader will need your permission to show the books on your SD Card. After you touch \"OK\", Android will open a window. Touch the button that looks like this:</string>
+    <string name="show_books_in_old_bloom_folder">Check for Lost Books</string>
+    <string name="get_more_books">Get more books from our library</string>
+    <string name="select_bloom_directory">Select Bloom directory</string>
+    <string name="request_bloom_permission_usb">To receive books via USB, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"</string>
+    <string name="request_bloom_permission_lost">To find lost books, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"</string>
+    <string name="request_bloom_permission_device_stats">To finish setting up stats reporting, you will need to give Bloom Reader permission to use the \"Bloom\" folder at the root of Internal Storage. Touch \"USE THIS FOLDER\"</string>
+    <string name="share_location">Поделиться местоположением</string>
+    <string name="request_location">Мы хотели бы записать ваш город, потому что люди, которые бесплатно делятся этими книгами, хотели бы знать, где читают их книги.</string>
+    <string name="allow">Разрешить</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="dont_allow">Не разрешать</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="turn_on_location">Включить местоположение</string>
+    <string name="request_gps">Авторы и иллюстраторы хотели бы знать, где читают их бесплатные книги. Но для этого нужно включить службу геолокации на вашем устройстве</string>
+    <string name="attempting_to_send_reading_stats">Attempting to send reading stats...</string>
+    <string name="all_reading_stats_sent">All reading stats sent.</string>
+    <string name="find_lost_books">Find lost books</string>
+    <string name="no_lost_books_found">No lost books found.</string>
+    <string name="restart">Restart</string>
+    <string name="close">Close</string>
+    <string name="read_now">Read Now</string>
+    <string name="download_is_complete">Book download is complete</string>
+    <string name="downloads_are_complete">Book downloads are complete</string>
+    <string name="downloading_file">Downloading %s</string>
+    <string name="downloading_books">Downloading books</string>
+    <string name="view_books">View books</string>
+</resources>

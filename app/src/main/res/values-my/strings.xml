@@ -36,7 +36,7 @@
     <string name="failed_book_import2">Bloom Reader was not able to read the book \"%1$s\".</string>
     <string name="external_storage_unavailable">ဖိုင်သိုလှောင်ခန်းကို မဆက်သွယ်နိုင်ပါ။ SD ကဒ်ပျောက်နေသလား?</string>
     <string name="need_newer_webview">In order to use this app, you will need to update the <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System WebView</a> from the Google Play Store and then restart the app.</string>
-    <string name="share_app_link">ဘလွန်းဖတ်စာကို ဂူဂဲပလေး&lt;/u&gt;မှ ရနိုင်ရန် ဆက်သွယ်ရမည့် လင့်လိပ်စာကို&lt;u&gt;မျှဝေပါ။</string>
+    <string name="share_app_link"><u>ဘလွန်းဖတ်စာကို ဂူဂဲပလေးမှ ရနိုင်ရန် ဆက်သွယ်ရမည့် လင့်လိပ်စာကို မျှဝေပါ။</u></string>
     <string name="share_app_with_friend">ဘလွန်းဖတ်စာအဲပ်ကို မိတ်ဆွေအား မျှဝေမည်။</string>
     <string name="share_books_with_friend">ဘလွန်းဖတ်စာထည့်ပြီးသောမိတ်ဆွေအား စာအုပ်အားလုံးကို မျှဝေမည်။</string>
     <string name="share_app_via">...မှတဆင့် အဲပ်ကို ဝေမျှမည်။</string>

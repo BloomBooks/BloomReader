@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Bloom Reader</string>
+    <string name="delete">Xóa</string>
+    <string name="deleteConfirmation">Xóa khỏi thiết bị?</string>
+    <!-- %1$s is a book title -->
+    <string name="deleteExplanationBook">%1$s sẽ biến mất khỏi thiết bị của bạn.</string>
+    <!-- %1$s is the name of the shelf -->
+    <string name="deleteExplanationEmptyShelf">Kệ sách %1$s sẽ biến mất khỏi thiết bị của bạn.</string>
+    <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
+    <string name="deleteExplanationShelf">Tất cả sách %1$d và kệ sách ở %2$s sẽ biến mất khỏi thiết bị của bạn.</string>
+    <string name="deleteConfirmButton">Xóa ngay bây giờ</string>
+    <string name="share">Chia sẻ</string>
+    <!-- %1$s is a book title -->
+    <string name="shareBook">Chia sẻ %1$s</string>
+    <string name="cancel">Huỷ</string>
+    <string name="ok">OK</string>
+    <string name="navigation_drawer_open">Mở thanh điều hướng</string>
+    <string name="navigation_drawer_close">Đóng thanh điều hướng</string>
+    <string name="get_books_local_wifi">Nhập sách từ Bloom trên máy tính, dùng Wifi</string>
+    <!-- %1$s is a book title -->
+    <string name="already_have_version">Đã tìm thấy \"%1$s\", phiên bản này đã có sẵn.</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_new_version">Đã tìm thấy phiên bản \"%1$s\" mới từ \"%2$s\", đang yêu cầu…</string>
+    <!-- %1$s is a book title; %2$s is a description of the sending network -->
+    <string name="found_file">Đã tìm thấy \"%1$s\" mới từ \"%2$s\", đang yêu cầu…</string>
+    <!-- As in, Done receiving a file-->
+    <string name="done">Hoàn thành.</string>
+    <string name="transferFailed">Có lỗi xảy ra. Nếu nguồn vẫn còn có sẵn, chúng tôi sẽ sớm thử lại ngay.</string>
+    <string name="downloading">Đang tải xuống…</string>
+    <!-- %1$s is a description of the sending network -->
+    <string name="looking_for_adds">Đang tìm kiếm quảng cáo sách qua mạng lưới WiFi %1s…</string>
+    <string name="device_hotspot">Device Hotspot</string>
+    <string name="no_wifi_connected">Thiết bị này có vẻ như không kết nối với mạng WiFi.</string>
+    <string name="failed_book_import">Nhập dữ liệu sách thất bại.</string>
+    <string name="failed_book_import2">Bloom Reader không thể đọc được sách \"%1$s\".</string>
+    <string name="external_storage_unavailable">Không thể tiếp cận ổ chứa dữ liệu tập tin. Bạn có quên gắn thẻ nhớ SD?</string>
+    <string name="need_newer_webview">Để sử dụng ứng dụng này, bạn cần cập nhật <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">Android System WebView</a> từ Google Play Store rồi khởi động lại ứng dụng.</string>
+    <string name="share_app_link"><u>Chia sẻ link để tải Bloom Reader ở Google Play</u></string>
+    <string name="share_app_with_friend">Chia sẻ phần mềm Bloom Reader với bạn bè!</string>
+    <string name="share_books_with_friend">Chia sẻ tất cả sách của bạn với một người bạn đã cài đặt Bloom Reader.</string>
+    <string name="share_app_via">Chia sẻ App qua</string>
+    <string name="share_link_via">Chia sẻ Link qua</string>
+    <string name="share_books_via">Chia sẻ Sách qua</string>
+    <!-- %1$s is the app name (defined by app_name) -->
+    <string name="recommend_app">Đọc sách Bloom với app %1$s:</string>
+    <string name="failed_to_share_apk">Không chia sẻ tập tin app được.</string>
+    <string name="failed_to_share_books">Không chia sẻ sách được</string>
+    <string name="failed_to_open_book">Không thể mở sách</string>
+    <!-- %1$s is a book title -->
+    <string name="missing_book">Không tìm thấy %1$s. Có thể nó nằm trên thẻ nhớ SD đã lấy ra khỏd máy, hoặc nó đã bị xóa.</string>
+    <string name="device_storage_is_full">Không thể mở sách. Ổ nhớ trên thiết bị đã đầy. Hãy xóa bớt ổ nhớ và thử lại.</string>
+    <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
+    <string name="adding_book">Đang thêm %1$s...</string>
+    <string name="bundle_import_out_of_space">Không đủ ổ nhớ trên thiết bị để lưu tất cả sách trong nhóm này.</string>
+    <!-- %1$s is the name of a bloombundle that failed to import -->
+    <string name="bundle_import_error">Xảy ra lỗi khi đọc %1$s. Hãy thử tải lại lần nữa.</string>
+    <string name="share_app">Chia sẻ app Bloom Reader</string>
+    <string name="open_bloompub_file">Mở tập tin BloomPUB</string>
+    <string name="open_bloombundle_file">Open BloomBundle file</string>
+    <string name="searching">Đang tìm kiếm...</string>
+    <string name="no_books_added">Không tìm thấy sách Bloom hay nhóm sách mới nào trên thiết bị này.</string>
+    <string name="release_notes">Ghi chú Phát hành</string>
+    <string name="about_bloom_reader">Về Bloom Reader</string>
+    <string name="about_bloom">Về Bloom</string>
+    <string name="about_sil">Về SIL</string>
+    <string name="or">hoặc</string>
+    <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
+    <string name="receive_books_over_wifi">Nhận sách từ máy tính</string>
+    <!-- Used both as a menu option and as the title of the resulting dialog-->
+    <string name="receive_books_over_usb">Nhận sách qua USB</string>
+    <string name="ready_to_receive_usb">Bloom Reader sẵn sàng nhận sách qua cáp USB từ chương trình Bloom Editor</string>
+    <string name="please_send_book">Vui lòng gửi một cuốn sách từ Bloom Editor và sau đó chọn lại lệnh này</string>
+    <string name="need_storage_permission">Bloom Reader cần quyền truy cập ổ chứa tập tin để chạy chương trình.</string>
+    <string name="grant_storage_permission">Cho phép Tiếp cận Ổ lưu trữ</string>
+    <string name="renaming_invalid_book">Đổi tên sách thành %1$s</string>
+    <string name="preparing_to_show_books">Đang chuẩn bị để trình bày sách…</string>
+    <string name="show_books_on_sd_card">Hiển thị sách trên Thẻ SD</string>
+    <string name="please_click_use_this_folder">Bloom Reader sẽ cần bạn cho phép để hiển thị sách trên Thẻ SD của bạn. Sau khi bạn nhấn \"OK\", Android sẽ mở một cửa sổ. Nhấn vào nút trông giống như sau:</string>
+    <string name="show_books_in_old_bloom_folder">Kiểm tra sách bị thất lạc</string>
+    <string name="get_more_books">Nhận thêm sách từ thư viện chúng tôi</string>
+    <string name="select_bloom_directory">Chọn danh mục Bloom</string>
+    <string name="request_bloom_permission_usb">Để nhận sách qua USB, bạn cần cấp cho Bloom Reader quyền sử dụng thư mục \"Bloom\" ở thư mục gốc của Bộ nhớ trong. Chạm vào \"SỬ DỤNG THƯ MỤC NÀY\"</string>
+    <string name="request_bloom_permission_lost">Để tìm sách bị mất, bạn cần cấp cho Bloom Reader quyền sử dụng thư mục \"Bloom\" ở thư mục gốc của Bộ nhớ trong. Chạm vào \"SỬ DỤNG THƯ MỤC NÀY\"</string>
+    <string name="request_bloom_permission_device_stats">Để hoàn tất việc thiết lập báo cáo thống kê, bạn cần cấp cho Bloom Reader quyền sử dụng thư mục \"Bloom\" ở thư mục gốc của Bộ nhớ trong. Chạm vào \"SỬ DỤNG THƯ MỤC NÀY\"</string>
+    <string name="share_location">Chia sẻ vị trí</string>
+    <string name="request_location">Chúng tôi muốn ghi nhận lại thành phố của bạn vì những người chia sẻ những cuốn sách này miễn phí muốn biết sách của họ đang được đọc ở đâu.</string>
+    <string name="allow">Cho phép</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="dont_allow">Không cho phép</string>
+    <!-- Response button to the above request for permission to use location -->
+    <string name="turn_on_location">Bật Định vị</string>
+    <string name="request_gps">Các tác giả &amp; những người vẽ tranh minh họa muốn biết sách miễn phí của họ đang được đọc ở đâu. Tuy nhiên, chúng tôi cần bạn bật khả năng sử dụng Dịch vụ Định vị GPS của thiết bị</string>
+    <string name="attempting_to_send_reading_stats">Đang cố gắng gửi số liệu thống kê đọc...</string>
+    <string name="all_reading_stats_sent">Đã gửi tất cả số liệu thống kê đọc.</string>
+    <string name="find_lost_books">Tìm sách bị thất lạc</string>
+    <string name="no_lost_books_found">Không tìm thấy sách bị thất lạc.</string>
+    <string name="restart">Khởi động lại</string>
+    <string name="close">Đóng</string>
+    <string name="read_now">Đọc Bây Giờ</string>
+    <string name="download_is_complete">Tải sách đã hoàn tất</string>
+    <string name="downloads_are_complete">Tải sách đã hoàn tất</string>
+    <string name="downloading_file">Đang tải xuống %s</string>
+    <string name="downloading_books">Đang tải sách</string>
+    <string name="view_books">Xem sách</string>
+</resources>

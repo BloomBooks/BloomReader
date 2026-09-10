@@ -57,7 +57,7 @@
     <string name="bundle_import_error">Houve um problema ao ler %1$s. Tente baixá-lo novamente.</string>
     <string name="share_app">Compartilhe o app Bloom Reader</string>
     <string name="open_bloompub_file">Abrir arquivo BloomPUB</string>
-    <string name="open_bloombundle_file">Open BloomBundle file</string>
+    <string name="open_bloombundle_file">Abrir arquivo de BloomBundle</string>
     <string name="searching">Pesquisando...</string>
     <string name="no_books_added">Não foram encontrados novos livros ou pacotes Bloom no dispositivo.</string>
     <string name="release_notes">Notas da Versão</string>
@@ -66,7 +66,7 @@
     <string name="about_sil">Sobre SIL</string>
     <string name="or">ou</string>
     <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
-    <string name="receive_books_over_wifi">Receber livros do computador</string>
+    <string name="receive_books_over_wifi">Receber livros via WiFi</string>
     <!-- Used both as a menu option and as the title of the resulting dialog-->
     <string name="receive_books_over_usb">Receber livros via USB</string>
     <string name="ready_to_receive_usb">Bloom Reader está pronto para receber livros através do cabo USB do programa Bloom Editor</string>

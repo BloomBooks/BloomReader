@@ -5,9 +5,10 @@ We use Crowdin for localization. Bloom Reader's `strings.xml` is included in the
 ## Update/Add translations from Crowdin
 
 1. Download the translations. Either:
-   - Run `downloadFromCrowdin.sh` (needs `BLOOM_CROWDIN_TOKEN`, `curl`, and `python`). It triggers a translation
-     build via the Crowdin REST API, downloads the archive, extracts every `values-*/strings.xml` into
-     `app/src/main/res`, and then runs `processLocalizations.sh` for you (skip step 2).
+   - Run `downloadFromCrowdin.sh` (needs `BLOOM_CROWDIN_TOKEN`, `curl`, and `python`). It exports the Bloom Reader
+     file for every target language via the Crowdin REST API into `app/src/main/res/values-*/strings.xml`,
+     and then runs `processLocalizations.sh` for you (skip step 2). It uses per-file exports rather than a
+     project build because Crowdin's project builds can serve a stale cache for a while after edits.
    - Or use the Crowdin plugin (see below). (Or manually download them and copy to the correct structure.)
 2. Run `processLocalizations.sh`.
    - This remaps the language codes in the way we expect (e.g. Crowdin's `id` becomes Android's legacy `in` for Indonesian).

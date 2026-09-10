@@ -8,7 +8,7 @@
     <!-- %1$s is the name of the shelf -->
     <string name="deleteExplanationEmptyShelf">A estante %1$s desaparecerá do seu dispositivo.</string>
     <!-- %1$d is the number of books and shelves to be deleted; %2$s is the name of the shelf -->
-    <string name="deleteExplanationShelf">Todos os livros %1$d e %2$s prateleiras da estante desaparecerão do seu dispositivo.</string>
+    <string name="deleteExplanationShelf">Todos os %1$d livros e prateleiras da estante %2$s desaparecerão do seu dispositivo.</string>
     <string name="deleteConfirmButton">Excluir agora</string>
     <string name="share">Compartilhar</string>
     <!-- %1$s is a book title -->
@@ -49,7 +49,7 @@
     <string name="failed_to_open_book">O livro não pode ser aberto</string>
     <!-- %1$s is a book title -->
     <string name="missing_book">%1$s está faltando. Pode ter sido removido em um cartão SD, ou pode ter sido excluído.</string>
-    <string name="device_storage_is_full">No se puede abrir o livro. O dispositivo de armazenamento está cheio. Intente de novo depois de liberar espaço.</string>
+    <string name="device_storage_is_full">Não é possível abrir o livro. O armazenamento do dispositivo está cheio. Liberte algum espaço e tente novamente.</string>
     <!-- %1$s is the name of a book or shelf being added from a bloombundle -->
     <string name="adding_book">Adicionando %1$s...</string>
     <string name="bundle_import_out_of_space">Não há espaço suficiente no dispositivo para todos os livros deste pacote.</string>
@@ -57,7 +57,7 @@
     <string name="bundle_import_error">Houve um problema ao ler %1$s. Tente baixá-lo novamente.</string>
     <string name="share_app">Compartilhe o app Bloom Reader</string>
     <string name="open_bloompub_file">Abrir arquivo BloomPUB</string>
-    <string name="open_bloombundle_file">Open BloomBundle file</string>
+    <string name="open_bloombundle_file">Abrir arquivo de BloomBundle</string>
     <string name="searching">Pesquisando...</string>
     <string name="no_books_added">Não foram encontrados novos livros ou pacotes Bloom no dispositivo.</string>
     <string name="release_notes">Notas da Versão</string>
@@ -66,7 +66,7 @@
     <string name="about_sil">Sobre SIL</string>
     <string name="or">ou</string>
     <!-- Prior to BR 2.3, this message was "Receive books from computer"-->
-    <string name="receive_books_over_wifi">Receber livros do computador</string>
+    <string name="receive_books_over_wifi">Receber livros via WiFi</string>
     <!-- Used both as a menu option and as the title of the resulting dialog-->
     <string name="receive_books_over_usb">Receber livros via USB</string>
     <string name="ready_to_receive_usb">Bloom Reader está pronto para receber livros através do cabo USB do programa Bloom Editor</string>
@@ -98,9 +98,9 @@
     <string name="restart">Reiniciar</string>
     <string name="close">Fechar</string>
     <string name="read_now">Ler agora</string>
-    <string name="download_is_complete">Transferência de livros concluído</string>
+    <string name="download_is_complete">Transferência do livro concluída</string>
     <string name="downloads_are_complete">Transferência de livros concluído</string>
     <string name="downloading_file">A descarregar %s</string>
-    <string name="downloading_books">A descarregar o livro</string>
+    <string name="downloading_books">A descarregar livros</string>
     <string name="view_books">Ver livros</string>
 </resources>

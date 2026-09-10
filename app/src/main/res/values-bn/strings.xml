@@ -19,7 +19,7 @@
     <string name="navigation_drawer_close">ন্যাভিগেশন ড্রয়ার বন্ধ করুন</string>
     <string name="get_books_local_wifi">ওয়াই ফাই দিয়ে ব্লুম থেকে কম্পিউটারে বই নিন</string>
     <!-- %1$s is a book title -->
-    <string name="already_have_version">আগে থেকেই এই সংস্করণটি আছে, \"\'%1$s\" পাওয়া গেল।</string>
+    <string name="already_have_version">আগে থেকেই এই সংস্করণটি আছে, \"%1$s\" পাওয়া গেল।</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
     <string name="found_new_version">\"%2$s\" থেকে \"%1$s\"–এর নতুন সংস্করণটি পাওয়া গেছে, অনুরোধ...</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
@@ -60,7 +60,7 @@
     <string name="open_bloombundle_file">Open BloomBundle file</string>
     <string name="searching">অনুসন্ধান করা হচ্ছে...</string>
     <string name="no_books_added">কোন নতুন ব্লুম বই বা থোকা এই ডিভাইসে খুঁজে পাওয়া যায়নি।</string>
-    <string name="release_notes">রিলিজ নোট/ মুক্ত স্মারকলিপি</string>
+    <string name="release_notes">রিলিজ নোট</string>
     <string name="about_bloom_reader">ব্লুম পাঠক সম্বদ্ধে </string>
     <string name="about_bloom">ব্লুম সম্পর্কে</string>
     <string name="about_sil">SIL এর সম্পর্কে </string>

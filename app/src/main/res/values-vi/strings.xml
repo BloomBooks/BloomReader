@@ -21,9 +21,9 @@
     <!-- %1$s is a book title -->
     <string name="already_have_version">Đã tìm thấy \"%1$s\", phiên bản này đã có sẵn.</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
-    <string name="found_new_version">Đã tìm thấy \"%1$s\" từ \"%2$s\", đang yêu cầu…</string>
+    <string name="found_new_version">Đã tìm thấy phiên bản \"%1$s\" mới từ \"%2$s\", đang yêu cầu…</string>
     <!-- %1$s is a book title; %2$s is a description of the sending network -->
-    <string name="found_file">Đã tìm thấy \"%1$s\" mới từ \"%2$s\", đang yêu cầu…</string>
+    <string name="found_file">Đã tìm thấy \"%1$s\" từ \"%2$s\", đang yêu cầu…</string>
     <!-- As in, Done receiving a file-->
     <string name="done">Hoàn thành.</string>
     <string name="transferFailed">Có lỗi xảy ra. Nếu nguồn vẫn còn có sẵn, chúng tôi sẽ sớm thử lại ngay.</string>
